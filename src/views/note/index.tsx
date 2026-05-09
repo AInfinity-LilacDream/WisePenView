@@ -13,7 +13,7 @@ import NoteOutline from '@/components/Note/NoteOutline';
 import type { NoteOutlineItem } from '@/components/Note/NoteOutline/index.type';
 import NoteInfoBar from '@/components/Note/NoteInfoBar';
 import NoteTitle from '@/components/Note/NoteTitle';
-import { useNoteService } from '@/contexts/ServicesContext';
+import { useNoteService } from '@/services';
 import type { NoteInfoDisplayData } from '@/services/Note';
 import { useSmoothFlag } from '@/hooks/useSmoothFlag';
 import { useNoteSession } from '@/session/note/useNoteSession';

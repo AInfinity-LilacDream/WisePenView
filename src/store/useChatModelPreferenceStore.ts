@@ -21,7 +21,6 @@ export const useChatModelPreferenceStore = create<ChatModelPreferenceState>()(
     { name: 'chat-model-preference', storage: zustandSessionStorage }
   )
 );
-
 export const clearChatModelPreferenceStore = (): void => {
   useChatModelPreferenceStore.setState(DEFAULT_CHAT_MODEL_PREFERENCE_STATE);
   useChatModelPreferenceStore.persist.clearStorage();

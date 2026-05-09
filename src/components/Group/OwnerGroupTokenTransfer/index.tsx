@@ -4,8 +4,8 @@
 import React, { useCallback, useState } from 'react';
 import { Button, InputNumber, Skeleton } from 'antd';
 import { useRequest } from 'ahooks';
-import { useWalletService } from '@/contexts/ServicesContext';
-import { useGroupService } from '@/contexts/ServicesContext';
+import { useWalletService } from '@/services';
+import { useGroupService } from '@/services';
 import { WALLET_TOKEN_TRANSFER_TYPE } from '@/constants/wallet';
 import { parseErrorMessage } from '@/utils/parseErrorMessage';
 import { useAppMessage } from '@/hooks/useAppMessage';

@@ -2,7 +2,7 @@
 import axios from 'axios';
 import { clearAllZustandStores } from '@/store';
 import { clearAllServiceCaches } from '@/services/cacheRegistry';
-import { emitAuthSyncEvent } from '@/utils/authSync';
+import { emitAuthChangeEvent } from '@/utils/auth/authChange';
 import {
   awaitAddrReady,
   getApiBaseURL,
@@ -37,7 +37,7 @@ Axios.interceptors.response.use(
     if (status === 401) {
       clearAllServiceCaches();
       clearAllZustandStores();
-      emitAuthSyncEvent('UNAUTHORIZED');
+      emitAuthChangeEvent();
       window.location.href = '/login';
     }
     // 400 视为业务/字段校验错误，500 视为服务端错误，把服务端文案挂到 message 上供上层展示

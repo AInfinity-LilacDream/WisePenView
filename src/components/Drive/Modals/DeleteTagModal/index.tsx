@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Modal, Button, Alert } from 'antd';
 import { useRequest } from 'ahooks';
-import { useTagService } from '@/contexts/ServicesContext';
+import { useTagService } from '@/services';
 import { parseErrorMessage } from '@/utils/parseErrorMessage';
 import type { DeleteTagModalProps } from './index.type';
 import { useAppMessage } from '@/hooks/useAppMessage';

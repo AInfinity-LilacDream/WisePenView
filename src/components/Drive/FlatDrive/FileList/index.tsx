@@ -5,9 +5,9 @@ import type { ColumnsType } from 'antd/es/table';
 import { usePagination } from 'ahooks';
 import FileTypeIcon from '@/components/Common/FileTypeIcon';
 import { LuEllipsisVertical, LuPencil, LuTrash2, LuTag } from 'react-icons/lu';
-import { formatSize } from '@/utils/format';
+import { formatFileSize } from '@/utils/format/formatFileSize';
 import type { ResourceItem } from '@/types/resource';
-import { useResourceService } from '@/contexts/ServicesContext';
+import { useResourceService } from '@/services';
 import { parseErrorMessage } from '@/utils/parseErrorMessage';
 import { RenameFileModal, DeleteFileModal, EditStickerModal } from '@/components/Drive/Modals';
 import { useClickFile } from '@/hooks/drive';
@@ -71,7 +71,7 @@ const buildColumns = (props: ColumnBuildProps): ColumnsType<ResourceItem> => [
     dataIndex: 'size',
     key: 'size',
     width: 100,
-    render: (size: number) => formatSize(size),
+    render: (size: number) => formatFileSize(size),
   },
   {
     title: '',

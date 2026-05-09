@@ -9,7 +9,7 @@ import type {
 } from './index.type';
 import { NoteApi } from '@/apis/note';
 import { ResourceItemApi } from '@/apis/resource';
-import { formatTimestampToDateTime } from '@/utils/time';
+import { formatTimestampToDateTime } from '@/utils/format/formatTime';
 import type { NoteInfoResponse } from '@/types/note';
 import { useNoteSelectionStore, useRecentFilesStore } from '@/store';
 

@@ -1,5 +1,5 @@
 import { ResourceTagApi } from '@/apis/resource';
-import { normalizeTagGroupId } from '@/utils/normalizeTagGroupId';
+import { normalizeTagGroupId } from '@/utils/normalize/normalizeTagGroupId';
 import type { IResourceService } from '@/services/Resource/index.type';
 import { RESOURCE_SORT_BY, RESOURCE_SORT_DIR } from '@/services/Resource/index.type';
 import { registerServiceCacheCleaner } from '@/services/cacheRegistry';

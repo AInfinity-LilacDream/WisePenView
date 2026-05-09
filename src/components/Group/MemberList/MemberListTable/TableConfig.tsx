@@ -6,7 +6,7 @@ import type { GroupDisplayConfig } from '@/components/Group/GroupDisplayConfig';
 import QuotaBar from '@/components/Common/QuotaBar';
 import type { GroupMemberRole } from '@/constants/group';
 import { ROLE_LABEL, ROLE_MAP } from '@/constants/group';
-import { formatTimestampToDate } from '@/utils/time';
+import { formatTimestampToDate } from '@/utils/format/formatTime';
 
 type MemberRecord = GroupMember & { key: React.Key };
 

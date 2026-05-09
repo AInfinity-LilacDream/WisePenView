@@ -1,4 +1,4 @@
-import { toIdString } from '@/utils/number';
+import { normalizeId } from '@/utils/normalize/normalizeId';
 import { GroupMemberApi } from '@/apis/group';
 import type { UserGroupQuota } from '@/types/quota';
 import type { GroupQuotaInfo } from '@/types/quota';
@@ -29,7 +29,7 @@ const fetchUserGroupQuotas = async (
         baseRaw != null && typeof baseRaw === 'object' ? (baseRaw as Record<string, unknown>) : {};
       const rawGroupId = base.groupId ?? base.GroupId ?? item.groupId ?? item.GroupId;
       return {
-        groupId: toIdString(
+        groupId: normalizeId(
           typeof rawGroupId === 'string' || typeof rawGroupId === 'number' ? rawGroupId : null
         ),
         groupName: String(

@@ -40,7 +40,6 @@ export const useChatPanelStore = create<ChatPanelState>()(
     { name: 'chat-panel', storage: zustandSessionStorage }
   )
 );
-
 export const clearChatPanelStore = (): void => {
   useChatPanelStore.setState(DEFAULT_CHAT_PANEL_STATE);
   useChatPanelStore.persist.clearStorage();

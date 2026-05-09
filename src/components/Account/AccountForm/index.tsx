@@ -9,7 +9,7 @@ import {
   getSexLabel,
   SEX_LABELS,
 } from '@/constants/user';
-import { useUserService } from '@/contexts/ServicesContext';
+import { useUserService } from '@/services';
 import type { UpdateUserInfoRequest } from '@/services/User';
 import { parseErrorMessage } from '@/utils/parseErrorMessage';
 import { getProfileDisplayString } from './profileDisplay';

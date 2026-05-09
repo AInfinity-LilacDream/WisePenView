@@ -4,7 +4,7 @@ import { LuTag, LuFolderPlus, LuChevronRight, LuChevronDown, LuHouse } from 'rea
 import { AiOutlineCloudUpload } from 'react-icons/ai';
 import type { ResourceItem } from '@/types/resource';
 import type { TagTreeNode } from '@/services/Tag/index.type';
-import { useTagService } from '@/contexts/ServicesContext';
+import { useTagService } from '@/services';
 import {
   NewTagModal,
   RenameTagModal,

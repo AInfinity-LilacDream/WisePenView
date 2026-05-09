@@ -1,5 +1,5 @@
-import { toIdString } from '@/utils/number';
-import { formatTimestampToDate } from '@/utils/time';
+import { normalizeId } from '@/utils/normalize/normalizeId';
+import { formatTimestampToDate } from '@/utils/format/formatTime';
 import { mapRoleCodeToGroupMemberRole } from '@/constants/group';
 import type { Group, GroupFileOrgLogic, GroupMemberList, GroupResConfig } from '@/types/group';
 import { GroupApi, GroupMemberApi, GroupResConfigApi } from '@/apis/group';
@@ -26,7 +26,7 @@ type GroupRaw = { groupId?: string | number } & Record<string, unknown>;
 const normalizeGroup = (g: GroupRaw): Group =>
   ({
     ...g,
-    groupId: toIdString(g.groupId),
+    groupId: normalizeId(g.groupId),
     createTime: formatTimestampToDate((g as { createTime?: number | string | null }).createTime),
   }) as Group;
 
@@ -69,7 +69,7 @@ const fetchGroupResConfig = async (groupId: string): Promise<GroupResConfig> => 
     throw new Error('资源配置格式异常');
   }
   return {
-    groupId: toIdString(gid ?? groupId),
+    groupId: normalizeId(gid ?? groupId),
     fileOrgLogic,
   };
 };
@@ -83,7 +83,7 @@ const createGroup = async (params: CreateGroupRequest): Promise<string> => {
   if (payload == null) {
     throw new Error('创建小组失败');
   }
-  const groupId = toIdString(payload);
+  const groupId = normalizeId(payload);
   if (!groupId) {
     throw new Error('创建小组失败');
   }

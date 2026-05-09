@@ -4,7 +4,7 @@ import { RiIndentIncrease } from 'react-icons/ri';
 import MessageList from './MessageList';
 import ChatInput from './ChatInput';
 import type { Message, Model } from '@/components/ChatPanel/index.type';
-import { useChatService } from '@/contexts/ServicesContext';
+import { useChatService } from '@/services';
 import { useAppMessage } from '@/hooks/useAppMessage';
 import {
   clearNewChatSessionStore,

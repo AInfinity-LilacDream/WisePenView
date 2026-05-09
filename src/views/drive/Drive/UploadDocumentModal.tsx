@@ -5,7 +5,7 @@ import type { UploadFile, UploadProps } from 'antd';
 import { useRequest } from 'ahooks';
 import { AiOutlineInbox } from 'react-icons/ai';
 
-import { useDocumentService } from '@/contexts/ServicesContext';
+import { useDocumentService } from '@/services';
 import { useAppMessage } from '@/hooks/useAppMessage';
 import { parseErrorMessage } from '@/utils/parseErrorMessage';
 

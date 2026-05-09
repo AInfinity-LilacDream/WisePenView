@@ -1,10 +1,10 @@
 import React, { useCallback, useState } from 'react';
 import { useRequest } from 'ahooks';
 import { Modal, Button, Input } from 'antd';
-import { useFolderService } from '@/contexts/ServicesContext';
+import { useFolderService } from '@/services';
 import { parseErrorMessage } from '@/utils/parseErrorMessage';
-import { getFolderDisplayName } from '@/utils/path';
-import { validateReservedName } from '@/utils/validateReservedName';
+import { getFolderDisplayName } from '@/utils/tag/path';
+import { validateReservedName } from '@/utils/tag/validateReservedName';
 import type { NewFolderModalProps } from './index.type';
 import { useAppMessage } from '@/hooks/useAppMessage';
 

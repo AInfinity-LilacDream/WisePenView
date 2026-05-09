@@ -27,7 +27,6 @@ export const useDrivePreferencesStore = create<DrivePreferencesState>()(
     { name: 'drive-preferences', storage: zustandSessionStorage }
   )
 );
-
 export const clearDrivePreferencesStore = (): void => {
   useDrivePreferencesStore.setState(DEFAULT_DRIVE_PREFERENCES);
   useDrivePreferencesStore.persist.clearStorage();

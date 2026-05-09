@@ -52,7 +52,6 @@ export const useCurrentChatSessionStore = create<CurrentChatSessionState>()(
     { name: 'current-chat-session', storage: zustandSessionStorage }
   )
 );
-
 export const clearCurrentChatSessionStore = (): void => {
   useCurrentChatSessionStore.setState(DEFAULT_CURRENT_CHAT_SESSION_STATE);
   useCurrentChatSessionStore.persist.clearStorage();

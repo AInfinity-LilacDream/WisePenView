@@ -1,7 +1,7 @@
 import React from 'react';
 import { Modal, Button, Form, Input } from 'antd';
 import { useRequest } from 'ahooks';
-import { useGroupService } from '@/contexts/ServicesContext';
+import { useGroupService } from '@/services';
 import type { JoinGroupRequest } from '@/services/Group';
 import type { JoinGroupModalProps } from './index.type';
 import { useAppMessage } from '@/hooks/useAppMessage';

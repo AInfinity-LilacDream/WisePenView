@@ -3,7 +3,7 @@ import clsx from 'clsx';
 import { Tag, Radio, Select, Spin, Button } from 'antd';
 import { LuX, LuPlus } from 'react-icons/lu';
 import { useRequest } from 'ahooks';
-import { useStickerService } from '@/contexts/ServicesContext';
+import { useStickerService } from '@/services';
 import { TAG_QUERY_LOGIC_MODE, RESOURCE_SORT_BY, RESOURCE_SORT_DIR } from '@/services/Resource';
 import { parseErrorMessage } from '@/utils/parseErrorMessage';
 import type { FileFilterProps, FileFilterValue } from './index.type';

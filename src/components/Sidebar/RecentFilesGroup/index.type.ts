@@ -1,4 +1,4 @@
-import type { RecentFileItem } from '@/store/zustand/useRecentFilesStore';
+import type { RecentFileItem } from '@/store/useRecentFilesStore';
 
 export interface RecentFilesGroupProps {
   items: RecentFileItem[];

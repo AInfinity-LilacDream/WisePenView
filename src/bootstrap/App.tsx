@@ -5,12 +5,10 @@ import { useMount, useUnmount } from 'ahooks';
 import router from './router';
 import zhCN from 'antd/locale/zh_CN';
 
-import { ServicesProvider } from '@/contexts/ServicesContext';
+import { ServicesProvider } from '@/services';
 import appTheme from '@/theme';
 import styles from './App.module.less';
-import { clearAllServiceCaches } from '@/services/cacheRegistry';
-import { clearAllZustandStores } from '@/store';
-import { subscribeAuthSyncEvent } from '@/utils/authSync';
+import { subscribeAuthChangeEvent } from '@/utils/auth/authChange';
 
 const PageLoadingFallback: React.FC = () => (
   <div className={styles.pageLoadingFallback}>
@@ -19,22 +17,16 @@ const PageLoadingFallback: React.FC = () => (
 );
 
 const App: React.FC = () => {
-  const unsubscribeAuthSyncRef = useRef<(() => void) | null>(null);
+  const unsubscribeAuthChangeRef = useRef<(() => void) | null>(null);
 
-  // 挂载时，订阅全局登录状态，传入回调函数，在回调函数中清除所有服务缓存和状态，并重定向到登录页
+  // 挂载时订阅全局认证状态变化
   useMount(() => {
-    unsubscribeAuthSyncRef.current = subscribeAuthSyncEvent(() => {
-      clearAllServiceCaches();
-      clearAllZustandStores();
-      if (window.location.pathname !== '/login') {
-        window.location.href = '/login';
-      }
-    });
+    unsubscribeAuthChangeRef.current = subscribeAuthChangeEvent();
   });
 
   useUnmount(() => {
-    unsubscribeAuthSyncRef.current?.();
-    unsubscribeAuthSyncRef.current = null;
+    unsubscribeAuthChangeRef.current?.();
+    unsubscribeAuthChangeRef.current = null;
   });
 
   return (

@@ -3,7 +3,7 @@ import clsx from 'clsx';
 import { Input, Modal } from 'antd';
 import { useRequest } from 'ahooks';
 import { RiCheckLine, RiCloseLine, RiDeleteBinLine, RiEditLine } from 'react-icons/ri';
-import { useChatService } from '@/contexts/ServicesContext';
+import { useChatService } from '@/services';
 import { useAppMessage } from '@/hooks/useAppMessage';
 import { parseErrorMessage } from '@/utils/parseErrorMessage';
 import type { SessionMenuItemProps } from './index.type';

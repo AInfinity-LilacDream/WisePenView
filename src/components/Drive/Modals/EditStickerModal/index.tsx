@@ -3,7 +3,7 @@ import clsx from 'clsx';
 import { Modal, Tag, Spin, Divider } from 'antd';
 import { useRequest } from 'ahooks';
 import { LuPlus } from 'react-icons/lu';
-import { useStickerService } from '@/contexts/ServicesContext';
+import { useStickerService } from '@/services';
 import type { Sticker } from '@/services/Sticker';
 import { parseErrorMessage } from '@/utils/parseErrorMessage';
 import AddStickerModal from '@/components/Drive/FlatDrive/FileFilter/AddStickerModal';

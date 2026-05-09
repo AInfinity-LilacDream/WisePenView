@@ -2,7 +2,7 @@ import React, { useRef, useState } from 'react';
 import { Alert, Button, Form, Input, Modal, Radio } from 'antd';
 import { RiMailLine, RiShieldUserLine } from 'react-icons/ri';
 import { useRequest, useUnmount } from 'ahooks';
-import { useUserService } from '@/contexts/ServicesContext';
+import { useUserService } from '@/services';
 import type { InitiateUISVerifyRequest, SendEmailVerifyRequest } from '@/services/User';
 import { USER_STATUS } from '@/constants/user';
 import { parseErrorMessage } from '@/utils/parseErrorMessage';

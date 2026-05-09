@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { useFolderService, useTagService } from '@/contexts/ServicesContext';
+import { useFolderService, useTagService } from '@/services';
 import type { TagTreeNode } from '@/services/Tag/index.type';
 import { ROOT_DISPLAY } from '@/components/Drive/TreeNav/folderUtil';
 import type { ReadOnlyBreadcrumbProps } from './index.type';

@@ -4,7 +4,7 @@ import type { DataNode } from 'antd/es/tree';
 import { AiOutlineFolder, AiOutlineTag } from 'react-icons/ai';
 import { LuChevronDown } from 'react-icons/lu';
 import { useLatest, useRequest } from 'ahooks';
-import { useFolderService, useTagService } from '@/contexts/ServicesContext';
+import { useFolderService, useTagService } from '@/services';
 import type { TagTreeNode } from '@/services/Tag/index.type';
 import { mapFolderToTagTreeNode } from '@/types/folder';
 import { parseErrorMessage } from '@/utils/parseErrorMessage';

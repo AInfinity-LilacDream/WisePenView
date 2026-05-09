@@ -3,7 +3,7 @@ import type { Folder, FolderListByPathResponse } from '@/types/folder';
 import { mapTagToFolder } from '@/types/folder';
 import type { TagTreeResponse } from '@/services/Tag/index.type';
 import { ResourceTagApi } from '@/apis/resource';
-import { normalizeTagGroupId } from '@/utils/normalizeTagGroupId';
+import { normalizeTagGroupId } from '@/utils/normalize/normalizeTagGroupId';
 import type { IResourceService } from '@/services/Resource/index.type';
 import { RESOURCE_SORT_BY, RESOURCE_SORT_DIR } from '@/services/Resource/index.type';
 import { useTrashTagStore } from '@/store';

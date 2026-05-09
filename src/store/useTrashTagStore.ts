@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { normalizeTagGroupId } from '@/utils/normalizeTagGroupId';
+import { normalizeTagGroupId } from '@/utils/normalize/normalizeTagGroupId';
 
 import { zustandSessionStorage } from './sessionStorage';
 
@@ -60,7 +60,6 @@ export const useTrashTagStore = create<TrashTagState>()(
     { name: 'trash-tag', storage: zustandSessionStorage }
   )
 );
-
 export const clearTrashTagStore = (): void => {
   useTrashTagStore.setState(DEFAULT_TRASH_TAG_STATE);
   useTrashTagStore.persist.clearStorage();

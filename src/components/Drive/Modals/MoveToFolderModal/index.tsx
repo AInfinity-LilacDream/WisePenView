@@ -3,7 +3,7 @@ import { Modal, Button } from 'antd';
 import { useRequest } from 'ahooks';
 import type { TagTreeNode } from '@/services/Tag/index.type';
 import type { ResourceItem } from '@/types/resource';
-import { useFolderService } from '@/contexts/ServicesContext';
+import { useFolderService } from '@/services';
 import { parseErrorMessage } from '@/utils/parseErrorMessage';
 import TreeNav from '@/components/Drive/TreeNav';
 import ReadOnlyBreadcrumb from '@/components/Common/ReadOnlyBreadcrumb';

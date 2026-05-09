@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { useRequest } from 'ahooks';
 import { Descriptions, Divider, Form, Spin } from 'antd';
-import { useUserService } from '@/contexts/ServicesContext';
+import { useUserService } from '@/services';
 import type { GetUserInfoResponse } from '@/services/User';
 import { IDENTITY_TYPE } from '@/constants/user';
 import {

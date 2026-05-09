@@ -9,20 +9,20 @@ import type {
 import type { IAuthService } from './index.type';
 import { clearAllZustandStores } from '@/store';
 import { clearAllServiceCaches } from '@/services/cacheRegistry';
-import { emitAuthSyncEvent } from '@/utils/authSync';
+import { emitAuthChangeEvent } from '@/utils/auth/authChange';
 
 const login = async (params: LoginRequest) => {
   await AuthApi.login(params);
   clearAllServiceCaches();
   clearAllZustandStores();
-  emitAuthSyncEvent('LOGIN');
+  emitAuthChangeEvent();
 };
 
 const logout = async () => {
   await AuthApi.logout();
   clearAllServiceCaches();
   clearAllZustandStores();
-  emitAuthSyncEvent('LOGOUT');
+  emitAuthChangeEvent();
 };
 
 const register = async (params: RegisterRequest) => {

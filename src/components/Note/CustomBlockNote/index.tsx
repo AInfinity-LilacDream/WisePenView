@@ -5,7 +5,7 @@ import { zh } from '@blocknote/core/locales';
 import { useMount, useUnmount } from 'ahooks';
 import '@blocknote/mantine/style.css';
 
-import { useImageService } from '@/contexts/ServicesContext';
+import { useImageService } from '@/services';
 import { useAppMessage } from '@/hooks/useAppMessage';
 import { assertImageProxyUploadLimit } from '@/services/Image';
 import {

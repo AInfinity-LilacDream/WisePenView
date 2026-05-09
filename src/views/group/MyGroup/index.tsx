@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Tabs, Button, Row, Col, Pagination, Empty, Spin } from 'antd';
 import { AiOutlinePlus, AiOutlineUserAdd } from 'react-icons/ai';
 import GroupCard from '@/components/Group/GroupCard';
-import { useGroupService } from '@/contexts/ServicesContext';
+import { useGroupService } from '@/services';
 import type { FetchGroupListRequest } from '@/services/Group';
 import type { Group } from '@/types/group';
 import { GROUP_ROLE_FILTER_MAP } from '@/constants/group';

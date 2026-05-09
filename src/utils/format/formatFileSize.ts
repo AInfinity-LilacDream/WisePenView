@@ -1,5 +1,5 @@
 /** 将字节数格式化为可读字符串（B, KB, MB, GB） */
-export function formatSize(bytes?: number): string {
+export function formatFileSize(bytes?: number): string {
   if (bytes == null || bytes === 0) return '-';
   const units = ['B', 'KB', 'MB', 'GB'];
   let i = 0;

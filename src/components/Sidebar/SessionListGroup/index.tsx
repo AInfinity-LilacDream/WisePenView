@@ -2,7 +2,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { Button } from 'antd';
 import type { MenuProps } from 'antd';
 import { useMount, useRequest } from 'ahooks';
-import { useChatService } from '@/contexts/ServicesContext';
+import { useChatService } from '@/services';
 import { useAppMessage } from '@/hooks/useAppMessage';
 import { useChatPanelStore, useCurrentChatSessionStore } from '@/store';
 import type { ChatSession } from '@/services/Chat';

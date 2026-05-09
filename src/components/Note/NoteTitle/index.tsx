@@ -6,7 +6,7 @@ import type { Block as BlockNoteBlock } from '@blocknote/core';
 import { zh } from '@blocknote/core/locales';
 import '@blocknote/mantine/style.css';
 
-import { useNoteService } from '@/contexts/ServicesContext';
+import { useNoteService } from '@/services';
 import { useNewNoteStore } from '@/store';
 
 import type { NoteTitleProps } from './index.type';

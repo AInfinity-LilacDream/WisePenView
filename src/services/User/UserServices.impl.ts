@@ -1,4 +1,4 @@
-import { toIdString } from '@/utils/number';
+import { normalizeId } from '@/utils/normalize/normalizeId';
 import { UserApi } from '@/apis/user';
 import type { User } from '@/types/user';
 import { registerServiceCacheCleaner } from '@/services/cacheRegistry';
@@ -18,7 +18,7 @@ type CachedUserSafe = Pick<User, 'id' | 'username' | 'nickname' | 'avatar' | 'id
 const toUserSafe = (data: GetUserInfoResponse): CachedUserSafe => {
   const { userInfo } = data;
   return {
-    id: toIdString(userInfo.id),
+    id: normalizeId(userInfo.id),
     username: userInfo.username,
     nickname: userInfo.nickname ?? undefined,
     avatar: userInfo.avatar ?? undefined,

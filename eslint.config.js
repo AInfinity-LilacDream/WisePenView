@@ -60,7 +60,7 @@ export default defineConfig([
               ],
               importNamePattern: '^create[A-Z]\\w*Services$',
               message:
-                '项目保留命名约定：createXxxServices 是 Service 工厂的专属符号，仅允许在装配入口 src/contexts/ServicesContext/registry.impl.ts 中 import；其它位置禁止直接导入或调用，业务代码请通过 useXxxService() 获取实例。',
+                '项目保留命名约定：createXxxServices 是 Service 工厂的专属符号，仅允许在装配入口 src/services/_registry/registry.impl.ts 中 import；其它位置禁止直接导入或调用，业务代码请通过 useXxxService() 获取实例。',
             },
           ],
         },
@@ -89,12 +89,12 @@ export default defineConfig([
         {
           selector: 'ExportAllDeclaration[source.value=/Services\\.impl(\\.[jt]sx?)?$/]',
           message:
-            '禁止 re-export *Services.impl —— createXxxServices 工厂只能在 src/contexts/ServicesContext/registry.impl.ts 装配，index.ts 不得二次导出。',
+            '禁止 re-export *Services.impl —— createXxxServices 工厂只能在 src/services/_registry/registry.impl.ts 装配，index.ts 不得二次导出。',
         },
         {
           selector: 'ExportNamedDeclaration[source.value=/Services\\.impl(\\.[jt]sx?)?$/]',
           message:
-            '禁止 re-export *Services.impl —— createXxxServices 工厂只能在 src/contexts/ServicesContext/registry.impl.ts 装配，index.ts 不得二次导出。',
+            '禁止 re-export *Services.impl —— createXxxServices 工厂只能在 src/services/_registry/registry.impl.ts 装配，index.ts 不得二次导出。',
         },
       ],
     },
@@ -111,7 +111,7 @@ export default defineConfig([
   {
     // Service 工厂的唯一合法装配入口：只有 registry.impl.ts 可以 import createXxxServices。
     // 请勿扩大此白名单，否则"分层 + 显式注入"约束将被破坏。
-    files: ['src/contexts/ServicesContext/registry.impl.ts'],
+    files: ['src/services/_registry/registry.impl.ts'],
     rules: {
       'no-restricted-imports': 'off',
     },

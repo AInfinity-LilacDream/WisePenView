@@ -11,12 +11,12 @@ import { Button, Pagination, Skeleton, Table, Tabs } from 'antd';
 import { RiAddLine, RiArrowDownLine, RiArrowUpLine, RiSubtractLine } from 'react-icons/ri';
 import RechargeModal from '@/components/Wallet/RechargeModal';
 import { WALLET_TARGET_TYPE, WALLET_TOKEN_TX_TYPE } from '@/constants/wallet';
-import { useGroupService, useWalletService } from '@/contexts/ServicesContext';
+import { useGroupService, useWalletService } from '@/services';
 import { useAppMessage } from '@/hooks/useAppMessage';
 import type { WalletTransactionKind, WalletTransactionRecord } from '@/types/wallet';
-import { formatCompactNumber } from '@/utils/number';
+import { formatCompactNumber } from '@/utils/format/formatNumber';
 import { parseErrorMessage } from '@/utils/parseErrorMessage';
-import { formatTimestampToDateTime } from '@/utils/time';
+import { formatTimestampToDateTime } from '@/utils/format/formatTime';
 import type { ComputeWalletProps, ComputeWalletRef } from './index.type';
 import styles from './style.module.less';
 
