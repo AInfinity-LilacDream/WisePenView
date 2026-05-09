@@ -16,7 +16,7 @@ import { OpenAI, Claude, Grok, DeepSeek, Doubao, Meta, Mistral, Gemini } from '@
 
 import { useChatService } from '@/contexts/ServicesContext';
 import { mapApiModelsToFlatModels } from '@/services/Chat';
-import { useChatModelPreferenceStore } from '@/store/zustand/useChatModelPreferenceStore';
+import { useChatModelPreferenceStore } from '@/store/useChatModelPreferenceStore';
 import type { Model } from '../index.type';
 
 import styles from './style.module.less';

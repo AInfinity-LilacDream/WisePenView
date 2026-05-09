@@ -50,7 +50,6 @@ export const usePdfPreviewProgressStore = create<PdfPreviewProgressState>()(
     { name: 'pdf-preview-progress', storage: zustandSessionStorage }
   )
 );
-
 export const clearPdfPreviewProgressStore = (): void => {
   usePdfPreviewProgressStore.setState(DEFAULT_PDF_PREVIEW_PROGRESS);
   usePdfPreviewProgressStore.persist.clearStorage();

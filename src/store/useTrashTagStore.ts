@@ -60,7 +60,6 @@ export const useTrashTagStore = create<TrashTagState>()(
     { name: 'trash-tag', storage: zustandSessionStorage }
   )
 );
-
 export const clearTrashTagStore = (): void => {
   useTrashTagStore.setState(DEFAULT_TRASH_TAG_STATE);
   useTrashTagStore.persist.clearStorage();

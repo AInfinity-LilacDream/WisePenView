@@ -65,7 +65,6 @@ export const useRecentFilesStore = create<RecentFilesState>()(
     { name: 'recent-files', storage: zustandSessionStorage }
   )
 );
-
 export const clearRecentFilesStore = (): void => {
   useRecentFilesStore.setState(DEFAULT_RECENT_FILES_STATE);
   useRecentFilesStore.persist.clearStorage();
