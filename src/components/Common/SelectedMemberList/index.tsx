@@ -1,5 +1,5 @@
 import type { GroupMember } from '@/domains/Group';
-import { ROLE_LABEL } from '@/domains/Group/enum';
+import { ROLE } from '@/domains/Group/enum';
 import { Avatar, List } from 'antd';
 import React, { useMemo } from 'react';
 import type { SelectedMemberListProps } from './index.type';
@@ -9,7 +9,7 @@ const SelectedMemberList: React.FC<SelectedMemberListProps> = ({ members }) => {
   const formatDescription = (member: GroupMember) => {
     const parts = [];
     if (member.nickname) parts.push(member.nickname);
-    if (member.role) parts.push(ROLE_LABEL[member.role] ?? member.role);
+    if (member.role) parts.push(ROLE.keyLabels[member.role] ?? member.role);
     return parts.join(' ') || undefined;
   };
 

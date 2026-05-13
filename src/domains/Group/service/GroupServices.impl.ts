@@ -1,5 +1,6 @@
 import type { Group, GroupFileOrgLogic, GroupMemberList, GroupResConfig } from '@/domains/Group';
-import { mapRoleCodeToGroupMemberRole } from '@/domains/Group/enum';
+import { GROUP_FILE_ORG_LOGIC, ROLE } from '@/domains/Group/enum';
+import type { EnumKey } from '@/utils/enum';
 import { formatTimestampToDate } from '@/utils/format/formatTime';
 import { normalizeId } from '@/utils/normalize/normalizeId';
 import { GroupApi, GroupMemberApi, GroupResConfigApi } from '../apis/GroupApi';
@@ -30,7 +31,8 @@ const normalizeGroup = (g: GroupRaw): Group =>
     createTime: formatTimestampToDate((g as { createTime?: number | string | null }).createTime),
   }) as Group;
 
-const isGroupFileOrgLogic = (v: unknown): v is GroupFileOrgLogic => v === 'FOLDER' || v === 'TAG';
+const isGroupFileOrgLogic = (v: unknown): v is GroupFileOrgLogic =>
+  typeof v === 'string' && GROUP_FILE_ORG_LOGIC.getKey(v) != null;
 
 const fetchGroupList = async (
   params: FetchGroupListRequest
@@ -117,11 +119,11 @@ const fetchGroupMembers = async (
   };
 };
 
-const fetchMyRoleInGroup = async (groupId: string): Promise<'OWNER' | 'ADMIN' | 'MEMBER'> => {
+const fetchMyRoleInGroup = async (groupId: string): Promise<EnumKey<typeof ROLE>> => {
   const data = await GroupMemberApi.getMyRole(groupId);
   const roleNum = typeof data === 'number' ? data : data?.role;
   if (roleNum == null || roleNum < 0) throw new Error('获取角色失败');
-  return mapRoleCodeToGroupMemberRole(roleNum);
+  return ROLE.getKey(roleNum) ?? 'MEMBER';
 };
 
 const joinGroup = async (params: JoinGroupRequest) => {

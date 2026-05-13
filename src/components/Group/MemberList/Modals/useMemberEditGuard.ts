@@ -3,7 +3,8 @@ import {
   canEditSelectedMembers,
   canEditSelectedMembersForQuota,
 } from '@/components/Group/GroupDisplayConfig';
-import type { GroupMemberRole } from '@/domains/Group/enum';
+import type { ROLE } from '@/domains/Group/enum';
+import type { EnumKey } from '@/utils/enum';
 import { useMemo } from 'react';
 
 interface UseMemberEditGuardOptions {
@@ -18,7 +19,7 @@ interface UseMemberEditGuardOptions {
  * @returns memberContainsOwner, canEdit, confirmDisabled
  */
 export function useMemberEditGuard(
-  members: { role?: GroupMemberRole }[],
+  members: { role?: EnumKey<typeof ROLE> }[],
   editableRoles: readonly (EditableRole | EditableRoleForQuota)[],
   options: UseMemberEditGuardOptions = {}
 ): { memberContainsOwner: boolean; canEdit: boolean; confirmDisabled: boolean } {

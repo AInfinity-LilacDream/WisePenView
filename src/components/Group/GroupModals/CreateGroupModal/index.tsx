@@ -1,6 +1,6 @@
 import { useGroupService, useImageService, useUserService } from '@/domains';
 import type { CreateGroupRequest, GroupFileOrgLogic } from '@/domains/Group';
-import { ALLOWED_GROUP_TYPES_MAP, GROUP, GROUP_TYPE } from '@/domains/Group/enum';
+import { ALLOWED_GROUP_TYPES_MAP, GROUP_FILE_ORG_LOGIC, GROUP_TYPE } from '@/domains/Group/enum';
 import { useAppMessage } from '@/hooks/useAppMessage';
 import { createBeforeUploadImageWithinLimit } from '@/utils/image/uploadLimit';
 import { parseErrorMessage } from '@/utils/parseErrorMessage';
@@ -27,7 +27,7 @@ const fileFromCoverField = (fileList?: UploadFile[]): File | undefined => {
   return raw instanceof File ? raw : undefined;
 };
 
-const groupTypeOptionsBase = GROUP.options;
+const groupTypeOptionsBase = GROUP_TYPE.options;
 
 const CreateGroupModal: React.FC<CreateGroupModalProps> = ({ open, onCancel, onSuccess }) => {
   const groupService = useGroupService();
@@ -163,12 +163,15 @@ const CreateGroupModal: React.FC<CreateGroupModalProps> = ({ open, onCancel, onS
         <Form.Item
           label="文件管理方式"
           name="fileOrgLogic"
-          initialValue={'FOLDER' satisfies GroupFileOrgLogic}
+          initialValue={GROUP_FILE_ORG_LOGIC.FOLDER}
           rules={[{ required: true, message: '请选择文件管理方式（创建后无法更改）' }]}
         >
           <Radio.Group>
-            <Radio value="FOLDER">文件夹管理（推荐）</Radio>
-            <Radio value="TAG">按标签管理（Beta）</Radio>
+            {GROUP_FILE_ORG_LOGIC.options.map((option) => (
+              <Radio key={option.value} value={option.value}>
+                {option.label}
+              </Radio>
+            ))}
           </Radio.Group>
         </Form.Item>
         <Form.Item

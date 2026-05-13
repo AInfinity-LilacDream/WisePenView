@@ -4,6 +4,8 @@
  */
 
 import type { TagListByTagResponse } from '@/domains/Tag';
+import type { EnumValue } from '@/utils/enum';
+import { createEnum } from '@/utils/enum';
 
 /** TagService 接口：供依赖注入使用 */
 export interface ITagService {
@@ -26,18 +28,18 @@ export interface GetResByTagRequest {
   filePageSize?: number;
 }
 
-/** OpenAPI TagTreeResponse.visibilityMode / TagCreateRequest / TagUpdateRequest */
-export type TagVisibilityModeString = '0' | '1' | '2' | '3';
-
 /** 与 OpenAPI 文档语义对应的别名，值为接口要求的字符串 */
-export const TAG_VISIBILITY_MODE = {
-  ALL: '0',
-  ONLY_ADMIN: '1',
-  WHITELIST: '2',
-  BLACKLIST: '3',
-} as const satisfies Record<string, TagVisibilityModeString>;
+export const TAG_VISIBILITY_MODE = createEnum([
+  { value: '0', key: 'ALL', label: '全部可见' },
+  { value: '1', key: 'ONLY_ADMIN', label: '仅管理员' },
+  { value: '2', key: 'WHITELIST', label: '白名单' },
+  { value: '3', key: 'BLACKLIST', label: '黑名单' },
+] as const);
 
-export type TagVisibilityMode = (typeof TAG_VISIBILITY_MODE)[keyof typeof TAG_VISIBILITY_MODE];
+/** OpenAPI TagTreeResponse.visibilityMode / TagCreateRequest / TagUpdateRequest */
+export type TagVisibilityModeString = EnumValue<typeof TAG_VISIBILITY_MODE>;
+
+export type TagVisibilityMode = EnumValue<typeof TAG_VISIBILITY_MODE>;
 
 /**
  * 标签树节点（OpenAPI TagTreeResponse）

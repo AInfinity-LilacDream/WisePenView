@@ -1,7 +1,7 @@
 import { useDocumentService } from '@/domains';
 import type { PendingDocItem } from '@/domains/Document';
 import {
-  getDocumentStatusLabel,
+  DOCUMENT_PROCESS,
   isDocumentCancelableStatus,
   isDocumentRetryableStatus,
   isDocumentTerminalStatus,
@@ -167,7 +167,7 @@ const UploadQueueTab = forwardRef<UploadQueueTabRef>((_, ref) => {
         dataIndex: ['documentStatus', 'status'],
         key: 'status',
         width: 160,
-        render: (value: string) => getDocumentStatusLabel(value),
+        render: (value: string) => DOCUMENT_PROCESS.getLabel(value),
       },
       {
         title: '',

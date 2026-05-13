@@ -1,6 +1,7 @@
 import { useRecentFilesStore } from '@/store';
 import { ResourceItemApi } from '../apis/ResourceApi';
 import type { ListResourceItemsApiRequest } from '../apis/ResourceApi.type';
+import { TAG_QUERY_LOGIC_MODE } from '../enum';
 import type {
   GetGroupResourceRequest,
   GetUserResourcesRequest,
@@ -9,7 +10,6 @@ import type {
   ResourceListPage,
   UpdateResourceTagsRequest,
 } from './index.type';
-import { TAG_QUERY_LOGIC_MODE } from './index.type';
 
 const requestResourceItemList = async (
   params: GetUserResourcesRequest,

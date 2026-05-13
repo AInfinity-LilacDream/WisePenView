@@ -1,6 +1,6 @@
 import { useUserService } from '@/domains';
 import type { UpdateUserInfoRequest } from '@/domains/User';
-import { DEGREE, getDegreeLevelLabel, getSexLabel, SEX_ENUM } from '@/domains/User/enum';
+import { DEGREE, SEX } from '@/domains/User/enum';
 import { useAppMessage } from '@/hooks/useAppMessage';
 import { parseErrorMessage } from '@/utils/parseErrorMessage';
 import { useRequest } from 'ahooks';
@@ -19,7 +19,7 @@ const SexReadonlyInput = React.forwardRef<InputRef, { value?: number | null }>((
     ref={ref}
     disabled
     readOnly
-    value={value != null ? getSexLabel(value) : '-'}
+    value={value != null ? SEX.getLabel(value) : '-'}
     className={styles.editableInput}
   />
 ));
@@ -31,7 +31,7 @@ const DegreeLevelReadonlyInput = React.forwardRef<InputRef, { value?: number | n
       ref={ref}
       disabled
       readOnly
-      value={value != null ? getDegreeLevelLabel(value) : '-'}
+      value={value != null ? DEGREE.getLabel(value) : '-'}
       className={styles.editableInput}
     />
   )
@@ -118,7 +118,7 @@ const AccountForm: React.FC<AccountFormProps> = ({
   const optionsMap = useMemo(
     () =>
       ({
-        sex: SEX_ENUM.options.map(({ value, label }) => (
+        sex: SEX.options.map(({ value, label }) => (
           <Option key={value} value={value}>
             {label}
           </Option>

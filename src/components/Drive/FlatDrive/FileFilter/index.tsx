@@ -1,6 +1,6 @@
 import StickerManageModal from '@/components/Drive/Modals/StickerManageModal';
 import { useStickerService } from '@/domains';
-import { RESOURCE_SORT_BY, RESOURCE_SORT_DIR, TAG_QUERY_LOGIC_MODE } from '@/domains/Resource';
+import { RESOURCE_SORT_BY, RESOURCE_SORT_DIR, TAG_QUERY_LOGIC_MODE } from '@/domains/Resource/enum';
 import type { Sticker } from '@/domains/Sticker';
 import { useAppMessage } from '@/hooks/useAppMessage';
 import { parseErrorMessage } from '@/utils/parseErrorMessage';
@@ -20,18 +20,6 @@ const DEFAULT_VALUE: FileFilterValue = {
   sortBy: RESOURCE_SORT_BY.UPDATE_TIME,
   sortDir: RESOURCE_SORT_DIR.DESC,
 };
-
-const SORT_BY_OPTIONS = [
-  { label: '更新时间', value: RESOURCE_SORT_BY.UPDATE_TIME },
-  { label: '创建时间', value: RESOURCE_SORT_BY.CREATE_TIME },
-  { label: '名称', value: RESOURCE_SORT_BY.NAME },
-  { label: '大小', value: RESOURCE_SORT_BY.SIZE },
-];
-
-const SORT_DIR_OPTIONS = [
-  { label: '升序', value: RESOURCE_SORT_DIR.ASC },
-  { label: '降序', value: RESOURCE_SORT_DIR.DESC },
-];
 
 const FileFilter: React.FC<FileFilterProps> = ({ value, onChange }) => {
   const stickerService = useStickerService();
@@ -114,10 +102,7 @@ const FileFilter: React.FC<FileFilterProps> = ({ value, onChange }) => {
             value={current.tagQueryLogicMode}
             onChange={(e) => updateValue({ tagQueryLogicMode: e.target.value })}
             size="middle"
-            options={[
-              { label: '包含任意', value: TAG_QUERY_LOGIC_MODE.OR },
-              { label: '包含全部', value: TAG_QUERY_LOGIC_MODE.AND },
-            ]}
+            options={[...TAG_QUERY_LOGIC_MODE.options]}
           />
         </div>
       </div>
@@ -156,14 +141,14 @@ const FileFilter: React.FC<FileFilterProps> = ({ value, onChange }) => {
             size="middle"
             value={current.sortBy}
             onChange={(val) => updateValue({ sortBy: val })}
-            options={SORT_BY_OPTIONS}
+            options={[...RESOURCE_SORT_BY.options]}
             className={styles.sortSelect}
           />
           <Radio.Group
             value={current.sortDir}
             onChange={(e) => updateValue({ sortDir: e.target.value })}
             size="middle"
-            options={SORT_DIR_OPTIONS}
+            options={[...RESOURCE_SORT_DIR.options]}
           />
         </div>
         <div className={styles.toolbarRight}>

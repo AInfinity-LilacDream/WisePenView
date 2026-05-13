@@ -1,8 +1,8 @@
 import QuotaBar from '@/components/Common/QuotaBar';
 import type { GroupDisplayConfig } from '@/components/Group/GroupDisplayConfig';
 import type { GroupMember } from '@/domains/Group';
-import type { GroupMemberRole } from '@/domains/Group/enum';
-import { ROLE_LABEL, ROLE_MAP } from '@/domains/Group/enum';
+import { ROLE } from '@/domains/Group/enum';
+import type { EnumKey } from '@/utils/enum';
 import { formatTimestampToDate } from '@/utils/format/formatTime';
 import type { TableColumnsType } from 'antd';
 import { Avatar, Badge } from 'antd';
@@ -10,7 +10,7 @@ import React from 'react';
 
 type MemberRecord = GroupMember & { key: React.Key };
 
-const getBadgeColor = (role: GroupMemberRole): string => {
+const getBadgeColor = (role: EnumKey<typeof ROLE>): string => {
   switch (role) {
     case 'OWNER':
       return 'gold';
@@ -34,7 +34,7 @@ export const getColumns = (
       dataIndex: 'role',
       width: 64,
       align: 'center',
-      render: (role: GroupMemberRole) => (
+      render: (role: EnumKey<typeof ROLE>) => (
         <Badge color={getBadgeColor(role)} className={styles.badgeItem} />
       ),
     },
@@ -80,10 +80,10 @@ export const getColumns = (
       title: '角色',
       dataIndex: 'role',
       width: 120,
-      render: (role: GroupMemberRole) => (
-        <span className={styles.roleItem}>{ROLE_LABEL[role] ?? role}</span>
+      render: (role: EnumKey<typeof ROLE>) => (
+        <span className={styles.roleItem}>{ROLE.keyLabels[role] ?? role}</span>
       ),
-      sorter: (a, b) => (ROLE_MAP[a.role] ?? 0) - (ROLE_MAP[b.role] ?? 0),
+      sorter: (a, b) => (ROLE[a.role] ?? 0) - (ROLE[b.role] ?? 0),
     },
     {
       key: 'joinTime',

@@ -1,5 +1,5 @@
 import type { GetUserInfoResponse } from '@/domains/User';
-import { getDegreeLevelLabel, getSexLabel } from '@/domains/User/enum';
+import { DEGREE, SEX } from '@/domains/User/enum';
 import type { ProfileFieldKey } from '@/views/profile/profile.config';
 
 /** 从完整用户信息中取出档案字段原始值；昵称/姓名在 userInfo，其余在 userProfile。 */
@@ -21,7 +21,7 @@ export function getProfileDisplayString(
 ): string {
   const raw = getProfileFieldValue(user, key);
   if (raw === null || raw === undefined || raw === '') return '-';
-  if (key === 'sex') return getSexLabel(raw as number);
-  if (key === 'degreeLevel') return getDegreeLevelLabel(raw as number);
+  if (key === 'sex') return SEX.getLabel(raw as number);
+  if (key === 'degreeLevel') return DEGREE.getLabel(raw as number);
   return String(raw);
 }

@@ -1,11 +1,12 @@
 /**
  * 钱包 Service：/user/wallet/*，成功码与全局一致 `code === 200`。
  */
-import type { WalletTransactionKind, WalletTransactionRecord } from '@/domains/Wallet';
 import {
-  WALLET_LIST_TX_TYPE_QUERY_VALUE,
-  WALLET_TX_TAB_MERGE_FETCH_CAP,
-} from '@/domains/Wallet/enum';
+  WALLET_TRANSACTION_KIND,
+  type WalletTransactionKind,
+  type WalletTransactionRecord,
+} from '@/domains/Wallet';
+import { WALLET_TOKEN_TX_TYPE, WALLET_TX_TAB_MERGE_FETCH_CAP } from '@/domains/Wallet/enum';
 import { UserWalletApi } from '../apis/UserApi';
 import type {
   GetWalletInfoResponse,
@@ -35,34 +36,19 @@ const normalizeTokenTransactionTypeRaw = (raw: unknown): unknown => {
 const mapTokenTransactionTypeToKind = (raw: unknown, tokenCount: number): WalletTransactionKind => {
   if (typeof raw === 'string') {
     const upper = raw.trim().toUpperCase();
-    if (upper === 'REFILL') return 'RECHARGE';
-    if (upper === 'SPEND') return 'SPEND';
-    if (upper === 'TRANSFER_IN') return 'TRANSFER_IN';
-    if (upper === 'TRANSFER_OUT') return 'TRANSFER_OUT';
+    if (upper === 'REFILL') return WALLET_TRANSACTION_KIND.RECHARGE;
+    if (upper === 'SPEND') return WALLET_TRANSACTION_KIND.SPEND;
+    if (upper === 'TRANSFER_IN') return WALLET_TRANSACTION_KIND.TRANSFER_IN;
+    if (upper === 'TRANSFER_OUT') return WALLET_TRANSACTION_KIND.TRANSFER_OUT;
   }
   const n = Number(raw);
-  if (n === 1) return 'RECHARGE';
-  if (n === 2) return 'SPEND';
-  if (n === 3) return 'TRANSFER_IN';
-  if (n === 4) return 'TRANSFER_OUT';
-  if (tokenCount > 0) return 'RECHARGE';
-  if (tokenCount < 0) return 'SPEND';
-  return 'SPEND';
-};
-
-const titleForKind = (k: WalletTransactionKind): string => {
-  switch (k) {
-    case 'RECHARGE':
-      return '充值';
-    case 'SPEND':
-      return '消费';
-    case 'TRANSFER_IN':
-      return '划入';
-    case 'TRANSFER_OUT':
-      return '划出';
-    default:
-      return '流水';
-  }
+  if (n === 1) return WALLET_TRANSACTION_KIND.RECHARGE;
+  if (n === 2) return WALLET_TRANSACTION_KIND.SPEND;
+  if (n === 3) return WALLET_TRANSACTION_KIND.TRANSFER_IN;
+  if (n === 4) return WALLET_TRANSACTION_KIND.TRANSFER_OUT;
+  if (tokenCount > 0) return WALLET_TRANSACTION_KIND.RECHARGE;
+  if (tokenCount < 0) return WALLET_TRANSACTION_KIND.SPEND;
+  return WALLET_TRANSACTION_KIND.SPEND;
 };
 
 const operatorNameFromRow = (row: Record<string, unknown>): string | undefined => {
@@ -97,7 +83,7 @@ const mapTransactionRow = (row: Record<string, unknown>): WalletTransactionRecor
   const time = String(row.createTime ?? row.time ?? row.createdAt ?? '');
   const titleFromApi =
     row.title != null && String(row.title).trim().length > 0 ? String(row.title) : '';
-  const title = titleFromApi || titleForKind(kind);
+  const title = titleFromApi || WALLET_TRANSACTION_KIND.getLabel(kind);
   const subFromMeta = row.meta != null && String(row.meta).length > 0 ? String(row.meta) : '';
   const subFromLegacy =
     row.subTitle != null && String(row.subTitle).length > 0
@@ -143,8 +129,8 @@ const listTransactions = async (
     query.groupId = String(gid);
   }
   if (params.type !== undefined && params.type !== null) {
-    const typeName =
-      WALLET_LIST_TX_TYPE_QUERY_VALUE[params.type as keyof typeof WALLET_LIST_TX_TYPE_QUERY_VALUE];
+    // Spring 对枚举 Query 一般按枚举名绑定，传数字会 400。
+    const typeName = WALLET_TOKEN_TX_TYPE.getKey(params.type);
     if (typeName != null) {
       query.type = typeName;
     }

@@ -1,10 +1,10 @@
-import { IDENTITY_TYPE } from '@/domains/User/enum';
+import { IDENTITY } from '@/domains/User/enum';
 
 /** 基本档案字段显隐配置，按 identityType 计算 */
 export const getProfileFieldConfig = (identityType: number) => {
-  const isStudent = identityType === IDENTITY_TYPE.STUDENT;
-  const isTeacher = identityType === IDENTITY_TYPE.TEACHER;
-  const isAdmin = identityType === IDENTITY_TYPE.ADMIN;
+  const isStudent = identityType === IDENTITY.STUDENT;
+  const isTeacher = identityType === IDENTITY.TEACHER;
+  const isAdmin = identityType === IDENTITY.ADMIN;
 
   return {
     showProfileSection: !isAdmin,

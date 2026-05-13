@@ -1,12 +1,13 @@
-import type { GroupMemberRole } from '@/domains/Group/enum';
+import type { GROUP_FILE_ORG_LOGIC, ROLE } from '@/domains/Group/enum';
+import type { EnumKey, EnumValue } from '@/utils/enum';
 
 /** 成员列表领域模型（由 OpenAPI GroupMemberDetailResponse 映射）；userId 对应接口 memberId，避免大数精度丢失 */
 export interface GroupMember {
   userId: string;
   realname: string;
   nickname: string;
-  /** 组内角色（由接口数字角色码经 mapRoleCodeToGroupMemberRole 映射） */
-  role: GroupMemberRole;
+  /** 组内角色（由接口数字角色码经 ROLE.getKey 映射） */
+  role: EnumKey<typeof ROLE>;
   joinTime: string;
   avatar: string;
   limit?: number;
@@ -28,7 +29,7 @@ export interface GroupOwnerInfo {
 }
 
 /** 小组文件组织模式（与 OpenAPI GroupResConfigResponse.fileOrgLogic 对齐） */
-export type GroupFileOrgLogic = 'FOLDER' | 'TAG';
+export type GroupFileOrgLogic = EnumValue<typeof GROUP_FILE_ORG_LOGIC>;
 
 /** 小组资源配置（与 OpenAPI GroupResConfigResponse 对齐） */
 export interface GroupResConfig {

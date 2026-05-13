@@ -7,9 +7,14 @@
  */
 import RechargeModal from '@/components/Wallet/RechargeModal';
 import { useGroupService, useWalletService } from '@/domains';
-import type { WalletTransactionKind, WalletTransactionRecord } from '@/domains/Wallet';
+import {
+  WALLET_TRANSACTION_KIND,
+  type WalletTransactionKind,
+  type WalletTransactionRecord,
+} from '@/domains/Wallet';
 import { WALLET_TARGET_TYPE, WALLET_TOKEN_TX_TYPE } from '@/domains/Wallet/enum';
 import { useAppMessage } from '@/hooks/useAppMessage';
+import type { EnumValue } from '@/utils/enum';
 import { formatCompactNumber } from '@/utils/format/formatNumber';
 import { formatTimestampToDateTime } from '@/utils/format/formatTime';
 import { parseErrorMessage } from '@/utils/parseErrorMessage';
@@ -24,7 +29,7 @@ const PAGE_SIZE = 20;
 
 type TxTabKey = 'all' | 'recharge' | 'spend';
 
-type WalletTxTypeQueryCode = (typeof WALLET_TOKEN_TX_TYPE)[keyof typeof WALLET_TOKEN_TX_TYPE];
+type WalletTxTypeQueryCode = EnumValue<typeof WALLET_TOKEN_TX_TYPE>;
 
 const tabToListType = (key: TxTabKey): number | undefined => {
   if (key === 'recharge') return WALLET_TOKEN_TX_TYPE.REFILL;
@@ -32,26 +37,12 @@ const tabToListType = (key: TxTabKey): number | undefined => {
   return undefined;
 };
 
-const isInflowKind = (k: WalletTransactionKind): boolean => k === 'RECHARGE' || k === 'TRANSFER_IN';
+const isInflowKind = (k: WalletTransactionKind): boolean =>
+  k === WALLET_TRANSACTION_KIND.RECHARGE || k === WALLET_TRANSACTION_KIND.TRANSFER_IN;
 
 /** 掩码行展示：全角 *、- 与半角混排时视觉大小不一，先规范再交给 summarySub 等宽样式 */
 const normalizeMaskDisplayText = (s: string): string =>
   s.replace(/\uFF0A/g, '*').replace(/\uFF0D/g, '-');
-
-const typeLabel = (k: WalletTransactionKind): string => {
-  switch (k) {
-    case 'RECHARGE':
-      return '充值';
-    case 'SPEND':
-      return '消费';
-    case 'TRANSFER_IN':
-      return '划入';
-    case 'TRANSFER_OUT':
-      return '划出';
-    default:
-      return '流水';
-  }
-};
 
 const ComputeWallet = React.forwardRef<ComputeWalletRef, ComputeWalletProps>(
   (
@@ -295,13 +286,13 @@ const ComputeWallet = React.forwardRef<ComputeWalletRef, ComputeWalletProps>(
                   <>
                     <RiArrowUpLine size={16} className={styles.amountRecharge} />
                     <RiAddLine size={14} className={styles.amountRecharge} />
-                    <span>{typeLabel(kind)}</span>
+                    <span>{WALLET_TRANSACTION_KIND.getLabel(kind)}</span>
                   </>
                 ) : (
                   <>
                     <RiArrowDownLine size={16} className={styles.amountSpend} />
                     <RiSubtractLine size={14} className={styles.amountSpend} />
-                    <span>{typeLabel(kind)}</span>
+                    <span>{WALLET_TRANSACTION_KIND.getLabel(kind)}</span>
                   </>
                 )}
               </span>

@@ -1,5 +1,5 @@
 import { useImageService, useUserService } from '@/domains';
-import { getIdentityTypeLabel, getVerificationModeLabel, USER_STATUS } from '@/domains/User/enum';
+import { getVerificationModeLabel, IDENTITY, USER_STATUS } from '@/domains/User/enum';
 import { useAppMessage } from '@/hooks/useAppMessage';
 import { createBeforeUploadImageWithinLimit } from '@/utils/image/uploadLimit';
 import { parseErrorMessage } from '@/utils/parseErrorMessage';
@@ -78,7 +78,7 @@ const AccountHeader: React.FC<AccountHeaderProps> = ({ user, onUserInfoUpdated }
     .charAt(0)
     .toUpperCase();
   const identityLabel =
-    user?.userInfo?.identityType != null ? getIdentityTypeLabel(user.userInfo.identityType) : '';
+    user?.userInfo?.identityType != null ? IDENTITY.getLabel(user.userInfo.identityType) : '';
   const verifiedText = getVerificationModeLabel(user?.userInfo?.verificationMode ?? null);
 
   return (

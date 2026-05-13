@@ -4,6 +4,7 @@
  */
 
 import type { ResourceItem } from '@/domains/Resource';
+import type { ResourceSortBy, ResourceSortDir, TagQueryLogicMode } from '@/domains/Resource/enum';
 
 /** 资源列表分页（与 OpenAPI PageResultResourceItemResponse 一致） */
 export interface ResourceListPage {
@@ -21,31 +22,6 @@ export interface IResourceService {
   renameResource(params: RenameResourceRequest): Promise<void>;
   updateResourceTags(params: UpdateResourceTagsRequest): Promise<void>;
 }
-
-/** 排序字段枚举 */
-export const RESOURCE_SORT_BY = {
-  UPDATE_TIME: 'UPDATE_TIME',
-  CREATE_TIME: 'CREATE_TIME',
-  NAME: 'NAME',
-  SIZE: 'SIZE',
-} as const;
-
-/** 排序方向枚举 */
-export const RESOURCE_SORT_DIR = {
-  ASC: 'ASC',
-  DESC: 'DESC',
-} as const;
-
-/** 标签查询逻辑：OR=包含任意标签，AND=包含全部标签 */
-export const TAG_QUERY_LOGIC_MODE = {
-  OR: 'OR',
-  AND: 'AND',
-} as const;
-
-export type TagQueryLogicMode = (typeof TAG_QUERY_LOGIC_MODE)[keyof typeof TAG_QUERY_LOGIC_MODE];
-
-export type ResourceSortBy = (typeof RESOURCE_SORT_BY)[keyof typeof RESOURCE_SORT_BY];
-export type ResourceSortDir = (typeof RESOURCE_SORT_DIR)[keyof typeof RESOURCE_SORT_DIR];
 
 /** 重命名资源请求参数（对齐 OpenAPI ResourceRenameRequest，POST /resource/item/renameRes） */
 export interface RenameResourceRequest {
@@ -67,8 +43,8 @@ export interface UpdateResourceTagsRequest {
 export interface GetUserResourcesRequest {
   page: number;
   size: number;
-  sortBy: (typeof RESOURCE_SORT_BY)[keyof typeof RESOURCE_SORT_BY];
-  sortDir: (typeof RESOURCE_SORT_DIR)[keyof typeof RESOURCE_SORT_DIR];
+  sortBy: ResourceSortBy;
+  sortDir: ResourceSortDir;
   resourceType?: string;
   /** 按标签筛选，传 tagId 列表 */
   tagIds?: string[];

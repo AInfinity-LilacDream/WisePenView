@@ -1,7 +1,8 @@
 import SelectedMemberList from '@/components/Common/SelectedMemberList';
 import { useGroupService } from '@/domains';
-import { ROLE_MAP, type GroupMemberRole } from '@/domains/Group/enum';
+import { ROLE } from '@/domains/Group/enum';
 import { useAppMessage } from '@/hooks/useAppMessage';
+import type { EnumKey } from '@/utils/enum';
 import { parseErrorMessage } from '@/utils/parseErrorMessage';
 import { useRequest } from 'ahooks';
 import { Alert, Button, Modal, Select } from 'antd';
@@ -23,7 +24,7 @@ const EditPermissionModal: React.FC<EditPermissionModalProps> = ({
 }) => {
   const groupService = useGroupService();
   const message = useAppMessage();
-  const [selectedPermission, setSelectedPermission] = useState<GroupMemberRole>('MEMBER');
+  const [selectedPermission, setSelectedPermission] = useState<EnumKey<typeof ROLE>>('MEMBER');
   const { loading, run: runUpdatePermission } = useRequest(
     async (role: number) =>
       groupService.updateMemberRole({
@@ -52,7 +53,7 @@ const EditPermissionModal: React.FC<EditPermissionModalProps> = ({
   const canPromoteToAdmin = groupDisplayConfig.canModifyPermission;
 
   const handleConfirm = () => {
-    const role = ROLE_MAP[selectedPermission] ?? ROLE_MAP['MEMBER'];
+    const role = ROLE[selectedPermission] ?? ROLE.MEMBER;
     runUpdatePermission(role);
   };
 
@@ -87,7 +88,7 @@ const EditPermissionModal: React.FC<EditPermissionModalProps> = ({
           <label className={styles.permissionLabel}>将以下成员的权限设置为</label>
           <Select
             value={selectedPermission}
-            onChange={(value) => setSelectedPermission(value as GroupMemberRole)}
+            onChange={(value) => setSelectedPermission(value as EnumKey<typeof ROLE>)}
             className={styles.fullWidth}
           >
             {canPromoteToAdmin && <Option value="ADMIN">管理员</Option>}

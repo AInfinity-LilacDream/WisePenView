@@ -7,7 +7,7 @@ import {
 } from '@/components/Account';
 import { useUserService } from '@/domains';
 import type { GetUserInfoResponse } from '@/domains/User';
-import { IDENTITY_TYPE } from '@/domains/User/enum';
+import { IDENTITY } from '@/domains/User/enum';
 import { useAppMessage } from '@/hooks/useAppMessage';
 import { parseErrorMessage } from '@/utils/parseErrorMessage';
 import { useRequest } from 'ahooks';
@@ -39,7 +39,7 @@ const Account: React.FC = () => {
     },
   });
 
-  const identityType = user?.userInfo?.identityType ?? IDENTITY_TYPE.STUDENT;
+  const identityType = user?.userInfo?.identityType ?? IDENTITY.STUDENT;
   const fieldConfig = getProfileFieldConfig(identityType);
   const visibleFields = PROFILE_FIELDS.filter((f) => fieldConfig[f.key]);
 

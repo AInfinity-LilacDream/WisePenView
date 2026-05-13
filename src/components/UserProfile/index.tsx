@@ -1,6 +1,6 @@
 import { useUserService } from '@/domains';
 import type { User } from '@/domains/User';
-import { getIdentityTypeLabel } from '@/domains/User/enum';
+import { IDENTITY } from '@/domains/User/enum';
 import { useMount } from 'ahooks';
 import type { MenuProps } from 'antd';
 import { Avatar, Button, Dropdown, Modal } from 'antd';
@@ -39,7 +39,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ collapsed }) => {
 
   const displayName = user?.nickname || user?.username || '-';
   const identityLabel =
-    user?.identityType !== undefined ? getIdentityTypeLabel(user.identityType) : '-';
+    user?.identityType !== undefined ? IDENTITY.getLabel(user.identityType) : '-';
 
   const handleMenuClick: MenuProps['onClick'] = ({ key }) => {
     switch (key) {

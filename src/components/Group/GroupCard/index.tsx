@@ -1,5 +1,5 @@
 import UserCapsule from '@/components/Common/UserCapsule';
-import { GROUP_TYPE, getGroupTypeLabel } from '@/domains/Group/enum';
+import { GROUP_TYPE } from '@/domains/Group/enum';
 import { PLACEHOLDER_IMAGE } from '@/utils/image/placeholder';
 import { Badge, Card, Image } from 'antd';
 import React from 'react';
@@ -54,7 +54,7 @@ const GroupCard: React.FC<GroupCardProps> = ({ group, onClick }) => {
 
   if (groupType === GROUP_TYPE.ADVANCED) {
     return (
-      <Badge.Ribbon text={getGroupTypeLabel(groupType)} color="#faad14">
+      <Badge.Ribbon text={GROUP_TYPE.getLabel(groupType)} color="#faad14">
         {cardContent}
       </Badge.Ribbon>
     );
@@ -62,7 +62,7 @@ const GroupCard: React.FC<GroupCardProps> = ({ group, onClick }) => {
 
   if (groupType === GROUP_TYPE.PUBLIC) {
     return (
-      <Badge.Ribbon text={getGroupTypeLabel(groupType)} color="#722ed1">
+      <Badge.Ribbon text={GROUP_TYPE.getLabel(groupType)} color="#722ed1">
         {cardContent}
       </Badge.Ribbon>
     );
