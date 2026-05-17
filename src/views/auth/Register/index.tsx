@@ -2,7 +2,7 @@ import ServiceAgreement from '@/components/ServiceAgreement/index';
 import { useAuthService } from '@/domains';
 import type { RegisterRequest } from '@/domains/Auth';
 import { useAppMessage } from '@/hooks/useAppMessage';
-import { parseErrorMessage } from '@/utils/parseErrorMessage';
+import { parseErrorMessage } from '@/utils/error';
 import { useRequest } from 'ahooks';
 import { Button, Checkbox, Form, Input, Modal, Typography } from 'antd';
 import React, { useState } from 'react';
@@ -33,7 +33,7 @@ const Register: React.FC = () => {
         setSuccessModalOpen(true);
       },
       onError: (err: unknown) => {
-        message.error(parseErrorMessage(err, t('register.registerFailed')));
+        message.error(parseErrorMessage(err));
       },
     }
   );

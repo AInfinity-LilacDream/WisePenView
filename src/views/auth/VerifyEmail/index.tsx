@@ -1,7 +1,7 @@
 import { useUserService } from '@/domains';
 import type { ConfirmEmailVerifyRequest } from '@/domains/User';
 import { useAppMessage } from '@/hooks/useAppMessage';
-import { parseErrorMessage } from '@/utils/parseErrorMessage';
+import { parseErrorMessage } from '@/utils/error';
 import { useRequest } from 'ahooks';
 import { Alert, Button, Modal, Typography } from 'antd';
 import React, { useState } from 'react';
@@ -31,7 +31,7 @@ const VerifyEmail: React.FC = () => {
         setSuccessModalOpen(true);
       },
       onError: (err: unknown) => {
-        message.error(parseErrorMessage(err, t('verifyEmail.verifyFailed')));
+        message.error(parseErrorMessage(err));
       },
     }
   );

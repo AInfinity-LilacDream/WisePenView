@@ -1,7 +1,7 @@
 import { useGroupService } from '@/domains';
 import type { QuitGroupRequest } from '@/domains/Group';
 import { useAppMessage } from '@/hooks/useAppMessage';
-import { parseErrorMessage } from '@/utils/parseErrorMessage';
+import { parseErrorMessage } from '@/utils/error';
 import { useRequest } from 'ahooks';
 import { Alert, Button, Modal } from 'antd';
 import React from 'react';
@@ -35,7 +35,7 @@ const ExitGroupModal: React.FC<ExitGroupModalProps> = ({
         navigate('/app/my-group');
       },
       onError: (err) => {
-        message.error(parseErrorMessage(err, '退出小组失败'));
+        message.error(parseErrorMessage(err));
       },
     }
   );

@@ -1,7 +1,7 @@
 import { useGroupService } from '@/domains';
 import type { DeleteGroupRequest } from '@/domains/Group';
 import { useAppMessage } from '@/hooks/useAppMessage';
-import { parseErrorMessage } from '@/utils/parseErrorMessage';
+import { parseErrorMessage } from '@/utils/error';
 import { useRequest } from 'ahooks';
 import { Alert, Button, Input, Modal } from 'antd';
 import React, { useCallback, useState } from 'react';
@@ -43,7 +43,7 @@ const DissolveGroupModal: React.FC<DissolveGroupModalProps> = ({
         navigate('/app/my-group');
       },
       onError: (err) => {
-        message.error(parseErrorMessage(err, '解散小组失败'));
+        message.error(parseErrorMessage(err));
       },
     }
   );

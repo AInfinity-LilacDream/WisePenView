@@ -1,7 +1,7 @@
 import { useGroupService } from '@/domains';
 import type { JoinGroupRequest } from '@/domains/Group';
 import { useAppMessage } from '@/hooks/useAppMessage';
-import { parseErrorMessage } from '@/utils/parseErrorMessage';
+import { parseErrorMessage } from '@/utils/error';
 import { useRequest } from 'ahooks';
 import { Button, Form, Input, Modal } from 'antd';
 import React from 'react';
@@ -34,7 +34,7 @@ const JoinGroupModal: React.FC<JoinGroupModalProps> = ({ open, onCancel, onSucce
           'errorFields' in err &&
           Array.isArray((err as { errorFields?: unknown }).errorFields);
         if (!isValidationError) {
-          message.error(parseErrorMessage(err, '加入小组失败'));
+          message.error(parseErrorMessage(err));
         }
       },
     }

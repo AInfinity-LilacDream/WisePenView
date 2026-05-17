@@ -9,7 +9,7 @@ import { useUserService } from '@/domains';
 import type { GetUserInfoResponse } from '@/domains/User';
 import { IDENTITY } from '@/domains/User/enum';
 import { useAppMessage } from '@/hooks/useAppMessage';
-import { parseErrorMessage } from '@/utils/parseErrorMessage';
+import { parseErrorMessage } from '@/utils/error';
 import { useRequest } from 'ahooks';
 import { Descriptions, Divider, Form, Spin } from 'antd';
 import React, { useMemo, useState } from 'react';
@@ -35,7 +35,7 @@ const Account: React.FC = () => {
       form.setFieldsValue(buildProfileFormValues(data));
     },
     onError: (err: unknown) => {
-      message.error(parseErrorMessage(err, '获取用户信息失败'));
+      message.error(parseErrorMessage(err));
     },
   });
 

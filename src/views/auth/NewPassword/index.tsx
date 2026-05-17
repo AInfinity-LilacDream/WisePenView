@@ -1,7 +1,7 @@
 import { useAuthService } from '@/domains';
 import type { NewPasswordRequest } from '@/domains/Auth';
 import { useAppMessage } from '@/hooks/useAppMessage';
-import { parseErrorMessage } from '@/utils/parseErrorMessage';
+import { parseErrorMessage } from '@/utils/error';
 import { useMount, useRequest } from 'ahooks';
 import { Button, Form, Input, Modal, Typography } from 'antd';
 import React, { useState } from 'react';
@@ -35,7 +35,7 @@ const NewPassword: React.FC = () => {
         setSuccessModalOpen(true);
       },
       onError: (err) => {
-        message.error(parseErrorMessage(err, t('newPassword.setFailed')));
+        message.error(parseErrorMessage(err));
       },
     }
   );

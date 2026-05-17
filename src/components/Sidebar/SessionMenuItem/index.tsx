@@ -1,6 +1,6 @@
 import { useChatService } from '@/domains';
 import { useAppMessage } from '@/hooks/useAppMessage';
-import { parseErrorMessage } from '@/utils/parseErrorMessage';
+import { parseErrorMessage } from '@/utils/error';
 import { useRequest } from 'ahooks';
 import { Input, Modal } from 'antd';
 import clsx from 'clsx';
@@ -30,7 +30,7 @@ const SessionMenuItem: React.FC<SessionMenuItemProps> = ({ session, onUpdated, o
         await onUpdated();
       },
       onError: (err) => {
-        messageApi.error(parseErrorMessage(err, '重命名会话失败'));
+        messageApi.error(parseErrorMessage(err));
       },
     }
   );
@@ -48,7 +48,7 @@ const SessionMenuItem: React.FC<SessionMenuItemProps> = ({ session, onUpdated, o
         await onUpdated();
       },
       onError: (err) => {
-        messageApi.error(parseErrorMessage(err, '删除会话失败'));
+        messageApi.error(parseErrorMessage(err));
       },
     }
   );

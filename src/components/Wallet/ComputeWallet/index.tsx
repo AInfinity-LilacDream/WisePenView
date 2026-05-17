@@ -15,9 +15,9 @@ import {
 import { WALLET_TARGET_TYPE, WALLET_TOKEN_TX_TYPE } from '@/domains/Wallet/enum';
 import { useAppMessage } from '@/hooks/useAppMessage';
 import type { EnumValue } from '@/utils/enum';
+import { parseErrorMessage } from '@/utils/error';
 import { formatCompactNumber } from '@/utils/format/formatNumber';
 import { formatTimestampToDateTime } from '@/utils/format/formatTime';
-import { parseErrorMessage } from '@/utils/parseErrorMessage';
 import { usePagination, useRequest, useUnmount } from 'ahooks';
 import { Button, Pagination, Skeleton, Table, Tabs } from 'antd';
 import React, {
@@ -137,7 +137,7 @@ function ComputeWallet({
         }
       },
       onError: (err, params) => {
-        message.error(parseErrorMessage(err, '获取余额失败'));
+        message.error(parseErrorMessage(err));
         const options = params?.[0];
         if (!options?.silent) {
           setLoadingWallet(false);
@@ -196,7 +196,7 @@ function ComputeWallet({
       defaultPageSize: PAGE_SIZE,
       refreshDeps: [walletService, targetType, effectiveGroupId, txTab],
       onError: (err) => {
-        message.error(parseErrorMessage(err, '获取交易明细失败'));
+        message.error(parseErrorMessage(err));
       },
     }
   );
@@ -236,7 +236,7 @@ function ComputeWallet({
         window.setTimeout(() => setFlashFirstRow(false), 2400);
       },
       onError: (err) => {
-        message.error(parseErrorMessage(err, '充值失败'));
+        message.error(parseErrorMessage(err));
       },
     }
   );

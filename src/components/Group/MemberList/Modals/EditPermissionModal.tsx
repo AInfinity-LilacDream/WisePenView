@@ -3,7 +3,7 @@ import { useGroupService } from '@/domains';
 import { ROLE } from '@/domains/Group/enum';
 import { useAppMessage } from '@/hooks/useAppMessage';
 import type { EnumKey } from '@/utils/enum';
-import { parseErrorMessage } from '@/utils/parseErrorMessage';
+import { parseErrorMessage } from '@/utils/error';
 import { useRequest } from 'ahooks';
 import { Alert, Button, Modal, Select } from 'antd';
 import React, { useState } from 'react';
@@ -40,7 +40,7 @@ const EditPermissionModal: React.FC<EditPermissionModalProps> = ({
         onCancel();
       },
       onError: (err) => {
-        message.error(parseErrorMessage(err, '修改权限失败'));
+        message.error(parseErrorMessage(err));
       },
     }
   );

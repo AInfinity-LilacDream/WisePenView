@@ -4,7 +4,7 @@
 import { useGroupService, useWalletService } from '@/domains';
 import { WALLET_TOKEN_TRANSFER_TYPE } from '@/domains/Wallet/enum';
 import { useAppMessage } from '@/hooks/useAppMessage';
-import { parseErrorMessage } from '@/utils/parseErrorMessage';
+import { parseErrorMessage } from '@/utils/error';
 import { useRequest } from 'ahooks';
 import { Button, InputNumber, Skeleton } from 'antd';
 import React, { useCallback, useState } from 'react';
@@ -45,7 +45,7 @@ const OwnerGroupTokenTransfer: React.FC<OwnerGroupTokenTransferProps> = ({
         setGroupBal(res.groupBal);
       },
       onError: (err) => {
-        message.error(parseErrorMessage(err, '获取余额失败'));
+        message.error(parseErrorMessage(err));
       },
     }
   );
@@ -70,7 +70,7 @@ const OwnerGroupTokenTransfer: React.FC<OwnerGroupTokenTransferProps> = ({
         await refreshAfterTransfer();
       },
       onError: (err) => {
-        message.error(parseErrorMessage(err, '转入失败'));
+        message.error(parseErrorMessage(err));
       },
     }
   );
@@ -90,7 +90,7 @@ const OwnerGroupTokenTransfer: React.FC<OwnerGroupTokenTransferProps> = ({
         await refreshAfterTransfer();
       },
       onError: (err) => {
-        message.error(parseErrorMessage(err, '转回失败'));
+        message.error(parseErrorMessage(err));
       },
     }
   );

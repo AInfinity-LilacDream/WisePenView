@@ -2,7 +2,7 @@ import ServiceAgreement from '@/components/ServiceAgreement/index';
 import { useAuthService } from '@/domains';
 import type { LoginRequest } from '@/domains/Auth';
 import { useAppMessage } from '@/hooks/useAppMessage';
-import { parseErrorMessage } from '@/utils/parseErrorMessage';
+import { parseErrorMessage } from '@/utils/error';
 import { useRequest } from 'ahooks';
 import { Button, Form, Input, Typography } from 'antd';
 import React, { useState } from 'react';
@@ -27,7 +27,7 @@ const Login: React.FC = () => {
         navigate('/app/drive');
       },
       onError: (err: unknown) => {
-        message.error(parseErrorMessage(err, t('login.loginFailed')));
+        message.error(parseErrorMessage(err));
       },
     }
   );

@@ -7,7 +7,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { useDocumentService } from '@/domains';
 import { useAppMessage } from '@/hooks/useAppMessage';
-import { parseErrorMessage } from '@/utils/parseErrorMessage';
+import { parseErrorMessage } from '@/utils/error';
 
 import styles from './UploadDocumentModal.module.less';
 
@@ -64,7 +64,7 @@ export const UploadDocumentModal: React.FC<UploadDocumentModalProps> = ({
         onClose();
       },
       onError: (err: unknown) => {
-        message.error(parseErrorMessage(err, '上传失败'));
+        message.error(parseErrorMessage(err));
       },
       onFinally: () => {
         setPhase('idle');

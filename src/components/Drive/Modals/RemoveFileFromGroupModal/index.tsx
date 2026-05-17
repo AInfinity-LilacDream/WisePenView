@@ -2,7 +2,7 @@ import { useResourceService, useTagService } from '@/domains';
 import type { TagTreeNode } from '@/domains/Tag/service/index.type';
 import { useAppMessage } from '@/hooks/useAppMessage';
 import { useRecentFilesStore } from '@/store';
-import { parseErrorMessage } from '@/utils/parseErrorMessage';
+import { parseErrorMessage } from '@/utils/error';
 import { useRequest } from 'ahooks';
 import { Alert, Button, Modal } from 'antd';
 import React from 'react';
@@ -61,7 +61,7 @@ const RemoveFileFromGroupModal: React.FC<RemoveFileFromGroupModalProps> = ({
         onCancel();
       },
       onError: (err) => {
-        message.error(parseErrorMessage(err, '移出失败'));
+        message.error(parseErrorMessage(err));
       },
     }
   );

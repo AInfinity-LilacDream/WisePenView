@@ -2,8 +2,8 @@ import { useGroupService, useImageService } from '@/domains';
 import type { EditGroupRequest } from '@/domains/Group';
 import { GROUP_TYPE } from '@/domains/Group/enum';
 import { useAppMessage } from '@/hooks/useAppMessage';
+import { parseErrorMessage } from '@/utils/error';
 import { createBeforeUploadImageWithinLimit } from '@/utils/image/uploadLimit';
-import { parseErrorMessage } from '@/utils/parseErrorMessage';
 import { useRequest } from 'ahooks';
 import type { UploadFile } from 'antd';
 import { Button, Form, Input, Modal, Upload } from 'antd';
@@ -74,7 +74,7 @@ const EditGroupInfoModal: React.FC<EditGroupInfoModalProps> = ({
         onCancel();
       },
       onError: (error: unknown) => {
-        message.error(parseErrorMessage(error, '编辑小组信息失败，请重试'));
+        message.error(parseErrorMessage(error));
       },
     }
   );

@@ -1,7 +1,7 @@
 import { useAuthService } from '@/domains';
 import type { ResetPasswordRequest } from '@/domains/Auth';
 import { useAppMessage } from '@/hooks/useAppMessage';
-import { parseErrorMessage } from '@/utils/parseErrorMessage';
+import { parseErrorMessage } from '@/utils/error';
 import { useRequest } from 'ahooks';
 import { Alert, Button, Form, Input, Typography } from 'antd';
 import React from 'react';
@@ -24,7 +24,7 @@ const ResetPassword: React.FC = () => {
         message.info(t('resetPassword.sendSuccess'));
       },
       onError: (err: unknown) => {
-        message.error(parseErrorMessage(err, t('resetPassword.sendFailed')));
+        message.error(parseErrorMessage(err));
       },
     }
   );

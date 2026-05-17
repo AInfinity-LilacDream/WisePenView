@@ -1,6 +1,6 @@
 import { useTagService } from '@/domains';
 import { useAppMessage } from '@/hooks/useAppMessage';
-import { parseErrorMessage } from '@/utils/parseErrorMessage';
+import { parseErrorMessage } from '@/utils/error';
 import { validateReservedName } from '@/utils/tag/validateReservedName';
 import { useRequest } from 'ahooks';
 import { Button, Input, Modal } from 'antd';
@@ -36,7 +36,7 @@ const NewTagModal: React.FC<NewTagModalProps> = ({
         onCancel();
       },
       onError: (err) => {
-        message.error(parseErrorMessage(err, '新建失败'));
+        message.error(parseErrorMessage(err));
       },
     }
   );

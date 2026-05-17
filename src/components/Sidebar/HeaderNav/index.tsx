@@ -2,7 +2,7 @@ import { useChatService, useNoteService, useUserService } from '@/domains';
 import { RESOURCE_TYPE } from '@/domains/Resource/enum';
 import { useAppMessage } from '@/hooks/useAppMessage';
 import { useNewChatSessionStore, useNewNoteStore, useRecentFilesStore } from '@/store';
-import { parseErrorMessage } from '@/utils/parseErrorMessage';
+import { parseErrorMessage } from '@/utils/error';
 import { useRequest } from 'ahooks';
 import type { MenuProps } from 'antd';
 import { Menu } from 'antd';
@@ -36,7 +36,7 @@ const HeaderNav: React.FC<HeaderNavProps> = ({ collapsed, onSessionCreated }) =>
         onSessionCreated(session.id, session.title);
       },
       onError: (err) => {
-        messageApi.error(parseErrorMessage(err, '新建对话失败'));
+        messageApi.error(parseErrorMessage(err));
       },
     }
   );

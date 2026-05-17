@@ -1,8 +1,8 @@
 import { useImageService, useUserService } from '@/domains';
 import { getVerificationModeLabel, IDENTITY, USER_STATUS } from '@/domains/User/enum';
 import { useAppMessage } from '@/hooks/useAppMessage';
+import { parseErrorMessage } from '@/utils/error';
 import { createBeforeUploadImageWithinLimit } from '@/utils/image/uploadLimit';
-import { parseErrorMessage } from '@/utils/parseErrorMessage';
 import { useRequest } from 'ahooks';
 import type { UploadFile } from 'antd';
 import { Avatar, Button, Modal, Tooltip, Upload } from 'antd';
@@ -45,7 +45,7 @@ const AccountHeader: React.FC<AccountHeaderProps> = ({ user, onUserInfoUpdated }
         setAvatarModalOpen(false);
       },
       onError: (err: unknown) => {
-        message.error(parseErrorMessage(err, '头像更新失败'));
+        message.error(parseErrorMessage(err));
       },
     }
   );

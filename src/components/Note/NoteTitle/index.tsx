@@ -10,7 +10,7 @@ import { useNoteService } from '@/domains';
 import { useNewNoteStore } from '@/store';
 
 import { useAppMessage } from '@/hooks/useAppMessage';
-import { parseErrorMessage } from '@/utils/parseErrorMessage';
+import { parseErrorMessage } from '@/utils/error';
 import type { NoteTitleProps } from './index.type';
 import styles from './style.module.less';
 
@@ -114,7 +114,7 @@ const NoteTitle: React.FC<NoteTitleProps> = ({ id, initialContent, onEnterKey, f
       const trimmed = raw.trim();
       const nextTitle = trimmed || '未命名笔记';
       void noteService.syncTitle({ resourceId: currentId, newName: nextTitle }).catch((error) => {
-        message.error(parseErrorMessage(error, '同步标题失败'));
+        message.error(parseErrorMessage(error));
       });
     }, TITLE_DEBOUNCE_MS);
   }, [editor, message, noteService]);

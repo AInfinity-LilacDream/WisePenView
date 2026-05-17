@@ -1,6 +1,6 @@
 import { useFolderService } from '@/domains';
 import { useAppMessage } from '@/hooks/useAppMessage';
-import { parseErrorMessage } from '@/utils/parseErrorMessage';
+import { parseErrorMessage } from '@/utils/error';
 import { getFolderDisplayName } from '@/utils/tag/path';
 import { useRequest } from 'ahooks';
 import { Alert, Button, Modal } from 'antd';
@@ -25,7 +25,7 @@ const DeleteFolderModal: React.FC<DeleteFolderModalProps> = ({
         onCancel();
       },
       onError: (err) => {
-        message.error(parseErrorMessage(err, '删除失败'));
+        message.error(parseErrorMessage(err));
       },
     }
   );

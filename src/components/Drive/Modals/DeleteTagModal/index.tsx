@@ -1,6 +1,6 @@
 import { useTagService } from '@/domains';
 import { useAppMessage } from '@/hooks/useAppMessage';
-import { parseErrorMessage } from '@/utils/parseErrorMessage';
+import { parseErrorMessage } from '@/utils/error';
 import { useRequest } from 'ahooks';
 import { Alert, Button, Modal } from 'antd';
 import React from 'react';
@@ -29,7 +29,7 @@ const DeleteTagModal: React.FC<DeleteTagModalProps> = ({
         onCancel();
       },
       onError: (err) => {
-        message.error(parseErrorMessage(err, '删除失败'));
+        message.error(parseErrorMessage(err));
       },
     }
   );

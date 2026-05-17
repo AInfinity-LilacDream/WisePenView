@@ -4,8 +4,8 @@ import { useResourceService } from '@/domains';
 import type { ResourceItem } from '@/domains/Resource';
 import { useClickFile } from '@/hooks/drive';
 import { useAppMessage } from '@/hooks/useAppMessage';
+import { parseErrorMessage } from '@/utils/error';
 import { formatFileSize } from '@/utils/format/formatFileSize';
-import { parseErrorMessage } from '@/utils/parseErrorMessage';
 import { usePagination } from 'ahooks';
 import type { MenuProps } from 'antd';
 import { Dropdown, Table, Tag } from 'antd';
@@ -194,7 +194,7 @@ const FileList: React.FC<FileListProps> = ({ groupId, filter }) => {
         setTotal(res.total);
       },
       onError: (err) => {
-        message.error(parseErrorMessage(err, '获取资源列表失败'));
+        message.error(parseErrorMessage(err));
         setList([]);
         setTotal(0);
       },

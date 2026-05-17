@@ -7,8 +7,8 @@ import {
   isDocumentTerminalStatus,
 } from '@/domains/Document/enum';
 import { useAppMessage } from '@/hooks/useAppMessage';
+import { parseErrorMessage } from '@/utils/error';
 import { formatFileSize } from '@/utils/format/formatFileSize';
-import { parseErrorMessage } from '@/utils/parseErrorMessage';
 import { useInterval, useMount, useRequest, useUnmount } from 'ahooks';
 import { Button, Empty, Space, Table } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
@@ -63,7 +63,7 @@ function UploadQueueTab({ ref }: { ref?: Ref<UploadQueueTabRef> }) {
       },
       onError: (err) => {
         setPollingActive(false);
-        message.error(parseErrorMessage(err, '获取上传队列失败'));
+        message.error(parseErrorMessage(err));
       },
     }
   );
@@ -83,7 +83,7 @@ function UploadQueueTab({ ref }: { ref?: Ref<UploadQueueTabRef> }) {
         runFetchPendingList(false);
       },
       onError: (err) => {
-        message.error(parseErrorMessage(err, '重试失败'));
+        message.error(parseErrorMessage(err));
       },
       onFinally: () => {
         setRetryingId(null);
@@ -106,7 +106,7 @@ function UploadQueueTab({ ref }: { ref?: Ref<UploadQueueTabRef> }) {
         runFetchPendingList(false);
       },
       onError: (err) => {
-        message.error(parseErrorMessage(err, '取消失败'));
+        message.error(parseErrorMessage(err));
       },
       onFinally: () => {
         setCancelingId(null);

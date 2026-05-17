@@ -1,7 +1,7 @@
 import SelectedMemberList from '@/components/Common/SelectedMemberList';
 import { useGroupService } from '@/domains';
 import { useAppMessage } from '@/hooks/useAppMessage';
-import { parseErrorMessage } from '@/utils/parseErrorMessage';
+import { parseErrorMessage } from '@/utils/error';
 import { useRequest } from 'ahooks';
 import { Alert, Button, Modal } from 'antd';
 import React from 'react';
@@ -33,7 +33,7 @@ const DeleteMemberModal: React.FC<DeleteMemberModalProps> = ({
         onCancel();
       },
       onError: (err) => {
-        message.error(parseErrorMessage(err, '删除成员失败'));
+        message.error(parseErrorMessage(err));
       },
     }
   );

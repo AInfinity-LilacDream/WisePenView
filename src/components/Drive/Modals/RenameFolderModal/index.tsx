@@ -1,6 +1,6 @@
 import { useFolderService } from '@/domains';
 import { useAppMessage } from '@/hooks/useAppMessage';
-import { parseErrorMessage } from '@/utils/parseErrorMessage';
+import { parseErrorMessage } from '@/utils/error';
 import { getFolderDisplayName } from '@/utils/tag/path';
 import { useRequest } from 'ahooks';
 import { Button, Input, Modal } from 'antd';
@@ -36,7 +36,7 @@ const RenameFolderModal: React.FC<RenameFolderModalProps> = ({
         onCancel();
       },
       onError: (err) => {
-        message.error(parseErrorMessage(err, '重命名失败'));
+        message.error(parseErrorMessage(err));
       },
     }
   );

@@ -1,7 +1,7 @@
 import QuotaBar from '@/components/Common/QuotaBar';
 import { useQuotaService } from '@/domains';
 import { useAppMessage } from '@/hooks/useAppMessage';
-import { parseErrorMessage } from '@/utils/parseErrorMessage';
+import { parseErrorMessage } from '@/utils/error';
 import { usePagination } from 'ahooks';
 import type { TableColumnsType, TablePaginationConfig } from 'antd';
 import { Table } from 'antd';
@@ -32,7 +32,7 @@ const QuotaByGroup: React.FC<QuotaByGroupProps> = ({ pagination }) => {
       defaultCurrent: 1,
       defaultPageSize: pagination?.defaultPageSize ?? 10,
       onError: (error: unknown) => {
-        message.error(parseErrorMessage(error, '获取配额数据失败'));
+        message.error(parseErrorMessage(error));
       },
     }
   );

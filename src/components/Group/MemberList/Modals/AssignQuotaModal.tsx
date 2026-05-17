@@ -1,7 +1,7 @@
 import SelectedMemberList from '@/components/Common/SelectedMemberList';
 import { useQuotaService } from '@/domains';
 import { useAppMessage } from '@/hooks/useAppMessage';
-import { parseErrorMessage } from '@/utils/parseErrorMessage';
+import { parseErrorMessage } from '@/utils/error';
 import { useRequest } from 'ahooks';
 import { Alert, Button, Form, InputNumber, Modal } from 'antd';
 import React, { useCallback, useState } from 'react';
@@ -65,7 +65,7 @@ const AssignQuotaModal: React.FC<AssignQuotaModalProps> = ({
         onCancel();
       },
       onError: (err) => {
-        message.error(parseErrorMessage(err, '分配配额失败'));
+        message.error(parseErrorMessage(err));
       },
     }
   );

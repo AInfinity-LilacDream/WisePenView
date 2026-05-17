@@ -3,7 +3,7 @@ import { useResourceService } from '@/domains';
 import type { ResourceItem } from '@/domains/Resource';
 import type { TagTreeNode } from '@/domains/Tag/service/index.type';
 import { useAppMessage } from '@/hooks/useAppMessage';
-import { parseErrorMessage } from '@/utils/parseErrorMessage';
+import { parseErrorMessage } from '@/utils/error';
 import { useRequest } from 'ahooks';
 import { Button, Modal } from 'antd';
 import React, { useCallback, useMemo, useState } from 'react';
@@ -56,7 +56,7 @@ const EditTagModal: React.FC<EditTagModalProps> = ({
         onCancel();
       },
       onError: (err) => {
-        message.error(parseErrorMessage(err, '更新标签失败'));
+        message.error(parseErrorMessage(err));
       },
     }
   );

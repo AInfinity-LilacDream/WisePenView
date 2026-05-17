@@ -2,8 +2,8 @@ import { useGroupService, useImageService, useUserService } from '@/domains';
 import type { CreateGroupRequest, GroupFileOrgLogic } from '@/domains/Group';
 import { ALLOWED_GROUP_TYPES_MAP, GROUP_FILE_ORG_LOGIC, GROUP_TYPE } from '@/domains/Group/enum';
 import { useAppMessage } from '@/hooks/useAppMessage';
+import { parseErrorMessage } from '@/utils/error';
 import { createBeforeUploadImageWithinLimit } from '@/utils/image/uploadLimit';
-import { parseErrorMessage } from '@/utils/parseErrorMessage';
 import { useRequest } from 'ahooks';
 import type { UploadFile } from 'antd';
 import { Button, Form, Input, Modal, Radio, Select, Upload } from 'antd';
@@ -85,9 +85,7 @@ const CreateGroupModal: React.FC<CreateGroupModalProps> = ({ open, onCancel, onS
         });
         message.success('创建成功');
       } catch (configErr: unknown) {
-        message.warning(
-          parseErrorMessage(configErr, '小组已创建，但文件管理方式未保存，请稍后在小组内重试')
-        );
+        message.warning(parseErrorMessage(configErr));
       }
     },
     {
@@ -104,7 +102,7 @@ const CreateGroupModal: React.FC<CreateGroupModalProps> = ({ open, onCancel, onS
           'errorFields' in err &&
           Array.isArray((err as { errorFields?: unknown }).errorFields);
         if (!isValidationError) {
-          message.error(parseErrorMessage(err, '创建失败'));
+          message.error(parseErrorMessage(err));
         }
       },
     }

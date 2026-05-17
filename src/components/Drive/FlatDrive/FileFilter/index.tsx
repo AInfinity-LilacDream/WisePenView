@@ -3,7 +3,7 @@ import { useStickerService } from '@/domains';
 import { RESOURCE_SORT_BY, RESOURCE_SORT_DIR, TAG_QUERY_LOGIC_MODE } from '@/domains/Resource/enum';
 import type { Sticker } from '@/domains/Sticker';
 import { useAppMessage } from '@/hooks/useAppMessage';
-import { parseErrorMessage } from '@/utils/parseErrorMessage';
+import { parseErrorMessage } from '@/utils/error';
 import { useRequest } from 'ahooks';
 import { Button, Radio, Select, Spin, Tag } from 'antd';
 import clsx from 'clsx';
@@ -35,7 +35,7 @@ const FileFilter: React.FC<FileFilterProps> = ({ value, onChange }) => {
       setStickers(list);
     },
     onError: (err) => {
-      message.error(parseErrorMessage(err, '获取标签列表失败'));
+      message.error(parseErrorMessage(err));
       setStickers([]);
     },
   });

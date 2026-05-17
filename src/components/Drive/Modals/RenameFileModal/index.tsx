@@ -1,6 +1,6 @@
 import { useResourceService } from '@/domains';
 import { useAppMessage } from '@/hooks/useAppMessage';
-import { parseErrorMessage } from '@/utils/parseErrorMessage';
+import { parseErrorMessage } from '@/utils/error';
 import { useRequest } from 'ahooks';
 import { Button, Input, Modal } from 'antd';
 import React, { useCallback, useState } from 'react';
@@ -34,7 +34,7 @@ const RenameFileModal: React.FC<RenameFileModalProps> = ({ open, onCancel, onSuc
         onCancel();
       },
       onError: (err) => {
-        message.error(parseErrorMessage(err, '重命名失败'));
+        message.error(parseErrorMessage(err));
       },
     }
   );
