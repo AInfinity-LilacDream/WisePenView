@@ -1,4 +1,5 @@
 import type { Message } from '@/components/ChatPanel/index.type';
+import IconText from '@/components/Common/IconText';
 import { useAppMessage } from '@/hooks/useAppMessage';
 import { useInterval } from 'ahooks';
 import { Button, Spin } from 'antd';
@@ -63,12 +64,15 @@ function AiMessage({ message }: { message: Message }) {
         )}
         <ToolCallBlock content={message.toolContent || ''} />
         {showLoadingIndicator && (
-          <div className={styles.loadingHint}>
-            <Spin size="small" />
-            <span key={loadingHintIndex} className={styles.loadingHintText}>
-              {LOADING_HINTS[loadingHintIndex]}
-            </span>
-          </div>
+          <IconText
+            className={styles.loadingHint}
+            textClassName={styles.loadingHintText}
+            icon={<Spin size="small" />}
+            iconSize={14}
+            gap="var(--ant-margin-xs)"
+          >
+            <span key={loadingHintIndex}>{LOADING_HINTS[loadingHintIndex]}</span>
+          </IconText>
         )}
         {/* 正文内容 */}
         {/* 只有当正文有内容，或者没有思考过程且非 loading 时（避免空白占位），才渲染正文 */}

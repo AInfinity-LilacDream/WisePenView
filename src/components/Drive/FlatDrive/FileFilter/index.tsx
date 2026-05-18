@@ -1,3 +1,4 @@
+import IconText from '@/components/Common/IconText';
 import StickerManageModal from '@/components/Drive/Modals/StickerManageModal';
 import { useStickerService } from '@/domains';
 import { RESOURCE_SORT_BY, RESOURCE_SORT_DIR, TAG_QUERY_LOGIC_MODE } from '@/domains/Resource/enum';
@@ -152,12 +153,10 @@ function FileFilter({ value, onChange }: FileFilterProps) {
           />
         </div>
         <div className={styles.toolbarRight}>
-          <Button
-            type="default"
-            icon={<LuTags size={16} />}
-            onClick={() => setStickerManageModalOpen(true)}
-          >
-            管理标签
+          <Button type="default" onClick={() => setStickerManageModalOpen(true)}>
+            <IconText icon={<LuTags />} iconSize={16}>
+              管理标签
+            </IconText>
           </Button>
         </div>
       </div>

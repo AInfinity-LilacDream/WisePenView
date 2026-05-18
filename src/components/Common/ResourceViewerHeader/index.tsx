@@ -2,6 +2,7 @@ import clsx from 'clsx';
 import { RiArrowLeftLine } from 'react-icons/ri';
 import { useLocation, useNavigate } from 'react-router-dom';
 
+import IconText from '@/components/Common/IconText';
 import type { ResourceViewerHeaderProps } from './index.type';
 import styles from './style.module.less';
 
@@ -32,8 +33,9 @@ function ResourceViewerHeader({
       <div className={styles.bar}>
         <div className={styles.toolbar}>
           <button type="button" className={styles.backLink} onClick={handleBack}>
-            <RiArrowLeftLine size={18} aria-hidden />
-            <span>{backLabel}</span>
+            <IconText icon={<RiArrowLeftLine />} iconSize={18} gap="var(--ant-margin-xs)">
+              {backLabel}
+            </IconText>
           </button>
           <div className={styles.toolbarMiddle}>
             {inlineTitle ? <div className={styles.inlineTitle}>{inlineTitle}</div> : null}

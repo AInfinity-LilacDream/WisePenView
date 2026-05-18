@@ -1,3 +1,4 @@
+import IconText from '@/components/Common/IconText';
 import {
   DeleteFileModal,
   DeleteFolderModal,
@@ -218,8 +219,9 @@ function FolderDrive() {
               className={`${styles.breadcrumbItem} ${breadcrumb.length === 0 ? styles.breadcrumbItemActive : ''}`}
               onClick={() => resetCwd()}
             >
-              <LuHouse size={14} />
-              <span>云盘</span>
+              <IconText icon={<LuHouse />} iconSize={14} gap={4}>
+                云盘
+              </IconText>
             </button>
             {breadcrumb.map((item, idx) => (
               <React.Fragment key={item.tagId}>
@@ -235,13 +237,10 @@ function FolderDrive() {
             ))}
           </nav>
 
-          <Button
-            type="default"
-            size="small"
-            icon={<LuFolderPlus size={16} />}
-            onClick={handleOpenNewFolder}
-          >
-            新建文件夹
+          <Button type="default" size="small" onClick={handleOpenNewFolder}>
+            <IconText icon={<LuFolderPlus />} iconSize={16}>
+              新建文件夹
+            </IconText>
           </Button>
         </div>
 

@@ -1,3 +1,4 @@
+import IconText from '@/components/Common/IconText';
 import FlatDrive from '@/components/Drive/FlatDrive';
 import { StickerManageModal } from '@/components/Drive/Modals';
 import FolderDrive from '@/components/Drive/TreeDrive/FolderDrive';
@@ -37,19 +38,15 @@ function Drive() {
           <span className={styles.pageSubtitle}>管理您的项目和文档</span>
         </div>
         <div className={styles.actionsRow}>
-          <Button
-            type="default"
-            icon={<LuTags size={16} />}
-            onClick={() => setStickerManageOpen(true)}
-          >
-            管理标签
+          <Button type="default" onClick={() => setStickerManageOpen(true)}>
+            <IconText icon={<LuTags />} iconSize={16}>
+              管理标签
+            </IconText>
           </Button>
-          <Button
-            type="primary"
-            icon={<AiOutlineCloudUpload size={16} />}
-            onClick={() => setUploadModalOpen(true)}
-          >
-            上传文件
+          <Button type="primary" onClick={() => setUploadModalOpen(true)}>
+            <IconText icon={<AiOutlineCloudUpload />} iconSize={16}>
+              上传文件
+            </IconText>
           </Button>
         </div>
       </div>

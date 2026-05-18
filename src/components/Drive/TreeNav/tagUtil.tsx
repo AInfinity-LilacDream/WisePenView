@@ -1,3 +1,4 @@
+import IconText from '@/components/Common/IconText';
 import type { TagTreeNode } from '@/domains/Tag/service/index.type';
 import type { DataNode } from 'antd/es/tree';
 import React from 'react';
@@ -23,10 +24,15 @@ export function tagToDataNode(
   return {
     key: node.tagId,
     title: (
-      <span className={styles.nodeTitle}>
-        {getNodeIcon?.(node) ?? <AiOutlineTag size={14} color="var(--ant-color-primary)" />}
+      <IconText
+        className={styles.nodeTitle}
+        icon={getNodeIcon?.(node) ?? <AiOutlineTag color="var(--ant-color-primary)" />}
+        iconSize={14}
+        gap="var(--ant-margin-xxs)"
+        ellipsis
+      >
         {node.tagName}
-      </span>
+      </IconText>
     ),
     isLeaf: children.length === 0,
     children: children.length > 0 ? children : undefined,

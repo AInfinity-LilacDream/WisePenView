@@ -1,4 +1,5 @@
 import FileTypeIcon from '@/components/Common/FileTypeIcon';
+import IconText from '@/components/Common/IconText';
 import ResourceViewerHeader from '@/components/Common/ResourceViewerHeader';
 import rvhStyles from '@/components/Common/ResourceViewerHeader/style.module.less';
 import PdfViewer from '@/components/Pdf/PdfViewer/index';
@@ -135,14 +136,19 @@ function PdfPreview() {
       <div className={styles.container}>
         <ResourceViewerHeader
           inlineTitle={
-            <>
-              <span aria-hidden className={styles.headerTypeIcon}>
+            <IconText
+              className={rvhStyles.inlineTitleText}
+              icon={
                 <FileTypeIcon
                   resourceType={docInfo.resourceInfo.resourceType ?? RESOURCE_TYPE.FILE}
                 />
-              </span>
-              <span className={rvhStyles.inlineTitleText}>{docInfo.resourceInfo.resourceName}</span>
-            </>
+              }
+              iconSize={18}
+              gap="var(--ant-margin-sm)"
+              ellipsis
+            >
+              {docInfo.resourceInfo.resourceName}
+            </IconText>
           }
         />
         <div className={styles.statesBelowHeader}>
@@ -169,14 +175,19 @@ function PdfPreview() {
     <div className={styles.container}>
       <ResourceViewerHeader
         inlineTitle={
-          <>
-            <span aria-hidden className={styles.headerTypeIcon}>
+          <IconText
+            className={rvhStyles.inlineTitleText}
+            icon={
               <FileTypeIcon
                 resourceType={docInfo.resourceInfo.resourceType ?? RESOURCE_TYPE.FILE}
               />
-            </span>
-            <span className={rvhStyles.inlineTitleText}>{docInfo.resourceInfo.resourceName}</span>
-          </>
+            }
+            iconSize={18}
+            gap="var(--ant-margin-sm)"
+            ellipsis
+          >
+            {docInfo.resourceInfo.resourceName}
+          </IconText>
         }
       />
       <div className={styles.content}>

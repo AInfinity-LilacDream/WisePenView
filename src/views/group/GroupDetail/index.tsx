@@ -1,6 +1,7 @@
 /**
  * 小组详情：展示/ Tab / 小组盘只读等由 getGroupDisplayConfig（如 showWalletTabs、driveReadOnlyMode）驱动。
  */
+import IconText from '@/components/Common/IconText';
 import UserCapsule from '@/components/Common/UserCapsule';
 import TagDrive from '@/components/Drive/TreeDrive/TagDrive';
 import { getGroupDisplayConfig } from '@/components/Group/GroupDisplayConfig';
@@ -229,24 +230,22 @@ function GroupDetail() {
       <div className={layout.actionsBar}>
         {currentUserRole === 'OWNER' ? (
           <div className={layout.actionsRow}>
-            <Button icon={<AiOutlineEdit size={16} />} onClick={() => setEditGroupModalOpen(true)}>
-              编辑小组信息
+            <Button onClick={() => setEditGroupModalOpen(true)}>
+              <IconText icon={<AiOutlineEdit />} iconSize={16}>
+                编辑小组信息
+              </IconText>
             </Button>
-            <Button
-              danger
-              icon={<AiOutlineDelete size={16} />}
-              onClick={() => setDissolveGroupModalOpen(true)}
-            >
-              解散小组
+            <Button danger onClick={() => setDissolveGroupModalOpen(true)}>
+              <IconText icon={<AiOutlineDelete />} iconSize={16}>
+                解散小组
+              </IconText>
             </Button>
           </div>
         ) : (
-          <Button
-            danger
-            icon={<AiOutlineLogout size={16} />}
-            onClick={() => setExitGroupModalOpen(true)}
-          >
-            退出小组
+          <Button danger onClick={() => setExitGroupModalOpen(true)}>
+            <IconText icon={<AiOutlineLogout />} iconSize={16}>
+              退出小组
+            </IconText>
           </Button>
         )}
       </div>

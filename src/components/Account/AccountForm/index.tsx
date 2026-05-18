@@ -1,3 +1,4 @@
+import IconText from '@/components/Common/IconText';
 import { useUserService } from '@/domains';
 import type { UpdateUserInfoRequest } from '@/domains/User';
 import { DEGREE, SEX } from '@/domains/User/enum';
@@ -141,12 +142,10 @@ function AccountForm({
       <div className={styles.sectionHeader}>
         <h3 className={styles.sectionTitle}>基本档案</h3>
         {!editMode ? (
-          <Button
-            type="primary"
-            icon={<RiPencilLine size={16} />}
-            onClick={() => onEditModeChange(true)}
-          >
-            编辑资料
+          <Button type="primary" onClick={() => onEditModeChange(true)}>
+            <IconText icon={<RiPencilLine />} iconSize={16}>
+              编辑资料
+            </IconText>
           </Button>
         ) : null}
       </div>

@@ -1,4 +1,5 @@
 import FileTypeIcon from '@/components/Common/FileTypeIcon';
+import IconText from '@/components/Common/IconText';
 import type { MenuProps } from 'antd';
 import { RiCloseLine } from 'react-icons/ri';
 import type { RecentFilesGroupProps } from './index.type';
@@ -22,7 +23,6 @@ export const buildRecentFilesGroupItems = ({
         ]
       : items.map((item) => ({
           key: `opened-file-${item.resourceId}`,
-          icon: <FileTypeIcon resourceType={item.resourceType} size={16} />,
           onClick: () => onOpenFile(item.resourceId),
           label: (
             <div
@@ -32,7 +32,15 @@ export const buildRecentFilesGroupItems = ({
                 event.preventDefault();
               }}
             >
-              <span className={styles.fileMenuLabelText}>{item.resourceName || '未命名'}</span>
+              <IconText
+                className={styles.fileMenuLabelText}
+                icon={<FileTypeIcon resourceType={item.resourceType} />}
+                iconSize={16}
+                gap="var(--ant-margin-xs)"
+                ellipsis
+              >
+                {item.resourceName || '未命名'}
+              </IconText>
               <button
                 type="button"
                 className={styles.fileCloseBtn}

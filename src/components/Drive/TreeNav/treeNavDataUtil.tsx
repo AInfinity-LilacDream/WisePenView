@@ -1,4 +1,5 @@
 import FileTypeIcon from '@/components/Common/FileTypeIcon';
+import IconText from '@/components/Common/IconText';
 import type { Folder } from '@/domains/Folder';
 import { mapFolderToTagTreeNode } from '@/domains/Folder';
 import type { IFolderService } from '@/domains/Folder/service/index.type';
@@ -54,10 +55,15 @@ export function tagToLazyNavDataNode(node: TagTreeNode, ctx: NavNodeBuildContext
   return {
     key: node.tagId,
     title: (
-      <span className={styles.nodeTitle}>
-        {customBranchIcon ?? <AiOutlineTag size={14} color="var(--ant-color-primary)" />}
+      <IconText
+        className={styles.nodeTitle}
+        icon={customBranchIcon ?? <AiOutlineTag color="var(--ant-color-primary)" />}
+        iconSize={14}
+        gap="var(--ant-margin-xxs)"
+        ellipsis
+      >
         {node.tagName}
-      </span>
+      </IconText>
     ),
     isLeaf: false,
     checkable: false,
@@ -76,16 +82,22 @@ export function createFileDataNode(item: ResourceItem, ctx: NavNodeBuildContext)
   return {
     key: `${TREE_NAV_FILE_KEY_PREFIX}${id}`,
     title: (
-      <span className={styles.nodeTitle}>
-        {customFileIcon ?? (
-          <FileTypeIcon
-            resourceType={item.resourceType}
-            size={14}
-            color="var(--ant-color-text-secondary)"
-          />
-        )}
+      <IconText
+        className={styles.nodeTitle}
+        icon={
+          customFileIcon ?? (
+            <FileTypeIcon
+              resourceType={item.resourceType}
+              color="var(--ant-color-text-secondary)"
+            />
+          )
+        }
+        iconSize={14}
+        gap="var(--ant-margin-xxs)"
+        ellipsis
+      >
         {item.resourceName || '未命名文件'}
-      </span>
+      </IconText>
     ),
     isLeaf: true,
     checkable: false,

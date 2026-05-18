@@ -1,3 +1,4 @@
+import IconText from '@/components/Common/IconText';
 import { useAppMessage } from '@/hooks/useAppMessage';
 import { Button, Modal } from 'antd';
 import { useState } from 'react';
@@ -34,14 +35,10 @@ function InviteUserModal({ open, onCancel, inviteCode }: InviteUserModalProps) {
         <Button key="cancel" onClick={handleCancel}>
           关闭
         </Button>,
-        <Button
-          key="copy"
-          type="primary"
-          icon={<LuCopy />}
-          onClick={handleCopy}
-          disabled={!inviteCode}
-        >
-          {copied ? '已复制' : '复制'}
+        <Button key="copy" type="primary" onClick={handleCopy} disabled={!inviteCode}>
+          <IconText icon={<LuCopy />} iconSize={16}>
+            {copied ? '已复制' : '复制'}
+          </IconText>
         </Button>,
       ]}
       width={400}

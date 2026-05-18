@@ -14,6 +14,7 @@ import {
 
 import { Claude, DeepSeek, Doubao, Gemini, Grok, Meta, Mistral, OpenAI } from '@lobehub/icons';
 
+import IconText from '@/components/Common/IconText';
 import { useChatService } from '@/domains';
 import { mapApiModelsToFlatModels } from '@/domains/Chat';
 import { useChatModelPreferenceStore } from '@/store/useChatModelPreferenceStore';
@@ -124,8 +125,11 @@ function ModelSelector({ value, onChange }: ModelSelectorProps) {
 
   const sortMenuItems: MenuProps['items'] = SORT_OPTIONS.map((opt) => ({
     key: opt.value,
-    label: opt.label,
-    icon: <opt.icon />,
+    label: (
+      <IconText icon={<opt.icon />} iconSize={14} gap="var(--ant-margin-xs)">
+        {opt.label}
+      </IconText>
+    ),
     onClick: () => setCurrentSort(opt.value),
     className: currentSort === opt.value ? 'ant-dropdown-menu-item-selected' : '',
   }));
@@ -141,8 +145,13 @@ function ModelSelector({ value, onChange }: ModelSelectorProps) {
             onClick={() => setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'))}
             aria-label={sortOrder === 'asc' ? '切换为降序' : '切换为升序'}
           >
-            {sortOrder === 'asc' ? <RiArrowUpSLine /> : <RiArrowDownSLine />}
-            {sortOrder === 'asc' ? '升序' : '降序'}
+            <IconText
+              icon={sortOrder === 'asc' ? <RiArrowUpSLine /> : <RiArrowDownSLine />}
+              iconSize={14}
+              gap={2}
+            >
+              {sortOrder === 'asc' ? '升序' : '降序'}
+            </IconText>
           </button>
 
           <Dropdown
@@ -155,8 +164,9 @@ function ModelSelector({ value, onChange }: ModelSelectorProps) {
             placement="bottomRight"
           >
             <div className={styles.sortTrigger}>
-              {SORT_OPTIONS.find((o) => o.value === currentSort)?.label}
-              <RiArrowDownSLine style={{ marginLeft: 4, fontSize: 10 }} />
+              <IconText icon={<RiArrowDownSLine />} iconPosition="end" iconSize={10} gap={4}>
+                {SORT_OPTIONS.find((o) => o.value === currentSort)?.label}
+              </IconText>
             </div>
           </Dropdown>
         </div>
@@ -185,12 +195,16 @@ function ModelSelector({ value, onChange }: ModelSelectorProps) {
               {currentSort === 'ratio' && <div className={styles.rankNum}>#{index + 1}</div>}
 
               <div className={styles.itemLeft}>
-                <div className={styles.logoWrapper}>
-                  {/* 使用 Provider 字段动态生成 Logo */}
-                  <LogoFactory provider={model.provider} size={20} />
-                </div>
-
-                <div className={styles.modelName}>{model.name}</div>
+                <IconText
+                  className={styles.modelTitle}
+                  textClassName={styles.modelName}
+                  icon={<LogoFactory provider={model.provider} size={20} />}
+                  iconSize={20}
+                  gap="var(--ant-margin-xs)"
+                  ellipsis
+                >
+                  {model.name}
+                </IconText>
 
                 {/* {model.vision && (
                   <Tooltip title="支持视觉识别" classNames={{ container: styles.tooltipBody }}>
@@ -234,14 +248,21 @@ function ModelSelector({ value, onChange }: ModelSelectorProps) {
     >
       <div className={styles.trigger}>
         {/* 如果正在加载，显示 Loading 图标或占位符 */}
-        {loading ? (
-          <Spin size="small" style={{ marginRight: 8 }} />
-        ) : (
-          <LogoFactory provider={currentModel?.provider ?? 'openai'} size={16} />
-        )}
-
-        <span>{loading ? '模型加载中' : (currentModel?.name ?? '请选择模型')}</span>
-        <RiArrowDownSLine style={{ fontSize: 10 }} />
+        <IconText
+          icon={
+            loading ? (
+              <Spin size="small" />
+            ) : (
+              <LogoFactory provider={currentModel?.provider ?? 'openai'} size={16} />
+            )
+          }
+          iconSize={16}
+          gap="var(--ant-margin-xxs)"
+          ellipsis
+        >
+          {loading ? '模型加载中' : (currentModel?.name ?? '请选择模型')}
+        </IconText>
+        <IconText icon={<RiArrowDownSLine />} iconSize={10} aria-hidden />
       </div>
     </Popover>
   );

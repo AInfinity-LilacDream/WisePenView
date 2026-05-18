@@ -5,6 +5,7 @@ import { RiArrowLeftDoubleLine, RiMenuLine } from 'react-icons/ri';
 import { Link, useParams } from 'react-router-dom';
 
 import FileTypeIcon from '@/components/Common/FileTypeIcon';
+import IconText from '@/components/Common/IconText';
 import ResourceViewerHeader from '@/components/Common/ResourceViewerHeader';
 import rvhStyles from '@/components/Common/ResourceViewerHeader/style.module.less';
 import CustomBlockNote from '@/components/Note/CustomBlockNote';
@@ -83,12 +84,15 @@ function NoteViewConnected({ noteId, resourceId, noteInfoDisplay }: NoteViewConn
     <div className={styles.pageWrap}>
       <ResourceViewerHeader
         inlineTitle={
-          <>
-            <span aria-hidden className={styles.headerTypeIcon}>
-              <FileTypeIcon resourceType={RESOURCE_TYPE.NOTE} />
-            </span>
-            <span className={rvhStyles.inlineTitleText}>{toolbarNoteTitle}</span>
-          </>
+          <IconText
+            className={rvhStyles.inlineTitleText}
+            icon={<FileTypeIcon resourceType={RESOURCE_TYPE.NOTE} />}
+            iconSize={18}
+            gap="var(--ant-margin-sm)"
+            ellipsis
+          >
+            {toolbarNoteTitle}
+          </IconText>
         }
       />
       <div className={styles.statesBelowHeader}>

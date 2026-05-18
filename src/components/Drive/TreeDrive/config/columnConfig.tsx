@@ -1,4 +1,5 @@
 import FileTypeIcon from '@/components/Common/FileTypeIcon';
+import IconText from '@/components/Common/IconText';
 import type { MoveToFolderTarget } from '@/components/Drive/Modals';
 import type { GroupFileOrgLogic } from '@/domains/Group';
 import type { ResourceItem } from '@/domains/Resource';
@@ -95,10 +96,9 @@ export function getTreeDriveColumns(
               disabled={isLoading}
             >
               {isLoading ? (
-                <>
-                  <Spin size="small" />
-                  <span>加载中…</span>
-                </>
+                <IconText icon={<Spin size="small" />} iconSize={14} gap="var(--ant-margin-xs)">
+                  加载中…
+                </IconText>
               ) : (
                 <span>
                   加载更多文件（已加载 {record.loadedFiles} / 共 {record.totalFiles}）
@@ -108,26 +108,31 @@ export function getTreeDriveColumns(
           );
         }
         return (
-          <div className={styles.nameCell}>
-            {record._type === 'folder' ? (
-              mode === 'tag' && fileOrgLogic !== 'FOLDER' ? (
-                <AiOutlineTag size={20} color="var(--ant-color-primary)" />
+          <IconText
+            as="div"
+            className={styles.nameCell}
+            icon={
+              record._type === 'folder' ? (
+                mode === 'tag' && fileOrgLogic !== 'FOLDER' ? (
+                  <AiOutlineTag color="var(--ant-color-primary)" />
+                ) : (
+                  <AiOutlineFolder color="var(--ant-color-warning)" />
+                )
               ) : (
-                <AiOutlineFolder size={20} color="var(--ant-color-warning)" />
+                <FileTypeIcon
+                  resourceType={record.data.resourceType}
+                  color="var(--ant-color-text-secondary)"
+                />
               )
-            ) : (
-              <FileTypeIcon
-                resourceType={record.data.resourceType}
-                size={18}
-                color="var(--ant-color-text-secondary)"
-              />
-            )}
-            <span>
-              {record._type === 'folder'
-                ? getFolderDisplayName(record.data.tagName)
-                : record.data.resourceName || '未命名'}
-            </span>
-          </div>
+            }
+            iconSize={record._type === 'folder' ? 20 : 18}
+            gap="var(--ant-margin-sm)"
+            ellipsis
+          >
+            {record._type === 'folder'
+              ? getFolderDisplayName(record.data.tagName)
+              : record.data.resourceName || '未命名'}
+          </IconText>
         );
       },
     },

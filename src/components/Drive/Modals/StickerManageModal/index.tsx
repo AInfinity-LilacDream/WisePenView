@@ -1,3 +1,4 @@
+import IconText from '@/components/Common/IconText';
 import { useStickerService } from '@/domains';
 import type { Sticker } from '@/domains/Sticker';
 import { useAppMessage } from '@/hooks/useAppMessage';
@@ -207,12 +208,13 @@ function StickerManageModal({ open, onCancel, onSuccess }: StickerManageModalPro
                 />
                 <Button
                   type="default"
-                  icon={<LuPlus />}
                   onClick={() => void handleAdd()}
                   loading={addLoading}
                   style={{ marginTop: 12 }}
                 >
-                  新建标签
+                  <IconText icon={<LuPlus />} iconSize={16}>
+                    新建标签
+                  </IconText>
                 </Button>
               </div>
             </div>

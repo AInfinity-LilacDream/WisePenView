@@ -1,3 +1,4 @@
+import IconText from '@/components/Common/IconText';
 import { Button } from 'antd';
 import { AiOutlineDelete } from 'react-icons/ai';
 import { RiMoneyDollarCircleLine, RiUserLine } from 'react-icons/ri';
@@ -21,31 +22,24 @@ function MemberListToolbar({
         <div className={styles.toolbarEditContent}>
           <div className={styles.toolbarEditContentLeft}>
             {groupDisplayConfig.canModifyPermission && (
-              <Button
-                icon={<RiUserLine />}
-                onClick={onModifyPermission}
-                disabled={selectedCount === 0}
-              >
-                修改权限
+              <Button onClick={onModifyPermission} disabled={selectedCount === 0}>
+                <IconText icon={<RiUserLine />} iconSize={16}>
+                  修改权限
+                </IconText>
               </Button>
             )}
             {groupDisplayConfig.canAssignQuota && (
-              <Button
-                icon={<RiMoneyDollarCircleLine />}
-                onClick={onAssignQuota}
-                disabled={selectedCount === 0}
-              >
-                分配配额
+              <Button onClick={onAssignQuota} disabled={selectedCount === 0}>
+                <IconText icon={<RiMoneyDollarCircleLine />} iconSize={16}>
+                  分配配额
+                </IconText>
               </Button>
             )}
             {groupDisplayConfig.canRemoveMember && (
-              <Button
-                danger
-                icon={<AiOutlineDelete />}
-                onClick={onDelete}
-                disabled={selectedCount === 0}
-              >
-                删除成员
+              <Button danger onClick={onDelete} disabled={selectedCount === 0}>
+                <IconText icon={<AiOutlineDelete />} iconSize={16}>
+                  删除成员
+                </IconText>
               </Button>
             )}
           </div>

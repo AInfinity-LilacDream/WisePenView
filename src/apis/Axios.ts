@@ -52,6 +52,16 @@ const mapNetworkCode = (error: AxiosError): number => {
   return FRONTEND_NETWORK_ERROR.UNKNOWN;
 };
 
+const mapHttpCode = (status: number): number => {
+  if (status === 400) {
+    return FRONTEND_NETWORK_ERROR.BAD_REQUEST;
+  }
+  if (status === 500) {
+    return FRONTEND_NETWORK_ERROR.SERVER;
+  }
+  return FRONTEND_NETWORK_ERROR.HTTP;
+};
+
 const mapAxiosErrorToWisePenError = (error: AxiosError): WisePenError => {
   if (!error.response) {
     const code = mapNetworkCode(error);
@@ -82,7 +92,7 @@ const mapAxiosErrorToWisePenError = (error: AxiosError): WisePenError => {
     serverMsg ?? (status === 400 ? '请求参数错误' : status === 500 ? '服务器错误' : error.message);
 
   return new WisePenError({
-    code: FRONTEND_NETWORK_ERROR.UNKNOWN,
+    code: mapHttpCode(status),
     source: 'http',
     serverMsg: fallbackMsg,
     message: fallbackMsg,

@@ -5,6 +5,7 @@
  * 个人「充值」仅 REFILL；小组「充值」与「消费」通过 walletService.listMergedTransactions 合并两类流水；其余走 listTransactions。
  * 数据请求使用 ahooks（不使用 useEffect）。
  */
+import IconText from '@/components/Common/IconText';
 import RechargeModal from '@/components/Wallet/RechargeModal';
 import { useGroupService, useWalletService } from '@/domains';
 import {
@@ -282,21 +283,26 @@ function ComputeWallet({
           const kind = t as WalletTransactionKind;
           const inflow = isInflowKind(kind);
           return (
-            <span className={styles.typeCell}>
-              {inflow ? (
-                <>
-                  <RiArrowUpLine size={16} className={styles.amountRecharge} />
-                  <RiAddLine size={14} className={styles.amountRecharge} />
-                  <span>{WALLET_TRANSACTION_KIND.getLabel(kind)}</span>
-                </>
-              ) : (
-                <>
-                  <RiArrowDownLine size={16} className={styles.amountSpend} />
-                  <RiSubtractLine size={14} className={styles.amountSpend} />
-                  <span>{WALLET_TRANSACTION_KIND.getLabel(kind)}</span>
-                </>
-              )}
-            </span>
+            <IconText
+              className={styles.typeCell}
+              icon={
+                inflow ? (
+                  <span className={styles.typeIconStack}>
+                    <RiArrowUpLine size={16} className={styles.amountRecharge} />
+                    <RiAddLine size={14} className={styles.amountRecharge} />
+                  </span>
+                ) : (
+                  <span className={styles.typeIconStack}>
+                    <RiArrowDownLine size={16} className={styles.amountSpend} />
+                    <RiSubtractLine size={14} className={styles.amountSpend} />
+                  </span>
+                )
+              }
+              iconSize={32}
+              gap="var(--ant-margin-xs)"
+            >
+              {WALLET_TRANSACTION_KIND.getLabel(kind)}
+            </IconText>
           );
         },
       },

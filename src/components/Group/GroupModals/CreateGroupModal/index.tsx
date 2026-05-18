@@ -1,3 +1,4 @@
+import IconText from '@/components/Common/IconText';
 import { useGroupService, useImageService, useUserService } from '@/domains';
 import type { CreateGroupRequest, GroupFileOrgLogic } from '@/domains/Group';
 import { ALLOWED_GROUP_TYPES_MAP, GROUP_FILE_ORG_LOGIC, GROUP_TYPE } from '@/domains/Group/enum';
@@ -179,7 +180,11 @@ function CreateGroupModal({ open, onCancel, onSuccess }: CreateGroupModalProps) 
           getValueFromEvent={normalizeUpload}
         >
           <Upload name="file" beforeUpload={beforeUploadCover} accept="image/*" maxCount={1}>
-            <Button icon={<LuUpload />}>点击上传</Button>
+            <Button>
+              <IconText icon={<LuUpload />} iconSize={16}>
+                点击上传
+              </IconText>
+            </Button>
           </Upload>
         </Form.Item>
       </Form>

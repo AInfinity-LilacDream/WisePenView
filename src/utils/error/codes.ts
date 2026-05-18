@@ -3,6 +3,9 @@ export const FRONTEND_NETWORK_ERROR = {
   TIMEOUT: 10,
   NETWORK: 11,
   CANCELED: 12,
+  BAD_REQUEST: 13,
+  SERVER: 14,
+  HTTP: 15,
   UNKNOWN: 99,
 } as const;
 

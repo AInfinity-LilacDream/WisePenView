@@ -1,4 +1,5 @@
 import FileTypeIcon from '@/components/Common/FileTypeIcon';
+import IconText from '@/components/Common/IconText';
 import type { Folder } from '@/domains/Folder';
 import type { IFolderService } from '@/domains/Folder/service/index.type';
 import type { TagTreeNode } from '@/domains/Tag/service/index.type';
@@ -30,10 +31,15 @@ export function createFolderDataNode(
   return {
     key: folder.tagId,
     title: (
-      <span className={styles.nodeTitle}>
-        {icon ?? <AiOutlineFolder size={14} color="var(--ant-color-warning)" />}
+      <IconText
+        className={styles.nodeTitle}
+        icon={icon ?? <AiOutlineFolder color="var(--ant-color-warning)" />}
+        iconSize={14}
+        gap="var(--ant-margin-xxs)"
+        ellipsis
+      >
         {displayName ?? getFolderDisplayName(folder.tagName)}
-      </span>
+      </IconText>
     ),
     isLeaf: false,
   };
@@ -50,14 +56,17 @@ export function buildFilePreviewNodes(
     nodes.push({
       key: `${FILE_KEY_PREFIX}${f.resourceId}`,
       title: (
-        <span className={styles.nodeTitle}>
-          <FileTypeIcon
-            resourceType={f.resourceType}
-            size={14}
-            color="var(--ant-color-text-secondary)"
-          />
+        <IconText
+          className={styles.nodeTitle}
+          icon={
+            <FileTypeIcon resourceType={f.resourceType} color="var(--ant-color-text-secondary)" />
+          }
+          iconSize={14}
+          gap="var(--ant-margin-xxs)"
+          ellipsis
+        >
           {f.resourceName || '未命名文件'}
-        </span>
+        </IconText>
       ),
       isLeaf: true,
       selectable: false,

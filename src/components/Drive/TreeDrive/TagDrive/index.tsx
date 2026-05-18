@@ -1,3 +1,4 @@
+import IconText from '@/components/Common/IconText';
 import {
   DeleteTagModal,
   EditTagModal,
@@ -257,8 +258,9 @@ function TagDrive({
               className={`${styles.breadcrumbItem} ${breadcrumb.length === 0 ? styles.breadcrumbItemActive : ''}`}
               onClick={() => resetCwd()}
             >
-              <LuHouse size={14} />
-              <span>小组空间</span>
+              <IconText icon={<LuHouse />} iconSize={14} gap={4}>
+                小组空间
+              </IconText>
             </button>
             {breadcrumb.map((item, idx) => (
               <React.Fragment key={item.tagId}>
@@ -275,34 +277,25 @@ function TagDrive({
           </nav>
 
           <div className={styles.toolbarActions}>
-            <Button
-              type="default"
-              size="small"
-              icon={<AiOutlineCloudUpload size={16} />}
-              onClick={handleOpenUploadModal}
-            >
-              上传文件
+            <Button type="default" size="small" onClick={handleOpenUploadModal}>
+              <IconText icon={<AiOutlineCloudUpload />} iconSize={16}>
+                上传文件
+              </IconText>
             </Button>
 
             {canManageTagPermission && (
-              <Button
-                type="default"
-                size="small"
-                icon={<LuShield size={16} />}
-                onClick={() => handleOpenTagPermission()}
-              >
-                标签权限管理
+              <Button type="default" size="small" onClick={() => handleOpenTagPermission()}>
+                <IconText icon={<LuShield />} iconSize={16}>
+                  标签权限管理
+                </IconText>
               </Button>
             )}
 
             {canCreateTag && (
-              <Button
-                type="default"
-                size="small"
-                icon={createActionIcon}
-                onClick={handleOpenNewTag}
-              >
-                {createActionLabel}
+              <Button type="default" size="small" onClick={handleOpenNewTag}>
+                <IconText icon={createActionIcon} iconSize={16}>
+                  {createActionLabel}
+                </IconText>
               </Button>
             )}
           </div>
