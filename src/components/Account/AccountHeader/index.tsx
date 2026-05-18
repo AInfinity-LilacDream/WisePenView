@@ -6,12 +6,12 @@ import { createBeforeUploadImageWithinLimit } from '@/utils/image/uploadLimit';
 import { useRequest } from 'ahooks';
 import type { UploadFile } from 'antd';
 import { Avatar, Button, Modal, Tooltip, Upload } from 'antd';
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { RiCheckLine, RiCloseLine, RiErrorWarningLine } from 'react-icons/ri';
 import type { AccountHeaderProps } from './index.type';
 import styles from './style.module.less';
 
-const AccountHeader: React.FC<AccountHeaderProps> = ({ user, onUserInfoUpdated }) => {
+function AccountHeader({ user, onUserInfoUpdated }: AccountHeaderProps) {
   const userService = useUserService();
   const imageService = useImageService();
   const message = useAppMessage();
@@ -174,6 +174,6 @@ const AccountHeader: React.FC<AccountHeaderProps> = ({ user, onUserInfoUpdated }
       </Modal>
     </>
   );
-};
+}
 
 export default AccountHeader;

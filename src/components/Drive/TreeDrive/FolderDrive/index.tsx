@@ -29,7 +29,7 @@ import {
 import type { TreeRowItem } from '../index.type';
 import styles from '../style.module.less';
 
-const FolderDrive: React.FC = () => {
+function FolderDrive() {
   const folderService = useFolderService();
   const message = useAppMessage();
   const clickFile = useClickFile();
@@ -306,6 +306,6 @@ const FolderDrive: React.FC = () => {
       </div>
     </main>
   );
-};
+}
 
 export default FolderDrive;

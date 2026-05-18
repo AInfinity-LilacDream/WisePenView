@@ -10,7 +10,7 @@ import { usePagination } from 'ahooks';
 import type { MenuProps } from 'antd';
 import { Dropdown, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import React, { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { LuEllipsisVertical, LuPencil, LuTag, LuTrash2 } from 'react-icons/lu';
 import type { FileListProps } from './index.type';
 import styles from './style.module.less';
@@ -139,7 +139,7 @@ const buildColumns = (props: ColumnBuildProps): ColumnsType<ResourceItem> => [
   },
 ];
 
-const FileList: React.FC<FileListProps> = ({ groupId, filter }) => {
+function FileList({ groupId, filter }: FileListProps) {
   const resourceService = useResourceService();
   const message = useAppMessage();
   const clickFile = useClickFile();
@@ -308,6 +308,6 @@ const FileList: React.FC<FileListProps> = ({ groupId, filter }) => {
       />
     </>
   );
-};
+}
 
 export default FileList;

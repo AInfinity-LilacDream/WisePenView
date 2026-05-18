@@ -5,13 +5,13 @@ import { useAppMessage } from '@/hooks/useAppMessage';
 import { parseErrorMessage } from '@/utils/error';
 import { useRequest } from 'ahooks';
 import { Button, Form, Input, Typography } from 'antd';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { RiLockLine, RiUserLine } from 'react-icons/ri';
 import { Link, useNavigate } from 'react-router-dom';
 import auth from '../Auth.module.less';
 
-const Login: React.FC = () => {
+function Login() {
   const authService = useAuthService();
   const message = useAppMessage();
   const { t } = useTranslation('auth');
@@ -88,6 +88,6 @@ const Login: React.FC = () => {
       <ServiceAgreement open={contractOpen} onCancel={() => setContractOpen(false)} />
     </div>
   );
-};
+}
 
 export default Login;

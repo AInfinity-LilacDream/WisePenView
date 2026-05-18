@@ -6,17 +6,17 @@ import { useAppMessage } from '@/hooks/useAppMessage';
 import { parseErrorMessage } from '@/utils/error';
 import { useRequest } from 'ahooks';
 import { Button, Modal, Steps } from 'antd';
-import React, { useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
 import styles from './index.module.less';
 import type { UploadFileToGroupModalProps } from './index.type';
 
-const UploadFileToGroupModal: React.FC<UploadFileToGroupModalProps> = ({
+function UploadFileToGroupModal({
   open,
   onCancel,
   groupId,
   fileOrgLogic,
   onSuccess,
-}) => {
+}: UploadFileToGroupModalProps) {
   const resourceService = useResourceService();
   const message = useAppMessage();
   const [step, setStep] = useState(0);
@@ -196,6 +196,6 @@ const UploadFileToGroupModal: React.FC<UploadFileToGroupModalProps> = ({
       </div>
     </Modal>
   );
-};
+}
 
 export default UploadFileToGroupModal;

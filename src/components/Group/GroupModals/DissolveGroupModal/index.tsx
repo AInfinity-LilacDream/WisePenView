@@ -4,19 +4,19 @@ import { useAppMessage } from '@/hooks/useAppMessage';
 import { parseErrorMessage } from '@/utils/error';
 import { useRequest } from 'ahooks';
 import { Alert, Button, Input, Modal } from 'antd';
-import React, { useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { DissolveGroupModalProps } from './index.type';
 
 import styles from './index.module.less';
 
-const DissolveGroupModal: React.FC<DissolveGroupModalProps> = ({
+function DissolveGroupModal({
   open,
   onCancel,
   groupName,
   groupId,
   onSuccess,
-}) => {
+}: DissolveGroupModalProps) {
   const groupService = useGroupService();
   const message = useAppMessage();
   const [confirmName, setConfirmName] = useState('');
@@ -93,6 +93,6 @@ const DissolveGroupModal: React.FC<DissolveGroupModalProps> = ({
       </div>
     </Modal>
   );
-};
+}
 
 export default DissolveGroupModal;

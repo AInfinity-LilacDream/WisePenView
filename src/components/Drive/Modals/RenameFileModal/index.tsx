@@ -3,10 +3,10 @@ import { useAppMessage } from '@/hooks/useAppMessage';
 import { parseErrorMessage } from '@/utils/error';
 import { useRequest } from 'ahooks';
 import { Button, Input, Modal } from 'antd';
-import React, { useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
 import type { RenameFileModalProps } from './index.type';
 
-const RenameFileModal: React.FC<RenameFileModalProps> = ({ open, onCancel, onSuccess, file }) => {
+function RenameFileModal({ open, onCancel, onSuccess, file }: RenameFileModalProps) {
   const resourceService = useResourceService();
   const message = useAppMessage();
   const [name, setName] = useState('');
@@ -80,6 +80,6 @@ const RenameFileModal: React.FC<RenameFileModalProps> = ({ open, onCancel, onSuc
       />
     </Modal>
   );
-};
+}
 
 export default RenameFileModal;

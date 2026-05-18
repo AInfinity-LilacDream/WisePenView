@@ -7,7 +7,7 @@ import { parseErrorMessage } from '@/utils/error';
 import { useRequest } from 'ahooks';
 import { Button, Radio, Select, Spin, Tag } from 'antd';
 import clsx from 'clsx';
-import React, { useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { LuPlus, LuTags, LuX } from 'react-icons/lu';
 import AddStickerModal from './AddStickerModal';
 import type { FileFilterProps, FileFilterValue } from './index.type';
@@ -21,7 +21,7 @@ const DEFAULT_VALUE: FileFilterValue = {
   sortDir: RESOURCE_SORT_DIR.DESC,
 };
 
-const FileFilter: React.FC<FileFilterProps> = ({ value, onChange }) => {
+function FileFilter({ value, onChange }: FileFilterProps) {
   const stickerService = useStickerService();
   const message = useAppMessage();
   const [innerValue, setInnerValue] = useState<FileFilterValue>(DEFAULT_VALUE);
@@ -178,7 +178,7 @@ const FileFilter: React.FC<FileFilterProps> = ({ value, onChange }) => {
       />
     </div>
   );
-};
+}
 
 export default FileFilter;
 export type { FileFilterValue } from './index.type';

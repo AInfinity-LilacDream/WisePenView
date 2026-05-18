@@ -12,12 +12,12 @@ import { useAppMessage } from '@/hooks/useAppMessage';
 import { parseErrorMessage } from '@/utils/error';
 import { useRequest } from 'ahooks';
 import { Descriptions, Divider, Form, Spin } from 'antd';
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import type { ProfileFieldKey } from '../profile.config';
 import { getProfileFieldConfig, PROFILE_FIELDS } from '../profile.config';
 import layout from '../style.module.less';
 
-const Account: React.FC = () => {
+function Account() {
   const userService = useUserService();
   const message = useAppMessage();
   const [user, setUser] = useState<GetUserInfoResponse | null>(null);
@@ -98,6 +98,6 @@ const Account: React.FC = () => {
       </Spin>
     </div>
   );
-};
+}
 
 export default Account;

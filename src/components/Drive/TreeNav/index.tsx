@@ -33,7 +33,7 @@ function isLoadMoreTreeKey(key: React.Key): boolean {
   return String(key).startsWith(LOAD_MORE_KEY_PREFIX);
 }
 
-const TreeNav: React.FC<TreeNavProps> = ({
+function TreeNav({
   dataMode,
   selectTarget,
   nodesMultiSelect,
@@ -44,7 +44,7 @@ const TreeNav: React.FC<TreeNavProps> = ({
   onChange,
   refreshTrigger = 0,
   tagInitialCheckedIds,
-}) => {
+}: TreeNavProps) {
   const folderService = useFolderService();
   const tagService = useTagService();
   const message = useAppMessage();
@@ -551,6 +551,6 @@ const TreeNav: React.FC<TreeNavProps> = ({
       </div>
     </div>
   );
-};
+}
 
 export default TreeNav;

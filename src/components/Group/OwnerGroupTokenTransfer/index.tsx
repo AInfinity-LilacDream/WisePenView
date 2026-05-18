@@ -7,14 +7,11 @@ import { useAppMessage } from '@/hooks/useAppMessage';
 import { parseErrorMessage } from '@/utils/error';
 import { useRequest } from 'ahooks';
 import { Button, InputNumber, Skeleton } from 'antd';
-import React, { useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
 import type { OwnerGroupTokenTransferProps } from './index.type';
 import styles from './style.module.less';
 
-const OwnerGroupTokenTransfer: React.FC<OwnerGroupTokenTransferProps> = ({
-  groupId,
-  onTransferSuccess,
-}) => {
+function OwnerGroupTokenTransfer({ groupId, onTransferSuccess }: OwnerGroupTokenTransferProps) {
   const walletService = useWalletService();
   const groupService = useGroupService();
   const message = useAppMessage();
@@ -211,6 +208,6 @@ const OwnerGroupTokenTransfer: React.FC<OwnerGroupTokenTransferProps> = ({
       </div>
     </div>
   );
-};
+}
 
 export default OwnerGroupTokenTransfer;

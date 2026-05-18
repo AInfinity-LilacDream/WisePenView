@@ -7,7 +7,7 @@ import { createBeforeUploadImageWithinLimit } from '@/utils/image/uploadLimit';
 import { useRequest } from 'ahooks';
 import type { UploadFile } from 'antd';
 import { Button, Form, Input, Modal, Radio, Select, Upload } from 'antd';
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { LuUpload } from 'react-icons/lu';
 import type { CreateGroupModalProps } from './index.type';
 
@@ -29,7 +29,7 @@ const fileFromCoverField = (fileList?: UploadFile[]): File | undefined => {
 
 const groupTypeOptionsBase = GROUP_TYPE.options;
 
-const CreateGroupModal: React.FC<CreateGroupModalProps> = ({ open, onCancel, onSuccess }) => {
+function CreateGroupModal({ open, onCancel, onSuccess }: CreateGroupModalProps) {
   const groupService = useGroupService();
   const imageService = useImageService();
   const userService = useUserService();
@@ -185,6 +185,6 @@ const CreateGroupModal: React.FC<CreateGroupModalProps> = ({ open, onCancel, onS
       </Form>
     </Modal>
   );
-};
+}
 
 export default CreateGroupModal;

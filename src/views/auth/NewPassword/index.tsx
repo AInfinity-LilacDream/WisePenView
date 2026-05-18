@@ -4,7 +4,7 @@ import { useAppMessage } from '@/hooks/useAppMessage';
 import { parseErrorMessage } from '@/utils/error';
 import { useMount, useRequest } from 'ahooks';
 import { Button, Form, Input, Modal, Typography } from 'antd';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { RiLockLine } from 'react-icons/ri';
 import { Link, useNavigate } from 'react-router-dom';
@@ -12,7 +12,7 @@ import auth from '../Auth.module.less';
 
 type NewPasswordFormValues = Pick<NewPasswordRequest, 'newPassword'>;
 
-const NewPassword: React.FC = () => {
+function NewPassword() {
   const authService = useAuthService();
   const message = useAppMessage();
   const { t } = useTranslation('auth');
@@ -117,6 +117,6 @@ const NewPassword: React.FC = () => {
       </Modal>
     </div>
   );
-};
+}
 
 export default NewPassword;

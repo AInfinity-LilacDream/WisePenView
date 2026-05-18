@@ -6,12 +6,12 @@ import { parseErrorMessage } from '@/utils/error';
 import { useRequest } from 'ahooks';
 import { Divider, Modal, Spin, Tag } from 'antd';
 import clsx from 'clsx';
-import React, { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { LuPlus } from 'react-icons/lu';
 import styles from './index.module.less';
 import type { EditStickerModalProps } from './index.type';
 
-const EditStickerModal: React.FC<EditStickerModalProps> = ({ open, onCancel, onSuccess, file }) => {
+function EditStickerModal({ open, onCancel, onSuccess, file }: EditStickerModalProps) {
   const stickerService = useStickerService();
   const message = useAppMessage();
 
@@ -160,6 +160,6 @@ const EditStickerModal: React.FC<EditStickerModalProps> = ({ open, onCancel, onS
       />
     </>
   );
-};
+}
 
 export default EditStickerModal;

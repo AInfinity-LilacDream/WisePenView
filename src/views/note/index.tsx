@@ -1,6 +1,6 @@
 import { useRequest, useUnmount } from 'ahooks';
 import { Alert, Button, Result, Spin } from 'antd';
-import React, { useCallback, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { RiArrowLeftDoubleLine, RiMenuLine } from 'react-icons/ri';
 import { Link, useParams } from 'react-router-dom';
 
@@ -27,11 +27,7 @@ interface NoteViewConnectedProps {
   noteInfoDisplay: NoteInfoDisplayData;
 }
 
-const NoteViewConnected: React.FC<NoteViewConnectedProps> = ({
-  noteId,
-  resourceId,
-  noteInfoDisplay,
-}) => {
+function NoteViewConnected({ noteId, resourceId, noteInfoDisplay }: NoteViewConnectedProps) {
   const bodyEditorRef = useRef<NoteBodyEditorHandle>(null);
   const mainScrollRef = useRef<HTMLDivElement>(null);
   const titleAnchorRef = useRef<HTMLDivElement>(null);
@@ -206,9 +202,9 @@ const NoteViewConnected: React.FC<NoteViewConnectedProps> = ({
       </div>
     </div>
   );
-};
+}
 
-const NoteView: React.FC = () => {
+function NoteView() {
   const { noteId } = useParams<{ noteId?: string }>();
   const resourceId = noteId ?? '';
   const noteService = useNoteService();
@@ -311,6 +307,6 @@ const NoteView: React.FC = () => {
   return (
     <NoteViewConnected noteId={noteId} resourceId={resourceId} noteInfoDisplay={noteInfoDisplay} />
   );
-};
+}
 
 export default NoteView;

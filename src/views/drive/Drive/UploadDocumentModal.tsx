@@ -1,7 +1,7 @@
 import { useRequest } from 'ahooks';
 import type { UploadFile, UploadProps } from 'antd';
 import { Button, Modal, Progress, Upload } from 'antd';
-import React, { useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { AiOutlineInbox } from 'react-icons/ai';
 import { useNavigate } from 'react-router-dom';
 
@@ -20,11 +20,7 @@ export interface UploadDocumentModalProps {
 /**
  * 文档上传：MD5 → init → OSS PUT，成功后跳转 PDF 预览。
  */
-export const UploadDocumentModal: React.FC<UploadDocumentModalProps> = ({
-  open,
-  onClose,
-  onSuccess,
-}) => {
+export function UploadDocumentModal({ open, onClose, onSuccess }: UploadDocumentModalProps) {
   const documentService = useDocumentService();
   const navigate = useNavigate();
   const message = useAppMessage();
@@ -142,4 +138,4 @@ export const UploadDocumentModal: React.FC<UploadDocumentModalProps> = ({
       )}
     </Modal>
   );
-};
+}

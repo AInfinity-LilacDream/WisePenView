@@ -11,7 +11,7 @@ import styles from './style.module.less';
 
 type QuotaRecord = UserGroupQuota & { key: React.Key };
 
-const QuotaByGroup: React.FC<QuotaByGroupProps> = ({ pagination }) => {
+function QuotaByGroup({ pagination }: QuotaByGroupProps) {
   const quotaService = useQuotaService();
   const message = useAppMessage();
 
@@ -118,6 +118,6 @@ const QuotaByGroup: React.FC<QuotaByGroupProps> = ({ pagination }) => {
       />
     </div>
   );
-};
+}
 
 export default QuotaByGroup;

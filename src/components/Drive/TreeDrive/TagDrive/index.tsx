@@ -36,7 +36,7 @@ export interface TagDriveProps {
 
 const TAG_VIRTUAL_ROOT_ID = '__tag_root__';
 
-const TagDrive: React.FC<TagDriveProps> = ({ groupId, fileOrgLogic, canCreateTag }) => {
+function TagDrive({ groupId, fileOrgLogic, canCreateTag }: TagDriveProps) {
   const tagService = useTagService();
   const clickFile = useClickFile();
   const virtualRootRef = useRef<TreeDriveNode | null>(null);
@@ -348,6 +348,6 @@ const TagDrive: React.FC<TagDriveProps> = ({ groupId, fileOrgLogic, canCreateTag
       </div>
     </main>
   );
-};
+}
 
 export default TagDrive;

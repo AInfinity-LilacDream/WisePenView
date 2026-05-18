@@ -7,11 +7,11 @@ import { RESOURCE_TYPE } from '@/domains/Resource/enum';
 import { parseErrorMessage } from '@/utils/error';
 import { useRequest } from 'ahooks';
 import { Button, Result, Spin } from 'antd';
-import React, { useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import styles from './style.module.less';
 
-const PdfPreview: React.FC = () => {
+function PdfPreview() {
   const { resourceId } = useParams<{ resourceId: string }>();
   const [viewerErrorMap, setViewerErrorMap] = useState<Record<string, unknown>>({});
   const documentService = useDocumentService();
@@ -186,6 +186,6 @@ const PdfPreview: React.FC = () => {
       </div>
     </div>
   );
-};
+}
 
 export default PdfPreview;

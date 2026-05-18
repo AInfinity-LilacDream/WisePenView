@@ -6,13 +6,13 @@ import { parseErrorMessage } from '@/utils/error';
 import { useRequest } from 'ahooks';
 import type { MenuProps } from 'antd';
 import { Menu } from 'antd';
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 import { RiAddCircleFill, RiFileTextLine, RiGroupFill, RiPenNibFill } from 'react-icons/ri';
 import { useLocation, useNavigate } from 'react-router-dom';
 import type { HeaderNavProps } from './index.type';
 import styles from './style.module.less';
 
-const HeaderNav: React.FC<HeaderNavProps> = ({ collapsed, onSessionCreated }) => {
+function HeaderNav({ collapsed, onSessionCreated }: HeaderNavProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const chatService = useChatService();
@@ -130,6 +130,6 @@ const HeaderNav: React.FC<HeaderNavProps> = ({ collapsed, onSessionCreated }) =>
       items={menuItems}
     />
   );
-};
+}
 
 export default HeaderNav;

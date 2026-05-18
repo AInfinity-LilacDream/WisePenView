@@ -4,19 +4,12 @@ import { useAppMessage } from '@/hooks/useAppMessage';
 import { parseErrorMessage } from '@/utils/error';
 import { useRequest } from 'ahooks';
 import { Alert, Button, Modal } from 'antd';
-import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { ExitGroupModalProps } from './index.type';
 
 import styles from './index.module.less';
 
-const ExitGroupModal: React.FC<ExitGroupModalProps> = ({
-  open,
-  onCancel,
-  groupName,
-  groupId,
-  onSuccess,
-}) => {
+function ExitGroupModal({ open, onCancel, groupName, groupId, onSuccess }: ExitGroupModalProps) {
   const groupService = useGroupService();
   const message = useAppMessage();
   const navigate = useNavigate();
@@ -72,6 +65,6 @@ const ExitGroupModal: React.FC<ExitGroupModalProps> = ({
       />
     </Modal>
   );
-};
+}
 
 export default ExitGroupModal;

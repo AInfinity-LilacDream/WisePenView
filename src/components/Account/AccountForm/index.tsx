@@ -6,7 +6,7 @@ import { parseErrorMessage } from '@/utils/error';
 import { useRequest } from 'ahooks';
 import { Button, Descriptions, Form, Input, Select } from 'antd';
 import type { InputRef } from 'antd/es/input';
-import React, { useMemo, type Ref } from 'react';
+import { useMemo, type Ref } from 'react';
 import { RiPencilLine } from 'react-icons/ri';
 import type { AccountFormProps } from './index.type';
 import { getProfileDisplayString } from './profileDisplay';
@@ -40,7 +40,7 @@ function DegreeLevelReadonlyInput({ value, ref }: { value?: number | null; ref?:
 }
 DegreeLevelReadonlyInput.displayName = 'DegreeLevelReadonlyInput';
 
-const AccountForm: React.FC<AccountFormProps> = ({
+function AccountForm({
   show,
   user,
   form,
@@ -51,7 +51,7 @@ const AccountForm: React.FC<AccountFormProps> = ({
   onEditModeChange,
   onUserInfoUpdated,
   onCancel,
-}) => {
+}: AccountFormProps) {
   const userService = useUserService();
   const message = useAppMessage();
 
@@ -215,6 +215,6 @@ const AccountForm: React.FC<AccountFormProps> = ({
       )}
     </div>
   );
-};
+}
 
 export default AccountForm;

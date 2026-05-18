@@ -3,16 +3,9 @@ import { useAppMessage } from '@/hooks/useAppMessage';
 import { parseErrorMessage } from '@/utils/error';
 import { useRequest } from 'ahooks';
 import { Alert, Button, Modal } from 'antd';
-import React from 'react';
 import type { DeleteTagModalProps } from './index.type';
 
-const DeleteTagModal: React.FC<DeleteTagModalProps> = ({
-  open,
-  onCancel,
-  onSuccess,
-  tag,
-  groupId,
-}) => {
+function DeleteTagModal({ open, onCancel, onSuccess, tag, groupId }: DeleteTagModalProps) {
   const tagService = useTagService();
   const message = useAppMessage();
   const { loading, run: runDeleteTag } = useRequest(
@@ -64,6 +57,6 @@ const DeleteTagModal: React.FC<DeleteTagModalProps> = ({
       />
     </Modal>
   );
-};
+}
 
 export default DeleteTagModal;

@@ -5,7 +5,7 @@ import { useAppMessage } from '@/hooks/useAppMessage';
 import { parseErrorMessage } from '@/utils/error';
 import { useRequest, useUnmount } from 'ahooks';
 import { Alert, Button, Form, Input, Modal, Radio } from 'antd';
-import React, { useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { RiMailLine, RiShieldUserLine } from 'react-icons/ri';
 import VerifyBanner from '../VerifyBanner';
 import type {
@@ -17,7 +17,7 @@ import type {
 import { resolveUisQrImageDataUrl } from './resolveUisQrImageDataUrl';
 import styles from './style.module.less';
 
-const AccountVerification: React.FC<AccountVerificationProps> = ({ user, onUserInfoUpdated }) => {
+function AccountVerification({ user, onUserInfoUpdated }: AccountVerificationProps) {
   const userService = useUserService();
   const message = useAppMessage();
   const [verifyModalOpen, setVerifyModalOpen] = useState(false);
@@ -327,6 +327,6 @@ const AccountVerification: React.FC<AccountVerificationProps> = ({ user, onUserI
       </Modal>
     </>
   );
-};
+}
 
 export default AccountVerification;

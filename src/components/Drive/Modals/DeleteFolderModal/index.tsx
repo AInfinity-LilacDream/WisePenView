@@ -4,15 +4,9 @@ import { parseErrorMessage } from '@/utils/error';
 import { getFolderDisplayName } from '@/utils/tag/path';
 import { useRequest } from 'ahooks';
 import { Alert, Button, Modal } from 'antd';
-import React from 'react';
 import type { DeleteFolderModalProps } from './index.type';
 
-const DeleteFolderModal: React.FC<DeleteFolderModalProps> = ({
-  open,
-  onCancel,
-  onSuccess,
-  folder,
-}) => {
+function DeleteFolderModal({ open, onCancel, onSuccess, folder }: DeleteFolderModalProps) {
   const folderService = useFolderService();
   const message = useAppMessage();
   const { loading, run: runDeleteFolder } = useRequest(
@@ -60,6 +54,6 @@ const DeleteFolderModal: React.FC<DeleteFolderModalProps> = ({
       />
     </Modal>
   );
-};
+}
 
 export default DeleteFolderModal;

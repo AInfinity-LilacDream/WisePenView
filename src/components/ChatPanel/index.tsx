@@ -12,7 +12,7 @@ import {
 } from '@/store';
 import { parseErrorMessage } from '@/utils/error';
 import { useMount, useRequest, useUpdateEffect } from 'ahooks';
-import React, { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { RiIndentIncrease } from 'react-icons/ri';
 import ChatInput from './ChatInput';
 import {
@@ -30,7 +30,7 @@ interface ChatPanelProps {
   collapsed: boolean;
 }
 
-const ChatPanel: React.FC<ChatPanelProps> = ({ collapsed }) => {
+function ChatPanel({ collapsed }: ChatPanelProps) {
   const chatService = useChatService();
   const messageApi = useAppMessage();
   const setChatPanelCollapsed = useChatPanelStore((state) => state.setChatPanelCollapsed);
@@ -318,6 +318,6 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ collapsed }) => {
       )}
     </div>
   );
-};
+}
 
 export default ChatPanel;

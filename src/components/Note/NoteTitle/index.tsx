@@ -60,7 +60,7 @@ function toHeadingBlockFromTitle(title?: string): BlockNoteBlock[] {
   ];
 }
 
-const NoteTitle: React.FC<NoteTitleProps> = ({ id, initialContent, onEnterKey, focusOnMount }) => {
+function NoteTitle({ id, initialContent, onEnterKey, focusOnMount }: NoteTitleProps) {
   const noteService = useNoteService();
   const message = useAppMessage();
   const latestIdRef = useRef(id);
@@ -234,6 +234,6 @@ const NoteTitle: React.FC<NoteTitleProps> = ({ id, initialContent, onEnterKey, f
       />
     </div>
   );
-};
+}
 
 export default NoteTitle;

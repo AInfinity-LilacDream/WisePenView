@@ -5,16 +5,15 @@ import { useRecentFilesStore } from '@/store';
 import { parseErrorMessage } from '@/utils/error';
 import { useRequest } from 'ahooks';
 import { Alert, Button, Modal } from 'antd';
-import React from 'react';
 import type { RemoveFileFromGroupModalProps } from './index.type';
 
-const RemoveFileFromGroupModal: React.FC<RemoveFileFromGroupModalProps> = ({
+function RemoveFileFromGroupModal({
   open,
   onCancel,
   onSuccess,
   groupId,
   file,
-}) => {
+}: RemoveFileFromGroupModalProps) {
   const tagService = useTagService();
   const resourceService = useResourceService();
   const message = useAppMessage();
@@ -97,6 +96,6 @@ const RemoveFileFromGroupModal: React.FC<RemoveFileFromGroupModalProps> = ({
       <Alert description="确定将该文件移出小组空间吗？此操作不可撤销！" type="warning" showIcon />
     </Modal>
   );
-};
+}
 
 export default RemoveFileFromGroupModal;

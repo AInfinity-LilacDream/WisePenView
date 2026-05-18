@@ -5,12 +5,12 @@ import { parseErrorMessage } from '@/utils/error';
 import { useRequest } from 'ahooks';
 import { Button, Input, Modal, Popconfirm, Tag } from 'antd';
 import clsx from 'clsx';
-import React, { useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { LuPlus } from 'react-icons/lu';
 import type { StickerManageModalProps } from './index.type';
 import styles from './style.module.less';
 
-const StickerManageModal: React.FC<StickerManageModalProps> = ({ open, onCancel, onSuccess }) => {
+function StickerManageModal({ open, onCancel, onSuccess }: StickerManageModalProps) {
   const stickerService = useStickerService();
   const message = useAppMessage();
 
@@ -221,6 +221,6 @@ const StickerManageModal: React.FC<StickerManageModalProps> = ({ open, onCancel,
       </div>
     </Modal>
   );
-};
+}
 
 export default StickerManageModal;

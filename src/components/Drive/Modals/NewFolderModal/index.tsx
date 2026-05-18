@@ -5,17 +5,12 @@ import { getFolderDisplayName } from '@/utils/tag/path';
 import { validateReservedName } from '@/utils/tag/validateReservedName';
 import { useRequest } from 'ahooks';
 import { Button, Input, Modal } from 'antd';
-import React, { useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
 import type { NewFolderModalProps } from './index.type';
 
 import styles from './index.module.less';
 
-const NewFolderModal: React.FC<NewFolderModalProps> = ({
-  open,
-  onCancel,
-  onSuccess,
-  parentFolder,
-}) => {
+function NewFolderModal({ open, onCancel, onSuccess, parentFolder }: NewFolderModalProps) {
   const folderService = useFolderService();
   const message = useAppMessage();
   const [name, setName] = useState('');
@@ -102,6 +97,6 @@ const NewFolderModal: React.FC<NewFolderModalProps> = ({
       />
     </Modal>
   );
-};
+}
 
 export default NewFolderModal;

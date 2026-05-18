@@ -6,14 +6,14 @@ import type { EnumKey } from '@/utils/enum';
 import { parseErrorMessage } from '@/utils/error';
 import { useRequest } from 'ahooks';
 import { Alert, Button, Modal, Select } from 'antd';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import type { EditPermissionModalProps } from './index.type';
 import styles from './style.module.less';
 import { useMemberEditGuard } from './useMemberEditGuard';
 
 const { Option } = Select;
 
-const EditPermissionModal: React.FC<EditPermissionModalProps> = ({
+function EditPermissionModal({
   open,
   onCancel,
   onSuccess,
@@ -21,7 +21,7 @@ const EditPermissionModal: React.FC<EditPermissionModalProps> = ({
   memberIds,
   members,
   groupDisplayConfig,
-}) => {
+}: EditPermissionModalProps) {
   const groupService = useGroupService();
   const message = useAppMessage();
   const [selectedPermission, setSelectedPermission] = useState<EnumKey<typeof ROLE>>('MEMBER');
@@ -99,6 +99,6 @@ const EditPermissionModal: React.FC<EditPermissionModalProps> = ({
       <SelectedMemberList members={members} />
     </Modal>
   );
-};
+}
 
 export default EditPermissionModal;
