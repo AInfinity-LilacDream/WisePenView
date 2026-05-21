@@ -16,7 +16,6 @@ import { createDocumentServices } from '@/domains/Document/service/DocumentServi
 import { createDriveServices } from '@/domains/Drive/service/DriveServices.impl';
 import { createGroupServices } from '@/domains/Group/service/GroupServices.impl';
 import { createImageServices } from '@/domains/Image/service/ImageServices.impl';
-import { createInteractServices } from '@/domains/Interact/service/InteractServices.impl';
 import { createNoteServices } from '@/domains/Note/service/NoteServices.impl';
 import { createQuotaServices } from '@/domains/Quota/service/QuotaServices.impl';
 import { createResourceServices } from '@/domains/Resource/service/ResourceServices.impl';
@@ -33,7 +32,6 @@ const chatService = createChatServices();
 const documentService = createDocumentServices();
 const groupService = createGroupServices();
 const imageService = createImageServices();
-const interactService = createInteractServices();
 const noteService = createNoteServices();
 const quotaService = createQuotaServices();
 const resourceService = createResourceServices();
@@ -55,7 +53,6 @@ const servicesValue: ServicesContextValue = {
   driveService: driveService,
   groupService: groupService,
   imageService: imageService,
-  interactService: interactService,
   noteService: noteService,
   quotaService: quotaService,
   resourceService: resourceService,

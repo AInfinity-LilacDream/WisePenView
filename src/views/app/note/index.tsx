@@ -15,7 +15,7 @@ import NoteInfoBar from '@/components/Note/NoteInfoBar';
 import NoteOutline from '@/components/Note/NoteOutline';
 import type { NoteOutlineItem } from '@/components/Note/NoteOutline/index.type';
 import NoteTitle from '@/components/Note/NoteTitle';
-import { useInteractService, useNoteService } from '@/domains';
+import { useNoteService, useResourceService } from '@/domains';
 import type { NoteInfoDisplayData } from '@/domains/Note';
 import type { AiDiffDisplayMode } from '@/domains/Note/enum';
 import { AI_DIFF_DISPLAY_MODE, AI_DIFF_DISPLAY_MODE_LABELS } from '@/domains/Note/enum';
@@ -57,14 +57,14 @@ function NoteViewConnected({
   const isEditorReadOnly = status === 'connecting';
   const showFullPageSpin = status === 'connecting';
 
-  const interactService = useInteractService();
+  const resourceService = useResourceService();
   const message = useAppMessage();
   const [displayLiked, setDisplayLiked] = useState<boolean | undefined>(undefined);
   const [displayLikeCount, setDisplayLikeCount] = useState<number | null | undefined>(undefined);
   const [displayUserScore, setDisplayUserScore] = useState<number | null | undefined>(undefined);
 
   const { run: runToggleLike, loading: likeLoading } = useRequest(
-    () => interactService.toggleLike({ resourceId }),
+    () => resourceService.interactToggleLike({ resourceId }),
     {
       manual: true,
       onBefore: () => {
@@ -89,7 +89,7 @@ function NoteViewConnected({
   }, [runToggleLike]);
 
   const { run: runRate, loading: rateLoading } = useRequest(
-    (score: number) => interactService.rate({ resourceId, score }),
+    (score: number) => resourceService.interactRate({ resourceId, score }),
     {
       manual: true,
       onSuccess: (res) => {

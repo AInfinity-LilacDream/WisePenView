@@ -1,3 +1,4 @@
+import { ResourceInteractApi } from '../apis/InteractApi';
 import { ResourceItemApi } from '../apis/ResourceApi';
 import type { ListResourceItemsApiRequest } from '../apis/ResourceApi.type';
 import { TAG_QUERY_LOGIC_MODE } from '../enum';
@@ -5,6 +6,10 @@ import { normalizeResourceItem } from '../normalize/normalizeResourceItem';
 import type {
   GetGroupResourceRequest,
   GetUserResourcesRequest,
+  InteractRateRequest,
+  InteractRateResult,
+  InteractToggleLikeRequest,
+  InteractToggleLikeResult,
   IResourceService,
   RenameResourceRequest,
   ResourceListPage,
@@ -56,9 +61,28 @@ const updateResourceTags = async (params: UpdateResourceTagsRequest): Promise<vo
   await ResourceItemApi.changeResourceTags(params);
 };
 
+/** 点赞 / 取消点赞，返回操作后最新状态 */
+const interactToggleLike = async (
+  params: InteractToggleLikeRequest
+): Promise<InteractToggleLikeResult> => {
+  const res = await ResourceInteractApi.toggleLike({ resourceId: params.resourceId });
+  return { liked: res.liked };
+};
+
+/** 评分（1–5），支持覆盖，返回最新 userScore */
+const interactRate = async (params: InteractRateRequest): Promise<InteractRateResult> => {
+  const res = await ResourceInteractApi.rate({
+    resourceId: params.resourceId,
+    score: params.score,
+  });
+  return { userScore: res.userScore as number };
+};
+
 export const createResourceServices = (): IResourceService => ({
   getUserResources,
   getGroupResources,
   renameResource,
   updateResourceTags,
+  interactToggleLike,
+  interactRate,
 });

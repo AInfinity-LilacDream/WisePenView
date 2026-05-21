@@ -9,7 +9,6 @@ export {
   useDriveService,
   useGroupService,
   useImageService,
-  useInteractService,
   useNoteService,
   useQuotaService,
   useResourceService,

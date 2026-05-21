@@ -5,7 +5,7 @@ import ResourceInteractFooter from '@/components/Common/ResourceInteractFooter';
 import ResourceViewerHeader from '@/components/Common/ResourceViewerHeader';
 import rvhStyles from '@/components/Common/ResourceViewerHeader/style.module.less';
 import PdfViewer from '@/components/Pdf/PdfViewer/index';
-import { useDocumentService, useInteractService } from '@/domains';
+import { useDocumentService, useResourceService } from '@/domains';
 import { RESOURCE_TYPE } from '@/domains/Resource/enum';
 import { useAppMessage } from '@/hooks/useAppMessage';
 import { parseErrorMessage } from '@/utils/error';
@@ -19,7 +19,7 @@ function PdfPreview() {
   const { resourceId } = useParams<{ resourceId: string }>();
   const [viewerErrorMap, setViewerErrorMap] = useState<Record<string, unknown>>({});
   const documentService = useDocumentService();
-  const interactService = useInteractService();
+  const resourceService = useResourceService();
   const message = useAppMessage();
   const {
     data: docInfo,
@@ -43,7 +43,7 @@ function PdfPreview() {
   const resourceInfo = docInfo?.resourceInfo;
 
   const { run: runToggleLike, loading: likeLoading } = useRequest(
-    () => interactService.toggleLike({ resourceId: resourceId as string }),
+    () => resourceService.interactToggleLike({ resourceId: resourceId as string }),
     {
       manual: true,
       onBefore: () => {
@@ -64,7 +64,7 @@ function PdfPreview() {
   );
 
   const { run: runRate, loading: rateLoading } = useRequest(
-    (score: number) => interactService.rate({ resourceId: resourceId as string, score }),
+    (score: number) => resourceService.interactRate({ resourceId: resourceId as string, score }),
     {
       manual: true,
       onSuccess: (res) => {

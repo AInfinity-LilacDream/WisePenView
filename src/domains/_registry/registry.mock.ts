@@ -7,7 +7,6 @@ import { DocumentServicesMock } from '@/domains/Document/mock/DocumentServices.m
 import { DriveServicesMock } from '@/domains/Drive/mock/DriveServices.mock';
 import { GroupServicesMock } from '@/domains/Group/mock/GroupServices.mock';
 import { ImageServicesMock } from '@/domains/Image/mock/ImageServices.mock';
-import { InteractServicesMock } from '@/domains/Interact/mock/InteractServices.mock';
 import { NoteServicesMock } from '@/domains/Note/mock/NoteServices.mock';
 import { QuotaServicesMock } from '@/domains/Quota/mock/QuotaServices.mock';
 import { ResourceServicesMock } from '@/domains/Resource/mock/ResourceServices.mock';
@@ -25,7 +24,6 @@ const mockServicesValue: ServicesContextValue = {
   driveService: DriveServicesMock,
   groupService: GroupServicesMock,
   imageService: ImageServicesMock,
-  interactService: InteractServicesMock,
   noteService: NoteServicesMock,
   quotaService: QuotaServicesMock,
   resourceService: ResourceServicesMock,
