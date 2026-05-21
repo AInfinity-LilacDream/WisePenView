@@ -8,6 +8,7 @@ export {
   getAiDiffDisplayModeSnapshot,
   useAiDiffDisplayStore,
 } from './useAiDiffDisplayStore';
+export { clearActiveDriveScopeStore, useActiveDriveScopeStore } from './useActiveDriveScopeStore';
 export { clearChatPanelStore, useChatPanelStore } from './useChatPanelStore';
 export {
   clearCurrentChatSessionStore,
@@ -26,15 +27,4 @@ export {
   usePdfPreviewProgressStore,
   type PdfPreviewProgress,
 } from './usePdfPreviewProgressStore';
-export {
-  clearRecentFilesStore,
-  useRecentFilesStore,
-  type RecentFileItem,
-} from './useRecentFilesStore';
 export { clearTrashTagStore, useTrashTagStore } from './useTrashTagStore';
-export {
-  clearTreeDriveCwdStores,
-  getTreeDriveCwdStore,
-  useTreeDriveCwdStore,
-  type BreadcrumbItem,
-} from './useTreeDriveCwdStore';

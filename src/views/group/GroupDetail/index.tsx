@@ -1,8 +1,9 @@
 /**
  * 小组详情：展示/ Tab / 小组盘只读等由 getGroupDisplayConfig（如 showWalletTabs、driveReadOnlyMode）驱动。
  */
+import IconText from '@/components/Common/IconText';
 import UserCapsule from '@/components/Common/UserCapsule';
-import TagDrive from '@/components/Drive/TreeDrive/TagDrive';
+import TableDrive from '@/components/Drive/TableDrive';
 import { getGroupDisplayConfig } from '@/components/Group/GroupDisplayConfig';
 import {
   DissolveGroupModal,
@@ -20,7 +21,7 @@ import { useAppMessage } from '@/hooks/useAppMessage';
 import { useRequest } from 'ahooks';
 import type { TabsProps } from 'antd';
 import { Button, Spin, Tabs } from 'antd';
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { AiOutlineDelete, AiOutlineEdit, AiOutlineLogout } from 'react-icons/ai';
 import { useParams } from 'react-router-dom';
 import layout from '../style.module.less';
@@ -32,7 +33,7 @@ type GroupDetailLoaded = {
   resConfig: GroupResConfig;
 };
 
-const GroupDetail: React.FC = () => {
+function GroupDetail() {
   const groupService = useGroupService();
   const message = useAppMessage();
   const { id } = useParams<{ id: string }>();
@@ -105,10 +106,21 @@ const GroupDetail: React.FC = () => {
         label: '文件',
         children: (
           <div className={layout.tabPane}>
-            <TagDrive
-              groupId={gid}
-              fileOrgLogic={resConfig.fileOrgLogic}
-              canCreateTag={groupDisplayConfig.canCreateTag}
+            <TableDrive
+              scope={{ type: 'group', groupId: gid }}
+              actions={{
+                toolbar: {
+                  canCreateFolder: groupDisplayConfig.canCreateTag,
+                  canUploadToGroup: true,
+                  canManageTagPermission: groupDisplayConfig.canManageTag,
+                },
+                row: {
+                  canRename: groupDisplayConfig.canCreateTag,
+                  canDelete: groupDisplayConfig.canCreateTag,
+                  canMove: groupDisplayConfig.canCreateTag,
+                  canManageNodePermission: groupDisplayConfig.canManageTag,
+                },
+              }}
             />
           </div>
         ),
@@ -228,24 +240,22 @@ const GroupDetail: React.FC = () => {
       <div className={layout.actionsBar}>
         {currentUserRole === 'OWNER' ? (
           <div className={layout.actionsRow}>
-            <Button icon={<AiOutlineEdit size={16} />} onClick={() => setEditGroupModalOpen(true)}>
-              编辑小组信息
+            <Button onClick={() => setEditGroupModalOpen(true)}>
+              <IconText icon={<AiOutlineEdit />} iconSize={16}>
+                编辑小组信息
+              </IconText>
             </Button>
-            <Button
-              danger
-              icon={<AiOutlineDelete size={16} />}
-              onClick={() => setDissolveGroupModalOpen(true)}
-            >
-              解散小组
+            <Button danger onClick={() => setDissolveGroupModalOpen(true)}>
+              <IconText icon={<AiOutlineDelete />} iconSize={16}>
+                解散小组
+              </IconText>
             </Button>
           </div>
         ) : (
-          <Button
-            danger
-            icon={<AiOutlineLogout size={16} />}
-            onClick={() => setExitGroupModalOpen(true)}
-          >
-            退出小组
+          <Button danger onClick={() => setExitGroupModalOpen(true)}>
+            <IconText icon={<AiOutlineLogout />} iconSize={16}>
+              退出小组
+            </IconText>
           </Button>
         )}
       </div>
@@ -276,6 +286,6 @@ const GroupDetail: React.FC = () => {
       />
     </div>
   );
-};
+}
 
 export default GroupDetail;

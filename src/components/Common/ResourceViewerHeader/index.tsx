@@ -1,22 +1,22 @@
 import clsx from 'clsx';
-import React from 'react';
 import { RiArrowLeftLine } from 'react-icons/ri';
 import { useLocation, useNavigate } from 'react-router-dom';
 
+import IconText from '@/components/Common/IconText';
 import type { ResourceViewerHeaderProps } from './index.type';
 import styles from './style.module.less';
 
 const DEFAULT_FALLBACK_TO = '/app/drive';
 const DEFAULT_BACK_LABEL = '返回';
 
-const ResourceViewerHeader: React.FC<ResourceViewerHeaderProps> = ({
+function ResourceViewerHeader({
   fallbackTo = DEFAULT_FALLBACK_TO,
   backLabel = DEFAULT_BACK_LABEL,
   inlineTitle,
   extra,
   titleBlock,
   className,
-}) => {
+}: ResourceViewerHeaderProps) {
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -33,8 +33,9 @@ const ResourceViewerHeader: React.FC<ResourceViewerHeaderProps> = ({
       <div className={styles.bar}>
         <div className={styles.toolbar}>
           <button type="button" className={styles.backLink} onClick={handleBack}>
-            <RiArrowLeftLine size={18} aria-hidden />
-            <span>{backLabel}</span>
+            <IconText icon={<RiArrowLeftLine />} iconSize={18} gap="var(--ant-margin-xs)">
+              {backLabel}
+            </IconText>
           </button>
           <div className={styles.toolbarMiddle}>
             {inlineTitle ? <div className={styles.inlineTitle}>{inlineTitle}</div> : null}
@@ -49,6 +50,6 @@ const ResourceViewerHeader: React.FC<ResourceViewerHeaderProps> = ({
       ) : null}
     </header>
   );
-};
+}
 
 export default ResourceViewerHeader;

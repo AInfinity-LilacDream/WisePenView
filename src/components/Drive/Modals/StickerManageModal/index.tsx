@@ -1,16 +1,17 @@
+import IconText from '@/components/Common/IconText';
 import { useStickerService } from '@/domains';
 import type { Sticker } from '@/domains/Sticker';
 import { useAppMessage } from '@/hooks/useAppMessage';
-import { parseErrorMessage } from '@/utils/parseErrorMessage';
+import { parseErrorMessage } from '@/utils/error';
 import { useRequest } from 'ahooks';
 import { Button, Input, Modal, Popconfirm, Tag } from 'antd';
 import clsx from 'clsx';
-import React, { useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { LuPlus } from 'react-icons/lu';
 import type { StickerManageModalProps } from './index.type';
 import styles from './style.module.less';
 
-const StickerManageModal: React.FC<StickerManageModalProps> = ({ open, onCancel, onSuccess }) => {
+function StickerManageModal({ open, onCancel, onSuccess }: StickerManageModalProps) {
   const stickerService = useStickerService();
   const message = useAppMessage();
 
@@ -24,7 +25,7 @@ const StickerManageModal: React.FC<StickerManageModalProps> = ({ open, onCancel,
       setStickers(list);
     },
     onError: (err) => {
-      message.error(parseErrorMessage(err, '获取标签列表失败'));
+      message.error(parseErrorMessage(err));
       setStickers([]);
     },
   });
@@ -45,7 +46,7 @@ const StickerManageModal: React.FC<StickerManageModalProps> = ({ open, onCancel,
         onSuccess?.();
       },
       onError: (err) => {
-        message.error(parseErrorMessage(err, '更新标签失败'));
+        message.error(parseErrorMessage(err));
       },
     }
   );
@@ -62,7 +63,7 @@ const StickerManageModal: React.FC<StickerManageModalProps> = ({ open, onCancel,
         onSuccess?.();
       },
       onError: (err) => {
-        message.error(parseErrorMessage(err, '删除标签失败'));
+        message.error(parseErrorMessage(err));
       },
     }
   );
@@ -78,7 +79,7 @@ const StickerManageModal: React.FC<StickerManageModalProps> = ({ open, onCancel,
         onSuccess?.();
       },
       onError: (err) => {
-        message.error(parseErrorMessage(err, '创建标签失败'));
+        message.error(parseErrorMessage(err));
       },
     }
   );
@@ -207,12 +208,13 @@ const StickerManageModal: React.FC<StickerManageModalProps> = ({ open, onCancel,
                 />
                 <Button
                   type="default"
-                  icon={<LuPlus />}
                   onClick={() => void handleAdd()}
                   loading={addLoading}
                   style={{ marginTop: 12 }}
                 >
-                  新建标签
+                  <IconText icon={<LuPlus />} iconSize={16}>
+                    新建标签
+                  </IconText>
                 </Button>
               </div>
             </div>
@@ -221,6 +223,6 @@ const StickerManageModal: React.FC<StickerManageModalProps> = ({ open, onCancel,
       </div>
     </Modal>
   );
-};
+}
 
 export default StickerManageModal;

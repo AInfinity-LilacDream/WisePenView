@@ -7,6 +7,7 @@
 // Zustand stores
 export {
   clearAiDiffDisplayStore,
+  clearActiveDriveScopeStore,
   clearAllZustandStores,
   clearChatPanelStore,
   clearCurrentChatSessionStore,
@@ -15,11 +16,11 @@ export {
   clearNewNoteStore,
   clearNoteSelectionStore,
   clearPdfPreviewProgressStore,
-  clearRecentFilesStore,
   clearTrashTagStore,
   clearTreeDriveCwdStores,
   getTreeDriveCwdStore,
   useAiDiffDisplayStore,
+  useActiveDriveScopeStore,
   useChatPanelStore,
   useCurrentChatSessionStore,
   useDrivePreferencesStore,
@@ -27,11 +28,7 @@ export {
   useNewNoteStore,
   useNoteSelectionStore,
   usePdfPreviewProgressStore,
-  useRecentFilesStore,
   useTrashTagStore,
-  useTreeDriveCwdStore,
-  type BreadcrumbItem,
   type DriveViewMode,
   type PdfPreviewProgress,
-  type RecentFileItem,
 } from './zustand';

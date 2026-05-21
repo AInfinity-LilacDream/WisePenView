@@ -1,3 +1,4 @@
+import IconText from '@/components/Common/IconText';
 import GroupCard from '@/components/Group/GroupCard';
 import { CreateGroupModal, JoinGroupModal } from '@/components/Group/GroupModals';
 import { useGroupService } from '@/domains';
@@ -6,13 +7,13 @@ import { GROUP_ROLE_FILTER_MAP } from '@/domains/Group/enum';
 import { useAppMessage } from '@/hooks/useAppMessage';
 import { usePagination } from 'ahooks';
 import { Button, Col, Empty, Pagination, Row, Spin, Tabs } from 'antd';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { AiOutlinePlus, AiOutlineUserAdd } from 'react-icons/ai';
 import { useNavigate } from 'react-router-dom';
 import layout from '../style.module.less';
 import page from './style.module.less';
 
-const MyGroup: React.FC = () => {
+function MyGroup() {
   const groupService = useGroupService();
   const message = useAppMessage();
   const navigate = useNavigate();
@@ -76,15 +77,15 @@ const MyGroup: React.FC = () => {
           <span className={layout.pageSubtitle}>管理您的小组和协作</span>
         </div>
         <div className={layout.actionsRow}>
-          <Button icon={<AiOutlineUserAdd size={16} />} onClick={() => setJoinGroupModalOpen(true)}>
-            加入小组
+          <Button onClick={() => setJoinGroupModalOpen(true)}>
+            <IconText icon={<AiOutlineUserAdd />} iconSize={16}>
+              加入小组
+            </IconText>
           </Button>
-          <Button
-            type="primary"
-            icon={<AiOutlinePlus size={16} />}
-            onClick={() => setCreateGroupModalOpen(true)}
-          >
-            新建小组
+          <Button type="primary" onClick={() => setCreateGroupModalOpen(true)}>
+            <IconText icon={<AiOutlinePlus />} iconSize={16}>
+              新建小组
+            </IconText>
           </Button>
         </div>
       </div>
@@ -141,6 +142,6 @@ const MyGroup: React.FC = () => {
       />
     </div>
   );
-};
+}
 
 export default MyGroup;

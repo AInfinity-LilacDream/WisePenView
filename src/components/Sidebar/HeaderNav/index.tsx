@@ -1,25 +1,22 @@
-import { useChatService, useNoteService, useUserService } from '@/domains';
-import { RESOURCE_TYPE } from '@/domains/Resource/enum';
+import { useChatService, useNoteService } from '@/domains';
 import { useAppMessage } from '@/hooks/useAppMessage';
-import { useNewChatSessionStore, useNewNoteStore, useRecentFilesStore } from '@/store';
-import { parseErrorMessage } from '@/utils/parseErrorMessage';
+import { useNewChatSessionStore, useNewNoteStore } from '@/store';
+import { parseErrorMessage } from '@/utils/error';
 import { useRequest } from 'ahooks';
 import type { MenuProps } from 'antd';
 import { Menu } from 'antd';
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 import { RiAddCircleFill, RiFileTextLine, RiGroupFill, RiPenNibFill } from 'react-icons/ri';
 import { useLocation, useNavigate } from 'react-router-dom';
 import type { HeaderNavProps } from './index.type';
 import styles from './style.module.less';
 
-const HeaderNav: React.FC<HeaderNavProps> = ({ collapsed, onSessionCreated }) => {
+function HeaderNav({ collapsed, onSessionCreated }: HeaderNavProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const chatService = useChatService();
   const noteService = useNoteService();
-  const userService = useUserService();
   const messageApi = useAppMessage();
-  const addRecentFile = useRecentFilesStore((s) => s.addFile);
 
   const isDriveActive = location.pathname.startsWith('/app/drive');
   const isGroupActive = location.pathname.startsWith('/app/my-group');
@@ -36,7 +33,7 @@ const HeaderNav: React.FC<HeaderNavProps> = ({ collapsed, onSessionCreated }) =>
         onSessionCreated(session.id, session.title);
       },
       onError: (err) => {
-        messageApi.error(parseErrorMessage(err, '新建对话失败'));
+        messageApi.error(parseErrorMessage(err));
       },
     }
   );
@@ -57,22 +54,12 @@ const HeaderNav: React.FC<HeaderNavProps> = ({ collapsed, onSessionCreated }) =>
       if (!resourceId) {
         throw new Error('创建笔记失败：未获取到资源ID');
       }
-      const currentUser = await userService.getUserInfo();
-      return {
-        resourceId,
-        ownerInfo: currentUser,
-      };
+      return { resourceId };
     },
     {
       manual: true,
-      onSuccess: ({ resourceId, ownerInfo }) => {
+      onSuccess: ({ resourceId }) => {
         useNewNoteStore.getState().setNewNoteResourceId(resourceId);
-        addRecentFile({
-          resourceId,
-          resourceName: '未命名笔记',
-          ownerInfo,
-          resourceType: RESOURCE_TYPE.NOTE,
-        });
         navigate(`/app/note/${encodeURIComponent(resourceId)}`);
       },
       onError: () => {
@@ -130,6 +117,6 @@ const HeaderNav: React.FC<HeaderNavProps> = ({ collapsed, onSessionCreated }) =>
       items={menuItems}
     />
   );
-};
+}
 
 export default HeaderNav;

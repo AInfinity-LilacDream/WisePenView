@@ -1,9 +1,9 @@
-import { useContext } from 'react';
+import { use } from 'react';
 
 import type { IAuthService } from '@/domains/Auth';
 import type { IChatService } from '@/domains/Chat';
 import type { IDocumentService } from '@/domains/Document';
-import type { IFolderService } from '@/domains/Folder';
+import type { IDriveService } from '@/domains/Drive';
 import type { IGroupService } from '@/domains/Group';
 import type { IImageService } from '@/domains/Image';
 import type { INoteService } from '@/domains/Note';
@@ -19,7 +19,7 @@ import type { ServicesContextValue } from './registry';
 
 /** 内部 hook，供各 useXxxService 复用；必须在 ServicesProvider 内使用 */
 function useServicesContext(): ServicesContextValue {
-  const ctx = useContext(ServicesContext);
+  const ctx = use(ServicesContext);
   if (!ctx) {
     throw new Error('useServicesContext must be used within ServicesProvider');
   }
@@ -30,7 +30,7 @@ function useServicesContext(): ServicesContextValue {
 export const useAuthService = (): IAuthService => useServicesContext().authService;
 export const useChatService = (): IChatService => useServicesContext().chatService;
 export const useDocumentService = (): IDocumentService => useServicesContext().documentService;
-export const useFolderService = (): IFolderService => useServicesContext().folderService;
+export const useDriveService = (): IDriveService => useServicesContext().driveService;
 export const useGroupService = (): IGroupService => useServicesContext().groupService;
 export const useImageService = (): IImageService => useServicesContext().imageService;
 export const useNoteService = (): INoteService => useServicesContext().noteService;

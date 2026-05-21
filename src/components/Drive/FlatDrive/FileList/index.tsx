@@ -1,16 +1,17 @@
-import FileTypeIcon from '@/components/Common/FileTypeIcon';
+import EntryIcon from '@/components/Common/EntryIcon';
+import IconText from '@/components/Common/IconText';
 import { DeleteFileModal, EditStickerModal, RenameFileModal } from '@/components/Drive/Modals';
 import { useResourceService } from '@/domains';
 import type { ResourceItem } from '@/domains/Resource';
-import { useClickFile } from '@/hooks/drive';
 import { useAppMessage } from '@/hooks/useAppMessage';
+import { useNavigateResource } from '@/hooks/useNavigateResource';
+import { parseErrorMessage } from '@/utils/error';
 import { formatFileSize } from '@/utils/format/formatFileSize';
-import { parseErrorMessage } from '@/utils/parseErrorMessage';
 import { usePagination } from 'ahooks';
 import type { MenuProps } from 'antd';
 import { Dropdown, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import React, { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { LuEllipsisVertical, LuPencil, LuTag, LuTrash2 } from 'react-icons/lu';
 import type { FileListProps } from './index.type';
 import styles from './style.module.less';
@@ -33,10 +34,16 @@ const buildColumns = (props: ColumnBuildProps): ColumnsType<ResourceItem> => [
     dataIndex: 'resourceName',
     key: 'resourceName',
     render: (text: string, record: ResourceItem) => (
-      <div className={styles.nameCell}>
-        <FileTypeIcon resourceType={record.resourceType} size={18} color="#666" />
-        <span>{text || '未命名'}</span>
-      </div>
+      <IconText
+        as="div"
+        className={styles.nameCell}
+        icon={<EntryIcon entryType="resource" resourceType={record.resourceType} color="#666" />}
+        iconSize={18}
+        gap="var(--ant-margin-sm)"
+        ellipsis
+      >
+        {text || '未命名'}
+      </IconText>
     ),
   },
   {
@@ -139,10 +146,10 @@ const buildColumns = (props: ColumnBuildProps): ColumnsType<ResourceItem> => [
   },
 ];
 
-const FileList: React.FC<FileListProps> = ({ groupId, filter }) => {
+function FileList({ groupId, filter }: FileListProps) {
   const resourceService = useResourceService();
   const message = useAppMessage();
-  const clickFile = useClickFile();
+  const navigateResource = useNavigateResource(groupId);
   const [openDropdownKey, setOpenDropdownKey] = useState<string | null>(null);
   const [list, setList] = useState<ResourceItem[]>([]);
   const [total, setTotal] = useState(0);
@@ -194,7 +201,7 @@ const FileList: React.FC<FileListProps> = ({ groupId, filter }) => {
         setTotal(res.total);
       },
       onError: (err) => {
-        message.error(parseErrorMessage(err, '获取资源列表失败'));
+        message.error(parseErrorMessage(err));
         setList([]);
         setTotal(0);
       },
@@ -255,9 +262,12 @@ const FileList: React.FC<FileListProps> = ({ groupId, filter }) => {
 
   const handleRowClick = useCallback(
     (record: ResourceItem) => ({
-      onClick: () => clickFile(record),
+      onClick: () => {
+        if (!record.resourceId) return;
+        navigateResource(record.resourceId, record.resourceType);
+      },
     }),
-    [clickFile]
+    [navigateResource]
   );
 
   return (
@@ -308,6 +318,6 @@ const FileList: React.FC<FileListProps> = ({ groupId, filter }) => {
       />
     </>
   );
-};
+}
 
 export default FileList;

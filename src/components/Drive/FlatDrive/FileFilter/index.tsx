@@ -1,13 +1,14 @@
+import IconText from '@/components/Common/IconText';
 import StickerManageModal from '@/components/Drive/Modals/StickerManageModal';
 import { useStickerService } from '@/domains';
 import { RESOURCE_SORT_BY, RESOURCE_SORT_DIR, TAG_QUERY_LOGIC_MODE } from '@/domains/Resource/enum';
 import type { Sticker } from '@/domains/Sticker';
 import { useAppMessage } from '@/hooks/useAppMessage';
-import { parseErrorMessage } from '@/utils/parseErrorMessage';
+import { parseErrorMessage } from '@/utils/error';
 import { useRequest } from 'ahooks';
 import { Button, Radio, Select, Spin, Tag } from 'antd';
 import clsx from 'clsx';
-import React, { useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { LuPlus, LuTags, LuX } from 'react-icons/lu';
 import AddStickerModal from './AddStickerModal';
 import type { FileFilterProps, FileFilterValue } from './index.type';
@@ -21,7 +22,7 @@ const DEFAULT_VALUE: FileFilterValue = {
   sortDir: RESOURCE_SORT_DIR.DESC,
 };
 
-const FileFilter: React.FC<FileFilterProps> = ({ value, onChange }) => {
+function FileFilter({ value, onChange }: FileFilterProps) {
   const stickerService = useStickerService();
   const message = useAppMessage();
   const [innerValue, setInnerValue] = useState<FileFilterValue>(DEFAULT_VALUE);
@@ -35,7 +36,7 @@ const FileFilter: React.FC<FileFilterProps> = ({ value, onChange }) => {
       setStickers(list);
     },
     onError: (err) => {
-      message.error(parseErrorMessage(err, '获取标签列表失败'));
+      message.error(parseErrorMessage(err));
       setStickers([]);
     },
   });
@@ -152,12 +153,10 @@ const FileFilter: React.FC<FileFilterProps> = ({ value, onChange }) => {
           />
         </div>
         <div className={styles.toolbarRight}>
-          <Button
-            type="default"
-            icon={<LuTags size={16} />}
-            onClick={() => setStickerManageModalOpen(true)}
-          >
-            管理标签
+          <Button type="default" onClick={() => setStickerManageModalOpen(true)}>
+            <IconText icon={<LuTags />} iconSize={16}>
+              管理标签
+            </IconText>
           </Button>
         </div>
       </div>
@@ -178,7 +177,7 @@ const FileFilter: React.FC<FileFilterProps> = ({ value, onChange }) => {
       />
     </div>
   );
-};
+}
 
 export default FileFilter;
 export type { FileFilterValue } from './index.type';

@@ -4,11 +4,19 @@
  */
 
 import type { TagListByTagResponse } from '@/domains/Tag';
-import type { EnumValue } from '@/utils/enum';
-import { createEnum } from '@/utils/enum';
+import type {
+  TagAclGrantMode,
+  TagResourceAction,
+  TagResourceMountMode,
+  TagVisibilityModeString,
+} from '@/domains/Tag/enum';
 
 /** TagService 接口：供依赖注入使用 */
 export interface ITagService {
+  /** 获取未过滤的原始标签树（包含路径标签与系统隐藏标签） */
+  getRawTagTree(groupId?: string): Promise<TagTreeNode[]>;
+  /** 从原始标签索引中按 tagId 查找节点（需先调用 getRawTagTree） */
+  getRawTagById(tagId: string, groupId?: string): TagTreeNode | undefined;
   /** 获取标签树（带缓存），返回多个根节点 */
   getTagTree(groupId?: string): Promise<TagTreeNode[]>;
   /** 从已缓存的扁平索引中按 tagId 查找标签节点（需先调用 getTagTree） */
@@ -28,18 +36,7 @@ export interface GetResByTagRequest {
   filePageSize?: number;
 }
 
-/** 与 OpenAPI 文档语义对应的别名，值为接口要求的字符串 */
-export const TAG_VISIBILITY_MODE = createEnum([
-  { value: '0', key: 'ALL', label: '全部可见' },
-  { value: '1', key: 'ONLY_ADMIN', label: '仅管理员' },
-  { value: '2', key: 'WHITELIST', label: '白名单' },
-  { value: '3', key: 'BLACKLIST', label: '黑名单' },
-] as const);
-
-/** OpenAPI TagTreeResponse.visibilityMode / TagCreateRequest / TagUpdateRequest */
-export type TagVisibilityModeString = EnumValue<typeof TAG_VISIBILITY_MODE>;
-
-export type TagVisibilityMode = EnumValue<typeof TAG_VISIBILITY_MODE>;
+export type { TagAclGrantMode, TagResourceAction, TagResourceMountMode, TagVisibilityModeString };
 
 /**
  * 标签树节点（OpenAPI TagTreeResponse）
@@ -51,7 +48,12 @@ export interface TagTreeResponse {
   groupId?: string;
   tagDesc?: string;
   visibilityMode?: TagVisibilityModeString;
-  specifiedUsers?: string[];
+  aclGrantMode?: TagAclGrantMode;
+  resourceMountMode?: TagResourceMountMode;
+  aclGrantSpecifiedUsers?: string[];
+  resourceMountSpecifiedUsers?: string[];
+  mountSpecifiedUsers?: string[];
+  grantedActions?: TagResourceAction[];
   parentId?: string;
   children?: TagTreeResponse[];
 }
@@ -66,7 +68,12 @@ export interface TagCreateRequest {
   tagName: string;
   tagDesc?: string;
   visibilityMode?: TagVisibilityModeString;
-  specifiedUsers?: string[];
+  aclGrantMode?: TagAclGrantMode;
+  resourceMountMode?: TagResourceMountMode;
+  aclGrantSpecifiedUsers?: string[];
+  resourceMountSpecifiedUsers?: string[];
+  mountSpecifiedUsers?: string[];
+  grantedActions?: TagResourceAction[];
 }
 
 /** POST /resource/tag/changeTag */
@@ -75,7 +82,12 @@ export interface TagUpdateRequest {
   tagName?: string;
   tagDesc?: string;
   visibilityMode?: TagVisibilityModeString;
-  specifiedUsers?: string[];
+  aclGrantMode?: TagAclGrantMode;
+  resourceMountMode?: TagResourceMountMode;
+  aclGrantSpecifiedUsers?: string[];
+  resourceMountSpecifiedUsers?: string[];
+  mountSpecifiedUsers?: string[];
+  grantedActions?: TagResourceAction[];
   targetTagId: string;
 }
 

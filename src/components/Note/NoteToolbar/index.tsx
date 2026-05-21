@@ -14,6 +14,7 @@ import {
 import { Button } from 'antd';
 import { RiSparklingLine } from 'react-icons/ri';
 
+import IconText from '@/components/Common/IconText';
 import type { NoteToolbarProps } from './index.type';
 import styles from './style.module.less';
 
@@ -24,7 +25,6 @@ const NoteToolbar = ({ onAskAi }: NoteToolbarProps) => (
         <Button
           type="primary"
           size="small"
-          icon={<RiSparklingLine size={14} />}
           className={styles.askAiBtn}
           onMouseDown={(event) => {
             event.preventDefault();
@@ -36,7 +36,9 @@ const NoteToolbar = ({ onAskAi }: NoteToolbarProps) => (
             onAskAi();
           }}
         >
-          问AI
+          <IconText icon={<RiSparklingLine />} iconSize={14}>
+            问AI
+          </IconText>
         </Button>
         <BlockTypeSelect key="blockTypeSelect" />
         <FileCaptionButton key="fileCaptionButton" />

@@ -1,10 +1,11 @@
 import { useRequest, useUnmount } from 'ahooks';
 import { Alert, Button, Result, Segmented, Spin } from 'antd';
-import React, { useCallback, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { RiArrowLeftDoubleLine, RiMenuLine } from 'react-icons/ri';
 import { Link, useParams } from 'react-router-dom';
 
-import FileTypeIcon from '@/components/Common/FileTypeIcon';
+import EntryIcon from '@/components/Common/EntryIcon';
+import IconText from '@/components/Common/IconText';
 import ResourceViewerHeader from '@/components/Common/ResourceViewerHeader';
 import rvhStyles from '@/components/Common/ResourceViewerHeader/style.module.less';
 import CustomBlockNote from '@/components/Note/CustomBlockNote';
@@ -21,7 +22,7 @@ import { RESOURCE_TYPE } from '@/domains/Resource/enum';
 import { useSmoothFlag } from '@/hooks/useSmoothFlag';
 import { useNoteSession } from '@/session/note/useNoteSession';
 import { useAiDiffDisplayStore } from '@/store';
-import { parseErrorMessage } from '@/utils/parseErrorMessage';
+import { parseErrorMessage } from '@/utils/error';
 import styles from './style.module.less';
 
 interface NoteViewConnectedProps {
@@ -30,11 +31,7 @@ interface NoteViewConnectedProps {
   noteInfoDisplay: NoteInfoDisplayData;
 }
 
-const NoteViewConnected: React.FC<NoteViewConnectedProps> = ({
-  noteId,
-  resourceId,
-  noteInfoDisplay,
-}) => {
+function NoteViewConnected({ noteId, resourceId, noteInfoDisplay }: NoteViewConnectedProps) {
   const aiDiffDisplayMode = useAiDiffDisplayStore((state) => state.displayMode);
   const setAiDiffDisplayMode = useAiDiffDisplayStore((state) => state.setDisplayMode);
   const bodyEditorRef = useRef<NoteBodyEditorHandle>(null);
@@ -106,12 +103,15 @@ const NoteViewConnected: React.FC<NoteViewConnectedProps> = ({
     <div className={styles.pageWrap}>
       <ResourceViewerHeader
         inlineTitle={
-          <>
-            <span aria-hidden className={styles.headerTypeIcon}>
-              <FileTypeIcon resourceType={RESOURCE_TYPE.NOTE} />
-            </span>
-            <span className={rvhStyles.inlineTitleText}>{toolbarNoteTitle}</span>
-          </>
+          <IconText
+            className={rvhStyles.inlineTitleText}
+            icon={<EntryIcon entryType="resource" resourceType={RESOURCE_TYPE.NOTE} />}
+            iconSize={18}
+            gap="var(--ant-margin-sm)"
+            ellipsis
+          >
+            {toolbarNoteTitle}
+          </IconText>
         }
         extra={
           <Segmented
@@ -234,9 +234,9 @@ const NoteViewConnected: React.FC<NoteViewConnectedProps> = ({
       </div>
     </div>
   );
-};
+}
 
-const NoteView: React.FC = () => {
+function NoteView() {
   const { noteId } = useParams<{ noteId?: string }>();
   const resourceId = noteId ?? '';
   const noteService = useNoteService();
@@ -282,7 +282,7 @@ const NoteView: React.FC = () => {
               <Result
                 status="warning"
                 title="无法打开笔记"
-                subTitle={parseErrorMessage(noteInfoError, '笔记不存在或无访问权限')}
+                subTitle={parseErrorMessage(noteInfoError)}
                 extra={
                   <Link to="/app/drive">
                     <Button type="default">返回云盘</Button>
@@ -339,6 +339,6 @@ const NoteView: React.FC = () => {
   return (
     <NoteViewConnected noteId={noteId} resourceId={resourceId} noteInfoDisplay={noteInfoDisplay} />
   );
-};
+}
 
 export default NoteView;

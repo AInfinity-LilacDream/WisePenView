@@ -1,18 +1,16 @@
 import { useDocumentService, useNoteService } from '@/domains';
 import { RESOURCE_TYPE } from '@/domains/Resource/enum';
 import { useAppMessage } from '@/hooks/useAppMessage';
-import { useRecentFilesStore } from '@/store';
-import { parseErrorMessage } from '@/utils/parseErrorMessage';
+import { useNewNoteStore, usePdfPreviewProgressStore } from '@/store';
+import { parseErrorMessage } from '@/utils/error';
 import { useRequest } from 'ahooks';
 import { Alert, Button, Modal } from 'antd';
-import React from 'react';
 import type { DeleteFileModalProps } from './index.type';
 
-const DeleteFileModal: React.FC<DeleteFileModalProps> = ({ open, onCancel, onSuccess, file }) => {
+function DeleteFileModal({ open, onCancel, onSuccess, file }: DeleteFileModalProps) {
   const documentService = useDocumentService();
   const noteService = useNoteService();
   const message = useAppMessage();
-  const removeFile = useRecentFilesStore((s) => s.removeFile);
 
   const { loading, run: runDeleteFile } = useRequest(
     async () => {
@@ -28,14 +26,16 @@ const DeleteFileModal: React.FC<DeleteFileModalProps> = ({ open, onCancel, onSuc
       manual: true,
       onSuccess: (deletedResourceId) => {
         if (deletedResourceId) {
-          removeFile(deletedResourceId);
+          // 资源已删除，同步清理与之绑定的临时状态
+          usePdfPreviewProgressStore.getState().removeProgress(deletedResourceId);
+          useNewNoteStore.getState().clearNewNoteResourceId(deletedResourceId);
         }
         message.success('文件已删除');
         onSuccess?.();
         onCancel();
       },
       onError: (err) => {
-        message.error(parseErrorMessage(err, '删除失败'));
+        message.error(parseErrorMessage(err));
       },
     }
   );
@@ -70,6 +70,6 @@ const DeleteFileModal: React.FC<DeleteFileModalProps> = ({ open, onCancel, onSuc
       />
     </Modal>
   );
-};
+}
 
 export default DeleteFileModal;

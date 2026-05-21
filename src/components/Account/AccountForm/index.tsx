@@ -1,12 +1,13 @@
+import IconText from '@/components/Common/IconText';
 import { useUserService } from '@/domains';
 import type { UpdateUserInfoRequest } from '@/domains/User';
 import { DEGREE, SEX } from '@/domains/User/enum';
 import { useAppMessage } from '@/hooks/useAppMessage';
-import { parseErrorMessage } from '@/utils/parseErrorMessage';
+import { parseErrorMessage } from '@/utils/error';
 import { useRequest } from 'ahooks';
 import { Button, Descriptions, Form, Input, Select } from 'antd';
 import type { InputRef } from 'antd/es/input';
-import React, { useMemo } from 'react';
+import { useMemo, type Ref } from 'react';
 import { RiPencilLine } from 'react-icons/ri';
 import type { AccountFormProps } from './index.type';
 import { getProfileDisplayString } from './profileDisplay';
@@ -14,19 +15,21 @@ import styles from './style.module.less';
 
 const { Option } = Select;
 
-const SexReadonlyInput = React.forwardRef<InputRef, { value?: number | null }>(({ value }, ref) => (
-  <Input
-    ref={ref}
-    disabled
-    readOnly
-    value={value != null ? SEX.getLabel(value) : '-'}
-    className={styles.editableInput}
-  />
-));
+function SexReadonlyInput({ value, ref }: { value?: number | null; ref?: Ref<InputRef> }) {
+  return (
+    <Input
+      ref={ref}
+      disabled
+      readOnly
+      value={value != null ? SEX.getLabel(value) : '-'}
+      className={styles.editableInput}
+    />
+  );
+}
 SexReadonlyInput.displayName = 'SexReadonlyInput';
 
-const DegreeLevelReadonlyInput = React.forwardRef<InputRef, { value?: number | null }>(
-  ({ value }, ref) => (
+function DegreeLevelReadonlyInput({ value, ref }: { value?: number | null; ref?: Ref<InputRef> }) {
+  return (
     <Input
       ref={ref}
       disabled
@@ -34,11 +37,11 @@ const DegreeLevelReadonlyInput = React.forwardRef<InputRef, { value?: number | n
       value={value != null ? DEGREE.getLabel(value) : '-'}
       className={styles.editableInput}
     />
-  )
-);
+  );
+}
 DegreeLevelReadonlyInput.displayName = 'DegreeLevelReadonlyInput';
 
-const AccountForm: React.FC<AccountFormProps> = ({
+function AccountForm({
   show,
   user,
   form,
@@ -49,7 +52,7 @@ const AccountForm: React.FC<AccountFormProps> = ({
   onEditModeChange,
   onUserInfoUpdated,
   onCancel,
-}) => {
+}: AccountFormProps) {
   const userService = useUserService();
   const message = useAppMessage();
 
@@ -110,7 +113,7 @@ const AccountForm: React.FC<AccountFormProps> = ({
       },
       onError: (err) => {
         if (err && typeof err === 'object' && 'errorFields' in err) return;
-        message.error(parseErrorMessage(err, '保存失败'));
+        message.error(parseErrorMessage(err));
       },
     }
   );
@@ -139,12 +142,10 @@ const AccountForm: React.FC<AccountFormProps> = ({
       <div className={styles.sectionHeader}>
         <h3 className={styles.sectionTitle}>基本档案</h3>
         {!editMode ? (
-          <Button
-            type="primary"
-            icon={<RiPencilLine size={16} />}
-            onClick={() => onEditModeChange(true)}
-          >
-            编辑资料
+          <Button type="primary" onClick={() => onEditModeChange(true)}>
+            <IconText icon={<RiPencilLine />} iconSize={16}>
+              编辑资料
+            </IconText>
           </Button>
         ) : null}
       </div>
@@ -213,6 +214,6 @@ const AccountForm: React.FC<AccountFormProps> = ({
       )}
     </div>
   );
-};
+}
 
 export default AccountForm;
