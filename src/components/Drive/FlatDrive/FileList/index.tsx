@@ -1,4 +1,4 @@
-import FileTypeIcon from '@/components/Common/FileTypeIcon';
+import EntryIcon from '@/components/Common/EntryIcon';
 import IconText from '@/components/Common/IconText';
 import { DeleteFileModal, EditStickerModal, RenameFileModal } from '@/components/Drive/Modals';
 import { useResourceService } from '@/domains';
@@ -37,7 +37,7 @@ const buildColumns = (props: ColumnBuildProps): ColumnsType<ResourceItem> => [
       <IconText
         as="div"
         className={styles.nameCell}
-        icon={<FileTypeIcon resourceType={record.resourceType} color="#666" />}
+        icon={<EntryIcon entryType="resource" resourceType={record.resourceType} color="#666" />}
         iconSize={18}
         gap="var(--ant-margin-sm)"
         ellipsis

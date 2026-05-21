@@ -1,3 +1,4 @@
+import EntryIcon from '@/components/Common/EntryIcon';
 import IconText from '@/components/Common/IconText';
 import type { MenuProps } from 'antd';
 import { Dropdown } from 'antd';
@@ -6,7 +7,6 @@ import type { ReactNode } from 'react';
 import { LuEllipsisVertical, LuFolderInput, LuPencil, LuShield, LuTrash2 } from 'react-icons/lu';
 import type { DriveActionTarget } from '../../common/driveComponentModel';
 import { isDriveActionTarget } from '../../common/driveComponentModel';
-import NodeIcon from '../../common/NodeIcon';
 import type { DriveRow, DriveRowPredicate, TableDriveActionConfig } from '../index.type';
 import type { RowActionKind } from '../useTableDriveActions';
 
@@ -83,11 +83,12 @@ export function getTableDriveColumns(
           };
         }
         const iconSize = record.type === 'folder' ? 20 : 18;
+        const resourceType = record.type === 'resource' ? record.resourceType : undefined;
         return (
           <IconText
             as="div"
             className={styles.nameCell}
-            icon={<NodeIcon node={record} size={iconSize} />}
+            icon={<EntryIcon entryType={record.type} resourceType={resourceType} size={iconSize} />}
             iconSize={iconSize}
             gap="var(--ant-margin-sm)"
             ellipsis

@@ -1,5 +1,5 @@
+import EntryIcon from '@/components/Common/EntryIcon';
 import IconText from '@/components/Common/IconText';
-import NodeIcon from '@/components/Drive/common/NodeIcon';
 import { ROOT_DISPLAY } from '@/components/Drive/common/constants';
 import type { DriveNode, LoadMoreNode } from '@/domains/Drive';
 import type { DataNode } from 'antd/es/tree';
@@ -76,10 +76,12 @@ function toTreeDataNode(node: DriveNode, options: BuildTreeDataOptions): DataNod
 
   const selectable = node.type === 'trash' ? false : options.selectableTypes.has(node.type);
   const disabled = options.disabledNodeIds.has(node.id);
+  const resourceType =
+    node.type === 'resource' || node.type === 'link' ? node.resourceType : undefined;
   const title = (
     <IconText
       className={styles.nodeTitle}
-      icon={<NodeIcon node={node} size={14} />}
+      icon={<EntryIcon entryType={node.type} resourceType={resourceType} size={14} />}
       iconSize={14}
       gap="var(--ant-margin-xxs)"
       ellipsis
