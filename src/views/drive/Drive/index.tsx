@@ -14,7 +14,7 @@ import { UploadDocumentModal } from './UploadDocumentModal';
 import styles from './style.module.less';
 
 const VIEW_TABS: { key: DriveViewMode; label: string }[] = [
-  { key: 'tableDrive', label: '云盘（TableDrive）' },
+  { key: 'tableDrive', label: '云盘' },
   { key: 'flat', label: '标签管理' },
   { key: 'uploadQueue', label: '上传队列' },
 ];
