@@ -4,7 +4,7 @@ import { persist } from 'zustand/middleware';
 import { zustandSessionStorage } from './sessionStorage';
 
 /**
- * 记录用户最后一次 clickNode/clickFile 时所在的 Drive scope（个人 / 群组）。
+ * 记录用户最后一次从 Drive 打开资源时所在的 scope（个人 / 群组）。
  * 供 SidebarDrive 等下游消费，避免在 note/pdf 视图中再次让用户选择 scope。
  */
 interface ActiveDriveScopeState {

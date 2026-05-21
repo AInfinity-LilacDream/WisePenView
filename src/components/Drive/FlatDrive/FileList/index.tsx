@@ -4,7 +4,7 @@ import { DeleteFileModal, EditStickerModal, RenameFileModal } from '@/components
 import { useResourceService } from '@/domains';
 import type { ResourceItem } from '@/domains/Resource';
 import { useAppMessage } from '@/hooks/useAppMessage';
-import { useClickFile } from '@/hooks/useClickFile';
+import { useNavigateResource } from '@/hooks/useNavigateResource';
 import { parseErrorMessage } from '@/utils/error';
 import { formatFileSize } from '@/utils/format/formatFileSize';
 import { usePagination } from 'ahooks';
@@ -149,7 +149,7 @@ const buildColumns = (props: ColumnBuildProps): ColumnsType<ResourceItem> => [
 function FileList({ groupId, filter }: FileListProps) {
   const resourceService = useResourceService();
   const message = useAppMessage();
-  const clickFile = useClickFile();
+  const navigateResource = useNavigateResource(groupId);
   const [openDropdownKey, setOpenDropdownKey] = useState<string | null>(null);
   const [list, setList] = useState<ResourceItem[]>([]);
   const [total, setTotal] = useState(0);
@@ -262,9 +262,12 @@ function FileList({ groupId, filter }: FileListProps) {
 
   const handleRowClick = useCallback(
     (record: ResourceItem) => ({
-      onClick: () => clickFile(record),
+      onClick: () => {
+        if (!record.resourceId) return;
+        navigateResource(record.resourceId, record.resourceType);
+      },
     }),
-    [clickFile]
+    [navigateResource]
   );
 
   return (
