@@ -1,4 +1,4 @@
-export interface SidebarProps {
+export interface AppSidebarProps {
   collapsed: boolean;
   onToggle: () => void;
 }

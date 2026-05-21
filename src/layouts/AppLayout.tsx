@@ -1,13 +1,13 @@
 import ChatPanel from '@/components/ChatPanel';
-import Sidebar from '@/components/Sidebar';
-import ResourceSidebar from '@/components/Sidebar/ResourceSidebar';
+import AppSidebar from '@/components/Sidebar/AppSidebar';
+import DriveSidebar from '@/components/Sidebar/DriveSidebar';
 import { useChatPanelStore, useCurrentChatSessionStore } from '@/store';
 import { useMount, useUpdateEffect } from 'ahooks';
 import { Layout } from 'antd';
 import React, { useCallback, useRef, useState } from 'react';
 import { LuBot } from 'react-icons/lu';
 import { Outlet, useLocation } from 'react-router-dom';
-import styles from './SystemLayout.module.less';
+import styles from './AppLayout.module.less';
 
 const { Content, Sider } = Layout;
 const MIN_CHAT_PANEL_WIDTH = 320;
@@ -24,7 +24,7 @@ const getMaxChatPanelWidth = (): number => {
 
 const RESOURCE_SIDEBAR_PATH_REGEX = /^\/app\/(note|pdf)\//;
 
-function SystemLayout() {
+function AppLayout() {
   const rootRef = useRef<HTMLDivElement | null>(null);
   const chatResizeGuideRef = useRef<HTMLDivElement | null>(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -134,15 +134,15 @@ function SystemLayout() {
       style={{ ['--chat-panel-width' as string]: `${chatPanelWidth}px` }}
     >
       {chatResizing && <div ref={chatResizeGuideRef} className={styles.chatResizeGuide} />}
-      {/* 左侧 Sidebar：note/pdf 路由下切换为 ResourceSidebar 形态 */}
+      {/* 左侧 Sidebar：note/pdf 路由下切换为 DriveSidebar 形态 */}
       <Sider className={styles.leftSider} width={308} theme="light" collapsed={sidebarCollapsed}>
         {isResourceContext ? (
-          <ResourceSidebar
+          <DriveSidebar
             collapsed={sidebarCollapsed}
             onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
           />
         ) : (
-          <Sidebar
+          <AppSidebar
             collapsed={sidebarCollapsed}
             onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
           />
@@ -193,4 +193,4 @@ function SystemLayout() {
   );
 }
 
-export default SystemLayout;
+export default AppLayout;

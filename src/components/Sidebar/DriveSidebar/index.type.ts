@@ -1,4 +1,4 @@
-export interface ResourceSidebarProps {
+export interface DriveSidebarProps {
   collapsed: boolean;
   onToggle: () => void;
 }

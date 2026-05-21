@@ -11,8 +11,10 @@ import { useNavigate } from 'react-router-dom';
 import {
   RiArrowDownSLine,
   RiFeedbackLine,
+  RiHomeLine,
   RiLogoutBoxRLine,
   RiPieChartLine,
+  RiShieldKeyholeLine,
   RiShieldUserLine,
 } from 'react-icons/ri';
 
@@ -24,9 +26,10 @@ const FEEDBACK_SURVEY_URL = 'https://v.wjx.cn/vm/PrUZetY.aspx';
 
 interface UserProfileProps {
   collapsed: boolean;
+  menuMode?: 'app' | 'admin';
 }
 
-function UserProfile({ collapsed }: UserProfileProps) {
+function UserProfile({ collapsed, menuMode = 'app' }: UserProfileProps) {
   const navigate = useNavigate();
   const userService = useUserService();
   const [user, setUser] = useState<User | null>(null);
@@ -40,9 +43,16 @@ function UserProfile({ collapsed }: UserProfileProps) {
   const displayName = user?.nickname || user?.username || '-';
   const identityLabel =
     user?.identityType !== undefined ? IDENTITY.getLabel(user.identityType) : '-';
+  const isAdmin = user?.identityType === IDENTITY.ADMIN;
 
   const handleMenuClick: MenuProps['onClick'] = ({ key }) => {
     switch (key) {
+      case 'enter-admin':
+        navigate('/admin/users');
+        break;
+      case 'back-app':
+        navigate('/app');
+        break;
       case 'subscription':
         navigate('/app/profile/subscription');
         break;
@@ -68,21 +78,13 @@ function UserProfile({ collapsed }: UserProfileProps) {
     }
   };
 
-  const items: MenuProps['items'] = [
-    // --- 第一组：订阅与财务 ---
-    // {
-    //   key: 'subscription',
-    //   label: '订阅信息',
-    //   icon: <RiBankCardLine size={16} />,
-    // },
+  const appMenuItems: MenuProps['items'] = [
     {
       key: 'usage',
       label: '余额与使用量',
       icon: <RiPieChartLine size={16} />,
     },
     { type: 'divider' },
-
-    // --- 第二组：账号与反馈 ---
     {
       key: 'account',
       label: '账号',
@@ -94,29 +96,36 @@ function UserProfile({ collapsed }: UserProfileProps) {
       icon: <RiFeedbackLine size={16} />,
     },
     { type: 'divider' },
-
-    // --- 第三组：设置 (带右侧文字) ---
-    // {
-    //   key: 'language',
-    //   label: '语言',
-    //   icon: <RiTranslate2 size={16} />,
-    //   extra: <span style={{ fontSize: 12, color: '#999' }}>简体中文</span>,
-    // },
-    // {
-    //   key: 'theme',
-    //   label: '外观',
-    //   icon: <RiSunLine size={16} />,
-    //   extra: <span style={{ fontSize: 12, color: '#999' }}>浅色</span>,
-    // },
-    // { type: 'divider' },
-
-    // --- 第四组：退出 ---
+    ...(isAdmin
+      ? ([
+          {
+            key: 'enter-admin',
+            label: '进入管理',
+            icon: <RiShieldKeyholeLine size={16} />,
+          },
+        ] satisfies MenuProps['items'])
+      : []),
     {
       key: 'logout',
       label: '退出登录',
       icon: <RiLogoutBoxRLine size={16} />,
     },
   ];
+
+  const adminMenuItems: MenuProps['items'] = [
+    {
+      key: 'back-app',
+      label: '回到用户端',
+      icon: <RiHomeLine size={16} />,
+    },
+    {
+      key: 'logout',
+      label: '退出登录',
+      icon: <RiLogoutBoxRLine size={16} />,
+    },
+  ];
+
+  const items = menuMode === 'admin' ? adminMenuItems : appMenuItems;
 
   // 下拉菜单配置
   const dropdownProps = {

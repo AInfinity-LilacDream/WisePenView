@@ -5,10 +5,13 @@ import { Menu } from 'antd';
 import { useImperativeHandle, useMemo, useState, type Ref } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useSessionListGroup } from '../SessionListGroup';
-import type { SidebarMenuProps, SidebarMenuRef } from './index.type';
+import type { AppSessionMenuProps, AppSessionMenuRef } from './index.type';
 import styles from './style.module.less';
 
-function SidebarMenu({ collapsed, ref }: SidebarMenuProps & { ref?: Ref<SidebarMenuRef> }) {
+function AppSessionMenu({
+  collapsed,
+  ref,
+}: AppSessionMenuProps & { ref?: Ref<AppSessionMenuRef> }) {
   const location = useLocation();
   const setChatPanelCollapsed = useChatPanelStore((state) => state.setChatPanelCollapsed);
   const currentSessionId = useCurrentChatSessionStore((state) => state.currentSessionId);
@@ -66,7 +69,7 @@ function SidebarMenu({ collapsed, ref }: SidebarMenuProps & { ref?: Ref<SidebarM
   );
 }
 
-SidebarMenu.displayName = 'SidebarMenu';
+AppSessionMenu.displayName = 'AppSessionMenu';
 
-export type { SidebarMenuRef };
-export default SidebarMenu;
+export type { AppSessionMenuRef };
+export default AppSessionMenu;

@@ -1,11 +1,10 @@
 import logoImg from '@/assets/images/logo-icon.png';
 import clsx from 'clsx';
 import { RiIndentDecrease, RiIndentIncrease } from 'react-icons/ri';
-import HeaderNav from '../HeaderNav';
 import type { SidebarHeaderProps } from './index.type';
 import styles from './style.module.less';
 
-function SidebarHeader({ collapsed, onToggle, onSessionCreated }: SidebarHeaderProps) {
+function SidebarHeader({ collapsed, onToggle, title = 'WisePen', nav }: SidebarHeaderProps) {
   return (
     <div className={styles.header}>
       <div className={clsx(styles.headerTop, collapsed && styles.collapsedHeaderTop)}>
@@ -27,14 +26,12 @@ function SidebarHeader({ collapsed, onToggle, onSessionCreated }: SidebarHeaderP
             <div className={styles.logoIcon}>
               <img src={logoImg} alt="WisePen" />
             </div>
-            <span className={styles.logoText}>WisePen</span>
+            <span className={styles.logoText}>{title}</span>
           </>
         )}
       </div>
 
-      <div className={clsx(styles.headerNav, collapsed && styles.headerNavCollapsed)}>
-        <HeaderNav collapsed={collapsed} onSessionCreated={onSessionCreated} />
-      </div>
+      <div className={clsx(styles.headerNav, collapsed && styles.headerNavCollapsed)}>{nav}</div>
     </div>
   );
 }

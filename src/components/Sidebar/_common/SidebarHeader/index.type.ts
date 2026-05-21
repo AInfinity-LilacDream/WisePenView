@@ -1,5 +1,8 @@
+import type { ReactNode } from 'react';
+
 export interface SidebarHeaderProps {
   collapsed: boolean;
   onToggle: () => void;
-  onSessionCreated: (sessionId: string, sessionTitle: string) => void;
+  title?: string;
+  nav?: ReactNode;
 }

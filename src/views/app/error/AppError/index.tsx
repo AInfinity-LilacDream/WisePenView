@@ -4,7 +4,7 @@ import { isRouteErrorResponse, useNavigate, useRouteError } from 'react-router-d
 
 import LandingNavbar from '@/components/LandingNavbar';
 import { useAppMessage } from '@/hooks/useAppMessage';
-import ResourceNotFound from '@/views/error/ResourceNotFound';
+import ResourceNotFound from '@/views/app/error/ResourceNotFound';
 import styles from './style.module.less';
 
 interface AppErrorInfo {

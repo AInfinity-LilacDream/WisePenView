@@ -1,12 +1,12 @@
 import SidebarDrive from '@/components/Drive/SidebarDrive';
-import UserProfile from '@/components/UserProfile';
 import clsx from 'clsx';
 import { RiArrowLeftSLine, RiIndentDecrease, RiIndentIncrease } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
-import type { ResourceSidebarProps } from './index.type';
+import UserProfile from '../_common/UserProfile';
+import type { DriveSidebarProps } from './index.type';
 import styles from './style.module.less';
 
-function ResourceSidebar({ collapsed, onToggle }: ResourceSidebarProps) {
+function DriveSidebar({ collapsed, onToggle }: DriveSidebarProps) {
   const navigate = useNavigate();
 
   const handleBack = () => {
@@ -39,4 +39,4 @@ function ResourceSidebar({ collapsed, onToggle }: ResourceSidebarProps) {
   );
 }
 
-export default ResourceSidebar;
+export default DriveSidebar;

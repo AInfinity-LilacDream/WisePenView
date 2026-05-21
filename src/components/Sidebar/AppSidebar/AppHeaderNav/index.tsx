@@ -8,10 +8,10 @@ import { Menu } from 'antd';
 import { useCallback } from 'react';
 import { RiAddCircleFill, RiFileTextLine, RiGroupFill, RiPenNibFill } from 'react-icons/ri';
 import { useLocation, useNavigate } from 'react-router-dom';
-import type { HeaderNavProps } from './index.type';
+import type { AppHeaderNavProps } from './index.type';
 import styles from './style.module.less';
 
-function HeaderNav({ collapsed, onSessionCreated }: HeaderNavProps) {
+function AppHeaderNav({ collapsed, onSessionCreated }: AppHeaderNavProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const chatService = useChatService();
@@ -119,4 +119,4 @@ function HeaderNav({ collapsed, onSessionCreated }: HeaderNavProps) {
   );
 }
 
-export default HeaderNav;
+export default AppHeaderNav;
