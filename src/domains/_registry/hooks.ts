@@ -26,7 +26,6 @@ function useServicesContext(): ServicesContextValue {
   return ctx;
 }
 
-// 第七步：导出 useXxxService hook，组件内通过 useOrderService() 等获取实例
 export const useAuthService = (): IAuthService => useServicesContext().authService;
 export const useChatService = (): IChatService => useServicesContext().chatService;
 export const useDocumentService = (): IDocumentService => useServicesContext().documentService;
@@ -39,5 +38,4 @@ export const useResourceService = (): IResourceService => useServicesContext().r
 export const useStickerService = (): IStickerService => useServicesContext().stickerService;
 export const useTagService = (): ITagService => useServicesContext().tagService;
 export const useUserService = (): IUserService => useServicesContext().userService;
-/** 个人中心钱包、高级组 token 相关页注入 */
 export const useWalletService = (): IWalletService => useServicesContext().walletService;
