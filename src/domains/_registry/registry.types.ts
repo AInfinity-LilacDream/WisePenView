@@ -1,3 +1,4 @@
+import type { IAdminService } from '@/domains/Admin';
 import type { IAuthService } from '@/domains/Auth';
 import type { IChatService } from '@/domains/Chat';
 import type { IDocumentService } from '@/domains/Document';
@@ -13,6 +14,7 @@ import type { IUserService } from '@/domains/User';
 import type { IWalletService } from '@/domains/Wallet';
 
 export interface ServicesContextValue {
+  adminService: IAdminService;
   authService: IAuthService;
   chatService: IChatService;
   documentService: IDocumentService;

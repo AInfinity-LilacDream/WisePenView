@@ -10,6 +10,7 @@
  * 为避免循环依赖与隐式耦合，service 间不得互相直接 import 实现，必须经此装配。
  * 新增更深层级（Level 2+）时在此文件延展，保持"分层 + 显式注入"。
  */
+import { createAdminServices } from '@/domains/Admin/service/AdminServices.impl';
 import { createAuthServices } from '@/domains/Auth/service/AuthServices.impl';
 import { createChatServices } from '@/domains/Chat/service/ChatServices.impl';
 import { createDocumentServices } from '@/domains/Document/service/DocumentServices.impl';
@@ -27,6 +28,7 @@ import { createWalletServices } from '@/domains/Wallet/service/WalletServices.im
 import type { ServicesContextValue } from './registry.types';
 
 // Level 0：无跨 service 依赖
+const adminService = createAdminServices();
 const authService = createAuthServices();
 const chatService = createChatServices();
 const documentService = createDocumentServices();
@@ -47,6 +49,7 @@ const driveService = createDriveServices({
 });
 
 const servicesValue: ServicesContextValue = {
+  adminService: adminService,
   authService: authService,
   chatService: chatService,
   documentService: documentService,

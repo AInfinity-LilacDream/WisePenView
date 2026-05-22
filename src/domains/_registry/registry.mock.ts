@@ -1,6 +1,7 @@
 /**
  * Mock 服务注册表：仅绑定 *Services.mock.ts
  */
+import { AdminServicesMock } from '@/domains/Admin/mock/AdminServices.mock';
 import { AuthServicesMock } from '@/domains/Auth/mock/AuthServices.mock';
 import { ChatServicesMock } from '@/domains/Chat/mock/ChatServices.mock';
 import { DocumentServicesMock } from '@/domains/Document/mock/DocumentServices.mock';
@@ -18,6 +19,7 @@ import { WalletServicesMock } from '@/domains/Wallet/mock/WalletServices.mock';
 import type { ServicesContextValue } from './registry.types';
 
 const mockServicesValue: ServicesContextValue = {
+  adminService: AdminServicesMock,
   authService: AuthServicesMock,
   chatService: ChatServicesMock,
   documentService: DocumentServicesMock,

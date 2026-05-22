@@ -1,5 +1,6 @@
 import { use } from 'react';
 
+import type { IAdminService } from '@/domains/Admin';
 import type { IAuthService } from '@/domains/Auth';
 import type { IChatService } from '@/domains/Chat';
 import type { IDocumentService } from '@/domains/Document';
@@ -26,6 +27,7 @@ function useServicesContext(): ServicesContextValue {
   return ctx;
 }
 
+export const useAdminService = (): IAdminService => useServicesContext().adminService;
 export const useAuthService = (): IAuthService => useServicesContext().authService;
 export const useChatService = (): IChatService => useServicesContext().chatService;
 export const useDocumentService = (): IDocumentService => useServicesContext().documentService;
