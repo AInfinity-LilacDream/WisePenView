@@ -1,14 +1,28 @@
 import type { DefaultStyleSchema } from '@blocknote/core';
-import type { ReactCustomInlineContentRenderProps } from '@blocknote/react';
+import { DEFAULT_LINK_PROTOCOL, VALID_LINK_PROTOCOLS } from '@blocknote/core/extensions';
+import {
+  GenericPopover,
+  OpenLinkButton,
+  useComponentsContext,
+  useDictionary,
+  type GenericPopoverReference,
+  type ReactCustomInlineContentRenderProps,
+} from '@blocknote/react';
 import type { Transaction } from '@tiptap/pm/state';
 import { TextSelection } from '@tiptap/pm/state';
 import type { EditorView } from '@tiptap/pm/view';
-import type { RefObject } from 'react';
-import { useCallback, useRef } from 'react';
+import type { ChangeEvent, KeyboardEvent, ReactNode, Ref, RefObject } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
+import { RiLink, RiLinkUnlink, RiText } from 'react-icons/ri';
 
 import { AI_DIFF_DISPLAY_MODE, type AiDiffDisplayMode } from '@/domains/Note';
 import { useAiDiffDisplayModeContext } from './displayModeContext';
-import { applyAiDiffActionForKey, isInlineContentEffectivelyEmpty } from './patch';
+import {
+  applyAiDiffActionForKey,
+  clearAiLinkInlineContentForKey,
+  editAiLinkInlineContentForKey,
+  isInlineContentEffectivelyEmpty,
+} from './patch';
 import styles from './style.module.less';
 
 type AiDiffActionMode = 'accept' | 'discard'; // 用户对某条 diff 的动作：accept/discard
@@ -38,6 +52,26 @@ type AiDeleteConfig = {
   readonly type: 'ai-delete';
   readonly propSchema: {
     readonly text: { readonly default: '' };
+    readonly key: { readonly default: '' };
+  };
+  readonly content: 'none';
+};
+
+type AiLinkAddConfig = {
+  readonly type: 'ai-link-add';
+  readonly propSchema: {
+    readonly text: { readonly default: '' };
+    readonly href: { readonly default: '' };
+    readonly key: { readonly default: '' };
+  };
+  readonly content: 'none';
+};
+
+type AiLinkDeleteConfig = {
+  readonly type: 'ai-link-delete';
+  readonly propSchema: {
+    readonly text: { readonly default: '' };
+    readonly href: { readonly default: '' };
     readonly key: { readonly default: '' };
   };
   readonly content: 'none';
@@ -138,6 +172,50 @@ function useApplyAiDiffAction(
   );
 }
 
+function useUpdateAiInlineContent(
+  editor: unknown,
+  changeKey: string,
+  shellRef: RefObject<HTMLElement | null>,
+  updater: (content: unknown, key: string) => unknown[] | null
+): () => void {
+  return useCallback(() => {
+    const ed = editor as EditorForActions;
+    focusCaretAtInlineNode(ed, shellRef.current);
+    const block = getCursorBlock(ed);
+    if (!block || !isRecord(block)) return;
+
+    const next = updater(block['content'], changeKey);
+    if (!next) return;
+
+    if (isInlineContentEffectivelyEmpty(next) && !blockHasNestedChildren(block)) {
+      try {
+        ed.removeBlocks?.([block]);
+      } catch {
+        void 0;
+      }
+      ed.focus();
+      return;
+    }
+
+    try {
+      ed.updateBlock(block, { content: next });
+    } catch {
+      void 0;
+    }
+    ed.focus();
+  }, [changeKey, editor, shellRef, updater]);
+}
+
+function validateUrl(url: string): string {
+  for (const protocol of VALID_LINK_PROTOCOLS) {
+    if (url.startsWith(protocol)) {
+      return url;
+    }
+  }
+
+  return `${DEFAULT_LINK_PROTOCOL}://${url}`;
+}
+
 // 将ai-diff原始数据转化为渲染层可用的状态结构
 function resolveDiffViewState(
   displayMode: AiDiffDisplayMode,
@@ -189,6 +267,310 @@ function resolveDeleteViewState(
     return { mode: 'plain', plainText: text };
   }
   return { mode: 'compare', plainText: '' };
+}
+
+type AiLinkToolbarProps = {
+  editor: unknown;
+  changeKey: string;
+  shellRef: RefObject<HTMLElement | null>;
+  anchorElement: HTMLAnchorElement | null;
+  text: string;
+  href: string;
+};
+
+function AiLinkToolbarEditButton({
+  editor,
+  changeKey,
+  shellRef,
+  setToolbarOpen,
+  setToolbarPositionFrozen,
+  text,
+  href,
+}: AiLinkToolbarProps & {
+  setToolbarOpen: (open: boolean) => void;
+  setToolbarPositionFrozen: (frozen: boolean) => void;
+}) {
+  const Components = useComponentsContext()!;
+  const dict = useDictionary();
+  const [currentUrl, setCurrentUrl] = useState(href);
+  const [currentText, setCurrentText] = useState(text);
+  const updateLink = useUpdateAiInlineContent(
+    editor,
+    changeKey,
+    shellRef,
+    useCallback(
+      (content, key) =>
+        editAiLinkInlineContentForKey(content, key, {
+          href: validateUrl(currentUrl),
+          text: currentText,
+        }),
+      [currentText, currentUrl]
+    )
+  );
+
+  const handleUrlChange = useCallback(
+    (event: ChangeEvent<HTMLInputElement>) => setCurrentUrl(event.currentTarget.value),
+    []
+  );
+  const handleTextChange = useCallback(
+    (event: ChangeEvent<HTMLInputElement>) => setCurrentText(event.currentTarget.value),
+    []
+  );
+  const handleSubmit = useCallback(() => {
+    updateLink();
+    setToolbarOpen(false);
+    setToolbarPositionFrozen(false);
+  }, [setToolbarOpen, setToolbarPositionFrozen, updateLink]);
+  const handleEnter = useCallback(
+    (event: KeyboardEvent<HTMLInputElement>) => {
+      if (event.key === 'Enter' && !event.nativeEvent.isComposing) {
+        event.preventDefault();
+        handleSubmit();
+      }
+    },
+    [handleSubmit]
+  );
+
+  return (
+    <Components.Generic.Popover.Root onOpenChange={setToolbarPositionFrozen}>
+      <Components.Generic.Popover.Trigger>
+        <Components.LinkToolbar.Button
+          className="bn-button"
+          mainTooltip={dict.link_toolbar.edit.tooltip}
+          isSelected={false}
+        >
+          {dict.link_toolbar.edit.text}
+        </Components.LinkToolbar.Button>
+      </Components.Generic.Popover.Trigger>
+      <Components.Generic.Popover.Content
+        className="bn-popover-content bn-form-popover"
+        variant="form-popover"
+      >
+        <Components.Generic.Form.Root>
+          <Components.Generic.Form.TextInput
+            className="bn-text-input"
+            name="url"
+            icon={<RiLink />}
+            autoFocus={true}
+            placeholder={dict.link_toolbar.form.url_placeholder}
+            value={currentUrl}
+            onKeyDown={handleEnter}
+            onChange={handleUrlChange}
+            onSubmit={handleSubmit}
+          />
+          <Components.Generic.Form.TextInput
+            className="bn-text-input"
+            name="title"
+            icon={<RiText />}
+            placeholder={dict.link_toolbar.form.title_placeholder}
+            value={currentText}
+            onKeyDown={handleEnter}
+            onChange={handleTextChange}
+            onSubmit={handleSubmit}
+          />
+        </Components.Generic.Form.Root>
+      </Components.Generic.Popover.Content>
+    </Components.Generic.Popover.Root>
+  );
+}
+
+function AiLinkToolbarDeleteButton({
+  editor,
+  changeKey,
+  shellRef,
+  setToolbarOpen,
+}: AiLinkToolbarProps & { setToolbarOpen: (open: boolean) => void }) {
+  const Components = useComponentsContext()!;
+  const dict = useDictionary();
+  const clearLink = useUpdateAiInlineContent(
+    editor,
+    changeKey,
+    shellRef,
+    clearAiLinkInlineContentForKey
+  );
+
+  return (
+    <Components.LinkToolbar.Button
+      className="bn-button"
+      label={dict.link_toolbar.delete.tooltip}
+      mainTooltip={dict.link_toolbar.delete.tooltip}
+      isSelected={false}
+      onClick={(event) => {
+        event.preventDefault();
+        clearLink();
+        setToolbarOpen(false);
+      }}
+      icon={<RiLinkUnlink />}
+    />
+  );
+}
+
+function useAiLinkHoverToolbar({
+  editor,
+  changeKey,
+  shellRef,
+  anchorElement,
+  text,
+  href,
+}: AiLinkToolbarProps): {
+  toolbar: ReactNode;
+  linkAnchorHandlers: {
+    onMouseEnter: () => void;
+    onMouseLeave: () => void;
+  };
+} {
+  const Components = useComponentsContext()!;
+  const [toolbarOpen, setToolbarOpen] = useState(false);
+  const [toolbarPositionFrozen, setToolbarPositionFrozen] = useState(false);
+  const closeTimerRef = useRef<number | null>(null);
+
+  const cancelScheduledClose = useCallback(() => {
+    if (closeTimerRef.current !== null) {
+      window.clearTimeout(closeTimerRef.current);
+      closeTimerRef.current = null;
+    }
+  }, []);
+
+  const openToolbar = useCallback(() => {
+    cancelScheduledClose();
+    setToolbarOpen(true);
+  }, [cancelScheduledClose]);
+
+  const scheduleClose = useCallback(() => {
+    cancelScheduledClose();
+    if (toolbarPositionFrozen) return;
+    closeTimerRef.current = window.setTimeout(() => {
+      setToolbarOpen(false);
+      closeTimerRef.current = null;
+    }, 180);
+  }, [cancelScheduledClose, toolbarPositionFrozen]);
+
+  const floatingUIOptions = useMemo(
+    () => ({
+      useFloatingOptions: {
+        open: toolbarOpen,
+        onOpenChange: (open: boolean, _event?: Event, reason?: string) => {
+          if (reason === 'escape-key') {
+            cancelScheduledClose();
+            setToolbarOpen(false);
+            (editor as EditorForActions).focus();
+            return;
+          }
+          if (!toolbarPositionFrozen) {
+            setToolbarOpen(open);
+          }
+        },
+        placement: 'top-start' as const,
+      },
+      focusManagerProps: {
+        disabled: true,
+      },
+      elementProps: {
+        style: {
+          zIndex: 50,
+        },
+        onMouseEnter: openToolbar,
+        onMouseLeave: scheduleClose,
+      },
+    }),
+    [cancelScheduledClose, editor, openToolbar, scheduleClose, toolbarOpen, toolbarPositionFrozen]
+  );
+
+  const reference = useMemo<GenericPopoverReference | undefined>(() => {
+    if (!anchorElement) return undefined;
+    return { element: anchorElement };
+  }, [anchorElement]);
+
+  const linkAnchorHandlers = useMemo(
+    () => ({
+      onMouseEnter: openToolbar,
+      onMouseLeave: scheduleClose,
+    }),
+    [openToolbar, scheduleClose]
+  );
+
+  if (!anchorElement || !href) {
+    return { toolbar: null, linkAnchorHandlers };
+  }
+
+  return {
+    toolbar: (
+      <GenericPopover reference={reference} {...floatingUIOptions}>
+        <Components.LinkToolbar.Root
+          className="bn-toolbar bn-link-toolbar"
+          onMouseEnter={openToolbar}
+          onMouseLeave={scheduleClose}
+        >
+          <AiLinkToolbarEditButton
+            key={`${changeKey}:${href}:${text}`}
+            editor={editor}
+            changeKey={changeKey}
+            shellRef={shellRef}
+            anchorElement={anchorElement}
+            text={text}
+            href={href}
+            setToolbarOpen={setToolbarOpen}
+            setToolbarPositionFrozen={setToolbarPositionFrozen}
+          />
+          <OpenLinkButton url={href} />
+          <AiLinkToolbarDeleteButton
+            editor={editor}
+            changeKey={changeKey}
+            shellRef={shellRef}
+            anchorElement={anchorElement}
+            text={text}
+            href={href}
+            setToolbarOpen={setToolbarOpen}
+          />
+        </Components.LinkToolbar.Root>
+      </GenericPopover>
+    ),
+    linkAnchorHandlers,
+  };
+}
+
+function LinkStyledText({
+  text,
+  href,
+  variant,
+  anchorRef,
+  onMouseEnter,
+  onMouseLeave,
+}: {
+  text: string;
+  href?: string;
+  variant: 'add' | 'delete' | 'plain';
+  anchorRef?: Ref<HTMLAnchorElement>;
+  onMouseEnter?: () => void;
+  onMouseLeave?: () => void;
+}) {
+  const className =
+    variant === 'add'
+      ? `${styles.aiAddRoot} ${styles.aiLinkText}`
+      : variant === 'delete'
+        ? `${styles.aiDeleteRoot} ${styles.aiLinkText}`
+        : styles.aiLinkText;
+  return (
+    <a
+      ref={anchorRef}
+      href={href || undefined}
+      className={className}
+      target="_blank"
+      rel="noreferrer noopener"
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+      onClick={(event) => {
+        event.preventDefault();
+        event.stopPropagation();
+      }}
+      onMouseDown={(event) => {
+        event.preventDefault();
+        event.stopPropagation();
+      }}
+    >
+      {text}
+    </a>
+  );
 }
 
 // 当某个diff块需要折叠时，返回一个不可见的占位span
@@ -383,4 +765,148 @@ export function AiDeleteExportHTML(
   const text = String(inlineContent.props.text ?? '');
   const plain = resolveDeleteViewState(AI_DIFF_DISPLAY_MODE.OLD_ONLY, text).plainText;
   return plain ? <span>{plain}</span> : <span />;
+}
+
+export function AiLinkAddView(
+  props: ReactCustomInlineContentRenderProps<AiLinkAddConfig, DefaultStyleSchema>
+) {
+  const { editor, inlineContent } = props;
+  const displayMode = useAiDiffDisplayModeContext();
+  const shellRef = useRef<HTMLSpanElement | null>(null);
+  const [anchorElement, setAnchorElement] = useState<HTMLAnchorElement | null>(null);
+  const text = String(inlineContent.props.text ?? '');
+  const href = String(inlineContent.props.href ?? '');
+  const changeKey = String(inlineContent.props.key ?? '');
+  const viewState = resolveAddViewState(displayMode, text);
+
+  const setRefs = useCallback((node: HTMLSpanElement | null) => {
+    shellRef.current = node;
+  }, []);
+  const setAnchorRef = useCallback((node: HTMLAnchorElement | null) => {
+    setAnchorElement(node);
+  }, []);
+  const apply = useApplyAiDiffAction(editor, changeKey, shellRef);
+  const { toolbar, linkAnchorHandlers } = useAiLinkHoverToolbar({
+    editor,
+    changeKey,
+    shellRef,
+    anchorElement,
+    text,
+    href,
+  });
+
+  if (viewState.mode === 'hidden') {
+    return <StrategyHiddenShell setRefs={setRefs} />;
+  }
+
+  if (viewState.mode === 'plain') {
+    return (
+      <span ref={setRefs} className={styles.aiDiffRoot} contentEditable={false}>
+        <LinkStyledText
+          text={viewState.plainText}
+          href={href}
+          variant="plain"
+          anchorRef={setAnchorRef}
+          onMouseEnter={linkAnchorHandlers.onMouseEnter}
+          onMouseLeave={linkAnchorHandlers.onMouseLeave}
+        />
+        {toolbar}
+      </span>
+    );
+  }
+
+  return (
+    <span ref={setRefs} className={styles.aiDiffRoot} contentEditable={false}>
+      {toolbar}
+      <LinkStyledText
+        text={text}
+        href={href}
+        variant="add"
+        anchorRef={setAnchorRef}
+        onMouseEnter={linkAnchorHandlers.onMouseEnter}
+        onMouseLeave={linkAnchorHandlers.onMouseLeave}
+      />
+      <AiDiffActionButtons onApply={apply} />
+    </span>
+  );
+}
+
+export function AiLinkAddExportHTML(
+  props: ReactCustomInlineContentRenderProps<AiLinkAddConfig, DefaultStyleSchema>
+) {
+  const { inlineContent } = props;
+  const text = String(inlineContent.props.text ?? '');
+  return <span className={styles.aiLinkText}>{text}</span>;
+}
+
+export function AiLinkDeleteView(
+  props: ReactCustomInlineContentRenderProps<AiLinkDeleteConfig, DefaultStyleSchema>
+) {
+  const { editor, inlineContent } = props;
+  const displayMode = useAiDiffDisplayModeContext();
+  const shellRef = useRef<HTMLSpanElement | null>(null);
+  const [anchorElement, setAnchorElement] = useState<HTMLAnchorElement | null>(null);
+  const text = String(inlineContent.props.text ?? '');
+  const href = String(inlineContent.props.href ?? '');
+  const changeKey = String(inlineContent.props.key ?? '');
+  const viewState = resolveDeleteViewState(displayMode, text);
+
+  const setRefs = useCallback((node: HTMLSpanElement | null) => {
+    shellRef.current = node;
+  }, []);
+  const setAnchorRef = useCallback((node: HTMLAnchorElement | null) => {
+    setAnchorElement(node);
+  }, []);
+  const apply = useApplyAiDiffAction(editor, changeKey, shellRef);
+  const { toolbar, linkAnchorHandlers } = useAiLinkHoverToolbar({
+    editor,
+    changeKey,
+    shellRef,
+    anchorElement,
+    text,
+    href,
+  });
+
+  if (viewState.mode === 'hidden') {
+    return <StrategyHiddenShell setRefs={setRefs} />;
+  }
+
+  if (viewState.mode === 'plain') {
+    return (
+      <span ref={setRefs} className={styles.aiDiffRoot} contentEditable={false}>
+        <LinkStyledText
+          text={viewState.plainText}
+          href={href}
+          variant="plain"
+          anchorRef={setAnchorRef}
+          onMouseEnter={linkAnchorHandlers.onMouseEnter}
+          onMouseLeave={linkAnchorHandlers.onMouseLeave}
+        />
+        {toolbar}
+      </span>
+    );
+  }
+
+  return (
+    <span ref={setRefs} className={styles.aiDiffRoot} contentEditable={false}>
+      {toolbar}
+      <LinkStyledText
+        text={text}
+        href={href}
+        variant="delete"
+        anchorRef={setAnchorRef}
+        onMouseEnter={linkAnchorHandlers.onMouseEnter}
+        onMouseLeave={linkAnchorHandlers.onMouseLeave}
+      />
+      <AiDiffActionButtons onApply={apply} />
+    </span>
+  );
+}
+
+export function AiLinkDeleteExportHTML(
+  props: ReactCustomInlineContentRenderProps<AiLinkDeleteConfig, DefaultStyleSchema>
+) {
+  const { inlineContent } = props;
+  const text = String(inlineContent.props.text ?? '');
+  return <span className={styles.aiLinkText}>{text}</span>;
 }

@@ -24,6 +24,10 @@
   }
 }
 
+.mathRootInlineReadonly {
+  cursor: default;
+}
+
 .mathPreviewInline {
   min-height: 1em;
   display: inline-flex;
@@ -40,6 +44,98 @@
   color: #aaa;
   font-style: italic;
   user-select: none;
+}
+
+.inlineMathDiffRoot {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+  padding: 0;
+  overflow: visible;
+  border-radius: var(--ant-border-radius);
+  vertical-align: baseline;
+}
+
+.inlineMathDiffCard {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.8em;
+  max-width: 100%;
+  padding: 2px 6px;
+  border-radius: var(--ant-border-radius);
+}
+
+.inlineMathDiffDelete {
+  background: color-mix(in srgb, var(--ant-color-error-bg) 60%, var(--ant-color-bg-container));
+  border: 1px solid color-mix(
+    in srgb,
+    var(--ant-color-error-border) 45%,
+    var(--ant-color-border-secondary)
+  );
+  position: relative;
+  color: var(--ant-color-text-tertiary);
+  text-decoration: line-through;
+
+  :global(.katex),
+  :global(.katex *) {
+    color: inherit !important;
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 6px;
+    right: 6px;
+    border-top: 1px solid currentColor;
+    transform: translateY(-50%);
+    pointer-events: none;
+  }
+}
+
+.inlineMathDiffAdd {
+  background: color-mix(
+    in srgb,
+    var(--ant-color-success-bg-hover) 55%,
+    var(--ant-color-bg-container)
+  );
+  border: 1px solid color-mix(
+    in srgb,
+    var(--ant-color-success-border) 40%,
+    var(--ant-color-border-secondary)
+  );
+  font-weight: 700;
+
+  :global(.katex),
+  :global(.katex *) {
+    font-weight: 700 !important;
+  }
+}
+
+.inlineMathDiffActionLayer {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  width: 0;
+  height: 1em;
+}
+
+.inlineMathDiffActions {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  width: 0;
+  height: 0;
+  transform: translateY(-50%);
+}
+
+.inlineMathDiffActionsRoot {
+  left: 6px;
+  right: auto;
+  top: 50%;
+  transform: translateY(-50%);
 }
 
 /* 行内公式编辑：脱离文档流，浮在正文之上 */

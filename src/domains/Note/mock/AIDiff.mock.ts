@@ -14,7 +14,7 @@
  * 10. 纯删除内容(AI-Edit, no replace) — old_text 有内容，new_text 为空
  * 11. 跨片段合并块 — 相邻 AI-Edit（中间含共享 text）应合并为一整块 diff
  * 12. 合并块与独立块并存 — 前半段合并，后半段单独保留
- * 13–28. 写作常见排版 — 分隔线；符号/标点/货币/URL；学术中英混排；heading 1–3（改/增/删）；quote；嵌套 bullet；有序列表（含 start）；checkListItem；toggle 与子块；math 块（编辑/新增/删除）；NBSP 与连字符；邮箱/文件名式混排
+ * 13–33. 写作常见排版 — 分隔线；符号/标点/货币/URL；学术中英混排；heading 1–3（改/增/删）；quote；嵌套 bullet；有序列表（含 start）；checkListItem；toggle 与子块；math 块（编辑/新增/删除）；inlineMath（编辑/新增/删除）；link（新增/删除）；NBSP 与连字符；邮箱/文件名式混排
  * 注：codeBlock 不参与 aiGeneratedBlocksToBlockNoteBlocks（管线排除），故 mock 不含代码块。
  */
 
@@ -792,7 +792,121 @@ export const MOCK_AI_BLOCKS = [
   },
 
   // ────────────────────────────────────────────────────────────
-  // 场景 27：空白/窄字符类 formatChange（窄不间断空格、连字符）
+  // 场景 27：行内公式 — edit
+  // 期望：compare 模式下同时显示旧公式/新公式，并支持 Keep / Undo
+  // ────────────────────────────────────────────────────────────
+  {
+    id: 'p_inline_math_edit',
+    type: 'paragraph',
+    props: { textColor: 'default', backgroundColor: 'default', textAlignment: 'left' },
+    content: [
+      { type: 'text', text: '积分结果可写为 ', styles: {} },
+      {
+        type: 'inlineMath',
+        props: {
+          autoOpenEdit: false,
+          aiDiffType: 'edit',
+          aiDiffOrigin: '\\frac{1}{5}',
+          aiDiffReplace: '\\tfrac{1}{9}',
+        },
+      },
+      { type: 'text', text: '，与上文记号保持一致。', styles: {} },
+    ],
+    children: [],
+  },
+
+  // ────────────────────────────────────────────────────────────
+  // 场景 28：行内公式 — create
+  // 期望：OLD_ONLY 隐藏，NEW_ONLY / COMPARE 显示新增公式
+  // ────────────────────────────────────────────────────────────
+  {
+    id: 'p_inline_math_create',
+    type: 'paragraph',
+    props: { textColor: 'default', backgroundColor: 'default', textAlignment: 'left' },
+    content: [
+      { type: 'text', text: '根据推导可补充方差项 ', styles: {} },
+      {
+        type: 'inlineMath',
+        props: {
+          autoOpenEdit: false,
+          aiDiffType: 'create',
+          aiDiffOrigin: '',
+          aiDiffReplace: '\\sigma^2',
+        },
+      },
+      { type: 'text', text: ' 以说明噪声规模。', styles: {} },
+    ],
+    children: [],
+  },
+
+  // ────────────────────────────────────────────────────────────
+  // 场景 29：行内公式 — delete
+  // 期望：NEW_ONLY 隐藏，OLD_ONLY / COMPARE 显示待删除公式
+  // ────────────────────────────────────────────────────────────
+  {
+    id: 'p_inline_math_delete',
+    type: 'paragraph',
+    props: { textColor: 'default', backgroundColor: 'default', textAlignment: 'left' },
+    content: [
+      { type: 'text', text: '原稿中的冗余占位公式 ', styles: {} },
+      {
+        type: 'inlineMath',
+        props: {
+          autoOpenEdit: false,
+          aiDiffType: 'delete',
+          aiDiffOrigin: 'x_0 + y_0 = z_0',
+          aiDiffReplace: '',
+        },
+      },
+      { type: 'text', text: ' 已不再需要。', styles: {} },
+    ],
+    children: [],
+  },
+
+  // ────────────────────────────────────────────────────────────
+  // 场景 30：link — create
+  // 期望：compare 模式下显示为带链接样式的新增 diff，并支持 Keep / Undo
+  // ────────────────────────────────────────────────────────────
+  {
+    id: 'p_link_create',
+    type: 'paragraph',
+    props: { textColor: 'default', backgroundColor: 'default', textAlignment: 'left' },
+    content: [
+      { type: 'text', text: '更多背景资料可参见 ', styles: {} },
+      {
+        type: 'link',
+        href: 'https://example.com/reference/new-paper',
+        aiDiffType: 'create',
+        content: [{ type: 'text', text: '99999999', styles: {} }],
+      },
+      { type: 'text', text: '，便于继续核对来源。', styles: {} },
+    ],
+    children: [],
+  },
+
+  // ────────────────────────────────────────────────────────────
+  // 场景 31：link — delete
+  // 期望：compare 模式下显示为带链接样式的删除 diff，并支持 Keep / Undo
+  // ────────────────────────────────────────────────────────────
+  {
+    id: 'p_link_delete',
+    type: 'paragraph',
+    props: { textColor: 'default', backgroundColor: 'default', textAlignment: 'left' },
+    content: [
+      { type: 'text', text: '原文中的链接说明 ', styles: {} },
+      {
+        type: 'link',
+        href: 'https://example.com/reference/old-paper',
+        aiDiffType: 'delete',
+        content: [{ type: 'text', text: '8888888888', styles: {} }],
+      },
+      { type: 'text', text: ' 已被移除。', styles: {} },
+    ],
+    children: [],
+  },
+
+  // ────────────────────────────────────────────────────────────
+  // 场景 32：空白/窄字符类 formatChange（窄不间断空格、连字符）
   // ────────────────────────────────────────────────────────────
   {
     id: 'p_format_nbsp_hyphen',
@@ -810,7 +924,7 @@ export const MOCK_AI_BLOCKS = [
   },
 
   // ────────────────────────────────────────────────────────────
-  // 场景 28：邮件/版本号/文件名式中英混排
+  // 场景 33：邮件/版本号/文件名式中英混排
   {
     id: 'p_meta_strings',
     type: 'paragraph',

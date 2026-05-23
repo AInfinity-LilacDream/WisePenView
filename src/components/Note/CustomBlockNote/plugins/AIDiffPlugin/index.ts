@@ -15,6 +15,8 @@ import {
   aiAddInlineContentSpec,
   aiDeleteInlineContentSpec,
   aiDiffInlineContentSpec,
+  aiLinkAddInlineContentSpec,
+  aiLinkDeleteInlineContentSpec,
 } from './inlineContentSpecs';
 import { aiGeneratedBlocksToBlockNoteBlocks } from './patch';
 
@@ -391,6 +393,8 @@ export const aiDiffPlugin = {
     'ai-diff': aiDiffInlineContentSpec,
     'ai-add': aiAddInlineContentSpec,
     'ai-delete': aiDeleteInlineContentSpec,
+    'ai-link-add': aiLinkAddInlineContentSpec,
+    'ai-link-delete': aiLinkDeleteInlineContentSpec,
   },
   extensions: () => [aiDiffBlockFoldExtension()],
   editorProps: () => {
