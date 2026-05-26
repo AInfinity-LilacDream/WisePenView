@@ -2,30 +2,35 @@ import { ProgressBar } from '@heroui/react';
 import type { QuotaBarProps } from './index.type';
 import styles from './style.module.less';
 
+type ProgressColor = 'accent' | 'warning' | 'danger';
+
 function QuotaBar({ used = 0, limit }: QuotaBarProps) {
   const percentage = limit > 0 ? Math.min((used / limit) * 100, 100) : 0;
 
-  const getProgressFillClassName = (): string => {
+  const getProgressColor = (): ProgressColor => {
     if (percentage >= 100) {
-      return styles.quotaBarFillDanger;
+      return 'danger';
     } else if (percentage >= 80) {
-      return styles.quotaBarFillWarning;
+      return 'warning';
     } else {
-      return styles.quotaBarFillNormal;
+      return 'accent';
     }
   };
 
   return (
-    <div className={styles.quotaBar}>
-      <ProgressBar aria-label="额度使用进度" className={styles.quotaBarProgress} value={percentage}>
-        <ProgressBar.Track className={styles.quotaBarTrack}>
-          <ProgressBar.Fill className={`${styles.quotaBarFill} ${getProgressFillClassName()}`} />
-        </ProgressBar.Track>
-        <ProgressBar.Output className={styles.quotaBarText}>
-          {`${used.toLocaleString()} / ${limit.toLocaleString()}`}
-        </ProgressBar.Output>
-      </ProgressBar>
-    </div>
+    <ProgressBar
+      aria-label="额度使用进度"
+      className={styles.quotaBar}
+      color={getProgressColor()}
+      size="sm"
+      value={percentage}
+      valueLabel={`${used.toLocaleString()} / ${limit.toLocaleString()}`}
+    >
+      <ProgressBar.Track className={styles.quotaBarTrack}>
+        <ProgressBar.Fill />
+      </ProgressBar.Track>
+      <ProgressBar.Output className={styles.quotaBarText} />
+    </ProgressBar>
   );
 }
 

@@ -1,51 +1,16 @@
 .quotaBar {
-  display: flex;
-  align-items: center;
-  gap: var(--ant-margin-sm);
   width: 100%;
-  padding: 0 var(--ant-padding);
-}
-
-.quotaBarProgress {
-  display: flex;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: 'track output';
   align-items: center;
-  gap: var(--ant-margin-sm);
-  flex: 1;
+  column-gap: 12px;
 }
 
 .quotaBarTrack {
-  position: relative;
-  height: 8px;
-  flex: 1;
-  overflow: hidden;
-  background-color: rgba(0, 0, 0, 0.1);
-  border-radius: 6px;
-}
-
-.quotaBarFill {
-  position: absolute;
-  top: 0;
-  left: 0;
-  height: 100%;
-  border-radius: 6px;
-  transition: width 0.3s ease;
-}
-
-.quotaBarFillNormal {
-  background-color: #1890ff;
-}
-
-.quotaBarFillWarning {
-  background-color: #faad14;
-}
-
-.quotaBarFillDanger {
-  background-color: #ff4d4f;
+  grid-area: track;
 }
 
 .quotaBarText {
-  font-size: var(--ant-font-size-sm);
-  color: var(--ant-color-text-secondary);
+  grid-area: output;
   white-space: nowrap;
-  text-align: right;
 }

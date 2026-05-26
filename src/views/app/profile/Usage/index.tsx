@@ -23,8 +23,6 @@ function Usage() {
         <QuotaByGroup
           pagination={{
             defaultPageSize: 10,
-            pageSizeOptions: [10, 20, 50],
-            showSizeChanger: true,
           }}
         />
       </div>
