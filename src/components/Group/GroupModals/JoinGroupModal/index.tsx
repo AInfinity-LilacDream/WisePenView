@@ -1,7 +1,7 @@
 import { useGroupService } from '@/domains';
 import type { JoinGroupRequest } from '@/domains/Group';
-import { useAppMessage } from '@/hooks/useAppMessage';
 import { parseErrorMessage } from '@/utils/error';
+import { toast } from '@heroui/react';
 import { useRequest } from 'ahooks';
 import { Button, Form, Input, Modal } from 'antd';
 import type { JoinGroupModalProps } from './index.type';
@@ -12,7 +12,6 @@ const INVITE_CODE_LENGTH = 8;
 
 function JoinGroupModal({ open, onCancel, onSuccess }: JoinGroupModalProps) {
   const groupService = useGroupService();
-  const message = useAppMessage();
   const [form] = Form.useForm<JoinGroupRequest>();
   const isConfirmDisabled = Form.useWatch('inviteCode', form)?.trim().length !== INVITE_CODE_LENGTH;
 
@@ -21,7 +20,7 @@ function JoinGroupModal({ open, onCancel, onSuccess }: JoinGroupModalProps) {
     {
       manual: true,
       onSuccess: () => {
-        message.success('加入小组成功');
+        toast.success('加入小组成功');
         form.resetFields();
         onSuccess?.();
         onCancel();
@@ -33,7 +32,7 @@ function JoinGroupModal({ open, onCancel, onSuccess }: JoinGroupModalProps) {
           'errorFields' in err &&
           Array.isArray((err as { errorFields?: unknown }).errorFields);
         if (!isValidationError) {
-          message.error(parseErrorMessage(err));
+          toast.danger(parseErrorMessage(err));
         }
       },
     }
