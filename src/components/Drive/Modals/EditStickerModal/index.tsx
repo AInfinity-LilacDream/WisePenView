@@ -152,8 +152,8 @@ function EditStickerModal({ open, onCancel, onSuccess, file }: EditStickerModalP
       </Modal>
 
       <AddStickerModal
-        open={addModalOpen}
-        onCancel={() => setAddModalOpen(false)}
+        isOpen={addModalOpen}
+        onOpenChange={setAddModalOpen}
         onSuccess={handleAddSuccess}
       />
     </>

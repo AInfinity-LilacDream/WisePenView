@@ -1,23 +1,13 @@
 import { useResourceService } from '@/domains';
 import { parseErrorMessage } from '@/utils/error';
-import { toast } from '@heroui/react';
+import { Button, Input, Modal, TextField, toast } from '@heroui/react';
 import { useRequest } from 'ahooks';
-import { Button, Input, Modal } from 'antd';
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 import type { RenameFileModalProps } from './index.type';
 
-function RenameFileModal({ open, onCancel, onSuccess, file }: RenameFileModalProps) {
+function RenameFileModal({ isOpen, onOpenChange, onSuccess, file }: RenameFileModalProps) {
   const resourceService = useResourceService();
-  const [name, setName] = useState('');
-
-  const handleOpenChange = useCallback(
-    (visible: boolean) => {
-      if (visible && file) {
-        setName(file.resourceName || '');
-      }
-    },
-    [file]
-  );
+  const [name, setName] = useState(file?.resourceName || '');
 
   const { loading, run: runRenameFile } = useRequest(
     async (trimmed: string) =>
@@ -30,7 +20,7 @@ function RenameFileModal({ open, onCancel, onSuccess, file }: RenameFileModalPro
       onSuccess: () => {
         toast.success('重命名成功');
         onSuccess?.();
-        onCancel();
+        onOpenChange(false);
       },
       onError: (err) => {
         toast.danger(parseErrorMessage(err));
@@ -50,33 +40,41 @@ function RenameFileModal({ open, onCancel, onSuccess, file }: RenameFileModalPro
 
   const handleCancel = () => {
     setName('');
-    onCancel();
+    onOpenChange(false);
   };
 
   return (
-    <Modal
-      title="重命名文件"
-      open={open && !!file}
-      onCancel={handleCancel}
-      afterOpenChange={handleOpenChange}
-      destroyOnHidden
-      footer={[
-        <Button key="cancel" onClick={handleCancel}>
-          取消
-        </Button>,
-        <Button key="confirm" type="primary" onClick={handleSubmit} loading={loading}>
-          确定
-        </Button>,
-      ]}
-      width={400}
-    >
-      <Input
-        placeholder="请输入新名称"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        onPressEnter={handleSubmit}
-        autoFocus
-      />
+    <Modal isOpen={isOpen && !!file} onOpenChange={onOpenChange}>
+      <Modal.Backdrop isDismissable={!loading}>
+        <Modal.Container size="sm" placement="center">
+          <Modal.Dialog>
+            <Modal.Header>
+              <Modal.Heading>重命名文件</Modal.Heading>
+            </Modal.Header>
+            <Modal.Body>
+              <TextField aria-label="文件名称" value={name} autoFocus onChange={setName}>
+                <Input
+                  placeholder="请输入新名称"
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter') {
+                      event.preventDefault();
+                      handleSubmit();
+                    }
+                  }}
+                />
+              </TextField>
+            </Modal.Body>
+            <Modal.Footer>
+              <Button variant="secondary" onPress={handleCancel} isDisabled={loading}>
+                取消
+              </Button>
+              <Button variant="primary" onPress={handleSubmit} isDisabled={loading}>
+                确定
+              </Button>
+            </Modal.Footer>
+          </Modal.Dialog>
+        </Modal.Container>
+      </Modal.Backdrop>
     </Modal>
   );
 }

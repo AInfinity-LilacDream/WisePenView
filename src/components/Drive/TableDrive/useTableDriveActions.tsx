@@ -89,21 +89,29 @@ export function useTableDriveActions({
   const ModalHost = useMemo(
     () => (
       <>
-        <NewFolderNodeModal
-          open={newFolderOpen}
-          parentId={currentNodeId}
-          groupId={groupId}
-          existingFolderNames={existingFolderNames}
-          onCancel={() => setNewFolderOpen(false)}
-          onSuccess={refresh}
-        />
-        <RenameNodeModal
-          open={renameTarget !== null}
-          node={renameTarget}
-          groupId={groupId}
-          onCancel={() => setRenameTarget(null)}
-          onSuccess={refresh}
-        />
+        {newFolderOpen ? (
+          <NewFolderNodeModal
+            isOpen={newFolderOpen}
+            parentId={currentNodeId}
+            groupId={groupId}
+            existingFolderNames={existingFolderNames}
+            onOpenChange={setNewFolderOpen}
+            onSuccess={refresh}
+          />
+        ) : null}
+        {renameTarget ? (
+          <RenameNodeModal
+            isOpen={renameTarget !== null}
+            node={renameTarget}
+            groupId={groupId}
+            onOpenChange={(open) => {
+              if (!open) {
+                setRenameTarget(null);
+              }
+            }}
+            onSuccess={refresh}
+          />
+        ) : null}
         <DeleteNodeModal
           isOpen={deleteTarget !== null}
           node={deleteTarget}

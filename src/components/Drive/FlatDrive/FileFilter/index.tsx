@@ -161,8 +161,8 @@ function FileFilter({ value, onChange }: FileFilterProps) {
       </div>
 
       <AddStickerModal
-        open={addModalOpen}
-        onCancel={() => setAddModalOpen(false)}
+        isOpen={addModalOpen}
+        onOpenChange={setAddModalOpen}
         onSuccess={() => {
           void reloadStickers();
         }}
