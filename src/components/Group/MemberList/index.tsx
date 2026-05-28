@@ -110,8 +110,8 @@ function MemberList({ groupDisplayConfig, pagination, groupId, inviteCode }: Mem
       />
 
       <InviteUserModal
-        open={activeModal === 'invite'}
-        onCancel={onCancelModal}
+        isOpen={activeModal === 'invite'}
+        onOpenChange={(open) => !open && onCancelModal()}
         inviteCode={inviteCode}
       />
 
@@ -126,8 +126,8 @@ function MemberList({ groupDisplayConfig, pagination, groupId, inviteCode }: Mem
       />
 
       <DeleteMemberModal
-        open={activeModal === 'deleteMember'}
-        onCancel={onCancelModal}
+        isOpen={activeModal === 'deleteMember'}
+        onOpenChange={(open) => !open && onCancelModal()}
         memberIds={selectedMemberIds}
         members={selectedMembersList}
         onSuccess={onSuccessModal}

@@ -109,7 +109,7 @@ function Register() {
           </div>
         </Form.Item>
       </Form>
-      <ServiceAgreement open={contractOpen} onCancel={() => setContractOpen(false)} />
+      <ServiceAgreement isOpen={contractOpen} onOpenChange={setContractOpen} />
       <Modal
         title={t('register.registerSuccessTitle')}
         open={successModalOpen}

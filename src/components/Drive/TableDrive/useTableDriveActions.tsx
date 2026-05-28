@@ -105,10 +105,14 @@ export function useTableDriveActions({
           onSuccess={refresh}
         />
         <DeleteNodeModal
-          open={deleteTarget !== null}
+          isOpen={deleteTarget !== null}
           node={deleteTarget}
           groupId={groupId}
-          onCancel={() => setDeleteTarget(null)}
+          onOpenChange={(open) => {
+            if (!open) {
+              setDeleteTarget(null);
+            }
+          }}
           onSuccess={refresh}
         />
         <MoveNodeModal

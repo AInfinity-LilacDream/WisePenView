@@ -84,7 +84,7 @@ function Login() {
         </Link>
       </div>
 
-      <ServiceAgreement open={contractOpen} onCancel={() => setContractOpen(false)} />
+      <ServiceAgreement isOpen={contractOpen} onOpenChange={setContractOpen} />
     </div>
   );
 }

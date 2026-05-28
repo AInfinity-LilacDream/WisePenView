@@ -304,9 +304,9 @@ function FileList({ groupId, filter }: FileListProps) {
         onSuccess={fetchList}
       />
       <DeleteFileModal
-        open={deleteFileModalOpen}
+        isOpen={deleteFileModalOpen}
         file={deleteFileTarget}
-        onCancel={handleDeleteFileModalClose}
+        onOpenChange={(open) => !open && handleDeleteFileModalClose()}
         onSuccess={fetchList}
       />
       <EditStickerModal

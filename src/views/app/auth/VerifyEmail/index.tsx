@@ -1,9 +1,8 @@
 import { useUserService } from '@/domains';
 import type { ConfirmEmailVerifyRequest } from '@/domains/User';
 import { parseErrorMessage } from '@/utils/error';
-import { toast } from '@heroui/react';
+import { Button, Modal, toast } from '@heroui/react';
 import { useRequest } from 'ahooks';
-import { Alert, Button, Modal, Typography } from 'antd';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -50,37 +49,38 @@ function VerifyEmail() {
 
   return (
     <div className={auth.authContainer}>
-      <Typography.Title>{t('verifyEmail.title')}</Typography.Title>
-      <Alert
-        className={auth.bindAlert}
-        description={t('verifyEmail.alertDescription')}
-        type="info"
-        showIcon
-      />
-      <div style={{ marginTop: 24 }}>
+      <h1>{t('verifyEmail.title')}</h1>
+      <div className="mt-3 rounded-medium bg-primary/10 px-4 py-3 text-sm text-primary">
+        {t('verifyEmail.alertDescription')}
+      </div>
+      <div className="mt-6">
         <Button
-          type="primary"
-          size="large"
+          variant="primary"
           className={auth.submitButton}
-          loading={loading}
-          onClick={onVerify}
-          disabled={!token}
+          isDisabled={loading || !token}
+          onPress={onVerify}
         >
           {t('verifyEmail.submit')}
         </Button>
       </div>
-      <Modal
-        title={t('verifyEmail.successTitle')}
-        open={successModalOpen}
-        onCancel={goToAccount}
-        destroyOnHidden
-        footer={[
-          <Button key="close" type="primary" onClick={goToAccount}>
-            {t('verifyEmail.goToAccount')}
-          </Button>,
-        ]}
-      >
-        <Typography.Text>{t('verifyEmail.successDescription')}</Typography.Text>
+      <Modal isOpen={successModalOpen} onOpenChange={(open) => !open && goToAccount()}>
+        <Modal.Backdrop isDismissable>
+          <Modal.Container size="sm" placement="center">
+            <Modal.Dialog>
+              <Modal.Header>
+                <Modal.Heading>{t('verifyEmail.successTitle')}</Modal.Heading>
+              </Modal.Header>
+              <Modal.Body>
+                <p>{t('verifyEmail.successDescription')}</p>
+              </Modal.Body>
+              <Modal.Footer>
+                <Button variant="primary" onPress={goToAccount}>
+                  {t('verifyEmail.goToAccount')}
+                </Button>
+              </Modal.Footer>
+            </Modal.Dialog>
+          </Modal.Container>
+        </Modal.Backdrop>
       </Modal>
     </div>
   );

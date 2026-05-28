@@ -75,7 +75,7 @@ function RechargeModal({ open, onCancel, groupDisplayName, onSubmit }: RechargeM
   }, [open, value.length]);
 
   return (
-    <Modal.Root isOpen={open} onOpenChange={(isOpen) => !isOpen && handleCancel()}>
+    <Modal isOpen={open} onOpenChange={(isOpen) => !isOpen && handleCancel()}>
       <Modal.Backdrop isDismissable={!submitting}>
         <Modal.Container size="lg" placement="center">
           <Modal.Dialog>
@@ -128,7 +128,7 @@ function RechargeModal({ open, onCancel, groupDisplayName, onSubmit }: RechargeM
           </Modal.Dialog>
         </Modal.Container>
       </Modal.Backdrop>
-    </Modal.Root>
+    </Modal>
   );
 }
 

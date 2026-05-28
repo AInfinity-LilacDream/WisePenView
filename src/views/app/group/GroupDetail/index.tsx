@@ -277,8 +277,8 @@ function GroupDetail() {
         onSuccess={handleModalCloseOnly}
       />
       <ExitGroupModal
-        open={exitGroupModalOpen}
-        onCancel={() => setExitGroupModalOpen(false)}
+        isOpen={exitGroupModalOpen}
+        onOpenChange={(open) => setExitGroupModalOpen(open)}
         groupName={groupName}
         groupId={groupId}
         onSuccess={handleModalCloseOnly}
