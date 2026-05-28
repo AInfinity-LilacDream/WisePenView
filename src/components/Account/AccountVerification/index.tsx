@@ -276,7 +276,7 @@ function AccountVerification({ user, onUserInfoUpdated }: AccountVerificationPro
                 >
                   {verifyMode === 'email' ? (
                     <>
-                      <Alert className={styles.verifyModeAlert} status="info">
+                      <Alert className={styles.verifyModeAlert} status="accent">
                         <Alert.Indicator>
                           <RiInformationLine size={18} />
                         </Alert.Indicator>
@@ -307,7 +307,7 @@ function AccountVerification({ user, onUserInfoUpdated }: AccountVerificationPro
                     </>
                   ) : (
                     <>
-                      <Alert className={styles.verifyModeAlert} status="info">
+                      <Alert className={styles.verifyModeAlert} status="accent">
                         <Alert.Indicator>
                           <RiInformationLine size={18} />
                         </Alert.Indicator>
@@ -414,7 +414,7 @@ function AccountVerification({ user, onUserInfoUpdated }: AccountVerificationPro
                           </Alert>
                         ) : uisQrImageSrc != null ? (
                           <>
-                            <Alert className={styles.uisOutcomeHint} status="info">
+                            <Alert className={styles.uisOutcomeHint} status="accent">
                               <Alert.Indicator>
                                 <RiInformationLine size={18} />
                               </Alert.Indicator>
