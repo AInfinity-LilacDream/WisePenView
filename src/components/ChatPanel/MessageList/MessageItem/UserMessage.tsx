@@ -1,6 +1,6 @@
 import type { Message } from '@/components/ChatPanel/index.type';
-import { toast } from '@heroui/react';
-import { Button } from 'antd';
+import { Button, toast } from '@heroui/react';
+
 import React from 'react';
 import { LuCheck, LuCopy } from 'react-icons/lu';
 import MessageContent from './MessageContent';
@@ -31,15 +31,16 @@ function UserMessage({ message }: UserMessageProps) {
         {/* 左侧悬浮操作栏 */}
         <div className={styles.actions}>
           <Button
-            type="text"
-            shape="circle"
-            size="small"
+            variant="ghost"
+            isIconOnly
+            size="sm"
             className={styles.actionBtn}
-            icon={copied ? <LuCheck size={14} /> : <LuCopy size={14} />}
-            onClick={handleCopy}
-            title="复制"
+            onPress={handleCopy}
+            aria-label="复制"
             style={copied ? { color: 'var(--ant-color-success)' } : undefined}
-          />
+          >
+            {copied ? <LuCheck size={14} /> : <LuCopy size={14} />}
+          </Button>
         </div>
 
         {/* 气泡 */}

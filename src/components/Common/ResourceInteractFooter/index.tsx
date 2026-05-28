@@ -1,9 +1,9 @@
 /** 文档末尾互动区（Note 与 PDF 详情页通用）：大圆形点赞按钮 + 星级评分 */
 import { useUnmount } from 'ahooks';
-import { Rate } from 'antd';
 import React, { useCallback, useRef, useState } from 'react';
 import { RiThumbUpFill, RiThumbUpLine } from 'react-icons/ri';
 
+import Rating from '@/components/Common/Rating';
 import type { ResourceInteractFooterProps } from './index.type';
 import styles from './style.module.less';
 
@@ -37,8 +37,6 @@ function ResourceInteractFooter({
 }: ResourceInteractFooterProps) {
   const [bursting, setBursting] = useState(false);
   const burstTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  /** 每次评分时递增，触发光晕动效 */
-  const [ratingPopKey, setRatingPopKey] = useState(0);
 
   /** 仅在「未赞 → 点赞」时触发彩带动效 */
   const handleLikeClick = useCallback(() => {
@@ -57,7 +55,6 @@ function ResourceInteractFooter({
   /** 评分提交回调 */
   const handleRateChange = useCallback(
     (score: number) => {
-      setRatingPopKey((k) => k + 1);
       onRate?.(score);
     },
     [onRate]
@@ -118,17 +115,12 @@ function ResourceInteractFooter({
 
       {/* 评分区 */}
       <div className={styles.rateSection}>
-        <div
-          key={ratingPopKey}
-          className={`${styles.rateWrap} ${ratingPopKey > 0 ? styles.rateWrapPopping : ''}`}
-        >
-          <Rate
-            count={5}
+        <div className={styles.rateWrap}>
+          <Rating
             value={userScore ?? 0}
-            allowClear={false}
-            disabled={rateLoading}
-            onChange={handleRateChange}
-            className={styles.rateControl}
+            isDisabled={rateLoading}
+            ariaLabel="为本资源评分"
+            onValueChange={handleRateChange}
           />
         </div>
         <span className={styles.interactLabel}>{rateHintText}</span>

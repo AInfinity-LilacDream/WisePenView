@@ -1,17 +1,11 @@
-import {
-  AccountForm,
-  AccountHeader,
-  AccountVerification,
-  buildProfileFormValues,
-  type ProfileFormValues,
-} from '@/components/Account';
+import { AccountForm, AccountHeader, AccountVerification } from '@/components/Account';
 import { useUserService } from '@/domains';
 import type { GetUserInfoResponse } from '@/domains/User';
 import { IDENTITY } from '@/domains/User';
 import { parseErrorMessage } from '@/utils/error';
 import { toast } from '@heroui/react';
 import { useRequest } from 'ahooks';
-import { Descriptions, Divider, Form, Spin } from 'antd';
+import { Descriptions, Divider, Spin } from 'antd';
 import { useMemo, useState } from 'react';
 import type { ProfileFieldKey } from '../profile.config';
 import { getProfileFieldConfig, PROFILE_FIELDS } from '../profile.config';
@@ -21,17 +15,14 @@ function Account() {
   const userService = useUserService();
   const [user, setUser] = useState<GetUserInfoResponse | null>(null);
   const [editMode, setEditMode] = useState(false);
-  const [form] = Form.useForm<ProfileFormValues>();
 
   const handleUserInfoUpdated = (data: GetUserInfoResponse) => {
     setUser(data);
-    form.setFieldsValue(buildProfileFormValues(data));
   };
 
   const { loading } = useRequest(() => userService.getFullUserInfo(), {
     onSuccess: (data) => {
       setUser(data);
-      form.setFieldsValue(buildProfileFormValues(data));
     },
     onError: (err: unknown) => {
       toast.danger(parseErrorMessage(err));
@@ -48,11 +39,6 @@ function Account() {
   );
 
   const handleCancelEdit = () => {
-    if (user) {
-      form.setFieldsValue(buildProfileFormValues(user));
-    } else {
-      form.resetFields();
-    }
     setEditMode(false);
   };
 
@@ -84,7 +70,6 @@ function Account() {
           <AccountForm
             show={fieldConfig.showProfileSection}
             user={user}
-            form={form}
             fieldConfig={fieldConfig}
             visibleFields={visibleFields}
             readonlyFieldSet={readonlyFieldSet}

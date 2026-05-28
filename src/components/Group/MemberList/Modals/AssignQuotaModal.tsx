@@ -1,9 +1,9 @@
 import SelectedMemberList from '@/components/Common/SelectedMemberList';
 import { useQuotaService } from '@/domains';
 import { parseErrorMessage } from '@/utils/error';
-import { toast } from '@heroui/react';
+import { Button, toast } from '@heroui/react';
 import { useRequest } from 'ahooks';
-import { Alert, Button, Form, InputNumber, Modal } from 'antd';
+import { Alert, Form, InputNumber, Modal } from 'antd';
 import { useCallback, useState } from 'react';
 import type { AssignQuotaModalProps } from './index.type';
 import styles from './style.module.less';
@@ -96,15 +96,14 @@ function AssignQuotaModal({
       afterOpenChange={handleOpenChange}
       destroyOnHidden
       footer={[
-        <Button key="cancel" onClick={onCancel}>
+        <Button key="cancel" onPress={onCancel}>
           取消
         </Button>,
         <Button
           key="confirm"
-          type="primary"
-          onClick={handleConfirm}
-          loading={loading}
-          disabled={confirmDisabled || quotaOverGlobalMax}
+          variant="primary"
+          onPress={handleConfirm}
+          isDisabled={loading || confirmDisabled || quotaOverGlobalMax}
         >
           确定
         </Button>,

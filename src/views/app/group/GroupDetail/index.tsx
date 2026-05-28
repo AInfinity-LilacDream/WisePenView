@@ -17,10 +17,10 @@ import type { ComputeWalletRef } from '@/components/Wallet/ComputeWallet/index.t
 import { useGroupService } from '@/domains';
 import type { Group, GroupResConfig } from '@/domains/Group';
 import { WALLET_TARGET_TYPE } from '@/domains/Wallet';
-import { toast } from '@heroui/react';
+import { Button, toast } from '@heroui/react';
 import { useRequest } from 'ahooks';
 import type { TabsProps } from 'antd';
-import { Button, Spin, Tabs } from 'antd';
+import { Spin, Tabs } from 'antd';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { AiOutlineDelete, AiOutlineEdit, AiOutlineLogout } from 'react-icons/ai';
 import { useParams } from 'react-router-dom';
@@ -239,19 +239,19 @@ function GroupDetail() {
       <div className={layout.actionsBar}>
         {currentUserRole === 'OWNER' ? (
           <div className={layout.actionsRow}>
-            <Button onClick={() => setEditGroupModalOpen(true)}>
+            <Button onPress={() => setEditGroupModalOpen(true)}>
               <IconText icon={<AiOutlineEdit />} iconSize={16}>
                 编辑小组信息
               </IconText>
             </Button>
-            <Button danger onClick={() => setDissolveGroupModalOpen(true)}>
+            <Button variant="danger" onPress={() => setDissolveGroupModalOpen(true)}>
               <IconText icon={<AiOutlineDelete />} iconSize={16}>
                 解散小组
               </IconText>
             </Button>
           </div>
         ) : (
-          <Button danger onClick={() => setExitGroupModalOpen(true)}>
+          <Button variant="danger" onPress={() => setExitGroupModalOpen(true)}>
             <IconText icon={<AiOutlineLogout />} iconSize={16}>
               退出小组
             </IconText>

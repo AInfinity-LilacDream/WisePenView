@@ -8,9 +8,9 @@ import PdfViewer from '@/components/Pdf/PdfViewer/index';
 import { useDocumentService, useResourceService } from '@/domains';
 import { RESOURCE_TYPE } from '@/domains/Resource';
 import { parseErrorMessage } from '@/utils/error';
-import { toast } from '@heroui/react';
+import { Button, toast } from '@heroui/react';
 import { useRequest } from 'ahooks';
-import { Button, Result, Spin } from 'antd';
+import { Result, Spin } from 'antd';
 import { useCallback, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import styles from './style.module.less';
@@ -115,7 +115,7 @@ function PdfPreview() {
                 title="无法打开文档"
                 extra={
                   <Link to="/app/drive">
-                    <Button type="default">返回云盘</Button>
+                    <Button variant="secondary">返回云盘</Button>
                   </Link>
                 }
               />
@@ -139,7 +139,7 @@ function PdfPreview() {
                 subTitle={parseErrorMessage(docInfoError)}
                 extra={
                   <Link to="/app/drive">
-                    <Button type="default">返回云盘</Button>
+                    <Button variant="secondary">返回云盘</Button>
                   </Link>
                 }
               />
@@ -180,7 +180,7 @@ function PdfPreview() {
                 subTitle="文档信息为空，请稍后重试"
                 extra={
                   <Link to="/app/drive">
-                    <Button type="default">返回云盘</Button>
+                    <Button variant="secondary">返回云盘</Button>
                   </Link>
                 }
               />
@@ -221,7 +221,7 @@ function PdfPreview() {
                 subTitle={parseErrorMessage(viewerError)}
                 extra={
                   <Link to="/app/drive">
-                    <Button type="default">返回云盘</Button>
+                    <Button variant="secondary">返回云盘</Button>
                   </Link>
                 }
               />

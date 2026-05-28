@@ -2,9 +2,9 @@ import ServiceAgreement from '@/components/ServiceAgreement/index';
 import { useAuthService } from '@/domains';
 import type { RegisterRequest } from '@/domains/Auth';
 import { parseErrorMessage } from '@/utils/error';
-import { toast } from '@heroui/react';
+import { Button, toast } from '@heroui/react';
 import { useRequest } from 'ahooks';
-import { Button, Checkbox, Form, Input, Modal, Typography } from 'antd';
+import { Checkbox, Form, Input, Modal, Typography } from 'antd';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { RiLockLine, RiUserLine } from 'react-icons/ri';
@@ -93,11 +93,11 @@ function Register() {
 
         <Form.Item>
           <Button
-            type="primary"
-            size="large"
-            htmlType="submit"
+            variant="primary"
+            size="lg"
+            type="submit"
             className={auth.submitButton}
-            loading={loading}
+            isDisabled={loading}
           >
             {t('register.submit')}
           </Button>
@@ -118,7 +118,7 @@ function Register() {
         footer={[
           <Button
             key="stay"
-            onClick={() => {
+            onPress={() => {
               setSuccessModalOpen(false);
               form.resetFields();
               setAgreement(false);
@@ -128,8 +128,8 @@ function Register() {
           </Button>,
           <Button
             key="login"
-            type="primary"
-            onClick={() => {
+            variant="primary"
+            onPress={() => {
               setSuccessModalOpen(false);
 
               navigate('/login');

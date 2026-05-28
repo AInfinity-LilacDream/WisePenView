@@ -1,10 +1,10 @@
-import { Button, Collapse, Result, Space, Tooltip, Typography } from 'antd';
+import { Collapse, Result, Space, Tooltip, Typography } from 'antd';
 import { RiFileCopyLine } from 'react-icons/ri';
 import { isRouteErrorResponse, useNavigate, useRouteError } from 'react-router-dom';
 
 import LandingNavbar from '@/components/LandingNavbar';
 import ResourceNotFound from '@/views/app/error/ResourceNotFound';
-import { toast } from '@heroui/react';
+import { Button, toast } from '@heroui/react';
 import styles from './style.module.less';
 
 interface AppErrorInfo {
@@ -87,10 +87,10 @@ function AppError() {
           subTitle={errorInfo.subTitle}
           extra={
             <Space size="middle" wrap>
-              <Button type="primary" size="large" onClick={() => window.location.reload()}>
+              <Button variant="primary" size="lg" onPress={() => window.location.reload()}>
                 刷新页面
               </Button>
-              <Button size="large" onClick={() => navigate(-1)}>
+              <Button size="lg" onPress={() => navigate(-1)}>
                 返回上一页
               </Button>
             </Space>
@@ -105,17 +105,13 @@ function AppError() {
                   key: 'error-detail',
                   label: <Typography.Text type="secondary">查看错误详情</Typography.Text>,
                   extra: (
-                    <Tooltip title="复制错误详情">
-                      <Button
-                        type="text"
-                        size="small"
-                        icon={<RiFileCopyLine />}
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          handleCopyDetail();
-                        }}
-                      />
-                    </Tooltip>
+                    <span onClick={(event) => event.stopPropagation()}>
+                      <Tooltip title="复制错误详情">
+                        <Button variant="ghost" size="sm" isIconOnly onPress={handleCopyDetail}>
+                          <RiFileCopyLine />
+                        </Button>
+                      </Tooltip>
+                    </span>
                   ),
                   children: (
                     <div className={styles.errorDetailPanel}>

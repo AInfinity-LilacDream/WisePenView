@@ -2,9 +2,9 @@ import ServiceAgreement from '@/components/ServiceAgreement/index';
 import { useAuthService } from '@/domains';
 import type { LoginRequest } from '@/domains/Auth';
 import { parseErrorMessage } from '@/utils/error';
-import { toast } from '@heroui/react';
+import { Button, toast } from '@heroui/react';
 import { useRequest } from 'ahooks';
-import { Button, Form, Input, Typography } from 'antd';
+import { Form, Input, Typography } from 'antd';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { RiLockLine, RiUserLine } from 'react-icons/ri';
@@ -62,11 +62,11 @@ function Login() {
 
         <Form.Item>
           <Button
-            type="primary"
-            size="large"
-            htmlType="submit"
+            variant="primary"
+            size="lg"
+            type="submit"
             className={auth.submitButton}
-            loading={loading}
+            isDisabled={loading}
           >
             {t('login.submit')}
           </Button>

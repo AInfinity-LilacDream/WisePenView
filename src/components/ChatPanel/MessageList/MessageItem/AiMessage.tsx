@@ -1,8 +1,8 @@
 import type { Message } from '@/components/ChatPanel/index.type';
 import IconText from '@/components/Common/IconText';
-import { toast } from '@heroui/react';
+import { Button, toast } from '@heroui/react';
 import { useInterval } from 'ahooks';
-import { Button, Spin } from 'antd';
+import { Spin } from 'antd';
 import React from 'react';
 import { LuCheck, LuCopy } from 'react-icons/lu';
 import { LogoFactory } from '../../ModelSelector';
@@ -84,27 +84,17 @@ function AiMessage({ message }: { message: Message }) {
         {/* 底部操作栏 (非 Loading 时显示) */}
         {!message.loading && (
           <div className={styles.actions}>
-            {/* 系统当前不支持点赞 */}
-            {/* <Button type="text" shape="circle" size="small" className={styles.actionBtn}>
-              <LuThumbsUp size={14} />
-            </Button> */}
-            {/* 系统当前不支持点踩 */}
-            {/* <Button type="text" shape="circle" size="small" className={styles.actionBtn}>
-              <LuThumbsDown size={14} />
-            </Button> */}
-            {/* 系统当前不支持重新生成 */}
-            {/* <Button type="text" shape="circle" size="small" className={styles.actionBtn}>
-              <LuRotateCw size={14} />
-            </Button> */}
+            {/* 系统当前不支持点赞、点踩、重新生成 */}
             <Button
-              type="text"
-              shape="circle"
-              size="small"
+              variant="ghost"
+              isIconOnly
+              size="sm"
               className={`${styles.actionBtn} ${copied ? styles.actionBtnCopied : ''}`}
-              icon={copied ? <LuCheck size={14} /> : <LuCopy size={14} />}
-              onClick={handleCopy}
-              title="复制"
-            />
+              onPress={handleCopy}
+              aria-label="复制"
+            >
+              {copied ? <LuCheck size={14} /> : <LuCopy size={14} />}
+            </Button>
           </div>
         )}
       </div>

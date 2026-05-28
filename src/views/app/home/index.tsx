@@ -1,4 +1,5 @@
-import { Button, Card, Space, Tag, Typography } from 'antd';
+import { Button } from '@heroui/react';
+import { Card, Space, Tag, Typography } from 'antd';
 import { useNavigate } from 'react-router-dom';
 
 import nodeSvg from '@/assets/images/backgrounds/node.svg';
@@ -29,13 +30,13 @@ function Home() {
               </Paragraph>
               <Space className={styles.heroActions} size="middle" wrap>
                 <Button
-                  type="primary"
+                  variant="primary"
                   className={styles.heroCta}
-                  onClick={() => navigate('/register')}
+                  onPress={() => navigate('/register')}
                 >
                   注册
                 </Button>
-                <Button className={styles.heroCta} onClick={() => navigate('/login')}>
+                <Button className={styles.heroCta} onPress={() => navigate('/login')}>
                   登录
                 </Button>
               </Space>

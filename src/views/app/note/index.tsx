@@ -1,5 +1,5 @@
 import { useRequest, useUnmount } from 'ahooks';
-import { Alert, Button, Result, Segmented, Spin } from 'antd';
+import { Alert, Result, Segmented, Spin } from 'antd';
 import { useCallback, useRef, useState } from 'react';
 import { RiArrowLeftDoubleLine, RiMenuLine } from 'react-icons/ri';
 import { Link, useParams } from 'react-router-dom';
@@ -22,7 +22,7 @@ import { RESOURCE_TYPE } from '@/domains/Resource';
 import { useSmoothFlag } from '@/hooks/useSmoothFlag';
 import { useAiDiffDisplayStore } from '@/store';
 import { parseErrorMessage } from '@/utils/error';
-import { toast } from '@heroui/react';
+import { Button, toast } from '@heroui/react';
 import styles from './style.module.less';
 
 interface NoteViewConnectedProps {
@@ -235,10 +235,10 @@ function NoteViewConnected({
                     description="网络连接已断开，当前可继续本地编辑；网络恢复后会自动同步到云端。"
                     action={
                       <Button
-                        type="default"
-                        size="small"
-                        loading={isReconnectLoading}
-                        onClick={handleReconnect}
+                        variant="secondary"
+                        size="sm"
+                        isDisabled={isReconnectLoading}
+                        onPress={handleReconnect}
                       >
                         重试
                       </Button>
@@ -325,7 +325,7 @@ function NoteView() {
                 title="无法打开笔记"
                 extra={
                   <Link to="/app/drive">
-                    <Button type="default">返回云盘</Button>
+                    <Button variant="secondary">返回云盘</Button>
                   </Link>
                 }
               />
@@ -349,7 +349,7 @@ function NoteView() {
                 subTitle={parseErrorMessage(noteInfoError)}
                 extra={
                   <Link to="/app/drive">
-                    <Button type="default">返回云盘</Button>
+                    <Button variant="secondary">返回云盘</Button>
                   </Link>
                 }
               />
@@ -389,7 +389,7 @@ function NoteView() {
                 subTitle="笔记信息为空，请稍后重试"
                 extra={
                   <Link to="/app/drive">
-                    <Button type="default">返回云盘</Button>
+                    <Button variant="secondary">返回云盘</Button>
                   </Link>
                 }
               />

@@ -4,9 +4,9 @@ import { useStickerService } from '@/domains';
 import { RESOURCE_SORT_BY, RESOURCE_SORT_DIR, TAG_QUERY_LOGIC_MODE } from '@/domains/Resource';
 import type { Sticker } from '@/domains/Sticker';
 import { parseErrorMessage } from '@/utils/error';
-import { toast } from '@heroui/react';
+import { Button, toast } from '@heroui/react';
 import { useRequest } from 'ahooks';
-import { Button, Radio, Select, Spin, Tag } from 'antd';
+import { Radio, Select, Spin, Tag } from 'antd';
 import clsx from 'clsx';
 import { useCallback, useState } from 'react';
 import { LuPlus, LuTags, LuX } from 'react-icons/lu';
@@ -152,7 +152,7 @@ function FileFilter({ value, onChange }: FileFilterProps) {
           />
         </div>
         <div className={styles.toolbarRight}>
-          <Button type="default" onClick={() => setStickerManageModalOpen(true)}>
+          <Button variant="secondary" onPress={() => setStickerManageModalOpen(true)}>
             <IconText icon={<LuTags />} iconSize={16}>
               管理标签
             </IconText>
@@ -161,8 +161,8 @@ function FileFilter({ value, onChange }: FileFilterProps) {
       </div>
 
       <AddStickerModal
-        open={addModalOpen}
-        onCancel={() => setAddModalOpen(false)}
+        isOpen={addModalOpen}
+        onOpenChange={setAddModalOpen}
         onSuccess={() => {
           void reloadStickers();
         }}

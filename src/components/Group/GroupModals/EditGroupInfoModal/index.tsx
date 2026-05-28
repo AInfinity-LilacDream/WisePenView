@@ -4,10 +4,10 @@ import type { EditGroupRequest } from '@/domains/Group';
 import { GROUP_TYPE } from '@/domains/Group';
 import { parseErrorMessage } from '@/utils/error';
 import { createBeforeUploadImageWithinLimit } from '@/utils/image/uploadLimit';
-import { toast } from '@heroui/react';
+import { Button, toast } from '@heroui/react';
 import { useRequest } from 'ahooks';
 import type { UploadFile } from 'antd';
-import { Button, Form, Input, Modal, Upload } from 'antd';
+import { Form, Input, Modal, Upload } from 'antd';
 import { useMemo } from 'react';
 import { LuUpload } from 'react-icons/lu';
 import type { EditGroupInfoModalProps } from './index.type';
@@ -104,10 +104,10 @@ function EditGroupInfoModal({
       onCancel={onCancel}
       destroyOnHidden
       footer={[
-        <Button key="cancel" onClick={onCancel}>
+        <Button key="cancel" onPress={onCancel}>
           取消
         </Button>,
-        <Button key="confirm" type="primary" onClick={handleConfirm} loading={loading}>
+        <Button key="confirm" variant="primary" onPress={handleConfirm} isDisabled={loading}>
           确定
         </Button>,
       ]}

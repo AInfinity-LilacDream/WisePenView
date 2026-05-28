@@ -3,9 +3,9 @@ import { useGroupService } from '@/domains';
 import { ROLE } from '@/domains/Group';
 import type { EnumKey } from '@/utils/enum';
 import { parseErrorMessage } from '@/utils/error';
-import { toast } from '@heroui/react';
+import { Button, toast } from '@heroui/react';
 import { useRequest } from 'ahooks';
-import { Alert, Button, Modal, Select } from 'antd';
+import { Alert, Modal, Select } from 'antd';
 import { useState } from 'react';
 import type { EditPermissionModalProps } from './index.type';
 import styles from './style.module.less';
@@ -63,15 +63,14 @@ function EditPermissionModal({
       onCancel={onCancel}
       destroyOnHidden
       footer={[
-        <Button key="cancel" onClick={onCancel}>
+        <Button key="cancel" onPress={onCancel}>
           取消
         </Button>,
         <Button
           key="confirm"
-          type="primary"
-          onClick={handleConfirm}
-          disabled={confirmDisabled}
-          loading={loading}
+          variant="primary"
+          onPress={handleConfirm}
+          isDisabled={confirmDisabled || loading}
         >
           确定
         </Button>,

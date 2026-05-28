@@ -1,9 +1,9 @@
 import DriveNav from '@/components/Drive/DriveNav';
 import { useResourceService } from '@/domains';
 import { parseErrorMessage } from '@/utils/error';
-import { toast } from '@heroui/react';
+import { Button, toast } from '@heroui/react';
 import { useRequest } from 'ahooks';
-import { Button, Modal, Steps } from 'antd';
+import { Modal, Steps } from 'antd';
 import { useCallback, useState } from 'react';
 import type { DriveSelectionItem } from '../../common/driveComponentModel';
 import styles from './index.module.less';
@@ -128,19 +128,14 @@ function UploadFileToGroupModal({
         </div>
 
         <div className={styles.footer}>
-          <Button onClick={onCancel}>取消</Button>
-          {step === 1 && <Button onClick={() => setStep(0)}>上一步</Button>}
+          <Button onPress={onCancel}>取消</Button>
+          {step === 1 && <Button onPress={() => setStep(0)}>上一步</Button>}
           {step === 0 ? (
-            <Button type="primary" onClick={() => setStep(1)} disabled={!canNext}>
+            <Button variant="primary" onPress={() => setStep(1)} isDisabled={!canNext}>
               下一步
             </Button>
           ) : (
-            <Button
-              type="primary"
-              onClick={handleSubmit}
-              loading={submitting}
-              disabled={!canSubmit}
-            >
+            <Button variant="primary" onPress={handleSubmit} isDisabled={submitting || !canSubmit}>
               确定
             </Button>
           )}

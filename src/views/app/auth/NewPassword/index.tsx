@@ -1,9 +1,9 @@
 import { useAuthService } from '@/domains';
 import type { NewPasswordRequest } from '@/domains/Auth';
 import { parseErrorMessage } from '@/utils/error';
-import { toast } from '@heroui/react';
+import { Button, toast } from '@heroui/react';
 import { useMount, useRequest } from 'ahooks';
-import { Button, Form, Input, Modal, Typography } from 'antd';
+import { Form, Input, Modal, Typography } from 'antd';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { RiLockLine } from 'react-icons/ri';
@@ -70,11 +70,11 @@ function NewPassword() {
 
         <Form.Item>
           <Button
-            type="primary"
-            size="large"
-            htmlType="submit"
+            variant="primary"
+            size="lg"
+            type="submit"
             className={auth.submitButton}
-            loading={loading}
+            isDisabled={loading}
           >
             {t('newPassword.submit')}
           </Button>
@@ -93,7 +93,7 @@ function NewPassword() {
         footer={[
           <Button
             key="stay"
-            onClick={() => {
+            onPress={() => {
               setSuccessModalOpen(false);
               form.resetFields(); // 清空表单
             }}
@@ -102,8 +102,8 @@ function NewPassword() {
           </Button>,
           <Button
             key="login"
-            type="primary"
-            onClick={() => {
+            variant="primary"
+            onPress={() => {
               setSuccessModalOpen(false);
               navigate('/login');
             }}

@@ -5,7 +5,7 @@
   gap: 20px;
   padding: 48px 0 64px;
   margin-top: 24px;
-  border-top: 1px solid var(--ant-color-border-secondary);
+  border-top: 1px solid var(--color-border, #e4e4e7);
 }
 
 /* ——— 点赞区 ——— */
@@ -24,9 +24,9 @@
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  border: 1px solid var(--ant-color-primary);
+  border: 1px solid var(--color-primary, #006fee);
   background: transparent;
-  color: var(--ant-color-primary);
+  color: var(--color-primary, #006fee);
   cursor: pointer;
   overflow: visible; /* 彩带粒子可飞出按钮范围 */
   transition:
@@ -35,8 +35,8 @@
     box-shadow 0.2s;
 
   &:hover:not(:disabled) {
-    background: var(--ant-color-primary-bg);
-    box-shadow: 0 0 0 4px var(--ant-color-primary-bg);
+    background: color-mix(in srgb, var(--color-primary, #006fee) 12%, transparent);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-primary, #006fee) 12%, transparent);
   }
 
   &:disabled {
@@ -46,14 +46,14 @@
 }
 
 .likeBigBtnActive {
-  background: var(--ant-color-warning);
-  border-color: var(--ant-color-warning);
+  background: var(--color-warning, #f5a524);
+  border-color: var(--color-warning, #f5a524);
   color: #fff;
 
   &:hover:not(:disabled) {
-    background: var(--ant-color-warning-active);
-    border-color: var(--ant-color-warning-active);
-    box-shadow: 0 0 0 4px rgba(250, 173, 20, 0.15);
+    background: #d58900;
+    border-color: #d58900;
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-warning, #f5a524) 18%, transparent);
   }
 }
 
@@ -134,8 +134,8 @@
   align-items: center;
   gap: 10px;
   margin: 0;
-  font-size: var(--ant-font-size-sm);
-  color: var(--ant-color-text-quaternary);
+  font-size: 13px;
+  color: var(--color-muted-foreground, #71717a);
   white-space: nowrap;
 
   &::before,
@@ -144,7 +144,7 @@
     display: block;
     width: 48px;
     height: 1px;
-    background: var(--ant-color-border-secondary);
+    background: var(--color-border, #e4e4e7);
   }
 }
 
@@ -156,28 +156,7 @@
   gap: 14px;
 }
 
-.rateControl {
-  font-size: 26px !important;
-
-  /* 增大星星间距 */
-  & :global(.ant-rate-star:not(:last-child)) {
-    margin-inline-end: 12px !important;
-  }
-}
-
-/* 评分时：暖色光晕 + 微弹，贴合"给星"的感受 */
-@keyframes rateGlowUp {
-  0%   { transform: scale(1);    filter: drop-shadow(0 0 0px rgba(250, 173, 20, 0)); }
-  30%  { transform: scale(1.1);  filter: drop-shadow(0 0 8px rgba(250, 173, 20, 0.8)); }
-  65%  { transform: scale(0.97); filter: drop-shadow(0 0 4px rgba(250, 173, 20, 0.4)); }
-  100% { transform: scale(1);    filter: drop-shadow(0 0 0px rgba(250, 173, 20, 0)); }
-}
-
 .rateWrap {
   display: flex;
   align-items: center;
-}
-
-.rateWrapPopping {
-  animation: rateGlowUp 0.5s cubic-bezier(0.34, 1.2, 0.64, 1);
 }

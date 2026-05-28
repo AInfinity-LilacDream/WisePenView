@@ -2,9 +2,9 @@ import IconText from '@/components/Common/IconText';
 import { useStickerService } from '@/domains';
 import type { Sticker } from '@/domains/Sticker';
 import { parseErrorMessage } from '@/utils/error';
-import { toast } from '@heroui/react';
+import { Button, toast } from '@heroui/react';
 import { useRequest } from 'ahooks';
-import { Button, Input, Modal, Popconfirm, Tag } from 'antd';
+import { Input, Modal, Popconfirm, Tag } from 'antd';
 import clsx from 'clsx';
 import { useCallback, useState } from 'react';
 import { LuPlus } from 'react-icons/lu';
@@ -185,11 +185,15 @@ function StickerManageModal({ open, onCancel, onSuccess }: StickerManageModalPro
                 />
               </div>
               <div className={styles.formActions}>
-                <Button type="default" onClick={() => void handleUpdate()} loading={updateLoading}>
+                <Button
+                  variant="secondary"
+                  onPress={() => void handleUpdate()}
+                  isDisabled={updateLoading}
+                >
                   保存修改
                 </Button>
                 <Popconfirm title="确定删除该标签？" onConfirm={() => void handleDelete()}>
-                  <Button danger loading={deleteLoading}>
+                  <Button variant="danger" isDisabled={deleteLoading}>
                     删除
                   </Button>
                 </Popconfirm>
@@ -205,9 +209,9 @@ function StickerManageModal({ open, onCancel, onSuccess }: StickerManageModalPro
                   onChange={(e) => setAddName(e.target.value)}
                 />
                 <Button
-                  type="default"
-                  onClick={() => void handleAdd()}
-                  loading={addLoading}
+                  variant="secondary"
+                  onPress={() => void handleAdd()}
+                  isDisabled={addLoading}
                   style={{ marginTop: 12 }}
                 >
                   <IconText icon={<LuPlus />} iconSize={16}>

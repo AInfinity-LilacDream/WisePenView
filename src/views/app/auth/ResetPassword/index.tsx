@@ -1,9 +1,9 @@
 import { useAuthService } from '@/domains';
 import type { ResetPasswordRequest } from '@/domains/Auth';
 import { parseErrorMessage } from '@/utils/error';
-import { toast } from '@heroui/react';
+import { Button, toast } from '@heroui/react';
 import { useRequest } from 'ahooks';
-import { Alert, Button, Form, Input, Typography } from 'antd';
+import { Alert, Form, Input, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { RiMailLine } from 'react-icons/ri';
 import { Link } from 'react-router-dom';
@@ -66,11 +66,11 @@ function ResetPassword() {
 
         <Form.Item>
           <Button
-            type="primary"
-            size="large"
-            htmlType="submit"
+            variant="primary"
+            size="lg"
+            type="submit"
             className={auth.submitButton}
-            loading={loading}
+            isDisabled={loading}
           >
             {t('resetPassword.submit')}
           </Button>

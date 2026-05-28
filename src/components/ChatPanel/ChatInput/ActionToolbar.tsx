@@ -1,4 +1,4 @@
-import { Button } from 'antd';
+import { Button } from '@heroui/react';
 import { LuSend } from 'react-icons/lu';
 
 import type { Model } from '@/components/ChatPanel/index.type';
@@ -16,52 +16,22 @@ function ActionToolbar({ modelValue, onModelChange, onSend, disabledSend }: Acti
   return (
     <div className={styles.actionToolbar}>
       {/* 左侧功能区 */}
-      <div className={styles.toolsLeft}>
-        {/* TODO: 以下按钮功能待接入 */}
-        {/* <Tooltip title="上传文件">
-          <Button
-            type="text"
-            size="small"
-            shape="circle"
-            className={styles.toolBtn} // 只需要一个类名控制颜色
-            icon={<LuPlus />}
-          />
-        </Tooltip>
-
-        <Tooltip title="设置">
-          <Button
-            type="text"
-            size="small"
-            shape="circle"
-            className={styles.toolBtn}
-            icon={<LuSettings />}
-          />
-        </Tooltip>
-
-        <Tooltip title="历史记录">
-          <Button
-            type="text"
-            size="small"
-            shape="circle"
-            className={styles.toolBtn}
-            icon={<LuHistory />}
-          />
-        </Tooltip> */}
-      </div>
+      <div className={styles.toolsLeft}>{/* TODO: 左侧功能按钮待接入 */}</div>
 
       {/* 右侧功能区 */}
       <div className={styles.toolsRight}>
         <ModelSelector value={modelValue} onChange={onModelChange} />
 
         <Button
-          type="primary"
-          shape="circle"
-          size="small"
-          onClick={onSend}
-          disabled={disabledSend}
+          variant="primary"
+          isIconOnly
+          size="sm"
+          onPress={onSend}
+          isDisabled={disabledSend}
           className={styles.sendBtn}
-          icon={<LuSend size={14} />}
-        />
+        >
+          <LuSend size={14} />
+        </Button>
       </div>
     </div>
   );

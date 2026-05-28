@@ -1,4 +1,5 @@
-import { Button, Result, Space } from 'antd';
+import { Button } from '@heroui/react';
+import { Result, Space } from 'antd';
 import { useNavigate } from 'react-router-dom';
 
 import LandingNavbar from '@/components/LandingNavbar';
@@ -21,10 +22,10 @@ function ResourceNotFound() {
           subTitle="抱歉，您访问的链接可能已失效，或页面已被移动。请返回首页或上一页继续浏览。"
           extra={
             <Space size="middle" wrap>
-              <Button type="primary" size="large" onClick={() => navigate('/')}>
+              <Button variant="primary" size="lg" onPress={() => navigate('/')}>
                 返回首页
               </Button>
-              <Button size="large" onClick={() => navigate(-1)}>
+              <Button size="lg" onPress={() => navigate(-1)}>
                 返回上一页
               </Button>
             </Space>

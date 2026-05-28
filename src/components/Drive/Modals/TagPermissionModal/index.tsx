@@ -17,9 +17,9 @@ import {
   type TagResourceMountMode,
 } from '@/domains/Tag';
 import { createClientError, FRONTEND_CLIENT_ERROR, parseErrorMessage } from '@/utils/error';
-import { toast } from '@heroui/react';
+import { Button, toast } from '@heroui/react';
 import { useRequest } from 'ahooks';
-import { Button, Checkbox, Empty, Form, Modal, Radio, Select } from 'antd';
+import { Checkbox, Empty, Form, Modal, Radio, Select } from 'antd';
 import { useState } from 'react';
 import { DEFAULT_DRIVE_ROOT_ID, type DriveSelectionItem } from '../../common/driveComponentModel';
 import type { TagPermissionModalProps } from './index.type';
@@ -301,15 +301,14 @@ const TagPermissionModal = ({
       wrapClassName={styles.modalWrap}
       width={860}
       footer={[
-        <Button key="cancel" onClick={handleCancel}>
+        <Button key="cancel" onPress={handleCancel}>
           取消
         </Button>,
         <Button
           key="confirm"
-          type="primary"
-          onClick={handleSubmit}
-          loading={saving}
-          disabled={!selectedTag || !groupId}
+          variant="primary"
+          onPress={handleSubmit}
+          isDisabled={saving || !selectedTag || !groupId}
         >
           保存
         </Button>,

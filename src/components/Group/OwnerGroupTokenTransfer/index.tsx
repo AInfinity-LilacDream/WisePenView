@@ -4,9 +4,9 @@
 import { useGroupService, useWalletService } from '@/domains';
 import { WALLET_TOKEN_TRANSFER_TYPE } from '@/domains/Wallet';
 import { parseErrorMessage } from '@/utils/error';
-import { toast } from '@heroui/react';
+import { Button, toast } from '@heroui/react';
 import { useRequest } from 'ahooks';
-import { Button, InputNumber, Skeleton } from 'antd';
+import { InputNumber, Skeleton } from 'antd';
 import { useCallback, useState } from 'react';
 import type { OwnerGroupTokenTransferProps } from './index.type';
 import styles from './style.module.less';
@@ -128,7 +128,7 @@ function OwnerGroupTokenTransfer({ groupId, onTransferSuccess }: OwnerGroupToken
 
       <div className={styles.balanceHeader}>
         <h3 className={styles.balanceTitle}>当前余额</h3>
-        <Button onClick={() => void loadBalances()} disabled={balanceLoading}>
+        <Button onPress={() => void loadBalances()} isDisabled={balanceLoading}>
           刷新
         </Button>
       </div>
@@ -172,10 +172,9 @@ function OwnerGroupTokenTransfer({ groupId, onTransferSuccess }: OwnerGroupToken
           disabled={submittingToGroup || balanceLoading}
         />
         <Button
-          type="primary"
-          loading={submittingToGroup}
-          disabled={balanceLoading}
-          onClick={() => void handleGiveToGroup()}
+          variant="primary"
+          isDisabled={submittingToGroup || balanceLoading}
+          onPress={() => void handleGiveToGroup()}
         >
           确认转入小组
         </Button>
@@ -196,10 +195,9 @@ function OwnerGroupTokenTransfer({ groupId, onTransferSuccess }: OwnerGroupToken
           disabled={submittingToOwner || balanceLoading}
         />
         <Button
-          type="primary"
-          loading={submittingToOwner}
-          disabled={balanceLoading}
-          onClick={() => void handleGiveToOwner()}
+          variant="primary"
+          isDisabled={submittingToOwner || balanceLoading}
+          onPress={() => void handleGiveToOwner()}
         >
           确认转回组长
         </Button>

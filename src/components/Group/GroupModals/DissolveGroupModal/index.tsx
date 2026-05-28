@@ -1,9 +1,9 @@
 import { useGroupService } from '@/domains';
 import type { DeleteGroupRequest } from '@/domains/Group';
 import { parseErrorMessage } from '@/utils/error';
-import { toast } from '@heroui/react';
+import { Button, toast } from '@heroui/react';
 import { useRequest } from 'ahooks';
-import { Alert, Button, Input, Modal } from 'antd';
+import { Alert, Input, Modal } from 'antd';
 import { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { DissolveGroupModalProps } from './index.type';
@@ -63,16 +63,14 @@ function DissolveGroupModal({
       afterOpenChange={handleOpenChange}
       destroyOnHidden
       footer={[
-        <Button key="cancel" onClick={onCancel}>
+        <Button key="cancel" onPress={onCancel}>
           取消
         </Button>,
         <Button
           key="confirm"
-          danger
-          type="primary"
-          onClick={handleConfirm}
-          disabled={confirmName !== groupName}
-          loading={loading}
+          variant="danger"
+          onPress={handleConfirm}
+          isDisabled={confirmName !== groupName || loading}
         >
           解散
         </Button>,

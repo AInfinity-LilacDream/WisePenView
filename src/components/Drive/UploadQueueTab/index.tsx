@@ -8,9 +8,9 @@ import {
 } from '@/domains/Document';
 import { parseErrorMessage } from '@/utils/error';
 import { formatFileSize } from '@/utils/format/formatFileSize';
-import { toast } from '@heroui/react';
+import { Button, toast } from '@heroui/react';
 import { useInterval, useMount, useRequest, useUnmount } from 'ahooks';
-import { Button, Empty, Space, Table } from 'antd';
+import { Empty, Space, Table } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useImperativeHandle, useMemo, useState, type Ref } from 'react';
 import styles from './style.module.less';
@@ -181,23 +181,20 @@ function UploadQueueTab({ ref }: { ref?: Ref<UploadQueueTabRef> }) {
           return (
             <Space size={4}>
               <Button
-                type="link"
-                size="small"
-                disabled={retryDisabled}
-                loading={retryingId === record.documentId}
-                onClick={() => {
+                variant="ghost"
+                size="sm"
+                isDisabled={retryDisabled || retryingId === record.documentId}
+                onPress={() => {
                   if (record.documentId) runRetryPendingDoc(record.documentId);
                 }}
               >
                 重试
               </Button>
               <Button
-                type="link"
-                size="small"
-                danger
-                disabled={cancelDisabled}
-                loading={cancelingId === record.documentId}
-                onClick={() => {
+                variant="danger"
+                size="sm"
+                isDisabled={cancelDisabled || cancelingId === record.documentId}
+                onPress={() => {
                   if (record.documentId) runCancelPendingDoc(record.documentId);
                 }}
               >

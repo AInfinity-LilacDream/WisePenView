@@ -5,7 +5,8 @@ import TableDrive from '@/components/Drive/TableDrive';
 import type { UploadQueueTabRef } from '@/components/Drive/UploadQueueTab';
 import UploadQueueTab from '@/components/Drive/UploadQueueTab';
 import { useDrivePreferencesStore, type DriveViewMode } from '@/store';
-import { Button, Tabs } from 'antd';
+import { Button } from '@heroui/react';
+import { Tabs } from 'antd';
 import { useCallback, useRef, useState } from 'react';
 import { AiOutlineCloudUpload } from 'react-icons/ai';
 import { LuTags } from 'react-icons/lu';
@@ -41,12 +42,12 @@ function Drive() {
           <span className={styles.pageSubtitle}>管理您的项目和文档</span>
         </div>
         <div className={styles.actionsRow}>
-          <Button type="default" onClick={() => setStickerManageOpen(true)}>
+          <Button variant="secondary" onPress={() => setStickerManageOpen(true)}>
             <IconText icon={<LuTags />} iconSize={16}>
               管理标签
             </IconText>
           </Button>
-          <Button type="primary" onClick={() => setUploadModalOpen(true)}>
+          <Button variant="primary" onPress={() => setUploadModalOpen(true)}>
             <IconText icon={<AiOutlineCloudUpload />} iconSize={16}>
               上传文件
             </IconText>
@@ -68,8 +69,8 @@ function Drive() {
       </div>
 
       <UploadDocumentModal
-        open={uploadModalOpen}
-        onClose={() => setUploadModalOpen(false)}
+        isOpen={uploadModalOpen}
+        onOpenChange={setUploadModalOpen}
         onSuccess={handleUploadSuccess}
       />
       <StickerManageModal open={stickerManageOpen} onCancel={() => setStickerManageOpen(false)} />
