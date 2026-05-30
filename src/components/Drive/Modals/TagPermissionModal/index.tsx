@@ -3,18 +3,16 @@ import { useDriveService, useGroupService, useTagService } from '@/domains';
 import type { DriveNode } from '@/domains/Drive';
 import type { GroupMember } from '@/domains/Group';
 import {
+  ACCESS_CONTROL_SCOPE,
   actionsToPermissionCode,
   getResourceActionImpliedActions,
   getResourceActionImpliedMask,
   hasResourceAction,
   normalizeResourceActions,
   permissionCodeToActions,
-  TAG_ACL_GRANT_MODE,
   TAG_RESOURCE_ACTION,
-  TAG_RESOURCE_MOUNT_MODE,
-  type TagAclGrantMode,
+  type AccessControlScope,
   type TagResourceAction,
-  type TagResourceMountMode,
 } from '@/domains/Tag';
 import { createClientError, FRONTEND_CLIENT_ERROR, parseErrorMessage } from '@/utils/error';
 import { toast } from '@heroui/react';
@@ -26,20 +24,20 @@ import type { TagPermissionModalProps } from './index.type';
 import styles from './style.module.less';
 
 type TagPermissionFormValues = {
-  aclGrantMode?: TagAclGrantMode;
-  aclGrantSpecifiedUsers?: string[];
+  taggedResourceAclGrantScope?: AccessControlScope;
+  taggedResourceAclGrantSpecifiedUsers?: string[];
   grantedActions?: TagResourceAction[];
-  resourceMountMode?: TagResourceMountMode;
-  resourceMountSpecifiedUsers?: string[];
+  tagMountPermissionScope?: AccessControlScope;
+  tagMountSpecifiedUsers?: string[];
 };
 
 const MEMBER_PAGE_SIZE = 200;
 
-const isAclUserListMode = (mode?: TagAclGrantMode) =>
-  mode === TAG_ACL_GRANT_MODE.WHITELIST || mode === TAG_ACL_GRANT_MODE.BLACKLIST;
+const isAclUserListMode = (mode?: AccessControlScope) =>
+  mode === ACCESS_CONTROL_SCOPE.WHITELIST || mode === ACCESS_CONTROL_SCOPE.BLACKLIST;
 
-const isMountUserListMode = (mode?: TagResourceMountMode) =>
-  mode === TAG_RESOURCE_MOUNT_MODE.WHITELIST || mode === TAG_RESOURCE_MOUNT_MODE.BLACKLIST;
+const isMountUserListMode = (mode?: AccessControlScope) =>
+  mode === ACCESS_CONTROL_SCOPE.WHITELIST || mode === ACCESS_CONTROL_SCOPE.BLACKLIST;
 
 const getSelectableMembers = (members?: GroupMember[]) =>
   (members ?? []).filter((m) => m.role !== 'ADMIN' && m.role !== 'OWNER');
@@ -211,15 +209,16 @@ const TagPermissionModal = ({
         return;
       }
       form.setFieldsValue({
-        aclGrantMode: nextTag.aclGrantMode ?? TAG_ACL_GRANT_MODE.ALL,
-        aclGrantSpecifiedUsers: filterSelectableUserIds(
-          nextTag.aclGrantSpecifiedUsers,
+        taggedResourceAclGrantScope:
+          nextTag.taggedResourceAclGrantScope ?? ACCESS_CONTROL_SCOPE.ALL,
+        taggedResourceAclGrantSpecifiedUsers: filterSelectableUserIds(
+          nextTag.taggedResourceAclGrantSpecifiedUsers,
           selectableMemberIdSet
         ),
         grantedActions: normalizeResourceActions(nextTag.grantedActions),
-        resourceMountMode: nextTag.resourceMountMode ?? TAG_RESOURCE_MOUNT_MODE.ALL,
-        resourceMountSpecifiedUsers: filterSelectableUserIds(
-          nextTag.resourceMountSpecifiedUsers,
+        tagMountPermissionScope: nextTag.tagMountPermissionScope ?? ACCESS_CONTROL_SCOPE.ALL,
+        tagMountSpecifiedUsers: filterSelectableUserIds(
+          nextTag.tagMountSpecifiedUsers,
           selectableMemberIdSet
         ),
       });
@@ -231,20 +230,21 @@ const TagPermissionModal = ({
     async (values: TagPermissionFormValues) => {
       if (!selectedTag?.tagId) return;
       if (!groupId) throw createClientError(FRONTEND_CLIENT_ERROR.GROUP_ID_REQUIRED);
-      const aclGrantMode = values.aclGrantMode ?? TAG_ACL_GRANT_MODE.ALL;
-      const resourceMountMode = values.resourceMountMode ?? TAG_RESOURCE_MOUNT_MODE.ALL;
+      const taggedResourceAclGrantScope =
+        values.taggedResourceAclGrantScope ?? ACCESS_CONTROL_SCOPE.ALL;
+      const tagMountPermissionScope = values.tagMountPermissionScope ?? ACCESS_CONTROL_SCOPE.ALL;
       await tagService.updateTag({
         groupId,
         targetTagId: selectedTag.tagId,
-        aclGrantMode,
-        aclGrantSpecifiedUsers: filterSelectableUserIds(
-          values.aclGrantSpecifiedUsers,
+        taggedResourceAclGrantScope,
+        taggedResourceAclGrantSpecifiedUsers: filterSelectableUserIds(
+          values.taggedResourceAclGrantSpecifiedUsers,
           selectableMemberIdSet
         ),
         grantedActions: normalizeResourceActions(values.grantedActions),
-        resourceMountMode,
-        resourceMountSpecifiedUsers: filterSelectableUserIds(
-          values.resourceMountSpecifiedUsers,
+        tagMountPermissionScope,
+        tagMountSpecifiedUsers: filterSelectableUserIds(
+          values.tagMountSpecifiedUsers,
           selectableMemberIdSet
         ),
       });
@@ -340,9 +340,9 @@ const TagPermissionModal = ({
                 <>
                   <div className={styles.sectionCard}>
                     <div className={styles.sectionTitle}>访问权限下发模式</div>
-                    <Form.Item name="aclGrantMode" className={styles.modeRow}>
+                    <Form.Item name="taggedResourceAclGrantScope" className={styles.modeRow}>
                       <Radio.Group
-                        options={TAG_ACL_GRANT_MODE.options.map((item) => ({
+                        options={ACCESS_CONTROL_SCOPE.options.map((item) => ({
                           label: item.label,
                           value: item.value,
                         }))}
@@ -353,12 +353,14 @@ const TagPermissionModal = ({
 
                     <Form.Item
                       noStyle
-                      shouldUpdate={(prev, next) => prev.aclGrantMode !== next.aclGrantMode}
+                      shouldUpdate={(prev, next) =>
+                        prev.taggedResourceAclGrantScope !== next.taggedResourceAclGrantScope
+                      }
                     >
                       {({ getFieldValue }) =>
-                        isAclUserListMode(getFieldValue('aclGrantMode')) ? (
+                        isAclUserListMode(getFieldValue('taggedResourceAclGrantScope')) ? (
                           <Form.Item
-                            name="aclGrantSpecifiedUsers"
+                            name="taggedResourceAclGrantSpecifiedUsers"
                             label={
                               <span className={styles.selectHint}>选择用户（不含管理员）</span>
                             }
@@ -421,9 +423,9 @@ const TagPermissionModal = ({
 
                   <div className={styles.sectionCard}>
                     <div className={styles.sectionTitle}>资源挂载权限</div>
-                    <Form.Item name="resourceMountMode" className={styles.modeRow}>
+                    <Form.Item name="tagMountPermissionScope" className={styles.modeRow}>
                       <Radio.Group
-                        options={TAG_RESOURCE_MOUNT_MODE.options.map((item) => ({
+                        options={ACCESS_CONTROL_SCOPE.options.map((item) => ({
                           label: item.label,
                           value: item.value,
                         }))}
@@ -435,13 +437,13 @@ const TagPermissionModal = ({
                     <Form.Item
                       noStyle
                       shouldUpdate={(prev, next) =>
-                        prev.resourceMountMode !== next.resourceMountMode
+                        prev.tagMountPermissionScope !== next.tagMountPermissionScope
                       }
                     >
                       {({ getFieldValue }) =>
-                        isMountUserListMode(getFieldValue('resourceMountMode')) ? (
+                        isMountUserListMode(getFieldValue('tagMountPermissionScope')) ? (
                           <Form.Item
-                            name="resourceMountSpecifiedUsers"
+                            name="tagMountSpecifiedUsers"
                             label={
                               <span className={styles.selectHint}>选择用户（不含管理员）</span>
                             }

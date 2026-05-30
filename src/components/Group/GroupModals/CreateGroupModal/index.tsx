@@ -1,14 +1,31 @@
 import IconText from '@/components/Common/IconText';
 import { useGroupService, useImageService, useUserService } from '@/domains';
-import type { CreateGroupRequest } from '@/domains/Group';
-import { ALLOWED_GROUP_TYPES_MAP, GROUP_FILE_ORG_LOGIC, GROUP_TYPE } from '@/domains/Group';
+import type { CreateGroupRequest, GroupFileOrgLogic } from '@/domains/Group';
+import {
+  ALLOWED_GROUP_TYPES_MAP,
+  DEFAULT_MEMBER_ACTIONS,
+  FILE_ORG_LOGIC_INTRO,
+  FILE_ORG_LOGIC_LABEL,
+  GROUP_FILE_ORG_LOGIC,
+  GROUP_TYPE,
+} from '@/domains/Group';
+import {
+  actionsToPermissionCode,
+  getResourceActionImpliedActions,
+  getResourceActionImpliedMask,
+  hasResourceAction,
+  normalizeResourceActions,
+  permissionCodeToActions,
+  TAG_RESOURCE_ACTION,
+  type TagResourceAction,
+} from '@/domains/Tag';
 import { IDENTITY } from '@/domains/User';
 import { parseErrorMessage } from '@/utils/error';
 import { createBeforeUploadImageWithinLimit } from '@/utils/image/uploadLimit';
 import { toast } from '@heroui/react';
 import { useRequest } from 'ahooks';
 import type { UploadFile } from 'antd';
-import { Button, Form, Input, Modal, Select, Upload } from 'antd';
+import { Button, Checkbox, Form, Input, Modal, Radio, Select, Tooltip, Upload } from 'antd';
 import { useMemo, useState } from 'react';
 import { LuUpload } from 'react-icons/lu';
 import type { CreateGroupModalProps } from './index.type';
@@ -20,6 +37,8 @@ const { Option } = Select;
 
 type CreateGroupFormValues = Omit<CreateGroupRequest, 'groupCoverUrl'> & {
   cover?: UploadFile[];
+  fileOrgLogic?: GroupFileOrgLogic;
+  defaultMemberActions?: TagResourceAction[];
 };
 
 const fileFromCoverField = (fileList?: UploadFile[]): File | undefined => {
@@ -29,6 +48,9 @@ const fileFromCoverField = (fileList?: UploadFile[]): File | undefined => {
 };
 
 const groupTypeOptionsBase = GROUP_TYPE.options;
+
+const getActionLabel = (action: TagResourceAction) =>
+  TAG_RESOURCE_ACTION.labels[action] ?? String(action);
 
 function CreateGroupModal({ open, onCancel, onSuccess }: CreateGroupModalProps) {
   const groupService = useGroupService();
@@ -40,6 +62,9 @@ function CreateGroupModal({ open, onCancel, onSuccess }: CreateGroupModalProps) 
   );
   const [form] = Form.useForm<CreateGroupFormValues>();
   const [identityType, setIdentityType] = useState<number | undefined>();
+  const [hoveredAction, setHoveredAction] = useState<TagResourceAction | null>(null);
+  const watchedDefaultMemberActions = Form.useWatch('defaultMemberActions', form);
+  const watchedFileOrgLogic = Form.useWatch('fileOrgLogic', form);
 
   useRequest(() => userService.getUserInfo(), {
     onSuccess: (u) => {
@@ -55,6 +80,7 @@ function CreateGroupModal({ open, onCancel, onSuccess }: CreateGroupModalProps) 
 
   const handleCancel = () => {
     form.resetFields();
+    setHoveredAction(null);
     onCancel();
   };
 
@@ -82,7 +108,10 @@ function CreateGroupModal({ open, onCancel, onSuccess }: CreateGroupModalProps) 
       try {
         await groupService.updateGroupResConfig({
           groupId,
-          fileOrgLogic: GROUP_FILE_ORG_LOGIC.TAG,
+          fileOrgLogic: values.fileOrgLogic ?? GROUP_FILE_ORG_LOGIC.FOLDER,
+          defaultMemberActions: normalizeResourceActions(
+            values.defaultMemberActions ?? DEFAULT_MEMBER_ACTIONS
+          ),
         });
         toast.success('创建成功');
       } catch (configErr: unknown) {
@@ -114,6 +143,25 @@ function CreateGroupModal({ open, onCancel, onSuccess }: CreateGroupModalProps) 
     runCreateGroup(values);
   };
 
+  const selectedActions = normalizeResourceActions(watchedDefaultMemberActions);
+  const selectedActionSet = new Set(selectedActions);
+  const actionHighlightSet = hoveredAction
+    ? new Set([hoveredAction, ...getResourceActionImpliedActions(hoveredAction)])
+    : null;
+
+  const handleActionToggle = (action: TagResourceAction, checked: boolean) => {
+    const current = (form.getFieldValue('defaultMemberActions') ?? []) as TagResourceAction[];
+    if (checked) {
+      const nextCode = actionsToPermissionCode([...current, action]);
+      form.setFieldValue('defaultMemberActions', permissionCodeToActions(nextCode));
+      return;
+    }
+    const next = normalizeResourceActions(
+      current.filter((item) => !hasResourceAction(getResourceActionImpliedMask(item), action))
+    );
+    form.setFieldValue('defaultMemberActions', next);
+  };
+
   return (
     <Modal
       title="新建小组"
@@ -130,7 +178,15 @@ function CreateGroupModal({ open, onCancel, onSuccess }: CreateGroupModalProps) 
       ]}
       width={500}
     >
-      <Form form={form} layout="vertical" className={styles.modalFormPadding}>
+      <Form
+        form={form}
+        layout="vertical"
+        className={styles.modalFormPadding}
+        initialValues={{
+          fileOrgLogic: GROUP_FILE_ORG_LOGIC.FOLDER,
+          defaultMemberActions: DEFAULT_MEMBER_ACTIONS,
+        }}
+      >
         <Form.Item
           label="小组名称"
           name="groupName"
@@ -175,6 +231,61 @@ function CreateGroupModal({ open, onCancel, onSuccess }: CreateGroupModalProps) 
             </Button>
           </Upload>
         </Form.Item>
+        <div className={styles.sectionCard}>
+          <div className={styles.sectionTitle}>资源管理模式</div>
+          <Form.Item
+            name="fileOrgLogic"
+            className={styles.modeRow}
+            rules={[{ required: true, message: '请选择资源管理模式' }]}
+          >
+            <Radio.Group optionType="button" buttonStyle="solid">
+              {GROUP_FILE_ORG_LOGIC.options.map((item) => (
+                <Tooltip key={item.key} title={FILE_ORG_LOGIC_INTRO[item.value]}>
+                  <Radio.Button value={item.value}>{FILE_ORG_LOGIC_LABEL[item.value]}</Radio.Button>
+                </Tooltip>
+              ))}
+            </Radio.Group>
+          </Form.Item>
+          <div className={styles.modeHint}>注意：设置为标签模式后无法改回文件夹模式</div>
+        </div>
+        <div className={styles.sectionCard}>
+          <div className={styles.sectionTitle}>小组成员默认权限</div>
+          <Form.Item label="新成员默认可用的资源权限" className={styles.actionGroup}>
+            <Form.Item name="defaultMemberActions" hidden>
+              <Input />
+            </Form.Item>
+            <div className={styles.actionList}>
+              {TAG_RESOURCE_ACTION.options.map((item) => {
+                const action = item.value as TagResourceAction;
+                const impliedActions = getResourceActionImpliedActions(action);
+                const impliedLabels = impliedActions.map((value) => getActionLabel(value));
+                const isHighlighted = actionHighlightSet?.has(action);
+                return (
+                  <div
+                    key={item.key}
+                    className={
+                      isHighlighted
+                        ? `${styles.actionItem} ${styles.actionItemHighlight}`
+                        : styles.actionItem
+                    }
+                    onMouseEnter={() => setHoveredAction(action)}
+                    onMouseLeave={() => setHoveredAction(null)}
+                  >
+                    <Checkbox
+                      checked={selectedActionSet.has(action)}
+                      onChange={(event) => handleActionToggle(action, event.target.checked)}
+                    >
+                      <span className={styles.actionLabel}>{item.label}</span>
+                    </Checkbox>
+                    {impliedLabels.length > 0 ? (
+                      <div className={styles.actionHint}>包含：{impliedLabels.join(' / ')}</div>
+                    ) : null}
+                  </div>
+                );
+              })}
+            </div>
+          </Form.Item>
+        </div>
       </Form>
     </Modal>
   );
