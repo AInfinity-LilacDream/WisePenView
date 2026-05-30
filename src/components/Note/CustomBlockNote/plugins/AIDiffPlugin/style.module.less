@@ -74,19 +74,6 @@
   vertical-align: baseline;
 }
 
-/* Invisible hover bridge: closing the gap between diff text and floating buttons */
-.aiActionsAnchor::before {
-  content: '';
-  position: absolute;
-  z-index: 1;
-  left: -40px;
-  top: 50%;
-  width: min(148px, 45vw);
-  height: 3em;
-  transform: translateY(-50%);
-  pointer-events: auto;
-}
-
 .aiActionsLegacy {
   display: none;
 }
@@ -178,7 +165,8 @@
   &:active {
     background: var(--ant-color-fill);
     border-color: var(--ant-color-border);
-    box-shadow: inset 0 1px 2px color-mix(in srgb, var(--ant-color-text-quaternary) 45%, transparent);
+    box-shadow: inset 0 1px 2px
+      color-mix(in srgb, var(--ant-color-text-quaternary) 45%, transparent);
     color: var(--ant-color-text);
   }
 }
