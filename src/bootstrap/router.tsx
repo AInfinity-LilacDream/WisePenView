@@ -1,5 +1,5 @@
 import { lazy } from 'react';
-import { createBrowserRouter, Navigate } from 'react-router-dom';
+import { createBrowserRouter,Navigate } from 'react-router-dom';
 
 // 引入布局（保持同步加载，保证首屏壳子稳定）
 import AdminLayout from '@/layouts/AdminLayout';
@@ -10,6 +10,7 @@ import AdminRouteGuard from '@/views/admin/guard/AdminRouteGuard';
 
 // 页面使用 lazy load，按路由切分 chunk
 const UserManagement = lazy(() => import('@/views/admin/UserManagement'));
+const AdminUserDetail = lazy(() => import('@/views/admin/UserDetail'));
 const ResourceManagement = lazy(() => import('@/views/admin/ResourceManagement'));
 const GroupManagement = lazy(() => import('@/views/admin/GroupManagement'));
 const AnnouncementManagement = lazy(() => import('@/views/admin/AnnouncementManagement'));
@@ -177,6 +178,10 @@ const router = createBrowserRouter([
           {
             path: 'users',
             element: <UserManagement />,
+          },
+          {
+            path: 'users/:userId',
+            element: <AdminUserDetail />,
           },
           {
             path: 'resources',

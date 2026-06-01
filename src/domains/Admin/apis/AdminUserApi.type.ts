@@ -1,5 +1,19 @@
 import type { UserVerificationMode } from '@/domains/User/enum';
 
+export interface AdminUserProfileApiModel {
+  userId?: string | number | null;
+  sex?: number | null;
+  university?: string | null;
+  college?: string | null;
+  major?: string | null;
+  className?: string | null;
+  enrollmentYear?: string | null;
+  degreeLevel?: number | null;
+  academicTitle?: string | null;
+  createTime?: number | string | null;
+  updateTime?: number | string | null;
+}
+
 export interface AdminUserApiModel {
   id?: string | number | null;
   userId?: string | number | null;
@@ -13,16 +27,16 @@ export interface AdminUserApiModel {
   mobile?: string | null;
   verificationMode?: UserVerificationMode | null;
   status?: number | null;
-  createTime?: string | null;
-  updateTime?: string | null;
+  createTime?: number | string | null;
+  updateTime?: number | string | null;
 }
 
 export interface FetchAdminUserListApiRequest {
   page: number;
   size: number;
-  keyword: string;
-  status: number;
-  identityType: number;
+  keyword?: string;
+  status?: number;
+  identityType?: number;
 }
 
 export interface PageR<T> {
@@ -39,11 +53,7 @@ export interface GetAdminUserInfoApiRequest {
   userId: string;
 }
 
-export interface GetAdminUserInfoApiResponse {
-  userInfo: AdminUserApiModel;
-  userProfile?: Record<string, unknown> | null;
-  readonlyFields?: string[] | null;
-}
+export type GetAdminUserInfoApiResponse = AdminUserProfileApiModel;
 
 export interface ChangeAdminUserInfoApiRequest {
   userId: string;

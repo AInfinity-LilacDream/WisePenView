@@ -1,11 +1,13 @@
 import type { AdminUser } from '@/domains/Admin';
+import { formatTimestampToDateTime } from '@/utils/format/formatTime';
 import { normalizeId } from '@/utils/normalize/normalizeId';
 import type {
-  AdminUserApiModel,
-  FetchAdminUserListApiRequest,
-  FetchAdminUserListApiResponse,
+AdminUserApiModel,
+AdminUserProfileApiModel,
+FetchAdminUserListApiRequest,
+FetchAdminUserListApiResponse,
 } from '../apis/AdminUserApi.type';
-import type { FetchAdminUserListRequest, FetchAdminUserListResponse } from '../service/index.type';
+import type { FetchAdminUserListRequest,FetchAdminUserListResponse } from '../service/index.type';
 
 export const mapAdminUserApiModelToEntity = (raw: AdminUserApiModel): AdminUser => {
   return {
@@ -20,20 +22,37 @@ export const mapAdminUserApiModelToEntity = (raw: AdminUserApiModel): AdminUser 
     mobile: raw.mobile ?? undefined,
     verificationMode: raw.verificationMode ?? null,
     status: raw.status ?? 0,
-    createTime: raw.createTime ?? undefined,
-    updateTime: raw.updateTime ?? undefined,
+    createTime: formatTimestampToDateTime(raw.createTime),
+    updateTime: formatTimestampToDateTime(raw.updateTime),
+  };
+};
+
+export const mapAdminUserProfileApiModelToEntity = (
+  raw: AdminUserProfileApiModel | null | undefined
+): Record<string, unknown> | null => {
+  if (!raw) return null;
+
+  return {
+    ...raw,
+    userId: normalizeId(raw.userId),
+    createTime: formatTimestampToDateTime(raw.createTime),
+    updateTime: formatTimestampToDateTime(raw.updateTime),
   };
 };
 
 export const mapFetchAdminUserListRequestToApi = (
   params: FetchAdminUserListRequest
-): FetchAdminUserListApiRequest => ({
-  page: params.page,
-  size: params.size,
-  keyword: params.keyword,
-  status: params.status,
-  identityType: params.identityType,
-});
+): FetchAdminUserListApiRequest => {
+  const keyword = params.keyword?.trim();
+
+  return {
+    page: params.page,
+    size: params.size,
+    ...(keyword ? { keyword } : {}),
+    ...(params.status !== undefined ? { status: params.status } : {}),
+    ...(params.identityType !== undefined ? { identityType: params.identityType } : {}),
+  };
+};
 
 export const mapFetchAdminUserListResponse = (
   data: FetchAdminUserListApiResponse

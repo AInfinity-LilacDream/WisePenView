@@ -11,9 +11,9 @@ export interface IAdminService {
 export interface FetchAdminUserListRequest {
   page: number;
   size: number;
-  keyword: string;
-  status: number;
-  identityType: number;
+  keyword?: string;
+  status?: number;
+  identityType?: number;
 }
 
 export interface FetchAdminUserListResponse {
@@ -29,7 +29,7 @@ export interface GetAdminUserInfoRequest {
 }
 
 export interface GetAdminUserInfoResponse {
-  user: AdminUser;
+  user?: AdminUser;
   userProfile?: Record<string, unknown> | null;
   readonlyFields?: string[] | null;
 }

@@ -1,6 +1,6 @@
 import type { AdminUser } from '@/domains/Admin';
-import { IDENTITY, USER_STATUS } from '@/domains/User/enum';
-import { Avatar, Table, Tag } from 'antd';
+import { IDENTITY,USER_STATUS } from '@/domains/User/enum';
+import { Avatar,Button,Table,Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useMemo } from 'react';
 import type { AdminUserTableProps } from './index.type';
@@ -24,6 +24,7 @@ function AdminUserTable({
   pageSize,
   onPageChange,
   onRowClick,
+  onEditUser,
 }: AdminUserTableProps) {
   const columns = useMemo<ColumnsType<AdminUser>>(
     () => [
@@ -94,8 +95,26 @@ function AdminUserTable({
         ellipsis: true,
         render: (value?: string) => formatOptionalText(value),
       },
+      {
+        title: '操作',
+        key: 'actions',
+        width: 96,
+        fixed: 'right',
+        render: (_value, record) => (
+          <Button
+            type="link"
+            size="small"
+            onClick={(event) => {
+              event.stopPropagation();
+              onEditUser(record.id);
+            }}
+          >
+            编辑
+          </Button>
+        ),
+      },
     ],
-    []
+    [onEditUser]
   );
 
   return (
@@ -106,7 +125,7 @@ function AdminUserTable({
         loading={loading}
         columns={columns}
         dataSource={users}
-        scroll={{ x: 1112 }}
+        scroll={{ x: 1208 }}
         pagination={{
           total,
           current: currentPage,
