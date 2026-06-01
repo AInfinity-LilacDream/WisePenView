@@ -235,7 +235,7 @@ const TagPermissionModal = ({
           applyTagToForm(cachedTag);
         }
         try {
-          await tagService.refreshTagTree(groupId);
+          await tagService.getTagTree(groupId);
         } catch (err) {
           toast.danger(parseErrorMessage(err));
         }
@@ -252,7 +252,7 @@ const TagPermissionModal = ({
       }
 
       try {
-        await tagService.refreshTagTree(groupId);
+        await tagService.getTagTree(groupId);
       } catch (err) {
         toast.danger(parseErrorMessage(err));
       }

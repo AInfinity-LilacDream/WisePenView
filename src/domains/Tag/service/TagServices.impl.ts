@@ -134,25 +134,6 @@ export const createTagServices = (deps: TagServicesDeps): ITagService => {
     return roots;
   };
 
-  const refreshTagTree = async (groupId?: string): Promise<TagTreeNode[]> => {
-    const normalizedGroupId = normalizeTagGroupId(groupId);
-    const cacheKey = normalizedGroupId ?? CACHE_KEY_DEFAULT;
-    const params = normalizedGroupId ? { groupId: normalizedGroupId } : undefined;
-    const data = (await ResourceTagApi.getTagTree(params)) as TagTreeResponse[];
-    syncTrashTagIdToStore(normalizedGroupId, data ?? []);
-    const rawRoots: TagTreeNode[] = data ?? [];
-    rawTagTreeCache.set(cacheKey, rawRoots);
-    rawTagFlatCache.set(cacheKey, buildFlatMap(rawRoots));
-
-    const nonFolderRoots: TagTreeNode[] = rawRoots.filter(
-      (item) => !(item.tagName && item.tagName.startsWith('/'))
-    );
-    const roots: TagTreeNode[] = filterHiddenTags(nonFolderRoots);
-    tagTreeCache.set(cacheKey, roots);
-    tagFlatCache.set(cacheKey, buildFlatMap(roots));
-    return roots;
-  };
-
   const getTagById = (tagId: string, groupId?: string): TagTreeNode | undefined => {
     const cacheKey = normalizeTagGroupId(groupId) ?? CACHE_KEY_DEFAULT;
     return tagFlatCache.get(cacheKey)?.get(tagId);
@@ -211,7 +192,6 @@ export const createTagServices = (deps: TagServicesDeps): ITagService => {
   return {
     getRawTagTree,
     getRawTagById,
-    refreshTagTree,
     getTagTree,
     getTagById,
     getResByTag,
