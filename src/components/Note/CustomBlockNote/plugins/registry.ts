@@ -1,8 +1,15 @@
-import type { BlockSpecs, ExtensionFactoryInstance } from '@blocknote/core';
+import type {
+  BlockNoteEditor,
+  BlockSchema,
+  BlockSpecs,
+  ExtensionFactoryInstance,
+  InlineContentSchema,
+  StyleSchema,
+} from '@blocknote/core';
 import { BlockNoteSchema } from '@blocknote/core';
 import type { EditorProps } from '@tiptap/pm/view';
 
-import type { NoteEditorPlugin, NoteInlineContentSpecs } from './types';
+import type { NoteEditorPlugin, NoteInlineContentSpecs, PluginEditor } from './types';
 
 type DOMEventHandlers = NonNullable<EditorProps['handleDOMEvents']>;
 type DOMEventName = keyof DOMEventHandlers;
@@ -124,4 +131,24 @@ export function collectNoteEditorProps(plugins: readonly NoteEditorPlugin[]): Pa
     merged.handleDOMEvents = mergedDomHandlers;
   }
   return merged;
+}
+
+/**
+ * 按 `NOTE_EDITOR_PLUGINS` 顺序：先 BlockNote 默认导出，再依次执行各插件的 `blocksToMarkdownLossy`。
+ */
+export function composeNoteBlocksToMarkdownLossy<
+  BSchema extends BlockSchema,
+  I extends InlineContentSchema,
+  S extends StyleSchema,
+>(
+  editor: BlockNoteEditor<BSchema, I, S>,
+  plugins: readonly NoteEditorPlugin[],
+  blocks?: Parameters<BlockNoteEditor<BSchema, I, S>['blocksToMarkdownLossy']>[0]
+): string {
+  let markdown = editor.blocksToMarkdownLossy(blocks);
+  const pluginCtxEditor = editor as unknown as PluginEditor;
+  for (const plugin of plugins) {
+    markdown = plugin.blocksToMarkdownLossy?.(markdown, { editor: pluginCtxEditor }) ?? markdown;
+  }
+  return markdown;
 }
