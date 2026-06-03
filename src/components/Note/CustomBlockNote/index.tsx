@@ -29,9 +29,13 @@ import {
 import {
   collectNoteEditorExtensions,
   collectNoteEditorProps,
+  composeNoteBlocksToMarkdownLossy,
   getNoteEditorPlugins,
 } from './plugins';
-import { syncAiDiffBlockFoldDisplayMode } from './plugins/AIDiffPlugin';
+import {
+  filterDocumentBlocksForAiDiffExport,
+  syncAiDiffBlockFoldDisplayMode,
+} from './plugins/AIDiffPlugin';
 import { AiDiffDisplayModeProvider } from './plugins/AIDiffPlugin/displayModeContext';
 import { printNotePdfViaBrowser, waitForEditorPaint } from './plugins/noteBrowserPrint';
 import styles from './style.module.less';
@@ -41,6 +45,12 @@ type BlockNoteCollaborationConfig = NonNullable<CreateBlockNoteOptions['collabor
 
 function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === 'object' && v !== null;
+}
+
+function sanitizeMarkdownFileName(fileName?: string): string {
+  const normalizedName = (fileName ?? '').trim().replace(/[\\/:*?"<>|]+/g, '_');
+  const safeName = normalizedName.replace(/[.\s]+$/g, '');
+  return safeName || '未命名笔记';
 }
 
 function CustomBlockNote({
@@ -139,7 +149,7 @@ function CustomBlockNote({
 
   useMount(() => {
     newNoteBodyOnChangeCleanupRef.current = editor.onChange(() => {
-      const isNoteEmpty = editor.blocksToMarkdownLossy().trim().length === 0;
+      const isNoteEmpty = composeNoteBlocksToMarkdownLossy(editor, plugins).trim().length === 0;
       useNewNoteStore.getState().syncNewNoteBodyFromEditor(resourceId, isNoteEmpty);
 
       const needOutline = Boolean(onOutlineChange);
@@ -220,8 +230,30 @@ function CustomBlockNote({
           }
         }
       },
+      downloadMarkdown: async (fileName?: string) => {
+        const blocksForExport = filterDocumentBlocksForAiDiffExport(
+          editor.document,
+          AI_DIFF_DISPLAY_MODE.OLD_ONLY
+        );
+        const markdown = composeNoteBlocksToMarkdownLossy(
+          editor,
+          plugins,
+          blocksForExport as typeof editor.document
+        );
+        const blob = new Blob([markdown], { type: 'text/markdown;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const anchor = document.createElement('a');
+
+        anchor.href = url;
+        anchor.download = `${sanitizeMarkdownFileName(fileName)}.md`;
+        anchor.style.display = 'none';
+        document.body.appendChild(anchor);
+        anchor.click();
+        document.body.removeChild(anchor);
+        URL.revokeObjectURL(url);
+      },
     }),
-    [aiDiffDisplayMode, editor]
+    [aiDiffDisplayMode, editor, plugins]
   );
 
   const onKeyDownCapture = useNoteCaptureKeyEvent({ provider, undoManager, readOnly });

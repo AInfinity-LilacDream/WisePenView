@@ -51,6 +51,7 @@ function NoteViewConnected({
   const [outlineItems, setOutlineItems] = useState<NoteOutlineItem[]>([]);
   const [activeHeadingId, setActiveHeadingId] = useState<string | undefined>(undefined);
   const [pdfExportLoading, setPdfExportLoading] = useState(false);
+  const [isDownloadingMarkdown, setIsDownloadingMarkdown] = useState(false);
   const { status, doc, provider, reconnect } = useNoteSession(resourceId);
 
   const isConnected = status === 'connected';
@@ -167,6 +168,25 @@ function NoteViewConnected({
     }
   };
 
+  const handleDownloadMarkdown = async () => {
+    const bodyApi = bodyEditorRef.current;
+    if (!bodyApi) {
+      toast.info('编辑器未就绪');
+      return;
+    }
+    try {
+      setIsDownloadingMarkdown(true);
+      await bodyApi.downloadMarkdown(toolbarNoteTitle);
+      toast.success('Markdown 下载已开始');
+    } catch (err) {
+      toast.danger(parseErrorMessage(err));
+    } finally {
+      setIsDownloadingMarkdown(false);
+    }
+  };
+
+  const headerMorePending = pdfExportLoading || isDownloadingMarkdown;
+
   return (
     <div className={styles.pageWrap}>
       <ResourceViewerHeader
@@ -196,7 +216,7 @@ function NoteViewConnected({
                   <Button
                     variant="secondary"
                     size="sm"
-                    isPending={pdfExportLoading}
+                    isPending={headerMorePending}
                     isDisabled={showFullPageSpin}
                     aria-label="更多"
                   >
@@ -208,10 +228,14 @@ function NoteViewConnected({
                     aria-label="笔记更多操作"
                     onAction={(key) => {
                       if (key === 'print-pdf') void handlePrintPdf();
+                      if (key === 'download-md') void handleDownloadMarkdown();
                     }}
                   >
                     <Dropdown.Item id="print-pdf" textValue="打印为pdf">
                       打印为pdf
+                    </Dropdown.Item>
+                    <Dropdown.Item id="download-md" textValue="下载为md">
+                      下载为md
                     </Dropdown.Item>
                   </Dropdown.Menu>
                 </Dropdown.Popover>

@@ -20,6 +20,7 @@ export function getNoteEditorPlugins(): readonly NoteEditorPlugin[] {
 export {
   collectNoteEditorExtensions,
   collectNoteEditorProps,
+  composeNoteBlocksToMarkdownLossy,
   createNoteBlockNoteSchema,
 } from './registry';
 export type { NoteEditorPlugin } from './types';

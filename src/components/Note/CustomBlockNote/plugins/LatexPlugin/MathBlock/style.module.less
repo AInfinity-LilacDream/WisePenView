@@ -107,6 +107,11 @@
   user-select: none;
 }
 
+/** Markdown 导出用：保留 $$ 块内换行 */
+.mathExportRoot {
+  white-space: pre-wrap;
+}
+
 /** Portal 浮层内：独立公式块允许纵向拉伸编辑区（与原先块内 textarea 一致） */
 .blockPopoverTextarea {
   resize: vertical;

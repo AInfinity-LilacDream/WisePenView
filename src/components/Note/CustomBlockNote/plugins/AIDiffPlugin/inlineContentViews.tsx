@@ -294,13 +294,15 @@ export function AiDiffView(
   );
 }
 
-// 当编辑器内容被“导出成外部 HTML”时，把一条 ai-diff 行内节点序列化成对应的 HTML 结构
+// 当编辑器内容被“导出成外部 HTML”时，把一条 ai-diff 行内节点序列化成对应的 HTML 结构（固定仅旧文本）
 export function AiDiffExportHTML(
   props: ReactCustomInlineContentRenderProps<AiDiffConfig, DefaultStyleSchema>
 ) {
   const { inlineContent } = props;
   const origin = String(inlineContent.props.origin ?? '');
-  return origin ? <span className={styles.aiDeleteRoot}>{origin}</span> : <span />;
+  const replace = String(inlineContent.props.replace ?? '');
+  const plain = resolveDiffViewState(AI_DIFF_DISPLAY_MODE.OLD_ONLY, { origin, replace }).plainText;
+  return plain ? <span className={styles.aiDeleteRoot}>{plain}</span> : <span />;
 }
 
 // ai-add
@@ -338,7 +340,9 @@ export function AiAddView(
 export function AiAddExportHTML(
   props: ReactCustomInlineContentRenderProps<AiAddConfig, DefaultStyleSchema>
 ) {
-  return <span />;
+  const text = String(props.inlineContent.props.text ?? '');
+  const plain = resolveAddViewState(AI_DIFF_DISPLAY_MODE.OLD_ONLY, text).plainText;
+  return plain ? <span>{plain}</span> : <span />;
 }
 
 export function AiDeleteView(
@@ -377,5 +381,6 @@ export function AiDeleteExportHTML(
 ) {
   const { inlineContent } = props;
   const text = String(inlineContent.props.text ?? '');
-  return <span>{text}</span>;
+  const plain = resolveDeleteViewState(AI_DIFF_DISPLAY_MODE.OLD_ONLY, text).plainText;
+  return plain ? <span>{plain}</span> : <span />;
 }

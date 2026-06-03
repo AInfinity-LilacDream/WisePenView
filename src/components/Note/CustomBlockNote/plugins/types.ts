@@ -36,4 +36,9 @@ export interface NoteEditorPlugin {
   editorProps?: () => Partial<EditorProps>;
   /** 贡献 slash 菜单项 */
   slashMenu?: (ctx: { editor: PluginEditor }) => DefaultReactSuggestionItem[];
+  /**
+   * 在 BlockNote 默认 `editor.blocksToMarkdownLossy` 结果之上按插件顺序链式后处理。
+   * 块/行内的 Markdown 形态通常应在对应 spec 的 `toExternalHTML` 中注入，本钩子用于跨块修补或兼容旧导出。
+   */
+  blocksToMarkdownLossy?: (markdown: string, ctx: { editor: PluginEditor }) => string;
 }

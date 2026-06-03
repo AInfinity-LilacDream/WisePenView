@@ -251,8 +251,8 @@ function InlineMathView(
 function InlineMathExportHTML(
   props: ReactCustomInlineContentRenderProps<typeof inlineMathConfig, DefaultStyleSchema>
 ) {
-  const expr = props.inlineContent.props.expression as string;
-  const text = `$$${expr}$$`;
+  const expr = String(props.inlineContent.props.expression ?? '').trim();
+  const text = expr === '' ? ' $$ $$ ' : ` $${expr}$ `;
   return <span data-inline-math-export={text}>{text}</span>;
 }
 

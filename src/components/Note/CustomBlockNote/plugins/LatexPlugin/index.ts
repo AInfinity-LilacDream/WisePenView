@@ -2,6 +2,7 @@ import type { NoteEditorPlugin } from '../types';
 import { inlineMathContentSpec } from './InlineMath';
 import { inlineMathDollarExtension } from './InlineMath/inlineMathDollarExtension';
 import { createMathBlockSpec } from './MathBlock';
+import { latexBlocksToMarkdownLossy } from './markdownExport';
 import { createMathSlashMenuItem } from './slashMenuItem';
 
 /**
@@ -18,4 +19,5 @@ export const latexPlugin = {
   },
   extensions: () => [inlineMathDollarExtension()],
   slashMenu: ({ editor }) => [createMathSlashMenuItem(editor)],
+  blocksToMarkdownLossy: latexBlocksToMarkdownLossy,
 } satisfies NoteEditorPlugin;

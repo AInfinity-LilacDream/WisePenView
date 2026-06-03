@@ -448,6 +448,22 @@ function MathBlockView(props: MathBlockRenderProps) {
   );
 }
 
+type MathBlockExternalProps = MathBlockRenderProps & {
+  context: { nestingLevel: number };
+};
+
+/** Markdown / 外部 HTML：行间公式 `$$\n...\n$$`，避免使用编辑器内 KaTeX DOM */
+function MathBlockToExternalHTML(props: MathBlockExternalProps) {
+  void props.context;
+  const expr = String(props.block.props.expression ?? '').trim();
+  const payload = expr === '' ? '$$\n\n$$' : `$$\n${expr}\n$$`;
+  return (
+    <div className={`${styles.mathExportRoot} bn-math-block-export-md`} contentEditable={false}>
+      {payload}
+    </div>
+  );
+}
+
 /** KaTeX 独立公式块；预览在文档内，编辑区与行内公式一致为 body 挂载的浮层 */
 export const createMathBlockSpec = createReactBlockSpec(
   {
@@ -455,5 +471,5 @@ export const createMathBlockSpec = createReactBlockSpec(
     propSchema: mathBlockPropSchema,
     content: 'none',
   },
-  { render: MathBlockView }
+  { render: MathBlockView, toExternalHTML: MathBlockToExternalHTML }
 );
