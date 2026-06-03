@@ -7,6 +7,10 @@ import {
   AiDeleteView,
   AiDiffExportHTML,
   AiDiffView,
+  AiLinkAddExportHTML,
+  AiLinkAddView,
+  AiLinkDeleteExportHTML,
+  AiLinkDeleteView,
 } from './inlineContentViews.tsx'; // 从同目录文件集中引入这 4 类行内节点的“编辑器渲染”和“导出 HTML”实现
 
 const aiDiffConfig = {
@@ -38,6 +42,26 @@ const aiDeleteConfig = {
   content: 'none',
 } as const;
 
+const aiLinkAddConfig = {
+  type: 'ai-link-add',
+  propSchema: {
+    text: { default: '' },
+    href: { default: '' },
+    key: { default: '' },
+  },
+  content: 'none',
+} as const;
+
+const aiLinkDeleteConfig = {
+  type: 'ai-link-delete',
+  propSchema: {
+    text: { default: '' },
+    href: { default: '' },
+    key: { default: '' },
+  },
+  content: 'none',
+} as const;
+
 export const aiDiffInlineContentSpec = createReactInlineContentSpec(aiDiffConfig, {
   render: AiDiffView, // 编辑器内渲染：把该 inline content 显示成自定义 React 视图（例如高亮 diff）
   toExternalHTML: AiDiffExportHTML, // 导出渲染：把该 inline content 转成外部 HTML（用于复制/导出/保存为 HTML）
@@ -51,4 +75,14 @@ export const aiAddInlineContentSpec = createReactInlineContentSpec(aiAddConfig, 
 export const aiDeleteInlineContentSpec = createReactInlineContentSpec(aiDeleteConfig, {
   render: AiDeleteView,
   toExternalHTML: AiDeleteExportHTML,
+});
+
+export const aiLinkAddInlineContentSpec = createReactInlineContentSpec(aiLinkAddConfig, {
+  render: AiLinkAddView,
+  toExternalHTML: AiLinkAddExportHTML,
+});
+
+export const aiLinkDeleteInlineContentSpec = createReactInlineContentSpec(aiLinkDeleteConfig, {
+  render: AiLinkDeleteView,
+  toExternalHTML: AiLinkDeleteExportHTML,
 });

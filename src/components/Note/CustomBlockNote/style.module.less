@@ -84,3 +84,23 @@
     line-height: 1.4;
   }
 }
+
+.aiBulkActions {
+  position: absolute;
+  right: var(--ant-padding-lg);
+  bottom: var(--ant-padding-lg);
+  z-index: 9;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px;
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: var(--ant-border-radius-lg);
+  background: color-mix(in srgb, var(--ant-color-bg-elevated) 88%, var(--ant-color-fill-quaternary));
+  box-shadow: var(--ant-box-shadow-secondary);
+  pointer-events: none;
+}
+
+.aiBulkActionBtn {
+  pointer-events: auto;
+}

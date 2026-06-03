@@ -47,12 +47,43 @@ export function isInlineVisibleInMode(item: unknown, displayMode: AiDiffDisplayM
   if (type === 'text') {
     return getInlineText(item).trim() !== '';
   }
+  if (type === 'inlineMath') {
+    const props = getInlineProps(item);
+    const expression = getPropString(props, 'expression');
+    const aiDiffType = getPropString(props, 'aiDiffType');
+    const origin = getPropString(props, 'aiDiffOrigin');
+    const replace = getPropString(props, 'aiDiffReplace');
+    if (aiDiffType === 'edit') {
+      if (displayMode === AI_DIFF_DISPLAY_MODE.OLD_ONLY) return origin !== '';
+      if (displayMode === AI_DIFF_DISPLAY_MODE.NEW_ONLY) return replace !== '';
+      return origin !== '' || replace !== '';
+    }
+    if (aiDiffType === 'create') {
+      if (displayMode === AI_DIFF_DISPLAY_MODE.OLD_ONLY) return false;
+      return replace !== '';
+    }
+    if (aiDiffType === 'delete') {
+      if (displayMode === AI_DIFF_DISPLAY_MODE.NEW_ONLY) return false;
+      return origin !== '';
+    }
+    return expression !== '';
+  }
   if (type === 'ai-add') {
     const text = getPropString(getInlineProps(item), 'text');
     if (!text) return false;
     return displayMode !== AI_DIFF_DISPLAY_MODE.OLD_ONLY;
   }
+  if (type === 'ai-link-add') {
+    const text = getPropString(getInlineProps(item), 'text');
+    if (!text) return false;
+    return displayMode !== AI_DIFF_DISPLAY_MODE.OLD_ONLY;
+  }
   if (type === 'ai-delete') {
+    const text = getPropString(getInlineProps(item), 'text');
+    if (!text) return false;
+    return displayMode !== AI_DIFF_DISPLAY_MODE.NEW_ONLY;
+  }
+  if (type === 'ai-link-delete') {
     const text = getPropString(getInlineProps(item), 'text');
     if (!text) return false;
     return displayMode !== AI_DIFF_DISPLAY_MODE.NEW_ONLY;
@@ -89,10 +120,16 @@ export function isInlineVisibleInMode(item: unknown, displayMode: AiDiffDisplayM
 function hasAnyAiInline(content: readonly unknown[]): boolean {
   return content.some((item) => {
     const type = getInlineType(item);
+    if (type === 'inlineMath') {
+      const aiDiffType = getPropString(getInlineProps(item), 'aiDiffType');
+      return aiDiffType === 'edit' || aiDiffType === 'create' || aiDiffType === 'delete';
+    }
     return (
       type === 'ai-diff' ||
       type === 'ai-add' ||
       type === 'ai-delete' ||
+      type === 'ai-link-add' ||
+      type === 'ai-link-delete' ||
       type === 'AI-Create' ||
       type === 'AI-Delete' ||
       type === 'AI-Edit'

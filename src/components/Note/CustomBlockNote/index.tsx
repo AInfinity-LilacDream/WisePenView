@@ -15,9 +15,10 @@ import '@blocknote/mantine/style.css';
 import { useCreateBlockNote } from '@blocknote/react';
 import { toast } from '@heroui/react';
 import { useMount, useUnmount, useUpdateEffect } from 'ahooks';
-import { useImperativeHandle, useMemo, useRef, useState, type Ref } from 'react';
+import { useCallback, useImperativeHandle, useMemo, useRef, useState, type Ref } from 'react';
 import NoteSlashMenu from '../NoteSlashMenu';
 import NoteToolbar from '../NoteToolbar';
+import { hasAiDiffContentFromEditor } from './AiDiffPresence';
 import { blockNoteSchema } from './blockNoteSchema';
 import { useAttachNoteYjsUndoStack, useNoteCaptureKeyEvent, useNoteYjsUndoManager } from './hooks';
 import type { CustomBlockNoteProps, NoteBodyEditorHandle } from './index.type';
@@ -37,6 +38,13 @@ import {
   syncAiDiffBlockFoldDisplayMode,
 } from './plugins/AIDiffPlugin';
 import { AiDiffDisplayModeProvider } from './plugins/AIDiffPlugin/displayModeContext';
+import {
+  applyAiDiffActionToProps,
+  applyAllAiDiffActionsToContent,
+  isInlineContentEffectivelyEmpty,
+  type AiDiffActionMode,
+} from './plugins/AIDiffPlugin/patch';
+import aiDiffStyles from './plugins/AIDiffPlugin/style.module.less';
 import { printNotePdfViaBrowser, waitForEditorPaint } from './plugins/noteBrowserPrint';
 import styles from './style.module.less';
 
@@ -53,6 +61,10 @@ function sanitizeMarkdownFileName(fileName?: string): string {
   return safeName || '未命名笔记';
 }
 
+function blockHasNestedChildren(block: { children?: readonly unknown[] }): boolean {
+  return Array.isArray(block.children) && block.children.length > 0;
+}
+
 function CustomBlockNote({
   resourceId,
   doc,
@@ -61,6 +73,7 @@ function CustomBlockNote({
   readOnly = false,
   onOutlineChange,
   onActiveHeadingChange,
+  onAiDiffPresenceChange,
   ref,
 }: CustomBlockNoteProps & { ref?: Ref<NoteBodyEditorHandle> }) {
   const imageService = useImageService();
@@ -99,6 +112,8 @@ function CustomBlockNote({
   const [exportDisplayModeOverride, setExportDisplayModeOverride] =
     useState<AiDiffDisplayMode | null>(null);
   const effectiveAiDiffDisplayMode = exportDisplayModeOverride ?? aiDiffDisplayMode;
+  const lastAiDiffPresenceRef = useRef<boolean | null>(null);
+  const [hasAiDiffContent, setHasAiDiffContent] = useState(false);
   const { noteFragment, undoManager } = useNoteYjsUndoManager(doc);
 
   const plugins = useMemo(() => getNoteEditorPlugins(), []);
@@ -147,10 +162,26 @@ function CustomBlockNote({
     setSelectedText(resourceId, editor.getSelectedText());
   });
 
+  const syncAiDiffPresence = useCallback(() => {
+    const nextHasAiDiffContent = hasAiDiffContentFromEditor(editor);
+    if (lastAiDiffPresenceRef.current === nextHasAiDiffContent) {
+      return;
+    }
+
+    lastAiDiffPresenceRef.current = nextHasAiDiffContent;
+    setHasAiDiffContent(nextHasAiDiffContent);
+    onAiDiffPresenceChange?.(nextHasAiDiffContent);
+  }, [editor, onAiDiffPresenceChange]);
+
+  useMount(() => {
+    syncAiDiffPresence();
+  });
+
   useMount(() => {
     newNoteBodyOnChangeCleanupRef.current = editor.onChange(() => {
       const isNoteEmpty = composeNoteBlocksToMarkdownLossy(editor, plugins).trim().length === 0;
       useNewNoteStore.getState().syncNewNoteBodyFromEditor(resourceId, isNoteEmpty);
+      syncAiDiffPresence();
 
       const needOutline = Boolean(onOutlineChange);
       const needFlatBlocks = Boolean(onActiveHeadingChange);
@@ -303,8 +334,118 @@ function CustomBlockNote({
     setChatPanelCollapsed(false);
   };
 
+  const applyAllAiDiffActions = useCallback(
+    (mode: AiDiffActionMode) => {
+      if (readOnly) {
+        return;
+      }
+
+      const blocks: Parameters<Parameters<typeof editor.forEachBlock>[0]>[0][] = [];
+      editor.forEachBlock((block) => {
+        blocks.push(block);
+        return true;
+      });
+
+      const updates: Array<{
+        block: (typeof blocks)[number];
+        update: Parameters<typeof editor.updateBlock>[1];
+      }> = [];
+      const blocksToRemove: Parameters<typeof editor.removeBlocks>[0] = [];
+
+      for (const block of blocks) {
+        const propsAction = applyAiDiffActionToProps(block.props, mode);
+        const nextContent = applyAllAiDiffActionsToContent(block.content, mode);
+
+        if (propsAction.kind === 'remove') {
+          blocksToRemove.push(block);
+          continue;
+        }
+
+        if (nextContent && isInlineContentEffectivelyEmpty(nextContent)) {
+          if (!blockHasNestedChildren(block)) {
+            blocksToRemove.push(block);
+            continue;
+          }
+        }
+
+        if (!nextContent && propsAction.kind !== 'update') {
+          continue;
+        }
+
+        updates.push({
+          block,
+          update: {
+            ...(nextContent ? { content: nextContent } : {}),
+            ...(propsAction.kind === 'update' ? { props: propsAction.props } : {}),
+          } as Parameters<typeof editor.updateBlock>[1],
+        });
+      }
+
+      for (const item of updates) {
+        try {
+          editor.updateBlock(item.block, item.update);
+        } catch {
+          void 0;
+        }
+      }
+
+      for (let i = blocksToRemove.length - 1; i >= 0; i -= 1) {
+        try {
+          const block = blocksToRemove[i];
+          if (block) {
+            editor.removeBlocks([block]);
+          }
+        } catch {
+          void 0;
+        }
+      }
+
+      editor.focus();
+      syncAiDiffPresence();
+    },
+    [editor, readOnly, syncAiDiffPresence]
+  );
+  const showAiBulkActions =
+    hasAiDiffContent && !readOnly && aiDiffDisplayMode === AI_DIFF_DISPLAY_MODE.COMPARE;
+
   return (
     <div className={styles.editorShell} onKeyDownCapture={onKeyDownCapture}>
+      {showAiBulkActions ? (
+        <div className={styles.aiBulkActions} contentEditable={false}>
+          <button
+            type="button"
+            aria-label="Keep all AI changes"
+            className={`${aiDiffStyles.aiActionBtn} ${aiDiffStyles.aiActionAccept} ${styles.aiBulkActionBtn}`}
+            onMouseDown={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+            }}
+            onClick={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              applyAllAiDiffActions('accept');
+            }}
+          >
+            Keep all
+          </button>
+          <button
+            type="button"
+            aria-label="Undo all AI changes"
+            className={`${aiDiffStyles.aiActionBtn} ${aiDiffStyles.aiActionDiscard} ${styles.aiBulkActionBtn}`}
+            onMouseDown={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+            }}
+            onClick={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              applyAllAiDiffActions('discard');
+            }}
+          >
+            Undo all
+          </button>
+        </div>
+      ) : null}
       <AiDiffDisplayModeProvider value={effectiveAiDiffDisplayMode}>
         <BlockNoteView
           editor={editor}
