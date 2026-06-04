@@ -1,6 +1,4 @@
-import type { NoteInfoResponse } from '@/domains/Note';
 import type { IResourceService } from '@/domains/Resource';
-import { coerceResourceActions, maskNoteConfigurableResourceActions } from '@/domains/Resource';
 import { createClientError, FRONTEND_CLIENT_ERROR } from '@/utils/error';
 import { NoteApi } from '../apis/NoteApi';
 import { NoteServicesMap } from '../mapper/NoteServices.map';
@@ -36,31 +34,11 @@ const getNoteInfoDisplay = async (params: GetNoteInfoRequest): Promise<NoteInfoD
 const getNotePermissionConfig = async (
   params: GetNotePermissionConfigRequest
 ): Promise<NotePermissionConfig> => {
-  const noteInfoData = (await NoteApi.getNoteInfo(params)) as NoteInfoResponse;
+  const noteInfoData = await NoteApi.getNoteInfo(params);
   if (!noteInfoData?.resourceInfo) {
     throw createClientError(FRONTEND_CLIENT_ERROR.NOTE_NOT_FOUND);
   }
-  const { resourceInfo } = noteInfoData;
-  const overrideGrantedActions = maskNoteConfigurableResourceActions(
-    coerceResourceActions(resourceInfo.overrideGrantedActions as unknown[] | undefined)
-  );
-  const specifiedUsersGrantedActions = resourceInfo.specifiedUsersGrantedActions
-    ? Object.fromEntries(
-        Object.entries(resourceInfo.specifiedUsersGrantedActions).map(([userId, actions]) => [
-          userId,
-          maskNoteConfigurableResourceActions(coerceResourceActions(actions as unknown[])),
-        ])
-      )
-    : null;
-
-  return {
-    resourceId: resourceInfo.resourceId || params.resourceId,
-    overrideGrantedActions: overrideGrantedActions.length > 0 ? overrideGrantedActions : null,
-    specifiedUsersGrantedActions:
-      specifiedUsersGrantedActions && Object.keys(specifiedUsersGrantedActions).length > 0
-        ? specifiedUsersGrantedActions
-        : null,
-  };
+  return NoteServicesMap.mapNotePermissionConfigFromApi(noteInfoData, params.resourceId);
 };
 
 export const createNoteServices = (deps: NoteServicesDeps): INoteService => {

@@ -62,9 +62,8 @@ const updateResourceTags = async (params: UpdateResourceTagsRequest): Promise<vo
 const updateResourceActionPermission = async (
   params: UpdateResourceActionPermissionRequest
 ): Promise<void> => {
-  await ResourceItemApi.changeResourceActionPermission(
-    ResourceServicesMap.mapChangeResourceActionPermissionRequest(params)
-  );
+  const request = ResourceServicesMap.mapChangeResourceActionPermissionRequest(params);
+  await ResourceItemApi.changeResourceActionPermission(request);
 };
 
 /** 点赞 / 取消点赞，返回操作后最新状态 */

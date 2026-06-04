@@ -14,13 +14,11 @@ import {
   parseErrorMessage,
   WisePenError,
 } from '@/utils/error';
-import { createExtension } from '@blocknote/core';
 import { zh } from '@blocknote/core/locales';
 import { BlockNoteView } from '@blocknote/mantine';
 import '@blocknote/mantine/style.css';
 import { useCreateBlockNote } from '@blocknote/react';
 import { toast } from '@heroui/react';
-import { Plugin, PluginKey } from '@tiptap/pm/state';
 import { useMount, useUnmount, useUpdateEffect } from 'ahooks';
 import { useCallback, useImperativeHandle, useMemo, useRef, useState, type Ref } from 'react';
 import NoteSlashMenu from '../NoteSlashMenu';
@@ -39,6 +37,7 @@ import {
   collectNoteEditorExtensions,
   collectNoteEditorProps,
   composeNoteBlocksToMarkdownLossy,
+  createNoteReadOnlyFilterExtension,
   getNoteEditorPlugins,
 } from './plugins';
 import {
@@ -148,29 +147,7 @@ function CustomBlockNote({
   const editorExtensions = useMemo(
     () => [
       ...collectNoteEditorExtensions(plugins),
-      createExtension({
-        key: 'noteReadOnlyFilter',
-        prosemirrorPlugins: [
-          new Plugin({
-            key: new PluginKey('noteReadOnlyFilter'),
-            filterTransaction(tr) {
-              if (!blockLocalDocWritesRef.current) {
-                return true;
-              }
-              if (!tr.docChanged) {
-                return true;
-              }
-              if (tr.getMeta('y-sync$') !== undefined) {
-                return true;
-              }
-              if (tr.getMeta('addToHistory') === false) {
-                return true;
-              }
-              return false;
-            },
-          }),
-        ],
-      }),
+      createNoteReadOnlyFilterExtension(() => blockLocalDocWritesRef.current),
     ],
     [plugins]
   );

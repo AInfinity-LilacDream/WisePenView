@@ -1,12 +1,12 @@
 import type { EditorProps } from '@tiptap/pm/view';
-import { createContext, useContext } from 'react';
+import { createContext, use } from 'react';
 
 const NoteEditorReadOnlyContext = createContext(false);
 
 export const NoteEditorReadOnlyProvider = NoteEditorReadOnlyContext.Provider;
 
 export function useNoteEditorReadOnlyContext(): boolean {
-  return useContext(NoteEditorReadOnlyContext);
+  return use(NoteEditorReadOnlyContext);
 }
 
 const AI_DIFF_PLACEHOLDER_SELECTOR = '[data-ai-diff-toggle-add-placeholder="true"]';

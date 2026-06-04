@@ -1,11 +1,17 @@
 import type { NoteInfoResponse } from '@/domains/Note';
-import { RESOURCE_ACTION, resourceActionsInclude } from '@/domains/Resource';
+import {
+  coerceResourceActions,
+  maskNoteConfigurableResourceActions,
+  RESOURCE_ACTION,
+  resourceActionsInclude,
+} from '@/domains/Resource';
 import { formatTimestampToDateTime } from '@/utils/format/formatTime';
 import { normalizeId } from '@/utils/normalize/normalizeId';
 import { normalizeResourceItem } from '@/utils/normalize/normalizeResourceItem';
 import type {
   CreateNoteResponse,
   NoteInfoDisplayData,
+  NotePermissionConfig,
   SyncTitleRequest,
 } from '../service/index.type';
 
@@ -55,8 +61,44 @@ const mapNoteInfoDisplayFromApi = (data: NoteInfoResponse): NoteInfoDisplayData 
   };
 };
 
+const mapSpecifiedUsersGrantedActionsFromApi = (
+  raw: Record<string, unknown[]> | null | undefined
+): NotePermissionConfig['specifiedUsersGrantedActions'] => {
+  if (!raw) {
+    return null;
+  }
+  const mapped = Object.fromEntries(
+    Object.entries(raw).map(([userId, actions]) => [
+      userId,
+      maskNoteConfigurableResourceActions(coerceResourceActions(actions)),
+    ])
+  );
+  return Object.keys(mapped).length > 0 ? mapped : null;
+};
+
+const mapNotePermissionConfigFromApi = (
+  data: NoteInfoResponse,
+  fallbackResourceId: string
+): NotePermissionConfig => {
+  const { resourceInfo } = data;
+  const overrideGrantedActions = maskNoteConfigurableResourceActions(
+    coerceResourceActions(resourceInfo.overrideGrantedActions as unknown[] | undefined)
+  );
+
+  return {
+    // fallback：缺失 resourceId 时使用请求参数
+    resourceId: resourceInfo.resourceId || fallbackResourceId,
+    // fallback：无 override 权限时返回 null
+    overrideGrantedActions: overrideGrantedActions.length > 0 ? overrideGrantedActions : null,
+    specifiedUsersGrantedActions: mapSpecifiedUsersGrantedActionsFromApi(
+      resourceInfo.specifiedUsersGrantedActions as Record<string, unknown[]> | undefined
+    ),
+  };
+};
+
 export const NoteServicesMap = {
   mapSyncTitleRequest,
   mapCreateNoteFromApi,
   mapNoteInfoDisplayFromApi,
+  mapNotePermissionConfigFromApi,
 };

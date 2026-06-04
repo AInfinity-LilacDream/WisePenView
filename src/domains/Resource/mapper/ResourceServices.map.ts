@@ -6,7 +6,7 @@ import type {
   ListResourceItemsApiRequest,
   ResourceListPageApiResponse,
 } from '../apis/ResourceApi.type';
-import { resourceActionsToApiKeys, TAG_QUERY_LOGIC_MODE } from '../enum';
+import { resourceActionsToApiKeys, TAG_QUERY_LOGIC_MODE, type ResourceActionKey } from '../enum';
 import type {
   GetUserResourcesRequest,
   InteractRateResult,
@@ -77,25 +77,33 @@ const mapInteractRateFromApi = (data: RateApiResponse): InteractRateResult => ({
   userScore: data.userScore,
 });
 
+/** userId → ResourceAction[] 转为 API 请求的 userId → 枚举 key[]；null/undefined 原样透传 */
+const mapSpecifiedUsersGrantedActionsToApi = (
+  value: UpdateResourceActionPermissionRequest['specifiedUsersGrantedActions']
+): ChangeResourceActionPermissionApiRequest['specifiedUsersGrantedActions'] => {
+  if (value === null) {
+    return null;
+  }
+  if (value === undefined) {
+    return undefined;
+  }
+
+  const byUserId: Record<string, ResourceActionKey[]> = {};
+  for (const userId in value) {
+    byUserId[userId] = resourceActionsToApiKeys(value[userId]) ?? [];
+  }
+  return byUserId;
+};
+
 const mapChangeResourceActionPermissionRequest = (
   params: UpdateResourceActionPermissionRequest
 ): ChangeResourceActionPermissionApiRequest => {
-  const specifiedUsersGrantedActions =
-    params.specifiedUsersGrantedActions === null
-      ? null
-      : params.specifiedUsersGrantedActions
-        ? Object.fromEntries(
-            Object.entries(params.specifiedUsersGrantedActions).map(([userId, actions]) => [
-              userId,
-              resourceActionsToApiKeys(actions) ?? [],
-            ])
-          )
-        : undefined;
-
   return {
     resourceId: params.resourceId,
     overrideGrantedActions: resourceActionsToApiKeys(params.overrideGrantedActions),
-    specifiedUsersGrantedActions,
+    specifiedUsersGrantedActions: mapSpecifiedUsersGrantedActionsToApi(
+      params.specifiedUsersGrantedActions
+    ),
   };
 };
 
