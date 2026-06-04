@@ -1,7 +1,7 @@
 import type { Model } from '@/components/ChatPanel/index.type';
 import type { SkillScopeTreeGroup } from '@/components/ChatPanel/skillScope';
-import type { SkillSummary } from '@/domains';
 import type { ChatAgentOption } from '@/store';
+import type { SkillSummary } from '@/types/skill';
 
 export interface ChatInputProps {
   onSend: (text: string, opts?: SendOptions) => void | Promise<void>;

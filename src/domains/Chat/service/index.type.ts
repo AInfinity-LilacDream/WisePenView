@@ -1,5 +1,19 @@
 import type { Model as BackendModel } from '@/types/model';
 
+export interface ToolOption {
+  toolId: string;
+  label: string;
+}
+
+export interface UploadAttachmentParams {
+  file: File;
+}
+
+export interface UploadAttachmentResult {
+  attachmentId: string;
+  filename?: string;
+}
+
 /** ChatService 接口 */
 export interface IChatService {
   getModels(): Promise<ModelListResponse>;

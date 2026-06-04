@@ -6,6 +6,8 @@ import type {
   MessageResponse,
   PageResult,
   ToolOption,
+  UploadAttachmentParams,
+  UploadAttachmentResult,
 } from '@/domains/Chat';
 import { MODEL_TYPE } from '@/types/model';
 

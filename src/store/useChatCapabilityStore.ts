@@ -1,4 +1,4 @@
-import type { SkillSummary } from '@/domains';
+import type { SkillSummary } from '@/types/skill';
 import { create } from 'zustand';
 import type { ChatAgentOption } from './useChatAgentStore';
 
@@ -22,7 +22,10 @@ export interface TemporaryToolSelection {
 interface ChatCapabilityState {
   selectedSkills: TemporarySkillSelection[];
   selectedTools: TemporaryToolSelection[];
-  toggleSkill: (skill: SkillSummary, options?: { sourceAgent?: ChatAgentOption | null }) => void;
+  toggleSkill: (
+    skill: SkillSummary,
+    options?: { sourceAgent?: ChatAgentOption | null; external?: boolean }
+  ) => void;
   removeSkill: (skillId: string) => void;
   toggleTool: (tool: TemporaryToolSelection) => void;
   clearCapabilities: () => void;
@@ -46,6 +49,12 @@ export const useChatCapabilityStore = create<ChatCapabilityState>()((set) => ({
       }
 
       const sourceAgent = options?.sourceAgent;
+      const external =
+        options?.external ??
+        (Boolean(sourceAgent) &&
+          (sourceAgent?.agentType === 'GROUP'
+            ? sourceAgent.groupId !== skill.groupId
+            : skill.scopeType === 'GROUP'));
       return {
         selectedSkills: [
           ...state.selectedSkills,
@@ -58,11 +67,7 @@ export const useChatCapabilityStore = create<ChatCapabilityState>()((set) => ({
             groupName: skill.groupName,
             sourceAgentId: sourceAgent?.agentId,
             sourceAgentLabel: sourceAgent?.label,
-            external:
-              Boolean(sourceAgent) &&
-              (sourceAgent?.agentType === 'GROUP'
-                ? sourceAgent.groupId !== skill.groupId
-                : skill.scopeType === 'GROUP'),
+            external,
           },
         ],
       };

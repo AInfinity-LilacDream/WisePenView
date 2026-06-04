@@ -10,6 +10,7 @@ export type {
   ModelListResponse,
   PageResult,
   RenameSessionRequest,
+  ToolOption,
   UploadAttachmentParams,
   UploadAttachmentResult,
 } from './service/index.type';

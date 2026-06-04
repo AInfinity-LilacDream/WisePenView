@@ -1,6 +1,6 @@
 import ChatPanel from '@/components/ChatPanel';
 import { clearNewChatSessionStore, useCurrentChatSessionStore } from '@/store';
-import { useMount } from 'ahooks';
+import { useMount, useUpdateEffect } from 'ahooks';
 import { useNavigate, useParams } from 'react-router-dom';
 import styles from './style.module.less';
 
@@ -14,15 +14,22 @@ function ChatPage() {
   const clearCurrentSession = useCurrentChatSessionStore((s) => s.clearCurrentSession);
 
   useMount(() => {
-    if (routeSessionId && routeSessionId !== currentSessionId) {
+    if (routeSessionId) {
       setCurrentSession({ id: routeSessionId, title: '' });
-      return;
-    }
-    if (!routeSessionId) {
+    } else {
       clearCurrentSession();
       clearNewChatSessionStore();
     }
   });
+
+  useUpdateEffect(() => {
+    if (routeSessionId) {
+      setCurrentSession({ id: routeSessionId, title: '' });
+    } else {
+      clearCurrentSession();
+      clearNewChatSessionStore();
+    }
+  }, [routeSessionId]);
 
   const handleNewChat = async () => {
     clearCurrentSession();

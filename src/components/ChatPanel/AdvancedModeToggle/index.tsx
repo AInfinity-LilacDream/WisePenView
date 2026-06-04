@@ -8,23 +8,28 @@ function AdvancedModeToggle({ compact = false }: AdvancedModeToggleProps) {
   const setAdvancedMode = useAdvancedModeStore((state) => state.setAdvancedMode);
 
   return (
-    <button
-      type="button"
+    <div
       className={`${styles.advancedModeToggle} ${compact ? styles.compactToggle : ''}`}
-      onClick={() => setAdvancedMode(!advancedMode)}
+      onClick={(e) => {
+        if (!(e.target as HTMLElement).closest('.ant-switch')) {
+          setAdvancedMode(!advancedMode);
+        }
+      }}
+      role="button"
+      tabIndex={0}
       aria-pressed={advancedMode}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          if (!(e.target as HTMLElement).closest('.ant-switch')) {
+            setAdvancedMode(!advancedMode);
+          }
+        }
+      }}
     >
       <span className={styles.advancedModeText}>高级模式</span>
-      <Switch
-        size="small"
-        checked={advancedMode}
-        onChange={setAdvancedMode}
-        onClick={(checked, event) => {
-          event.stopPropagation();
-          setAdvancedMode(checked);
-        }}
-      />
-    </button>
+      <Switch size="small" checked={advancedMode} onChange={setAdvancedMode} />
+    </div>
   );
 }
 

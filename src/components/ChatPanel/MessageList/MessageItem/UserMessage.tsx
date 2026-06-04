@@ -33,10 +33,9 @@ function UserMessage({ message }: UserMessageProps) {
             variant="ghost"
             isIconOnly
             size="sm"
-            className={styles.actionBtn}
+            className={`${styles.actionBtn} ${copied ? styles.actionBtnCopied : ''}`}
             onPress={handleCopy}
             aria-label="复制"
-            style={copied ? { color: 'var(--ant-color-success)' } : undefined}
           >
             {copied ? <Check size={14} /> : <Copy size={14} />}
           </Button>

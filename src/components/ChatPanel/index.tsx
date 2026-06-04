@@ -1,9 +1,9 @@
 import type { ChatPanelProps, Message, Model } from '@/components/ChatPanel/index.type';
-import type { SkillSummary } from '@/domains';
 import { useChatService, useGroupService, useResourceService } from '@/domains';
 import { mapApiModelsToFlatModels } from '@/domains/Chat';
 import { useChatSession } from '@/domains/Chat/session/useChatSession';
 import {
+  clearChatCapabilityStore,
   clearChatPageStore,
   clearNewChatSessionStore,
   useAdvancedModeStore,
@@ -14,6 +14,7 @@ import {
   useNewChatSessionStore,
   useNoteSelectionStore,
 } from '@/store';
+import type { SkillSummary } from '@/types/skill';
 import { parseErrorMessage } from '@/utils/error';
 import { toast } from '@heroui/react';
 import { useMount, useRequest, useUpdateEffect } from 'ahooks';
@@ -35,11 +36,7 @@ import {
 } from './ChatPanel';
 import MessageList from './MessageList';
 import NewChatButton from './NewChatButton';
-import {
-  buildAdvancedSkillTreeGroups,
-  getAllowedSkillsForChat,
-  getPrimarySkillsForAgent,
-} from './skillScope';
+import { buildAdvancedSkillTreeGroups, getPrimarySkillsForAgent } from './skillScope';
 import styles from './style.module.less';
 
 function ChatPanel({ collapsed, fullWidth = false, onNewChat }: ChatPanelProps) {
@@ -67,6 +64,11 @@ function ChatPanel({ collapsed, fullWidth = false, onNewChat }: ChatPanelProps) 
   const setSessionAgent = useChatAgentStore((state) => state.setSessionAgent);
   const advancedMode = useAdvancedModeStore((state) => state.advancedMode);
   const selectedSkills = useChatCapabilityStore((state) => state.selectedSkills);
+
+  useUpdateEffect(() => {
+    clearChatCapabilityStore();
+  }, [currentSessionId]);
+
   const [currentModel, setCurrentModel] = useState<Model | null>(null);
   const [historyMessages, setHistoryMessages] = useState<Message[]>([]);
   const [historyPage, setHistoryPage] = useState(1);
@@ -74,11 +76,9 @@ function ChatPanel({ collapsed, fullWidth = false, onNewChat }: ChatPanelProps) 
   const [loadingMoreHistory, setLoadingMoreHistory] = useState(false);
 
   const defaultPersonalAgent = useMemo(() => buildDefaultPersonalAgent(), []);
-  const { data: joinedGroupData } = useRequest(
+  const { data: joinedGroupData, loading: loadingJoinedGroups } = useRequest(
     () => groupService.fetchGroupList({ groupRoleFilter: 'JOINED', page: 1, size: 100 }),
-    {
-      refreshDeps: [],
-    }
+    { refreshDeps: [] }
   );
   const { data: skillListData } = useRequest(
     async () => {
@@ -110,7 +110,6 @@ function ChatPanel({ collapsed, fullWidth = false, onNewChat }: ChatPanelProps) 
           skillId: item.resourceId,
           displayName: item.resourceName,
           description: '',
-          status: 'ACTIVE',
           scopeType: 'PERSONAL',
         });
       });
@@ -120,7 +119,6 @@ function ChatPanel({ collapsed, fullWidth = false, onNewChat }: ChatPanelProps) 
             skillId: item.resourceId,
             displayName: item.resourceName,
             description: '',
-            status: 'ACTIVE',
             scopeType: 'GROUP',
             groupId: group.groupId,
             groupName: group.groupName,
@@ -132,7 +130,7 @@ function ChatPanel({ collapsed, fullWidth = false, onNewChat }: ChatPanelProps) 
     { refreshDeps: [joinedGroupData] }
   );
 
-  const { data: personalAgentData } = useRequest(
+  const { data: personalAgentData, loading: loadingPersonalAgents } = useRequest(
     () =>
       resourceService.getUserResources({
         page: 1,
@@ -147,7 +145,7 @@ function ChatPanel({ collapsed, fullWidth = false, onNewChat }: ChatPanelProps) 
     () => (personalAgentData?.list ?? []).map((item) => buildAgentFromResourceItem(item)),
     [personalAgentData?.list]
   );
-  const { data: groupAgentData } = useRequest(
+  const { data: groupAgentData, loading: loadingGroupAgents } = useRequest(
     async () => {
       const groups = joinedGroupData?.groups ?? [];
       if (groups.length === 0) return [];
@@ -162,10 +160,7 @@ function ChatPanel({ collapsed, fullWidth = false, onNewChat }: ChatPanelProps) 
               sortDir: 'ASC',
               resourceType: 'AGENT',
             })
-            .then((res) => ({
-              list: res.list,
-              group,
-            }))
+            .then((res) => ({ list: res.list, group }))
         )
       );
       return results.flatMap(({ list, group }) =>
@@ -184,21 +179,29 @@ function ChatPanel({ collapsed, fullWidth = false, onNewChat }: ChatPanelProps) 
     () => [defaultPersonalAgent, ...personalAgentOptions, ...groupAgentOptions],
     [defaultPersonalAgent, personalAgentOptions, groupAgentOptions]
   );
+  const agentOptionsLoaded = !loadingJoinedGroups && !loadingPersonalAgents && !loadingGroupAgents;
   const selectedAgent = useMemo(() => {
-    if (currentSessionId) {
-      return sessionAgentBySessionId[currentSessionId] ?? defaultPersonalAgent;
-    }
-    return draftAgent ?? defaultPersonalAgent;
-  }, [currentSessionId, defaultPersonalAgent, draftAgent, sessionAgentBySessionId]);
+    const storedAgent = currentSessionId ? sessionAgentBySessionId[currentSessionId] : draftAgent;
+    if (!storedAgent) return defaultPersonalAgent;
+    if (storedAgent.isDefault) return defaultPersonalAgent;
+
+    const freshAgent = agentOptions.find((agent) => agent.agentId === storedAgent.agentId);
+    if (freshAgent) return freshAgent;
+
+    return agentOptionsLoaded ? defaultPersonalAgent : storedAgent;
+  }, [
+    agentOptions,
+    agentOptionsLoaded,
+    currentSessionId,
+    defaultPersonalAgent,
+    draftAgent,
+    sessionAgentBySessionId,
+  ]);
 
   const allSkills = useMemo(() => skillListData?.list ?? [], [skillListData?.list]);
   const primarySkills = useMemo(
     () => getPrimarySkillsForAgent(allSkills, selectedAgent),
     [allSkills, selectedAgent]
-  );
-  const allowedSkills = useMemo(
-    () => getAllowedSkillsForChat(allSkills, selectedAgent, advancedMode),
-    [advancedMode, allSkills, selectedAgent]
   );
   const advancedSkillGroups = useMemo(
     () =>
@@ -211,8 +214,8 @@ function ChatPanel({ collapsed, fullWidth = false, onNewChat }: ChatPanelProps) 
     [allSkills, joinedGroupData?.groups, primarySkills, selectedAgent]
   );
   const allowedSkillIds = useMemo(
-    () => allowedSkills.map((skill) => skill.skillId),
-    [allowedSkills]
+    () => primarySkills.map((skill) => skill.skillId),
+    [primarySkills]
   );
 
   const {
@@ -227,14 +230,8 @@ function ChatPanel({ collapsed, fullWidth = false, onNewChat }: ChatPanelProps) 
 
   const { runAsync: runLoadSessionHistory } = useRequest(
     async (sessionId: string, page = 1) =>
-      chatService.listHistoryMessages({
-        sessionId,
-        page,
-        size: HISTORY_PAGE_SIZE,
-      }),
-    {
-      manual: true,
-    }
+      chatService.listHistoryMessages({ sessionId, page, size: HISTORY_PAGE_SIZE }),
+    { manual: true }
   );
   const { runAsync: runCreateSession } = useRequest(() => chatService.createSession(), {
     manual: true,
@@ -244,10 +241,7 @@ function ChatPanel({ collapsed, fullWidth = false, onNewChat }: ChatPanelProps) 
   const modelMetaMap = useMemo<Record<string, ModelMeta>>(() => {
     const models = mapApiModelsToFlatModels(modelListData);
     return models.reduce<Record<string, ModelMeta>>((acc, model) => {
-      acc[model.id] = {
-        provider: model.provider,
-        name: model.name,
-      };
+      acc[model.id] = { provider: model.provider, name: model.name };
       return acc;
     }, {});
   }, [modelListData]);
@@ -269,11 +263,7 @@ function ChatPanel({ collapsed, fullWidth = false, onNewChat }: ChatPanelProps) 
         }
         return {
           ...message,
-          meta: {
-            ...message.meta,
-            modelName: modelMeta.name,
-            provider: modelMeta.provider,
-          },
+          meta: { ...message.meta, modelName: modelMeta.name, provider: modelMeta.provider },
         };
       })
     );
@@ -321,9 +311,7 @@ function ChatPanel({ collapsed, fullWidth = false, onNewChat }: ChatPanelProps) 
   };
 
   const loadMoreHistoryMessages = async () => {
-    if (!currentSessionId) return;
-    if (loadingMoreHistory) return;
-    if (historyPage >= historyTotalPage) return;
+    if (!currentSessionId || loadingMoreHistory || historyPage >= historyTotalPage) return;
 
     const nextPage = historyPage + 1;
     setLoadingMoreHistory(true);

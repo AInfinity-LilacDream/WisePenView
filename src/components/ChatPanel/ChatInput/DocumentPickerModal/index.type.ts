@@ -1,4 +1,4 @@
-﻿export interface DocumentPickerModalProps {
+export interface DocumentPickerModalProps {
   open: boolean;
   onClose: () => void;
 }

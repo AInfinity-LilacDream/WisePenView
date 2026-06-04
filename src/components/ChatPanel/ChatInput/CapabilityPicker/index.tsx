@@ -70,15 +70,9 @@ function CapabilityPicker({
   );
 
   const externalSkills = useMemo(() => {
-    const currentGroupId = currentAgent?.groupId;
     const orderMap = new Map(otherSkillGroups.map((group, index) => [group.key, index]));
     return selectedSkills
-      .filter((item) => {
-        if (currentAgent?.agentType === 'GROUP') {
-          return item.groupId !== currentGroupId;
-        }
-        return item.scopeType === 'GROUP';
-      })
+      .filter((item) => item.external)
       .sort((a, b) => {
         const aKey = a.groupId ? `group-${a.groupId}` : 'personal';
         const bKey = b.groupId ? `group-${b.groupId}` : 'personal';
@@ -87,7 +81,7 @@ function CapabilityPicker({
           (orderMap.get(bKey) ?? Number.MAX_SAFE_INTEGER)
         );
       });
-  }, [currentAgent, otherSkillGroups, selectedSkills]);
+  }, [otherSkillGroups, selectedSkills]);
 
   if (!open) return null;
 

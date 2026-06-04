@@ -1,6 +1,6 @@
-import type { SkillSummary } from '@/domains';
 import type { ChatAgentOption } from '@/store';
 import type { Group } from '@/types/group';
+import type { SkillSummary } from '@/types/skill';
 
 export interface SkillScopeTreeGroup {
   key: string;
@@ -44,12 +44,6 @@ export const getPrimarySkillsForAgent = (
   skills: SkillSummary[],
   agent: ChatAgentOption | null | undefined
 ): SkillSummary[] => skills.filter((skill) => isSkillInAgentScope(skill, agent));
-
-export const getAllowedSkillsForChat = (
-  skills: SkillSummary[],
-  agent: ChatAgentOption | null | undefined,
-  advancedMode: boolean
-): SkillSummary[] => (advancedMode ? skills : getPrimarySkillsForAgent(skills, agent));
 
 export const buildAdvancedSkillTreeGroups = (
   skills: SkillSummary[],

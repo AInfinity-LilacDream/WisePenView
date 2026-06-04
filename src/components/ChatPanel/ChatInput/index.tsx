@@ -1,7 +1,7 @@
-import type { SkillSummary } from '@/domains';
 import { useChatService } from '@/domains';
-import type { ChatAgentOption, TemporarySkillSelection } from '@/store';
+import type { ChatAgentOption } from '@/store';
 import { useChatCapabilityStore, useChatPageStore } from '@/store';
+import type { SkillSummary } from '@/types/skill';
 import { parseErrorMessage } from '@/utils/error';
 import { toast } from '@heroui/react';
 import { useRequest, useUpdateEffect } from 'ahooks';
@@ -31,6 +31,7 @@ import { base64ToFile, fileToBase64, generateThumbnail } from './uploadUtils';
 const { TextArea } = Input;
 
 const MAX_IMAGE_BASE64_BYTES = 5 * 1024 * 1024;
+const MAX_IMAGE_RAW_BYTES_APPROX = Math.floor(MAX_IMAGE_BASE64_BYTES * 0.75);
 const MAX_IMAGE_COUNT = 10;
 const IMAGE_EXTENSIONS = new Set(['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp']);
 
@@ -81,7 +82,6 @@ function ChatInput({
     (state) => state.removePendingAttachmentUpload
   );
 
-  // Cleanup base64MapRef when pendingImageMetas shrink
   useUpdateEffect(() => {
     const validIds = new Set(pendingImageMetas.map((m) => m.id));
     for (const key of base64MapRef.current.keys()) {
@@ -128,7 +128,7 @@ function ChatInput({
       const existingIds = new Set(selectedSkills.map((s) => s.skillId));
       selected.forEach(({ skill, sourceAgent }) => {
         if (!existingIds.has(skill.skillId)) {
-          toggleSkill(skill, { sourceAgent });
+          toggleSkill(skill, { sourceAgent, external: true });
         }
       });
     },
@@ -137,22 +137,16 @@ function ChatInput({
 
   const addPendingVisionImage = useCallback(
     async (file: File) => {
-      const pendingCount = useChatPageStore.getState().pendingImageMetas.length;
-      if (pendingCount >= MAX_IMAGE_COUNT) {
-        toast.warning(`最多添加 ${MAX_IMAGE_COUNT} 张图片`);
-        return;
-      }
       try {
         const { mimeType, base64 } = await fileToBase64(file);
         if (base64.length > MAX_IMAGE_BASE64_BYTES) {
-          toast.warning(`${file.name} 超过 5MB 限制`);
+          toast.warning(`${file.name} 转换后超过 5MB 限制`);
           return;
         }
         const id = crypto.randomUUID();
         const thumbnailUrl = await generateThumbnail(file, 48).catch(() => '');
         addPendingImage({ id, mimeType, filename: file.name, thumbnailUrl });
         base64MapRef.current.set(id, base64);
-        // added
       } catch (err) {
         toast.danger(`图片添加失败：${parseErrorMessage(err)}`);
       }
@@ -161,7 +155,7 @@ function ChatInput({
   );
 
   const uploadAndAddAttachment = useCallback(
-    async (file: File) => {
+    async (file: File): Promise<boolean> => {
       const id = crypto.randomUUID();
       addPendingAttachmentUpload({ id, filename: file.name, status: 'uploading' });
       try {
@@ -172,13 +166,14 @@ function ChatInput({
           filename: result.filename ?? file.name,
           enabled: true,
         });
-        // upload success
+        return true;
       } catch (err) {
         updatePendingAttachmentUpload(id, {
           status: 'failed',
           errorMessage: parseErrorMessage(err),
         });
         console.error('[Upload] failed:', file.name, err);
+        return false;
       }
     },
     [
@@ -193,10 +188,20 @@ function ChatInput({
   const routeFiles = useCallback(
     async (fileList: FileList | File[]) => {
       const files = Array.from(fileList);
+      let acceptedImageCount = useChatPageStore.getState().pendingImageMetas.length;
       for (const file of files) {
         const ext = file.name.split('.').pop()?.toLowerCase() ?? '';
         const isImage = IMAGE_EXTENSIONS.has(ext) || file.type.startsWith('image/');
         if (isImage && currentModelVision) {
+          if (acceptedImageCount >= MAX_IMAGE_COUNT) {
+            toast.warning(`最多添加 ${MAX_IMAGE_COUNT} 张图片`);
+            continue;
+          }
+          if (file.size > MAX_IMAGE_RAW_BYTES_APPROX) {
+            toast.warning(`${file.name} 过大，图片直传约限制原图 3.75MB`);
+            continue;
+          }
+          acceptedImageCount += 1;
           await addPendingVisionImage(file);
         } else {
           void uploadAndAddAttachment(file);
@@ -213,9 +218,11 @@ function ChatInput({
       const base64 = base64MapRef.current.get(meta.id);
       if (!base64) continue;
       const file = base64ToFile(base64, meta.mimeType, meta.filename);
-      removePendingImage(meta.id);
-      base64MapRef.current.delete(meta.id);
-      void uploadAndAddAttachment(file);
+      const uploaded = await uploadAndAddAttachment(file);
+      if (uploaded) {
+        removePendingImage(meta.id);
+        base64MapRef.current.delete(meta.id);
+      }
     }
   }, [removePendingImage, uploadAndAddAttachment]);
 
@@ -223,8 +230,7 @@ function ChatInput({
     (model: Parameters<typeof onModelChange>[0]) => {
       const wasVision = currentModelVision;
       onModelChange(model);
-      // After model switch, if vision -> non-vision, convert pending images
-      if (wasVision) {
+      if (wasVision && !model.vision) {
         void convertPendingImagesToAttachments();
       }
     },
@@ -250,17 +256,20 @@ function ChatInput({
         }
       }
     }
-    await onSend(
-      value.trim(),
-      pendingImages && pendingImages.length > 0 ? { pendingImages } : undefined
-    );
-    setValue('');
-    clearCapabilities();
-    // Clear sent images from store and ref
-    const sentIds = new Set(pendingImageMetas.map((m) => m.id));
-    for (const id of sentIds) {
-      removePendingImage(id);
-      base64MapRef.current.delete(id);
+    try {
+      await onSend(
+        value.trim(),
+        pendingImages && pendingImages.length > 0 ? { pendingImages } : undefined
+      );
+      setValue('');
+      clearCapabilities();
+      const sentIds = new Set(pendingImageMetas.map((m) => m.id));
+      for (const id of sentIds) {
+        removePendingImage(id);
+        base64MapRef.current.delete(id);
+      }
+    } catch (err) {
+      toast.danger(`发送失败：${parseErrorMessage(err)}`);
     }
   };
 
@@ -269,10 +278,6 @@ function ChatInput({
       e.preventDefault();
       void handleSend();
     }
-  };
-
-  const handleInputChange = (nextValue: string) => {
-    setValue(nextValue);
   };
 
   const handleCapabilityOpenChange = useCallback((open: boolean) => {
@@ -289,7 +294,6 @@ function ChatInput({
     setContentPickOpen(open);
   }, []);
 
-  // Drag handlers
   const handleDragEnter = useCallback((e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
@@ -325,7 +329,6 @@ function ChatInput({
     [routeFiles]
   );
 
-  // Paste handler
   const handlePaste = useCallback(
     (e: ClipboardEvent<HTMLTextAreaElement>) => {
       const items = e.clipboardData?.items;
@@ -346,17 +349,12 @@ function ChatInput({
     clearCapabilities();
   }, [advancedMode, clearCapabilities, selectedAgent?.agentId]);
 
-  const normalizedSelectedSkills = useMemo<TemporarySkillSelection[]>(
-    () => selectedSkills,
-    [selectedSkills]
-  );
-
   const capabilityDropdownContent = (
     <CapabilityPicker
       open
       advancedMode={advancedMode}
       primarySkills={primarySkills}
-      selectedSkills={normalizedSelectedSkills}
+      selectedSkills={selectedSkills}
       selectedTools={selectedTools}
       toolOptions={toolOptions}
       onToggleSkill={togglePrimarySkill}
@@ -412,9 +410,7 @@ function ChatInput({
               <X size={12} />
             </button>
             <span className={styles.selectedHintText} title={selectedContextText}>
-              选中内容：{'\u201C'}
-              {selectedPreview}
-              {'\u201D'}
+              选中内容：{`“${selectedPreview}”`}
             </span>
           </div>
         ) : null}
@@ -424,7 +420,7 @@ function ChatInput({
         <div className={styles.textareaWrap}>
           <TextArea
             value={value}
-            onChange={(e) => handleInputChange(e.target.value)}
+            onChange={(e) => setValue(e.target.value)}
             placeholder="输入消息..."
             autoSize={{ minRows: 1, maxRows: 8 }}
             className={styles.textarea}
@@ -457,7 +453,7 @@ function ChatInput({
         open={otherSkillModalOpen}
         groups={otherSkillGroups}
         currentAgent={selectedAgent}
-        selectedSkills={normalizedSelectedSkills}
+        selectedSkills={selectedSkills}
         onClose={() => setOtherSkillModalOpen(false)}
         onConfirm={handleOtherSkillConfirm}
       />

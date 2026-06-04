@@ -13,7 +13,7 @@ import { Button, Empty, Modal, Spin, Tree } from 'antd';
 import type { DataNode } from 'antd/es/tree';
 import { Folder, Users } from 'lucide-react';
 import type { Key } from 'react';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import type { DocumentPickerModalProps } from './index.type';
 import styles from './style.module.less';
 
@@ -58,6 +58,10 @@ function prefixTreeKeys(scopeKey: string, nodes: DataNode[]): DataNode[] {
   }));
 }
 
+const RENDERABLE_TYPES = new Set<RenderableType>(['folder', 'resource', 'link']);
+const SELECTABLE_TYPES = new Set<SelectableType>(['resource', 'link']);
+const EMPTY_STRING_SET = new Set<string>();
+
 function DocumentPickerModal({ open, onClose }: DocumentPickerModalProps) {
   const driveService = useDriveService();
   const groupService = useGroupService();
@@ -67,13 +71,6 @@ function DocumentPickerModal({ open, onClose }: DocumentPickerModalProps) {
   const [checkedKeys, setCheckedKeys] = useState<string[]>([]);
   const scopeMapRef = useRef<Map<string, ScopeInfo>>(new Map());
   const scopedDriveNodeMapRef = useRef<Map<string, DriveNode>>(new Map());
-
-  const renderableTypes = useMemo(
-    () => new Set<RenderableType>(['folder', 'resource', 'link']),
-    []
-  );
-  const selectableTypes = useMemo(() => new Set<SelectableType>(['resource', 'link']), []);
-  const disabledNodeIds = useMemo(() => new Set<string>(), []);
 
   const buildScopeRootNode = useCallback(
     (key: string, title: string, scopeType: 'personal' | 'group'): DataNode => {
@@ -110,9 +107,9 @@ function DocumentPickerModal({ open, onClose }: DocumentPickerModalProps) {
     const children = buildDriveTreeData(
       driveNodes,
       {
-        renderableTypes,
-        selectableTypes,
-        disabledNodeIds,
+        renderableTypes: RENDERABLE_TYPES,
+        selectableTypes: SELECTABLE_TYPES,
+        disabledNodeIds: EMPTY_STRING_SET,
         onLoadMoreClick: (node: LoadMoreNode) => {
           void handleLoadMore(scopeKey, node);
         },

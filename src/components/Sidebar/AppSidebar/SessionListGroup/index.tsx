@@ -6,6 +6,7 @@ import { Button, Header, ListBox, ListBoxItem, ListBoxSection, toast } from '@he
 import { useMount, useRequest } from 'ahooks';
 import clsx from 'clsx';
 import { useImperativeHandle, useState, type Ref } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import styles from '../AppSessionMenu/style.module.less';
 import SessionMenuItem from '../SessionMenuItem';
 import type {
@@ -26,6 +27,8 @@ const useSessionListGroup = ({ onActiveSessionMenuKeyChange }: SessionListGroupP
   const setCurrentSession = useCurrentChatSessionStore((state) => state.setCurrentSession);
   const clearCurrentSession = useCurrentChatSessionStore((state) => state.clearCurrentSession);
   const setChatPanelCollapsed = useChatPanelStore((state) => state.setChatPanelCollapsed);
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const { runAsync: runListSessions, loading: sessionListLoading } = useRequest(
     async (page: number) =>
@@ -93,6 +96,9 @@ const useSessionListGroup = ({ onActiveSessionMenuKeyChange }: SessionListGroupP
   const selectSession = (session: ChatSession) => {
     setCurrentSession({ id: session.id, title: session.title });
     setChatPanelCollapsed(false);
+    if (location.pathname.startsWith('/app/chat')) {
+      navigate(`/app/chat/${session.id}`);
+    }
   };
 
   const loadMoreSessions = () => {
