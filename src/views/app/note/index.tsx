@@ -95,50 +95,18 @@ function NoteViewConnected({
   const blockLocalDocWrites = isConnected && !noteInfoDisplay.canCollaborativeEdit;
   const showFullPageSpin = status === 'connecting';
 
-  const resourceService = useResourceService();
   const userService = useUserService();
+  const resourceService = useResourceService();
   const { data: currentUser } = useRequest(() => userService.getUserInfo(), {
     ready: Boolean(noteInfoDisplay.ownerId),
     refreshDeps: [noteInfoDisplay.ownerId],
   });
-  const [displayLiked, setDisplayLiked] = useState<boolean | undefined>(undefined);
-  const [displayLikeCount, setDisplayLikeCount] = useState<number | null | undefined>(undefined);
-  const [displayUserScore, setDisplayUserScore] = useState<number | null | undefined>(undefined);
 
-  const { run: runToggleLike, loading: likeLoading } = useRequest(
-    () => resourceService.interactToggleLike({ resourceId }),
-    {
-      manual: true,
-      onBefore: () => {
-        const curLiked = displayLiked ?? noteInfoDisplay?.liked ?? false;
-        const curLikeCount = displayLikeCount ?? noteInfoDisplay?.likeCount ?? 0;
-        setDisplayLiked(!curLiked);
-        setDisplayLikeCount(curLikeCount + (curLiked ? -1 : 1));
-      },
-      onSuccess: (res) => {
-        setDisplayLiked(res.liked);
-      },
-      onError: (err) => {
-        setDisplayLiked(noteInfoDisplay?.liked ?? false);
-        setDisplayLikeCount(noteInfoDisplay?.likeCount ?? null);
-        toast.danger(parseErrorMessage(err));
-      },
-    }
-  );
-
-  const { run: runRate, loading: rateLoading } = useRequest(
-    (score: number) => resourceService.interactRate({ resourceId, score }),
-    {
-      manual: true,
-      onSuccess: (res) => {
-        setDisplayUserScore(res.userScore);
-        onRefreshNoteInfo();
-      },
-      onError: (err) => {
-        toast.danger(parseErrorMessage(err));
-      },
-    }
-  );
+  // 进入页面时上报阅读
+  useRequest(() => resourceService.interactRead(resourceId), {
+    ready: Boolean(resourceId),
+    refreshDeps: [resourceId],
+  });
 
   const focusBody = () => {
     bodyEditorRef.current?.focus();
@@ -381,10 +349,7 @@ function NoteViewConnected({
                     onEnterKey={focusBody}
                   />
                 </div>
-                <NoteInfoBar
-                  noteInfoDisplay={noteInfoDisplay}
-                  displayLikeCount={displayLikeCount}
-                />
+                <NoteInfoBar noteInfoDisplay={noteInfoDisplay} />
                 <div className={styles.body}>
                   <CustomBlockNote
                     key={`${resourceId}-${noteInfoDisplay.canCollaborativeEdit}`}
@@ -400,16 +365,7 @@ function NoteViewConnected({
                     onAiDiffPresenceChange={handleAiDiffPresenceChange}
                   />
                 </div>
-                <ResourceInteractFooter
-                  liked={displayLiked ?? noteInfoDisplay?.liked ?? false}
-                  userScore={
-                    displayUserScore !== undefined ? displayUserScore : noteInfoDisplay?.userScore
-                  }
-                  onToggleLike={runToggleLike}
-                  onRate={runRate}
-                  likeLoading={likeLoading}
-                  rateLoading={rateLoading}
-                />
+                <ResourceInteractFooter resourceId={resourceId} onRateSuccess={onRefreshNoteInfo} />
               </div>
             </div>
           </div>

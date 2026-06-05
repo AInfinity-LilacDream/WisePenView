@@ -1,0 +1,33 @@
+.rateSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.rateWrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+/* 文字标签：两侧带细横线装饰 */
+.interactLabel {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  font-size: 13px;
+  color: var(--color-muted-foreground, #71717a);
+  white-space: nowrap;
+
+  &::before,
+  &::after {
+    content: '';
+    display: block;
+    width: 48px;
+    height: 1px;
+    background: var(--color-border, #e4e4e7);
+  }
+}

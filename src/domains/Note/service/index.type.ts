@@ -4,7 +4,7 @@
  */
 
 import type { Block } from '@/domains/Note';
-import type { ResourceAction } from '@/domains/Resource';
+import type { ResourceAction, ResourceItem } from '@/domains/Resource';
 
 /** NoteService 接口：供依赖注入使用 */
 /** web-socket服务放在了yjs目录下 */
@@ -30,16 +30,8 @@ export interface NoteInfoDisplayData {
   ownerId?: string;
   authors: NoteInfoDisplayAuthor[];
   lastEditedAtText: string;
-  /** 有效阅读量，null 表示暂无数据 */
-  readCount?: number | null;
-  /** 资源总点赞数 */
-  likeCount?: number | null;
-  /** 平均评分，null = 暂无评分 */
-  scoreAvg?: number | null;
-  /** 当前用户是否已点赞 */
-  liked?: boolean;
-  /** 当前用户评分（1-5），null = 未评分 */
-  userScore?: number | null;
+  /** 资源实体，供展示阅读量/点赞/评分等统计字段 */
+  resourceInfo?: ResourceItem;
   /** 当前用户是否具备协同编辑（EDIT）权限 */
   canCollaborativeEdit: boolean;
 }

@@ -2,9 +2,7 @@ import type {
   GetGroupResourceRequest,
   GetUserResourcesRequest,
   InteractRateRequest,
-  InteractRateResult,
   InteractToggleLikeRequest,
-  InteractToggleLikeResult,
   IResourceService,
   RemoveResourcesRequest,
   RenameResourceRequest,
@@ -97,20 +95,30 @@ const updateResourceTags = async (): Promise<void> => {
   await delay(150);
 };
 
-const interactToggleLike = async (
-  _params: InteractToggleLikeRequest
-): Promise<InteractToggleLikeResult> => {
+const interactToggleLike = async (_params: InteractToggleLikeRequest): Promise<void> => {
   await delay(100);
-  return { liked: true };
 };
 
-const interactRate = async (params: InteractRateRequest): Promise<InteractRateResult> => {
+const interactRate = async (_params: InteractRateRequest): Promise<void> => {
   await delay(100);
-  return { userScore: params.score };
 };
 
 const updateResourceActionPermission = async (): Promise<void> => {
   await delay(100);
+};
+
+const getLikeStatus = async (_resourceId: string): Promise<{ liked: boolean | null }> => {
+  await delay(50);
+  return { liked: null };
+};
+
+const getRate = async (_resourceId: string): Promise<{ score: number | null }> => {
+  await delay(50);
+  return { score: null };
+};
+
+const interactRead = async (_resourceId: string): Promise<void> => {
+  await delay(50);
 };
 
 export const ResourceServicesMock: IResourceService = {
@@ -120,6 +128,9 @@ export const ResourceServicesMock: IResourceService = {
   removeResources,
   updateResourceTags,
   updateResourceActionPermission,
+  getLikeStatus,
+  getRate,
   interactToggleLike,
   interactRate,
+  interactRead,
 };

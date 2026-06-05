@@ -23,15 +23,14 @@ const mapSyncTitleRequest = (
 });
 
 const mapCreateNoteFromApi = (resourceId: string): CreateNoteResponse => ({
-  // fallback：旧接口可能返回空字符串
   resourceId: resourceId || undefined,
 });
 
 const mapNoteInfoDisplayFromApi = (data: NoteInfoResponse): NoteInfoDisplayData => {
-  // readCount/likeCount 后端以字符串返回（Java Long），归一化为 number
+  // 将后端 ResourceItem 中的 Long 字段归一化为 number
   const resourceInfo = normalizeResourceItem(data.resourceInfo);
   const ownerId = normalizeId(resourceInfo.ownerId) || undefined;
-  // fallback：缺失 authors 时按无作者处理
+  // authors 可能缺失，按空数组处理
   const authorIds = data.noteInfo.authors ?? [];
 
   return {
@@ -45,18 +44,10 @@ const mapNoteInfoDisplayFromApi = (data: NoteInfoResponse): NoteInfoDisplayData 
         avatar: author?.avatar,
       };
     }),
-    // fallback：缺失更新时间时显示暂无
+    // 更新时间缺失时使用占位文案
     lastEditedAtText: formatTimestampToDateTime(data.noteInfo.lastUpdatedAt) || '暂无',
-    // fallback：缺失阅读量时按暂无数据展示
-    readCount: resourceInfo.readCount ?? null,
-    // fallback：缺失点赞数时按暂无数据展示
-    likeCount: resourceInfo.likeCount ?? null,
-    // fallback：缺失评分均值时按暂无评分展示
-    scoreAvg: resourceInfo.scoreAvg ?? null,
-    // fallback：缺失 liked 时按未点赞展示
-    liked: resourceInfo.liked ?? false,
-    // fallback：缺失 userScore 时按未评分展示
-    userScore: resourceInfo.userScore ?? null,
+    // 资源实体（已归一化），供展示阅读量/点赞/评分等统计字段
+    resourceInfo,
     canCollaborativeEdit: resourceActionsInclude(resourceInfo.currentActions, RESOURCE_ACTION.EDIT),
   };
 };

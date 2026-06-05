@@ -1,6 +1,5 @@
 import type { ResourceItem } from '@/domains/Resource';
 import { normalizeResourceItem } from '@/utils/normalize/normalizeResourceItem';
-import type { RateApiResponse, ToggleLikeApiResponse } from '../apis/InteractApi.type';
 import type {
   ChangeResourceActionPermissionApiRequest,
   ListResourceItemsApiRequest,
@@ -9,8 +8,6 @@ import type {
 import { resourceActionsToApiKeys, TAG_QUERY_LOGIC_MODE, type ResourceActionKey } from '../enum';
 import type {
   GetUserResourcesRequest,
-  InteractRateResult,
-  InteractToggleLikeResult,
   ResourceListPage,
   UpdateResourceActionPermissionRequest,
 } from '../service/index.type';
@@ -69,14 +66,6 @@ const mapResourceListPageFromApi = (data: ResourceListPageApiResponse): Resource
   };
 };
 
-const mapInteractToggleLikeFromApi = (data: ToggleLikeApiResponse): InteractToggleLikeResult => ({
-  liked: data.liked,
-});
-
-const mapInteractRateFromApi = (data: RateApiResponse): InteractRateResult => ({
-  userScore: data.userScore,
-});
-
 /** userId → ResourceAction[] 转为 API 请求的 userId → 枚举 key[]；null/undefined 原样透传 */
 const mapSpecifiedUsersGrantedActionsToApi = (
   value: UpdateResourceActionPermissionRequest['specifiedUsersGrantedActions']
@@ -110,7 +99,5 @@ const mapChangeResourceActionPermissionRequest = (
 export const ResourceServicesMap = {
   mapListResourceItemsRequest,
   mapResourceListPageFromApi,
-  mapInteractToggleLikeFromApi,
-  mapInteractRateFromApi,
   mapChangeResourceActionPermissionRequest,
 };

@@ -28,10 +28,16 @@ export interface IResourceService {
   removeResources(params: RemoveResourcesRequest): Promise<void>;
   updateResourceTags(params: UpdateResourceTagsRequest): Promise<void>;
   updateResourceActionPermission(params: UpdateResourceActionPermissionRequest): Promise<void>;
-  /** 点赞 / 取消点赞，返回操作后最新状态 */
-  interactToggleLike(params: InteractToggleLikeRequest): Promise<InteractToggleLikeResult>;
-  /** 评分（1–5），支持覆盖，返回最新 userScore */
-  interactRate(params: InteractRateRequest): Promise<InteractRateResult>;
+  /** 获取当前用户点赞状态，供 ResourceLikeButton 薄层调用 */
+  getLikeStatus(resourceId: string): Promise<{ liked: boolean | null }>;
+  /** 获取当前用户评分，供 ResourceRating 薄层调用 */
+  getRate(resourceId: string): Promise<{ score: number | null }>;
+  /** 点赞 / 取消点赞 */
+  interactToggleLike(params: InteractToggleLikeRequest): Promise<void>;
+  /** 评分（1–5），支持覆盖 */
+  interactRate(params: InteractRateRequest): Promise<void>;
+  /** 上报资源阅读（详情页 / 文档预览页进入时调用一次） */
+  interactRead(resourceId: string): Promise<void>;
 }
 
 /** 重命名资源请求参数（对齐 OpenAPI ResourceRenameRequest，POST /resource/item/renameRes） */
@@ -80,24 +86,14 @@ export type GetGroupResourceRequest = GetUserResourcesRequest & {
   groupId: string;
 };
 
-/** 点赞 / 取消点赞请求参数（对齐 POST /resource/interact/toggleLike） */
+/** 点赞 / 取消点赞请求参数（对齐 POST /resource/interaction/toggleLike） */
 export interface InteractToggleLikeRequest {
   resourceId: string;
 }
 
-/** 点赞操作响应：返回操作后的最新点赞状态 */
-export interface InteractToggleLikeResult {
-  liked: boolean;
-}
-
-/** 评分请求参数（对齐 POST /resource/interact/rate） */
+/** 评分请求参数（对齐 POST /resource/interaction/rate） */
 export interface InteractRateRequest {
   resourceId: string;
   /** 1–5 整数，支持覆盖提交 */
   score: number;
-}
-
-/** 评分操作响应：返回最新 userScore */
-export interface InteractRateResult {
-  userScore: number;
 }

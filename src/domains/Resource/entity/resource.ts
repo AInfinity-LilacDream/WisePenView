@@ -36,8 +36,4 @@ export interface ResourceItem {
   likeCount?: number | null;
   /** 平均评分，暂无评分时为 null，不得展示 0.0 */
   scoreAvg?: number | null;
-  /** 当前用户是否已点赞，后端不为 null */
-  liked?: boolean;
-  /** 当前用户评分（1-5），未评分时为 null；列表接口固定返回 null */
-  userScore?: number | null;
 }
