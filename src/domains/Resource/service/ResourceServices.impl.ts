@@ -1,4 +1,3 @@
-import { apiGet } from '@/apis/request';
 import { DocumentApi } from '@/domains/Document/apis/DocumentApi';
 import { NoteApi } from '@/domains/Note/apis/NoteApi';
 import {
@@ -69,20 +68,14 @@ const updateResourceActionPermission = async (
 };
 
 /** 获取当前用户点赞状态，供 ResourceLikeButton 薄层调用 */
-const getLikeStatus = async (resourceId: string): Promise<{ liked: boolean | null }> => {
-  const res = await apiGet<{ liked?: boolean; score?: number; resourceId?: string }>(
-    '/resource/interaction/getResourceUserInteractionRecord',
-    { params: { resourceId } }
-  );
+const getLikeStatus = async (resourceId: string): Promise<{ liked: boolean }> => {
+  const res = await ResourceInteractApi.getUserInteractionRecord({ resourceId });
   return ResourceServicesMap.mapLikeStatusFromApi(res);
 };
 
 /** 获取当前用户评分，供 ResourceRating 薄层调用 */
-const getRate = async (resourceId: string): Promise<{ score: number | null }> => {
-  const res = await apiGet<{ liked?: boolean; score?: number; resourceId?: string }>(
-    '/resource/interaction/getResourceUserInteractionRecord',
-    { params: { resourceId } }
-  );
+const getRate = async (resourceId: string): Promise<{ score: number }> => {
+  const res = await ResourceInteractApi.getUserInteractionRecord({ resourceId });
   return ResourceServicesMap.mapRateFromApi(res);
 };
 

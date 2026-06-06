@@ -1,10 +1,10 @@
 import EntryIcon from '@/components/Common/EntryIcon';
 import IconText from '@/components/Common/IconText';
-import ResourceInteractBar from '@/components/Common/ResourceInteractBar';
-import ResourceInteractFooter from '@/components/Common/ResourceInteractFooter';
-import ResourceViewerHeader from '@/components/Common/ResourceViewerHeader';
-import rvhStyles from '@/components/Common/ResourceViewerHeader/style.module.less';
 import PdfViewer from '@/components/Pdf/PdfViewer/index';
+import ResourceInteractBar from '@/components/Resource/ResourceInteractBar';
+import ResourceInteractFooter from '@/components/Resource/ResourceInteractFooter';
+import ResourceViewerHeader from '@/components/Resource/ResourceViewerHeader';
+import rvhStyles from '@/components/Resource/ResourceViewerHeader/style.module.less';
 import { useDocumentService, useResourceService } from '@/domains';
 import { RESOURCE_TYPE } from '@/domains/Resource';
 import { parseErrorMessage } from '@/utils/error';

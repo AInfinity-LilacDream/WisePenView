@@ -1,7 +1,7 @@
 import { Divider } from 'antd';
 
-import ResourceInteractBar from '@/components/Common/ResourceInteractBar';
 import UserCapsule from '@/components/Common/UserCapsule';
+import ResourceInteractBar from '@/components/Resource/ResourceInteractBar';
 import type { NoteInfoBarProps } from './index.type';
 import styles from './style.module.less';
 

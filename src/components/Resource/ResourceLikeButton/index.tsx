@@ -22,15 +22,14 @@ function ResourceLikeButton({ resourceId }: ResourceLikeButtonProps) {
     onSuccess: () => setDisplayLiked(undefined),
   });
 
-  const serverLiked = likeStatusData?.liked ?? null;
-  const resolvedLiked = displayLiked ?? serverLiked ?? false;
+  const resolvedLiked = displayLiked ?? likeStatusData?.liked ?? false;
 
   const { run: runToggleLike } = useRequest(
     () => resourceService.interactToggleLike({ resourceId }),
     {
       manual: true,
       onError: (err) => {
-        setDisplayLiked(serverLiked ?? false);
+        setDisplayLiked(undefined);
         toast.danger(parseErrorMessage(err));
       },
     }

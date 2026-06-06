@@ -1,5 +1,11 @@
-import { apiPost } from '@/apis/request';
-import type { RateApiRequest, ReadApiRequest, ToggleLikeApiRequest } from './InteractApi.type';
+import { apiGet, apiPost } from '@/apis/request';
+import type {
+  GetUserInteractionRecordApiRequest,
+  GetUserInteractionRecordApiResponse,
+  RateApiRequest,
+  ReadApiRequest,
+  ToggleLikeApiRequest,
+} from './InteractApi.type';
 
 /** /resource/interaction/* 子路由 API */
 function toggleLike(req: ToggleLikeApiRequest): Promise<void> {
@@ -14,4 +20,10 @@ function read(req: ReadApiRequest): Promise<void> {
   return apiPost('/resource/interaction/read', req);
 }
 
-export const ResourceInteractApi = { toggleLike, rate, read };
+function getUserInteractionRecord(
+  req: GetUserInteractionRecordApiRequest
+): Promise<GetUserInteractionRecordApiResponse> {
+  return apiGet('/resource/interaction/getResourceUserInteractionRecord', { params: req });
+}
+
+export const ResourceInteractApi = { toggleLike, rate, read, getUserInteractionRecord };

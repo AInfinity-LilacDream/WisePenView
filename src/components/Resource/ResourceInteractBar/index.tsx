@@ -16,10 +16,9 @@ function ResourceInteractBar({ resourceId }: ResourceInteractBarProps) {
     refreshDeps: [resourceId],
   });
 
-  const { readCount, likeCount, scoreAvg } = data ?? {};
+  if (!data) return null;
 
-  const scoreAvgText = scoreAvg != null ? `${scoreAvg.toFixed(1)} 分` : '暂无评分';
-  const hasScoreAvg = scoreAvg != null;
+  const { readCount, likeCount, scoreAvgText } = data;
   const showReadCount = readCount !== undefined;
 
   return (
@@ -44,12 +43,8 @@ function ResourceInteractBar({ resourceId }: ResourceInteractBarProps) {
 
       {/* 平均分 */}
       <div className={styles.interactItem}>
-        <Star
-          size={14}
-          aria-hidden
-          className={hasScoreAvg ? styles.interactIcon : styles.interactIconMuted}
-        />
-        <span className={hasScoreAvg ? undefined : styles.noScore}>{scoreAvgText}</span>
+        <Star size={14} aria-hidden className={styles.interactIcon} />
+        <span>{scoreAvgText}</span>
       </div>
     </div>
   );

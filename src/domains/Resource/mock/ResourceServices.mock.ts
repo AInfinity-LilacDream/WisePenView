@@ -107,14 +107,14 @@ const updateResourceActionPermission = async (): Promise<void> => {
   await delay(100);
 };
 
-const getLikeStatus = async (_resourceId: string): Promise<{ liked: boolean | null }> => {
+const getLikeStatus = async (_resourceId: string): Promise<{ liked: boolean }> => {
   await delay(50);
-  return { liked: null };
+  return { liked: false };
 };
 
-const getRate = async (_resourceId: string): Promise<{ score: number | null }> => {
+const getRate = async (_resourceId: string): Promise<{ score: number }> => {
   await delay(50);
-  return { score: null };
+  return { score: 0 };
 };
 
 const interactRead = async (_resourceId: string): Promise<void> => {
@@ -123,7 +123,7 @@ const interactRead = async (_resourceId: string): Promise<void> => {
 
 const getInteractStats = async (_resourceId: string) => {
   await delay(50);
-  return { readCount: 0, likeCount: 0, scoreAvg: null };
+  return { readCount: 0, likeCount: 0, scoreAvgText: '暂无评分' };
 };
 
 export const ResourceServicesMock: IResourceService = {

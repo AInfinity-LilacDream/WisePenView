@@ -30,9 +30,9 @@ export interface IResourceService {
   updateResourceTags(params: UpdateResourceTagsRequest): Promise<void>;
   updateResourceActionPermission(params: UpdateResourceActionPermissionRequest): Promise<void>;
   /** 获取当前用户点赞状态，供 ResourceLikeButton 薄层调用 */
-  getLikeStatus(resourceId: string): Promise<{ liked: boolean | null }>;
+  getLikeStatus(resourceId: string): Promise<{ liked: boolean }>;
   /** 获取当前用户评分，供 ResourceRating 薄层调用 */
-  getRate(resourceId: string): Promise<{ score: number | null }>;
+  getRate(resourceId: string): Promise<{ score: number }>;
   /** 点赞 / 取消点赞 */
   interactToggleLike(params: InteractToggleLikeRequest): Promise<void>;
   /** 评分（1–5），支持覆盖 */

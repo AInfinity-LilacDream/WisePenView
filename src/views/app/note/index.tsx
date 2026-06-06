@@ -6,9 +6,6 @@ import { Link, useParams } from 'react-router-dom';
 
 import EntryIcon from '@/components/Common/EntryIcon';
 import IconText from '@/components/Common/IconText';
-import ResourceInteractFooter from '@/components/Common/ResourceInteractFooter';
-import ResourceViewerHeader from '@/components/Common/ResourceViewerHeader';
-import rvhStyles from '@/components/Common/ResourceViewerHeader/style.module.less';
 import CustomBlockNote from '@/components/Note/CustomBlockNote';
 import type { NoteBodyEditorHandle } from '@/components/Note/CustomBlockNote/index.type';
 import NoteInfoBar from '@/components/Note/NoteInfoBar';
@@ -20,6 +17,9 @@ import {
 import NotePermissionModal from '@/components/Note/NotePermissionModal';
 import NoteTitle from '@/components/Note/NoteTitle';
 import type { NoteTitleHandle } from '@/components/Note/NoteTitle/index.type';
+import ResourceInteractFooter from '@/components/Resource/ResourceInteractFooter';
+import ResourceViewerHeader from '@/components/Resource/ResourceViewerHeader';
+import rvhStyles from '@/components/Resource/ResourceViewerHeader/style.module.less';
 import { useNoteService, useResourceService, useUserService } from '@/domains';
 import type { AiDiffDisplayMode, NoteInfoDisplayData } from '@/domains/Note';
 import { AI_DIFF_DISPLAY_MODE, AI_DIFF_DISPLAY_MODE_LABELS, useNoteSession } from '@/domains/Note';

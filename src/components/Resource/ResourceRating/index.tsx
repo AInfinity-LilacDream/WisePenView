@@ -31,8 +31,7 @@ function ResourceRating({ resourceId, onRateSuccess }: ResourceRatingProps) {
     onSuccess: () => setDisplayUserScore(undefined),
   });
 
-  const serverScore = rateData?.score ?? null;
-  const resolvedScore = displayUserScore ?? serverScore ?? 0;
+  const resolvedScore = displayUserScore ?? rateData?.score ?? 0;
 
   const rateHintText = useMemo(() => {
     if (displayUserScore != null) return RATE_HINT[displayUserScore] ?? `${displayUserScore} 分`;
@@ -45,7 +44,7 @@ function ResourceRating({ resourceId, onRateSuccess }: ResourceRatingProps) {
       manual: true,
       onSuccess: () => onRateSuccess?.(),
       onError: (err) => {
-        setDisplayUserScore(serverScore);
+        setDisplayUserScore(undefined);
         toast.danger(parseErrorMessage(err));
       },
     }

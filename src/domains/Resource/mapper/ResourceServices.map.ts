@@ -1,4 +1,5 @@
 import type { ResourceItem } from '@/domains/Resource';
+import type { GetUserInteractionRecordApiResponse } from '../apis/InteractApi.type';
 import type {
   ChangeResourceActionPermissionApiRequest,
   ListResourceItemsApiRequest,
@@ -128,34 +129,36 @@ const mapChangeResourceActionPermissionRequest = (
   };
 };
 
-/** 互动记录 API 响应 → 点赞状态 */
+/** 互动记录 API 响应 → 点赞状态；null（未操作）归一化为 false */
 const mapLikeStatusFromApi = (
-  res: { liked?: boolean; score?: number; resourceId?: string } | null | undefined
-): { liked: boolean | null } => ({
-  liked: res?.liked ?? null,
+  res: GetUserInteractionRecordApiResponse | null | undefined
+): { liked: boolean } => ({
+  liked: res?.liked ?? false,
 });
 
-/** 互动记录 API 响应 → 评分 */
+/** 互动记录 API 响应 → 评分；null（未评分）归一化为 0 */
 const mapRateFromApi = (
-  res: { liked?: boolean; score?: number; resourceId?: string } | null | undefined
-): { score: number | null } => ({
-  score: res?.score ?? null,
+  res: GetUserInteractionRecordApiResponse | null | undefined
+): { score: number } => ({
+  score: res?.score ?? 0,
 });
 
 /** 资源互动聚合统计（供 ResourceInteractBar 展示） */
 export interface ResourceInteractStats {
   readCount?: number | null;
   likeCount?: number | null;
-  scoreAvg?: number | null;
+  /** mapper 内已完成格式化：有评分则 "X.X 分"，无则 "暂无评分" */
+  scoreAvgText: string;
 }
 
 /** ResourceItem → 聚合互动统计，供 ResourceInteractBar 展示 */
 const mapInteractStatsFromApi = (resourceInfo: ResourceItem): ResourceInteractStats => {
   const normalized = normalizeResourceItem(resourceInfo);
+  const scoreAvg = normalized.scoreAvg ?? null;
   return {
     readCount: normalized.readCount ?? null,
     likeCount: normalized.likeCount ?? null,
-    scoreAvg: normalized.scoreAvg ?? null,
+    scoreAvgText: scoreAvg != null ? `${scoreAvg.toFixed(1)} 分` : '暂无评分',
   };
 };
 
