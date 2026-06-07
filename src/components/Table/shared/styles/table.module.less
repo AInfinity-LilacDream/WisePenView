@@ -56,6 +56,47 @@
   line-height: @table-header-bar-line-height;
 }
 
+/* headerBar：title/面包屑在左，toolbar 靠右；仅 toolbar 时用 spacer 顶到右侧 */
+.tableHeaderBarLayout() {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: @table-gap;
+}
+
+.tableHeaderBarSpacer() {
+  flex: 1;
+  min-width: 0;
+}
+
+.tableHeaderToolbarBase() {
+  display: flex;
+  align-items: center;
+  gap: @table-gap-compact;
+  min-width: 0;
+}
+
+.tableHeaderToolbarEnd() {
+  .tableHeaderToolbarBase();
+  flex-shrink: 0;
+  justify-content: flex-end;
+}
+
+.tableHeaderToolbarGrow() {
+  .tableHeaderToolbarBase();
+  flex: 1;
+
+  > * {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+/* HeroUI secondary 表头/表体圆角：min(32px, var(--radius-2xl))，在 tableRoot 局部归零 */
+.tableRootFlatHeader() {
+  --radius-2xl: 0;
+}
+
 .tableColFixedWidth(@cssVarName) {
   @width: ~'var(@{cssVarName})';
   width: @width;

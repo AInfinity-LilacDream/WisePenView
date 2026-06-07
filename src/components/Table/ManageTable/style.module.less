@@ -9,13 +9,15 @@
 }
 
 .headerBar {
-  display: flex;
-  align-items: center;
-  gap: @table-gap;
+  .tableHeaderBarLayout();
   min-height: @toolbar-height;
   padding: @table-toolbar-padding-block @table-shell-padding-inline;
   border-bottom: 1px solid var(--border-light);
   .tableHeaderBarText();
+}
+
+.headerBarSpacer {
+  .tableHeaderBarSpacer();
 }
 
 .title {
@@ -37,11 +39,6 @@
 }
 
 .toolbar {
-  display: flex;
-  flex: 1;
-  align-items: center;
-  gap: @table-gap-compact;
-  min-width: 0;
   .toolbarSelectHost();
 
   :global([data-slot='radio-group']) {
@@ -81,9 +78,18 @@
   }
 }
 
+.toolbarEnd {
+  .tableHeaderToolbarEnd();
+}
+
+.toolbarGrow {
+  .tableHeaderToolbarGrow();
+}
+
 .tableRoot {
   width: 100%;
   background: var(--surface);
+  .tableRootFlatHeader();
 
   /* HeroUI Table 覆盖*/
   :global(.table__scroll-container) {
@@ -106,16 +112,6 @@
   :global(.colEnum),
   :global(.colLg) {
     width: auto;
-  }
-
-  :global(.table-root--secondary .table__column:first-child),
-  :global(.table-root--secondary .table__column:last-child),
-  :global(.table-root--secondary .table__body tr:first-child td:first-child),
-  :global(.table-root--secondary .table__body tr:first-child td:last-child),
-  :global(.table-root--secondary .table__body tr:last-child td:first-child),
-  :global(.table-root--secondary .table__body tr:last-child td:last-child),
-  :global(.table-root--secondary .table__body:not(tbody)) {
-    border-radius: 0;
   }
 
   :global(.table__column::after) {

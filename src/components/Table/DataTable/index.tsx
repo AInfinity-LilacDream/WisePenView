@@ -120,6 +120,7 @@ function DataTable<T extends object>({
       {showHeaderBar ? (
         <div className={styles.headerBar}>
           {title ? <div className={styles.title}>{title}</div> : null}
+          {!title && toolbar ? <div className={styles.headerBarSpacer} aria-hidden /> : null}
           {toolbar ? (
             <div
               className={joinClassNames(

@@ -218,7 +218,17 @@ function ManageTable<T extends object>({
         <div className={styles.headerBar}>
           {title ? <div className={styles.title}>{title}</div> : null}
           {title && toolbar ? <div className={styles.headerDivider} aria-hidden /> : null}
-          {toolbar ? <div className={styles.toolbar}>{toolbar}</div> : null}
+          {!title && toolbar ? <div className={styles.headerBarSpacer} aria-hidden /> : null}
+          {toolbar ? (
+            <div
+              className={joinClassNames(
+                styles.toolbar,
+                title ? styles.toolbarGrow : styles.toolbarEnd
+              )}
+            >
+              {toolbar}
+            </div>
+          ) : null}
         </div>
       ) : null}
 

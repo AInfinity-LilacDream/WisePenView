@@ -287,7 +287,11 @@ function FolderTable<T extends FolderTableRow>({
     <div className={joinClassNames(styles.shell, className)}>
       {breadcrumb || toolbar ? (
         <div className={styles.headerBar}>
-          {breadcrumb ? <div className={styles.breadcrumb}>{breadcrumb}</div> : <div />}
+          {breadcrumb ? (
+            <div className={styles.breadcrumb}>{breadcrumb}</div>
+          ) : (
+            <div className={styles.headerBarSpacer} aria-hidden />
+          )}
           {toolbar ? <div className={styles.toolbar}>{toolbar}</div> : null}
         </div>
       ) : null}

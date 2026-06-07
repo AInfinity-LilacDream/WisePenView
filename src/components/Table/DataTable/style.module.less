@@ -10,11 +10,12 @@
 }
 
 .headerBar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: @table-gap;
+  .tableHeaderBarLayout();
   padding: @table-shell-padding-block @table-shell-padding-inline 0;
+}
+
+.headerBarSpacer {
+  .tableHeaderBarSpacer();
 }
 
 .title {
@@ -30,12 +31,7 @@
 }
 
 .toolbar {
-  display: flex;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: flex-end;
-  gap: @table-gap-tight;
-  min-width: 0;
+  .tableHeaderToolbarEnd();
 
   :global(button) {
     min-height: @table-control-min-height;
@@ -64,6 +60,7 @@
 .tableRoot {
   width: 100%;
   background: var(--surface);
+  .tableRootFlatHeader();
 
   :global(.table__scroll-container) {
     width: 100%;
@@ -72,16 +69,6 @@
   :global(.table__content) {
     width: 100%;
     table-layout: fixed;
-  }
-
-  :global(.table-root--secondary .table__column:first-child),
-  :global(.table-root--secondary .table__column:last-child),
-  :global(.table-root--secondary .table__body tr:first-child td:first-child),
-  :global(.table-root--secondary .table__body tr:first-child td:last-child),
-  :global(.table-root--secondary .table__body tr:last-child td:first-child),
-  :global(.table-root--secondary .table__body tr:last-child td:last-child),
-  :global(.table-root--secondary .table__body:not(tbody)) {
-    border-radius: 0;
   }
 
   :global(.table__column::after) {
