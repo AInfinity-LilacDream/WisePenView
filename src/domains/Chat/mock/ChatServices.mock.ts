@@ -52,35 +52,31 @@ const getModels: IChatService['getModels'] = async () => {
   return new Promise((resolve) => {
     setTimeout(() => {
       resolve({
-        standard_models: MOCK_MODELS.slice(0, 3).map((item: MockModelSeed, index: number) => ({
-          id: index + 1,
-          name: item.name,
+        system_models: MOCK_MODELS.slice(0, 3).map((item: MockModelSeed, index: number) => ({
+          id: `mock-system-${index + 1}`,
+          scope: 'system',
+          display_name: item.name,
           vendor: providerToVendor(item.provider),
           type: MODEL_TYPE.STANDARD_MODEL,
-          ratio: 1,
+          billing_ratio: 1,
           support_thinking: item.category === 'reasoning',
           support_vision: item.vision,
-          is_default: index === 0,
+          support_tools: true,
+          support_streaming: true,
+          is_active: true,
         })),
-        advanced_models: MOCK_MODELS.slice(3, 5).map((item: MockModelSeed, index: number) => ({
-          id: 101 + index,
-          name: item.name,
+        user_models: MOCK_MODELS.slice(3, 5).map((item: MockModelSeed, index: number) => ({
+          id: `mock-user-${index + 1}`,
+          scope: 'user',
+          display_name: item.name,
           vendor: providerToVendor(item.provider),
           type: MODEL_TYPE.ADVANCED_MODEL,
-          ratio: 10,
+          billing_ratio: 10,
           support_thinking: true,
           support_vision: item.vision,
-          is_default: false,
-        })),
-        other_models: MOCK_MODELS.slice(5).map((item: MockModelSeed, index: number) => ({
-          id: 201 + index,
-          name: item.name,
-          vendor: providerToVendor(item.provider),
-          type: MODEL_TYPE.UNKNOWN_MODEL,
-          ratio: 1,
-          support_thinking: false,
-          support_vision: item.vision,
-          is_default: false,
+          support_tools: true,
+          support_streaming: true,
+          is_active: true,
         })),
       });
     }, 200);
@@ -135,7 +131,7 @@ const buildMockHistoryMessages = (sessionId: string, total: number): MessageResp
     return {
       id: `${sessionId}-msg-${messageSeq}`,
       role,
-      model_id: isUser ? null : 1,
+      model_id: isUser ? null : 'mock-system-1',
       content: isUser
         ? `【${sessionId}】第 ${round} 轮：请解释一下这个需求，并给出步骤。`
         : `【${sessionId}】第 ${round} 轮回复：已整理需求背景、约束条件与执行步骤。`,
@@ -227,7 +223,6 @@ const listHistoryMessages: IChatService['listHistoryMessages'] = async (
   const allMessages = mockHistoryMessagesBySessionId[params.sessionId] ?? [];
   const total = allMessages.length;
 
-  // 无限滚动语义：page=1 返回最新一段；page 递增返回更老一段；每段内部保持时间升序。
   const end = Math.max(0, total - (page - 1) * size);
   const start = Math.max(0, end - size);
   const list = allMessages.slice(start, end);

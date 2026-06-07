@@ -21,9 +21,8 @@ import type {
 } from '../service/index.type';
 
 const mapGetModelsFromApi = (data: ListModelsApiResponse): ModelListResponse => ({
-  standard_models: data.standard_models,
-  advanced_models: data.advanced_models,
-  other_models: data.other_models,
+  system_models: data.system_models,
+  user_models: data.user_models,
 });
 
 const mapCreateSessionRequest = (params?: CreateSessionRequest): CreateSessionApiRequest => {
@@ -31,7 +30,6 @@ const mapCreateSessionRequest = (params?: CreateSessionRequest): CreateSessionAp
   const hasTitle = title !== undefined;
 
   return {
-    // 不传 title：沿用后端默认会话标题
     ...(hasTitle ? { title } : {}),
   };
 };
@@ -44,7 +42,6 @@ const mapRenameSessionRequest = (params: RenameSessionRequest): RenameSessionApi
 
   return {
     sessionId: params.sessionId,
-    // 不传 newTitle：保留后端对空标题的处理语义
     ...(hasNewTitle ? { newTitle } : {}),
   };
 };
@@ -57,7 +54,6 @@ const mapListSessionsRequest = (params?: ListSessionsRequest): ListSessionsApiRe
 });
 
 const mapListSessionsFromApi = (data: ListSessionsApiResponse): PageResult<ChatSession> => {
-  // fallback：兼容旧字段 total_page 缺失极端情况
   const totalPage = data.totalPage ?? data.total_page ?? 1;
   return {
     list: data.list,
@@ -79,7 +75,6 @@ const mapListHistoryMessagesRequest = (
 const mapListHistoryMessagesFromApi = (
   data: ListHistoryMessagesApiResponse
 ): PageResult<MessageResponse> => {
-  // fallback：兼容旧字段 total_page 缺失极端情况
   const totalPage = data.totalPage ?? data.total_page ?? 1;
   return {
     list: data.list,

@@ -18,7 +18,7 @@ import type {
 /** Chat API: /chat/* */
 
 function listModels(): Promise<ListModelsApiResponse> {
-  return apiGet('/chat/model/listModels');
+  return apiGet('/chat/model/listAvailableModels');
 }
 
 function getTools(): Promise<ListToolsApiResponse> {

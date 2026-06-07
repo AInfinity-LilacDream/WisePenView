@@ -27,11 +27,10 @@ export interface IChatService {
   uploadAttachment(params: UploadAttachmentParams): Promise<UploadAttachmentResult>;
 }
 
-/** `GET /model/listModels` 的 data 字段结构 */
+/** `GET /chat/model/listAvailableModels` 的 data 字段结构 */
 export interface ModelListResponse {
-  standard_models: BackendModel[];
-  advanced_models: BackendModel[];
-  other_models: BackendModel[];
+  system_models: BackendModel[];
+  user_models: BackendModel[];
 }
 
 /** 会话重命名请求参数（UI 侧使用 camelCase，Service 内部映射为接口字段） */

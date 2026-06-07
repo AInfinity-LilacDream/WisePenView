@@ -1,6 +1,6 @@
 /**
  * Chat 模型类型定义
- * 与 /chat/model/listModels 的响应结构对齐
+ * 对齐 /chat/model/listAvailableModels 的响应结构
  */
 
 /** 供应商 ID（对齐后端 ProviderId 枚举值） */
@@ -21,14 +21,19 @@ export const MODEL_TYPE = {
 
 export type ModelType = (typeof MODEL_TYPE)[keyof typeof MODEL_TYPE];
 
-/** 对齐后端 ModelInfo */
+/** 对齐后端 ModelResponse */
 export interface Model {
-  id: number;
-  name: string;
+  id: string;
+  scope: string;
+  display_name: string;
   vendor: string;
   type: ModelType;
-  ratio: number;
+  billing_ratio: number;
   support_thinking: boolean;
   support_vision: boolean;
-  is_default: boolean;
+  support_tools: boolean;
+  support_streaming: boolean;
+  context_window_tokens?: number | null;
+  max_output_tokens?: number | null;
+  is_active: boolean;
 }

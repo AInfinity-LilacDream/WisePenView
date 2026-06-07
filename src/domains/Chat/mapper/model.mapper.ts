@@ -29,20 +29,20 @@ const inferProvider = (vendor: string): string => {
 export const mapApiModelsToFlatModels = (data?: ModelListResponse): Model[] => {
   if (!data) return [];
 
-  const groupedModels = [...data.standard_models, ...data.advanced_models, ...data.other_models];
+  const groupedModels = [...data.system_models, ...data.user_models];
   return groupedModels.map((item, index) => ({
     id: String(item.id),
-    name: item.name,
+    name: item.display_name,
     vendor: item.vendor,
     provider: inferProvider(item.vendor),
-    ratio: item.ratio,
+    ratio: item.billing_ratio,
     supportThinking: item.support_thinking,
     tags: [
-      ...(item.is_default ? [{ text: 'Default', type: 'blue' }] : []),
+      ...(item.is_active && index === 0 ? [{ text: 'Default', type: 'blue' }] : []),
       ...(item.support_thinking ? [{ text: 'Thinking', type: 'purple' }] : []),
     ],
-    multiplier: item.ratio >= 1 ? `${item.ratio}x 消耗` : null,
-    isDefault: item.is_default,
+    multiplier: item.billing_ratio >= 1 ? `${item.billing_ratio}x 消耗` : null,
+    isDefault: item.is_active && index === 0,
     vision: item.support_vision,
     usageRank: index + 1,
     category:
