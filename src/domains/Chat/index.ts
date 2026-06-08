@@ -1,3 +1,6 @@
+export type { Model } from './entity/model';
+export { MODEL_PROVIDER_ID, MODEL_TYPE } from './enum/model';
+export type { ModelProviderId, ModelType } from './enum/model';
 export { mapApiModelsToFlatModels } from './mapper/model.mapper';
 export type {
   ChatSession,

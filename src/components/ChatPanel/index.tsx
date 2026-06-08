@@ -2,6 +2,7 @@ import type { ChatPanelProps, Message, Model } from '@/components/ChatPanel/inde
 import { useChatService, useGroupService, useResourceService } from '@/domains';
 import { mapApiModelsToFlatModels } from '@/domains/Chat';
 import { useChatSession } from '@/domains/Chat/session/useChatSession';
+import type { SkillSummary } from '@/domains/Resource';
 import {
   clearChatCapabilityStore,
   clearChatPageStore,
@@ -14,7 +15,6 @@ import {
   useNewChatSessionStore,
   useNoteSelectionStore,
 } from '@/store';
-import type { SkillSummary } from '@/types/skill';
 import { parseErrorMessage } from '@/utils/error';
 import { toast } from '@heroui/react';
 import { useMount, useRequest, useUpdateEffect } from 'ahooks';
@@ -465,7 +465,7 @@ function ChatPanel({ collapsed, fullWidth = false, onNewChat }: ChatPanelProps) 
               <AgentSelector
                 compact={!fullWidth}
                 options={agentOptions}
-                value={selectedAgent}
+                selectedAgent={selectedAgent}
                 onChange={handleAgentChange}
               />
             </div>

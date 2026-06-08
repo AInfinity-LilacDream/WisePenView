@@ -1,4 +1,4 @@
-import type { SkillSummary } from '@/types/skill';
+import type { SkillSummary } from '@/domains/Resource';
 import { create } from 'zustand';
 import type { ChatAgentOption } from './useChatAgentStore';
 

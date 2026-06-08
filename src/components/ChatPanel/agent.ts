@@ -1,6 +1,6 @@
+import type { Group } from '@/domains/Group';
 import type { ResourceItem } from '@/domains/Resource';
 import type { ChatAgentOption } from '@/store';
-import type { Group } from '@/types/group';
 
 const DEFAULT_PERSONAL_AGENT_ID = 'agent-personal-default';
 const DEFAULT_PERSONAL_AGENT_LABEL = '默认Agent';

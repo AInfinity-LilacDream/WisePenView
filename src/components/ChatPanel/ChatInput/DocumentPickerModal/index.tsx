@@ -5,9 +5,9 @@ import {
 } from '@/components/Drive/DriveNav/buildTreeData';
 import { useDriveService, useGroupService } from '@/domains';
 import type { DriveNode, LoadMoreNode } from '@/domains/Drive';
-import { useAppMessage } from '@/hooks/useAppMessage';
 import { useChatPageStore } from '@/store';
 import { parseErrorMessage } from '@/utils/error';
+import { toast } from '@heroui/react';
 import { useRequest } from 'ahooks';
 import { Button, Empty, Modal, Spin, Tree } from 'antd';
 import type { DataNode } from 'antd/es/tree';
@@ -65,7 +65,6 @@ const EMPTY_STRING_SET = new Set<string>();
 function DocumentPickerModal({ open, onClose }: DocumentPickerModalProps) {
   const driveService = useDriveService();
   const groupService = useGroupService();
-  const message = useAppMessage();
   const addDocRef = useChatPageStore((s) => s.addDocRef);
   const [treeData, setTreeData] = useState<DataNode[]>([]);
   const [checkedKeys, setCheckedKeys] = useState<string[]>([]);
@@ -146,7 +145,7 @@ function DocumentPickerModal({ open, onClose }: DocumentPickerModalProps) {
         replaceTreeNodeChildren(prev, scopeKey, buildScopedChildren(scopeKey, driveChildren))
       );
     } catch (err) {
-      message.error(parseErrorMessage(err));
+      toast.danger(parseErrorMessage(err));
     }
   }
 
@@ -165,7 +164,7 @@ function DocumentPickerModal({ open, onClose }: DocumentPickerModalProps) {
         replaceTreeNodeChildren(prev, scopedKey, buildScopedChildren(scopeKey, driveChildren))
       );
     } catch (err) {
-      message.error(parseErrorMessage(err));
+      toast.danger(parseErrorMessage(err));
     }
   }
 
@@ -182,7 +181,7 @@ function DocumentPickerModal({ open, onClose }: DocumentPickerModalProps) {
         replaceTreeNodeChildren(prev, parentKey, buildScopedChildren(scopeKey, driveChildren))
       );
     } catch (err) {
-      message.error(parseErrorMessage(err));
+      toast.danger(parseErrorMessage(err));
     }
   }
 
@@ -210,7 +209,7 @@ function DocumentPickerModal({ open, onClose }: DocumentPickerModalProps) {
           nodes.push(buildScopeRootNode(groupKey, group.groupName, 'group'));
         }
       } catch (err) {
-        message.error(parseErrorMessage(err));
+        toast.danger(parseErrorMessage(err));
       }
 
       setTreeData(nodes);

@@ -6,9 +6,7 @@ import popupStyles from '../popupSurface.module.less';
 import styles from '../style.module.less';
 import type { AgentSelectorProps } from './index.type';
 
-function AgentSelector({ value, options, onChange, compact = false }: AgentSelectorProps) {
-  const normalizedValue = value?.agentId ?? options[0]?.agentId;
-
+function AgentSelector({ selectedAgent, options, onChange, compact = false }: AgentSelectorProps) {
   const items = useMemo<Required<MenuProps>['items']>(
     () =>
       options.map((option) => ({
@@ -25,15 +23,13 @@ function AgentSelector({ value, options, onChange, compact = false }: AgentSelec
     [options]
   );
 
-  const currentLabel = options.find((option) => option.agentId === normalizedValue)?.label ?? '';
-
   return (
     <Dropdown
       trigger={['hover']}
       menu={{
         items,
         selectable: true,
-        selectedKeys: normalizedValue ? [normalizedValue] : [],
+        selectedKeys: [selectedAgent.agentId],
         onClick: ({ key }) => {
           const target = options.find((option) => option.agentId === key);
           if (!target) return;
@@ -47,7 +43,7 @@ function AgentSelector({ value, options, onChange, compact = false }: AgentSelec
         type="button"
         className={`${styles.agentSelectorButton} ${compact ? styles.compactAgentSelectorButton : ''}`}
       >
-        <span className={styles.agentSelectorValue}>{currentLabel}</span>
+        <span className={styles.agentSelectorValue}>{selectedAgent.label}</span>
         <ChevronDown className={styles.agentSelectorArrow} size={14} />
       </button>
     </Dropdown>

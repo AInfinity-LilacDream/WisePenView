@@ -1,7 +1,7 @@
 import { useChatService } from '@/domains';
+import type { SkillSummary } from '@/domains/Resource';
 import type { ChatAgentOption } from '@/store';
 import { useChatCapabilityStore, useChatPageStore } from '@/store';
-import type { SkillSummary } from '@/types/skill';
 import { parseErrorMessage } from '@/utils/error';
 import { toast } from '@heroui/react';
 import { useRequest, useUpdateEffect } from 'ahooks';
@@ -248,7 +248,7 @@ function ChatInput({
       .getState()
       .pendingAttachmentUploads.some((u) => u.status === 'uploading');
     if (uploading) {
-      toast.warning('附件仍在上传中，请稍后');
+      toast.warning('附件仍在上传中，请稍后再发送');
       return;
     }
     let pendingImages: PendingImagePayload[] | undefined;
@@ -415,7 +415,7 @@ function ChatInput({
               <X size={12} />
             </button>
             <span className={styles.selectedHintText} title={selectedContextText}>
-              选中内容：{`“${selectedPreview}”`}
+              选中内容：“{selectedPreview}”
             </span>
           </div>
         ) : null}

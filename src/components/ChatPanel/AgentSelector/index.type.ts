@@ -1,7 +1,7 @@
 import type { ChatAgentOption } from '@/store';
 
 export interface AgentSelectorProps {
-  value: ChatAgentOption | null;
+  selectedAgent: ChatAgentOption;
   options: ChatAgentOption[];
   onChange: (agent: ChatAgentOption) => void;
   compact?: boolean;

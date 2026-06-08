@@ -1,6 +1,6 @@
 import type { SkillScopeTreeGroup } from '@/components/ChatPanel/skillScope';
+import type { SkillSummary } from '@/domains/Resource';
 import type { ChatAgentOption, TemporarySkillSelection } from '@/store';
-import type { SkillSummary } from '@/types/skill';
 
 export interface OtherSkillModalProps {
   open: boolean;

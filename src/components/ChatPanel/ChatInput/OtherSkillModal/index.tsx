@@ -1,5 +1,5 @@
+import type { SkillSummary } from '@/domains/Resource';
 import type { ChatAgentOption } from '@/store';
-import type { SkillSummary } from '@/types/skill';
 import type { TreeDataNode } from 'antd';
 import { Button, Modal, Tree } from 'antd';
 import { ChevronDown, Folder } from 'lucide-react';

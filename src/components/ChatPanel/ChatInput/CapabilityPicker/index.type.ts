@@ -1,5 +1,5 @@
+import type { SkillSummary } from '@/domains/Resource';
 import type { ChatAgentOption, TemporarySkillSelection } from '@/store';
-import type { SkillSummary } from '@/types/skill';
 import type { CapabilityToolOption } from '../capability';
 
 export interface CapabilityPickerProps {
