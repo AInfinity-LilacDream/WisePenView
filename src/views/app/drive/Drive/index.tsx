@@ -1,4 +1,5 @@
 import IconText from '@/components/Common/IconText';
+import GlobalSearchBox from '@/components/Drive/GlobalSearchBox';
 import { StickerManageModal } from '@/components/Drive/Modals';
 import TableDrive from '@/components/Drive/TableDrive';
 import { useDrivePreferencesStore, type DriveViewMode } from '@/store';
@@ -41,6 +42,7 @@ function Drive() {
           <span className={styles.pageSubtitle}>管理您的项目和文档</span>
         </div>
         <div className={styles.actionsRow}>
+          <GlobalSearchBox />
           <Button variant="secondary" onPress={() => setStickerManageOpen(true)}>
             <IconText icon={<Tags />} iconSize={16}>
               管理标签

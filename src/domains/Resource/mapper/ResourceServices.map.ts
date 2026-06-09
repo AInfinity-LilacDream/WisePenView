@@ -2,6 +2,7 @@ import type { ResourceItem } from '@/domains/Resource';
 import type { GetUserInteractionRecordApiResponse } from '../apis/InteractApi.type';
 import type {
   ChangeResourceActionPermissionApiRequest,
+  GlobalSearchApiResponse,
   ListResourceItemsApiRequest,
   ResourceListPageApiResponse,
 } from '../apis/ResourceApi.type';
@@ -9,6 +10,8 @@ import { resourceActionsToApiKeys, TAG_QUERY_LOGIC_MODE, type ResourceActionKey 
 import type {
   GetUserResourcesRequest,
   ResourceListPage,
+  SearchHitItem,
+  SearchResultPage,
   UpdateResourceActionPermissionRequest,
 } from '../service/index.type';
 
@@ -162,6 +165,20 @@ const mapInteractStatsFromApi = (resourceInfo: ResourceItem): ResourceInteractSt
   };
 };
 
+// 小写化让 'NOTE' 对齐 RESOURCE_TYPE.NOTE='note'，下游 === 比较生效
+const mapSearchHitFromApi = (raw: GlobalSearchApiResponse['list'][number]): SearchHitItem => ({
+  ...raw,
+  resourceType: raw.resourceType.toLowerCase(),
+});
+
+const mapSearchResultPageFromApi = (data: GlobalSearchApiResponse): SearchResultPage => ({
+  list: data.list.map(mapSearchHitFromApi),
+  total: data.total,
+  page: data.page,
+  size: data.size,
+  totalPage: data.totalPage,
+});
+
 export const ResourceServicesMap = {
   mapListResourceItemsRequest,
   mapResourceListPageFromApi,
@@ -169,4 +186,5 @@ export const ResourceServicesMap = {
   mapLikeStatusFromApi,
   mapRateFromApi,
   mapInteractStatsFromApi,
+  mapSearchResultPageFromApi,
 };

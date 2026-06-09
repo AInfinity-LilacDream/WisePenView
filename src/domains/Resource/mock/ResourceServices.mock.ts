@@ -8,6 +8,8 @@ import type {
   RenameResourceRequest,
   ResourceItem,
   ResourceListPage,
+  SearchQueryRequest,
+  SearchResultPage,
 } from '@/domains/Resource';
 import {
   useNewNoteStore,
@@ -16,6 +18,7 @@ import {
   useResourceDisplayNameStore,
 } from '@/store';
 import mockdata from './mockdata.json';
+import { simulateGlobalSearch } from './searchMockData';
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 const toResourceItem = (
@@ -206,6 +209,11 @@ const getInteractStats = async (_resourceId: string) => {
   return { readCount: 0, likeCount: 0, scoreAvgText: '暂无评分' };
 };
 
+const globalSearch = async (params: SearchQueryRequest): Promise<SearchResultPage> => {
+  await delay(180);
+  return simulateGlobalSearch(params);
+};
+
 export const ResourceServicesMock: IResourceService = {
   getUserResources,
   getGroupResources,
@@ -219,4 +227,5 @@ export const ResourceServicesMock: IResourceService = {
   interactRate,
   interactRead,
   getInteractStats,
+  globalSearch,
 };

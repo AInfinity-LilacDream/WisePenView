@@ -6,6 +6,7 @@ export {
   RESOURCE_SORT_BY,
   RESOURCE_SORT_DIR,
   RESOURCE_TYPE,
+  SEARCH_SCOPE,
   TAG_QUERY_LOGIC_MODE,
   actionsToPermissionCode,
   coerceResourceActions,
@@ -24,6 +25,7 @@ export type {
   ResourceActionKey,
   ResourceSortBy,
   ResourceSortDir,
+  SearchScope,
   TagQueryLogicMode,
 } from './enum';
 export type {
@@ -35,5 +37,9 @@ export type {
   RemoveResourcesRequest,
   RenameResourceRequest,
   ResourceListPage,
+  SearchHitItem,
+  SearchQueryRequest,
+  SearchResultPage,
+  UpdateResourceActionPermissionRequest,
   UpdateResourceTagsRequest,
 } from './service/index.type';

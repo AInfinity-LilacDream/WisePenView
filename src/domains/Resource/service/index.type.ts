@@ -8,11 +8,12 @@ import type {
   ResourceItem,
   ResourceSortBy,
   ResourceSortDir,
+  SearchScope,
   TagQueryLogicMode,
 } from '@/domains/Resource';
 import type { ResourceInteractStats } from '../mapper/ResourceServices.map';
 
-/** 资源列表分页（与 OpenAPI PageResultResourceItemResponse 一致） */
+/** 资源列表分页 */
 export interface ResourceListPage {
   list: ResourceItem[];
   total: number;
@@ -41,6 +42,34 @@ export interface IResourceService {
   interactRead(resourceId: string): Promise<void>;
   /** 获取资源聚合互动统计（readCount / likeCount / scoreAvg），供 ResourceInteractBar 自行请求 */
   getInteractStats(resourceId: string): Promise<ResourceInteractStats>;
+  /** 全局全文搜索（ACL 过滤 + 高亮，分页） */
+  globalSearch(params: SearchQueryRequest): Promise<SearchResultPage>;
+}
+
+/** 全文搜索请求（对齐 GET /resource/search/globalSearchResources） */
+export interface SearchQueryRequest {
+  keyword: string;
+  scope: SearchScope;
+  page: number;
+  size: number;
+}
+
+/** 单条搜索命中项；resourceName/highlightContent 含 wp-highlight 包裹；resourceType 已小写化 */
+export interface SearchHitItem {
+  resourceId: string;
+  resourceType: string;
+  resourceName: string;
+  highlightContent: string | null;
+  updateTime: string;
+}
+
+/** 搜索分页结果 */
+export interface SearchResultPage {
+  list: SearchHitItem[];
+  total: number;
+  page: number;
+  size: number;
+  totalPage: number;
 }
 
 /** 重命名资源请求参数（对齐 OpenAPI ResourceRenameRequest，POST /resource/item/renameRes） */

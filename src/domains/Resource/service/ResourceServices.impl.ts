@@ -20,6 +20,8 @@ import type {
   RemoveResourcesRequest,
   RenameResourceRequest,
   ResourceListPage,
+  SearchQueryRequest,
+  SearchResultPage,
   UpdateResourceActionPermissionRequest,
   UpdateResourceTagsRequest,
 } from './index.type';
@@ -105,6 +107,11 @@ const getInteractStats = async (resourceId: string): Promise<ResourceInteractSta
   }
 };
 
+const globalSearch = async (params: SearchQueryRequest): Promise<SearchResultPage> => {
+  const data = await ResourceItemApi.globalSearch(params);
+  return ResourceServicesMap.mapSearchResultPageFromApi(data);
+};
+
 export const createResourceServices = (): IResourceService => ({
   getUserResources,
   getGroupResources,
@@ -118,4 +125,5 @@ export const createResourceServices = (): IResourceService => ({
   interactRate,
   interactRead,
   getInteractStats,
+  globalSearch,
 });

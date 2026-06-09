@@ -41,6 +41,27 @@ export interface RemoveResourcesApiRequest {
   resourceIds: string[];
 }
 
+export interface GlobalSearchApiRequest {
+  keyword: string;
+  scope: string;
+  page: number;
+  size: number;
+}
+
+export interface GlobalSearchApiResponse {
+  list: Array<{
+    resourceId: string;
+    resourceType: string;
+    resourceName: string;
+    highlightContent: string | null;
+    updateTime: string;
+  }>;
+  total: number;
+  page: number;
+  size: number;
+  totalPage: number;
+}
+
 export interface AddTagApiRequest {
   groupId?: string;
   parentId?: string;

@@ -7,6 +7,8 @@ import type {
   ChangeTagApiRequest,
   GetTagTreeApiRequest,
   GetTagTreeApiResponse,
+  GlobalSearchApiRequest,
+  GlobalSearchApiResponse,
   ListResourceItemsApiRequest,
   MoveTagApiRequest,
   RemoveResourcesApiRequest,
@@ -45,12 +47,17 @@ function removeResources(req: RemoveResourcesApiRequest): Promise<void> {
   });
 }
 
+function globalSearch(req: GlobalSearchApiRequest): Promise<GlobalSearchApiResponse> {
+  return apiGet('/resource/search/globalSearchResources', { params: req });
+}
+
 export const ResourceItemApi = {
   listResources,
   renameResource,
   changeResourceTags,
   changeResourceActionPermission,
   removeResources,
+  globalSearch,
 };
 
 // /resource/tag/*

@@ -1,0 +1,59 @@
+.modal {
+  // 卡片整体上移到视口 10vh，类 Algolia DocSearch 布局
+  :global(.ant-modal) {
+    top: 10vh;
+    padding-bottom: 0;
+  }
+
+  :global(.ant-modal-content) {
+    padding: 0;
+    overflow: hidden;
+    border-radius: var(--ant-border-radius-lg);
+  }
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: var(--ant-margin-sm);
+  padding: var(--ant-padding-xs) var(--ant-padding);
+  border-bottom: 1px solid var(--ant-color-split);
+}
+
+.headerIcon {
+  font-size: var(--ant-font-size-lg);
+  color: var(--ant-color-text-secondary);
+  flex-shrink: 0;
+}
+
+.input {
+  flex: 1;
+  font-size: var(--ant-font-size-lg);
+}
+
+.kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  padding: 2px var(--ant-padding-xs);
+  font-family: inherit;
+  font-size: var(--ant-font-size-sm);
+  color: var(--ant-color-text-tertiary);
+  background: var(--ant-color-fill-tertiary);
+  border: 1px solid var(--ant-color-border);
+  border-radius: var(--ant-border-radius-sm);
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    color: var(--ant-color-text-secondary);
+    background: var(--ant-color-fill-secondary);
+  }
+}
+
+.tabs {
+  padding: var(--ant-padding-xs) var(--ant-padding);
+  border-bottom: 1px solid var(--ant-color-split);
+}

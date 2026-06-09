@@ -1,0 +1,112 @@
+.list {
+  max-height: 60vh;
+  overflow-y: auto;
+  padding: var(--ant-padding-xs) 0;
+  scroll-behavior: smooth;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: var(--ant-color-border);
+    border-radius: var(--ant-border-radius-sm);
+  }
+}
+
+.emptyWrapper {
+  padding: var(--ant-padding-lg) var(--ant-padding);
+}
+
+.group {
+  & + & {
+    margin-top: var(--ant-margin-xs);
+  }
+}
+
+.groupHeader {
+  padding: var(--ant-padding-xs) var(--ant-padding);
+  background: var(--ant-color-bg-elevated);
+  color: var(--ant-color-text-secondary);
+  font-size: var(--ant-font-size-sm);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--ant-color-split);
+}
+
+.groupItems {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--ant-margin-sm);
+  padding: var(--ant-padding-sm) var(--ant-padding);
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  border-left: 2px solid transparent;
+
+  &:hover,
+  &.rowActive {
+    background: var(--ant-color-fill-tertiary);
+  }
+
+  &.rowActive {
+    border-left-color: var(--ant-color-primary);
+  }
+}
+
+.rowIcon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  padding-top: 2px;
+}
+
+.rowText {
+  flex: 1;
+  min-width: 0;
+}
+
+.rowTitle {
+  font-size: var(--ant-font-size);
+  color: var(--ant-color-text);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rowSnippet {
+  margin-top: 2px;
+  font-size: var(--ant-font-size-sm);
+  color: var(--ant-color-text-secondary);
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+// 后端发来 `<em class="wp-highlight">…</em>` 高亮包裹，全局命中即上色
+:global(.wp-highlight) {
+  color: var(--ant-color-error);
+  font-style: normal;
+  font-weight: 600;
+}
+
+.loadingMore {
+  display: flex;
+  justify-content: center;
+  padding: var(--ant-padding-sm) 0;
+}
+
+.footerHint {
+  padding: var(--ant-padding-sm) 0;
+  text-align: center;
+  color: var(--ant-color-text-tertiary);
+  font-size: var(--ant-font-size-sm);
+}

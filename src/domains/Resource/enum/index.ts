@@ -27,6 +27,13 @@ export const TAG_QUERY_LOGIC_MODE = createEnum([
   { value: 'AND', key: 'AND', label: '包含全部' },
 ] as const);
 
+/** 全文搜索范围：与后端 SearchScope 枚举字面值一致 */
+export const SEARCH_SCOPE = createEnum([
+  { value: 'ALL', key: 'ALL', label: '全部' },
+  { value: 'DOCUMENT', key: 'DOCUMENT', label: '文档' },
+  { value: 'NOTE', key: 'NOTE', label: '笔记' },
+] as const);
+
 /** 资源访问权限（与后端 ResourceAction 对齐） */
 export const RESOURCE_ACTION = createEnum([
   { value: 1, key: 'DISCOVER', label: '列表可见' },
@@ -37,6 +44,7 @@ export const RESOURCE_ACTION = createEnum([
 ] as const);
 
 export type TagQueryLogicMode = EnumValue<typeof TAG_QUERY_LOGIC_MODE>;
+export type SearchScope = EnumValue<typeof SEARCH_SCOPE>;
 
 export type ResourceSortBy = EnumValue<typeof RESOURCE_SORT_BY>;
 export type ResourceSortDir = EnumValue<typeof RESOURCE_SORT_DIR>;
