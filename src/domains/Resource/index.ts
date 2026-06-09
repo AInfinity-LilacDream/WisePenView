@@ -1,4 +1,5 @@
 export type { ResourceItem } from './entity/resource';
+export type { SkillScopeType, SkillSummary } from './entity/skill';
 export {
   NOTE_CONFIGURABLE_RESOURCE_ACTION_OPTIONS,
   RESOURCE_ACTION,

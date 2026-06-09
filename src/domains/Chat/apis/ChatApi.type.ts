@@ -34,16 +34,13 @@ export interface PageResult<T> {
   total: number;
   page: number;
   size: number;
-  // OpenAPI 约定字段
   totalPage?: number;
-  // fallback：兼容旧接口返回 total_page（历史实现中该字段必定存在）
   total_page: number;
 }
 
 export interface ListModelsApiResponse {
-  standard_models: BackendModel[];
-  advanced_models: BackendModel[];
-  other_models: BackendModel[];
+  system_models: BackendModel[];
+  user_models: BackendModel[];
 }
 export type CreateSessionApiRequest = { title?: string };
 export type CreateSessionApiResponse = ChatSession;
@@ -55,3 +52,14 @@ export type ListSessionsApiRequest = { page?: number; size?: number };
 export type ListSessionsApiResponse = PageResult<ChatSession>;
 export type ListHistoryMessagesApiRequest = { sessionId: string; page?: number; size?: number };
 export type ListHistoryMessagesApiResponse = PageResult<MessageResponse>;
+
+export interface ToolOption {
+  toolId: string;
+  label: string;
+}
+export type ListToolsApiResponse = ToolOption[];
+
+export interface UploadAttachmentResponse {
+  attachment_id: string;
+  filename?: string;
+}

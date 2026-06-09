@@ -4,11 +4,46 @@ interface ChatState {
   disabled?: boolean;
 }
 
+interface ChatAgentContext {
+  agent_id: string;
+  agent_type: 'PERSONAL' | 'GROUP';
+  group_id?: string;
+  advanced_mode_enabled: boolean;
+  system_prompt_override?: string;
+  tools?: string[];
+}
+
+interface ChatAttachmentRef {
+  attachment_id: string;
+  filename?: string;
+  enabled: boolean;
+  context_mode?: string;
+}
+
+interface ChatResourceRef {
+  resource_id: string;
+  resource_type?: string;
+  enabled: boolean;
+  context_mode?: string;
+}
+
+interface ImageB64Item {
+  mime_type: string;
+  base64: string;
+  filename?: string;
+}
+
 interface ChatRequestBody {
   session_id: string;
   query: string;
   model?: string;
   states?: ChatState[];
+  attachment_refs?: ChatAttachmentRef[];
+  resource_refs?: ChatResourceRef[];
+  agent_context?: ChatAgentContext;
+  allowed_skill_ids?: string[];
+  selected_skill_ids?: string[];
+  image_b64_list?: ImageB64Item[];
 }
 
 interface UseChatSessionOptions {
@@ -17,4 +52,12 @@ interface UseChatSessionOptions {
   enableSelected?: boolean;
 }
 
-export type { ChatRequestBody, ChatState, UseChatSessionOptions };
+export type {
+  ChatAgentContext,
+  ChatAttachmentRef,
+  ChatRequestBody,
+  ChatResourceRef,
+  ChatState,
+  ImageB64Item,
+  UseChatSessionOptions,
+};

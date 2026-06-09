@@ -1,8 +1,7 @@
 import type { Message } from '@/components/ChatPanel/index.type';
 import { Button, toast } from '@heroui/react';
 import { Check, Copy } from 'lucide-react';
-
-import React from 'react';
+import { useState } from 'react';
 import MessageContent from './MessageContent';
 import styles from './UserMessage.module.less';
 
@@ -12,7 +11,7 @@ interface UserMessageProps {
 }
 
 function UserMessage({ message }: UserMessageProps) {
-  const [copied, setCopied] = React.useState(false);
+  const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
     try {
@@ -20,7 +19,7 @@ function UserMessage({ message }: UserMessageProps) {
       toast.success('复制成功');
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
-    } catch (err) {
+    } catch {
       toast.danger('复制失败');
     }
   };
@@ -34,10 +33,9 @@ function UserMessage({ message }: UserMessageProps) {
             variant="ghost"
             isIconOnly
             size="sm"
-            className={styles.actionBtn}
+            className={`${styles.actionBtn} ${copied ? styles.actionBtnCopied : ''}`}
             onPress={handleCopy}
             aria-label="复制"
-            style={copied ? { color: 'var(--ant-color-success)' } : undefined}
           >
             {copied ? <Check size={14} /> : <Copy size={14} />}
           </Button>

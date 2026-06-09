@@ -9,18 +9,32 @@ import type {
   ListModelsApiResponse,
   ListSessionsApiRequest,
   ListSessionsApiResponse,
+  ListToolsApiResponse,
   RenameSessionApiRequest,
   RenameSessionApiResponse,
+  UploadAttachmentResponse,
 } from './ChatApi.type';
 
 /** Chat API: /chat/* */
 
 function listModels(): Promise<ListModelsApiResponse> {
-  return apiGet('/chat/model/listModels');
+  return apiGet('/chat/model/listAvailableModels');
+}
+
+function getTools(): Promise<ListToolsApiResponse> {
+  return apiGet('/chat/tools');
+}
+
+function uploadAttachment(formData: FormData): Promise<UploadAttachmentResponse> {
+  return apiPost('/attachment/upload', formData, {
+    timeout: 120000,
+  });
 }
 
 export const ChatApi = {
   listModels,
+  getTools,
+  uploadAttachment,
 };
 
 /** Chat Session API: /chat/session/* */

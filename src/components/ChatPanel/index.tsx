@@ -1,8 +1,18 @@
-import type { Message, Model } from '@/components/ChatPanel/index.type';
+import type { ChatPanelProps, Message, Model } from '@/components/ChatPanel/index.type';
 import { useChatService } from '@/domains';
-import { mapApiModelsToFlatModels, useChatSession } from '@/domains/Chat';
 import {
+  buildAdvancedSkillTreeGroups,
+  buildDefaultPersonalAgent,
+  getPrimarySkillsForAgent,
+} from '@/domains/Chat';
+import { useChatSession } from '@/domains/Chat/session/useChatSession';
+import {
+  clearChatCapabilityStore,
+  clearChatPageStore,
   clearNewChatSessionStore,
+  useAdvancedModeStore,
+  useChatAgentStore,
+  useChatCapabilityStore,
   useChatPanelStore,
   useCurrentChatSessionStore,
   useNewChatSessionStore,
@@ -13,7 +23,11 @@ import { toast } from '@heroui/react';
 import { useMount, useRequest, useUpdateEffect } from 'ahooks';
 import { IndentIncrease } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import AdvancedModeToggle from './AdvancedModeToggle';
+import AgentSelector from './AgentSelector';
 import ChatInput from './ChatInput';
+import type { SendOptions } from './ChatInput/index.type';
 import {
   HISTORY_PAGE_SIZE,
   buildPanelMessages,
@@ -23,15 +37,17 @@ import {
   type ModelMeta,
 } from './ChatPanel';
 import MessageList from './MessageList';
+import NewChatButton from './NewChatButton';
 import styles from './style.module.less';
 
-interface ChatPanelProps {
-  collapsed: boolean;
-}
+const DEFAULT_PERSONAL_AGENT = buildDefaultPersonalAgent();
 
-function ChatPanel({ collapsed }: ChatPanelProps) {
+function ChatPanel({ collapsed, fullWidth = false, onNewChat }: ChatPanelProps) {
+  const navigate = useNavigate();
   const chatService = useChatService();
   const setChatPanelCollapsed = useChatPanelStore((state) => state.setChatPanelCollapsed);
+  const chatPanelDraftOpen = useChatPanelStore((state) => state.chatPanelDraftOpen);
+  const setChatPanelDraftOpen = useChatPanelStore((state) => state.setChatPanelDraftOpen);
   const currentSessionId = useCurrentChatSessionStore((state) => state.currentSessionId);
   const currentSessionTitle = useCurrentChatSessionStore((state) => state.currentSessionTitle);
   const setCurrentSession = useCurrentChatSessionStore((state) => state.setCurrentSession);
@@ -43,11 +59,53 @@ function ChatPanel({ collapsed }: ChatPanelProps) {
     currentSessionId ? (state.selectedTextByResourceId[currentSessionId] ?? '') : ''
   );
   const clearSelectedText = useNoteSelectionStore((state) => state.clearSelectedText);
+  const draftAgent = useChatAgentStore((state) => state.draftAgent);
+  const sessionAgentBySessionId = useChatAgentStore((state) => state.sessionAgentBySessionId);
+  const setDraftAgent = useChatAgentStore((state) => state.setDraftAgent);
+  const setSessionAgent = useChatAgentStore((state) => state.setSessionAgent);
+  const advancedMode = useAdvancedModeStore((state) => state.advancedMode);
+  const selectedSkills = useChatCapabilityStore((state) => state.selectedSkills);
+  const selectedTools = useChatCapabilityStore((state) => state.selectedTools);
+
+  useUpdateEffect(() => {
+    clearChatCapabilityStore();
+  }, [currentSessionId]);
+
   const [currentModel, setCurrentModel] = useState<Model | null>(null);
   const [historyMessages, setHistoryMessages] = useState<Message[]>([]);
   const [historyPage, setHistoryPage] = useState(1);
   const [historyTotalPage, setHistoryTotalPage] = useState(1);
   const [loadingMoreHistory, setLoadingMoreHistory] = useState(false);
+
+  const { data: workspace, loading: loadingWorkspace } = useRequest(
+    () => chatService.getWorkspace(),
+    { refreshDeps: [] }
+  );
+  const groups = workspace?.groups ?? [];
+  const personalAgentOptions = workspace?.personalAgents ?? [];
+  const groupAgentOptions = workspace?.groupAgents ?? [];
+  const agentOptions = [DEFAULT_PERSONAL_AGENT, ...personalAgentOptions, ...groupAgentOptions];
+  const agentOptionsLoaded = !loadingWorkspace;
+  const selectedAgent = (() => {
+    const storedAgent = currentSessionId ? sessionAgentBySessionId[currentSessionId] : draftAgent;
+    if (!storedAgent) return DEFAULT_PERSONAL_AGENT;
+    if (storedAgent.isDefault) return DEFAULT_PERSONAL_AGENT;
+
+    const freshAgent = agentOptions.find((agent) => agent.agentId === storedAgent.agentId);
+    if (freshAgent) return freshAgent;
+
+    return agentOptionsLoaded ? DEFAULT_PERSONAL_AGENT : storedAgent;
+  })();
+
+  const allSkills = workspace?.skills ?? [];
+  const primarySkills = getPrimarySkillsForAgent(allSkills, selectedAgent);
+  const advancedSkillGroups = buildAdvancedSkillTreeGroups(
+    allSkills,
+    groups,
+    selectedAgent,
+    primarySkills
+  );
+  const allowedSkillIds = primarySkills.map((skill) => skill.skillId);
 
   const {
     messages: liveMessages,
@@ -61,30 +119,20 @@ function ChatPanel({ collapsed }: ChatPanelProps) {
 
   const { runAsync: runLoadSessionHistory } = useRequest(
     async (sessionId: string, page = 1) =>
-      chatService.listHistoryMessages({
-        sessionId,
-        page,
-        size: HISTORY_PAGE_SIZE,
-      }),
-    {
-      manual: true,
-    }
+      chatService.listHistoryMessages({ sessionId, page, size: HISTORY_PAGE_SIZE }),
+    { manual: true }
   );
   const { runAsync: runCreateSession } = useRequest(() => chatService.createSession(), {
     manual: true,
   });
-  const { data: modelListData } = useRequest(() => chatService.getModels());
+  const { data: models = [] } = useRequest(() => chatService.getModels());
 
   const modelMetaMap = useMemo<Record<string, ModelMeta>>(() => {
-    const models = mapApiModelsToFlatModels(modelListData);
     return models.reduce<Record<string, ModelMeta>>((acc, model) => {
-      acc[model.id] = {
-        provider: model.provider,
-        name: model.name,
-      };
+      acc[model.id] = { provider: model.provider, name: model.name };
       return acc;
     }, {});
-  }, [modelListData]);
+  }, [models]);
 
   useUpdateEffect(() => {
     if (Object.keys(modelMetaMap).length === 0) return;
@@ -103,11 +151,7 @@ function ChatPanel({ collapsed }: ChatPanelProps) {
         }
         return {
           ...message,
-          meta: {
-            ...message.meta,
-            modelName: modelMeta.name,
-            provider: modelMeta.provider,
-          },
+          meta: { ...message.meta, modelName: modelMeta.name, provider: modelMeta.provider },
         };
       })
     );
@@ -127,6 +171,7 @@ function ChatPanel({ collapsed }: ChatPanelProps) {
   const sending = status === 'submitted' || status === 'streaming';
   const chatInputModelId = currentModel?.id ?? '';
   const hasSelectedContext = enableSelectedText && Boolean(selectedContextText.trim());
+  const panelTitle = currentSessionTitle || '新对话';
 
   const loadHistoryMessages = async (sessionId: string) => {
     try {
@@ -135,7 +180,7 @@ function ChatPanel({ collapsed }: ChatPanelProps) {
         payload.list.map((m) => mapHistoryMessage(m, { modelMetaMap, currentModel }))
       );
       setHistoryPage(payload.page ?? 1);
-      setHistoryTotalPage(payload.totalPage);
+      setHistoryTotalPage(payload.totalPage ?? 1);
     } catch (error) {
       const errorMessage = parseErrorMessage(error);
       if (isSessionInvalidMessage(errorMessage)) {
@@ -154,9 +199,7 @@ function ChatPanel({ collapsed }: ChatPanelProps) {
   };
 
   const loadMoreHistoryMessages = async () => {
-    if (!currentSessionId) return;
-    if (loadingMoreHistory) return;
-    if (historyPage >= historyTotalPage) return;
+    if (!currentSessionId || loadingMoreHistory || historyPage >= historyTotalPage) return;
 
     const nextPage = historyPage + 1;
     setLoadingMoreHistory(true);
@@ -168,7 +211,7 @@ function ChatPanel({ collapsed }: ChatPanelProps) {
       );
       setHistoryMessages((previousMessages) => [...olderMessages, ...previousMessages]);
       setHistoryPage(payload.page ?? nextPage);
-      setHistoryTotalPage(payload.totalPage);
+      setHistoryTotalPage(payload.totalPage ?? historyTotalPage);
     } catch (error) {
       toast.danger(parseErrorMessage(error));
     } finally {
@@ -176,9 +219,10 @@ function ChatPanel({ collapsed }: ChatPanelProps) {
     }
   };
 
-  const handleSend = async (text: string) => {
+  const handleSend = async (text: string, opts?: SendOptions) => {
     if (!currentModel) return;
     let targetSessionId = currentSessionId;
+    const targetAgent = selectedAgent ?? DEFAULT_PERSONAL_AGENT;
 
     if (!targetSessionId) {
       try {
@@ -189,21 +233,48 @@ function ChatPanel({ collapsed }: ChatPanelProps) {
           title: createdSession.title,
         });
         setCurrentSession({ id: createdSession.id, title: createdSession.title });
+        setSessionAgent(createdSession.id, targetAgent);
+        setChatPanelDraftOpen(false);
+        if (fullWidth) {
+          navigate(`/app/chat/${createdSession.id}`, { replace: true });
+        }
       } catch (error) {
         toast.danger(parseErrorMessage(error));
         return;
       }
     }
 
+    const selectedSkillIds = selectedSkills.map((s) => s.skillId);
+    const selectedToolIds = selectedTools.map((t) => t.toolId);
+
     const sendPromise = sendSessionMessage(text, {
       model: currentModel.id,
       enableSelected: hasSelectedContext,
       sessionId: targetSessionId,
+      agentContext: {
+        agent_id: targetAgent.agentId,
+        agent_type: targetAgent.agentType,
+        group_id: targetAgent.groupId,
+        advanced_mode_enabled: advancedMode,
+        tools: selectedToolIds.length > 0 ? selectedToolIds : undefined,
+      },
+      allowedSkillIds,
+      selectedSkillIds: selectedSkillIds.length > 0 ? selectedSkillIds : undefined,
+      pendingImages: opts?.pendingImages,
     });
+
     if (hasSelectedContext) {
       clearSelectedText(targetSessionId);
     }
     await sendPromise;
+  };
+
+  const handleAgentChange = (nextAgent: (typeof agentOptions)[number]) => {
+    if (currentSessionId) {
+      setSessionAgent(currentSessionId, nextAgent);
+      return;
+    }
+    setDraftAgent(nextAgent);
   };
 
   const handleClearSelectedContext = () => {
@@ -213,6 +284,9 @@ function ChatPanel({ collapsed }: ChatPanelProps) {
 
   const handleCollapsePanel = () => {
     setChatPanelCollapsed(true);
+    if (!currentSessionId) {
+      setChatPanelDraftOpen(false);
+    }
   };
 
   useMount(() => {
@@ -225,6 +299,7 @@ function ChatPanel({ collapsed }: ChatPanelProps) {
   });
 
   useUpdateEffect(() => {
+    clearChatPageStore();
     if (!currentSessionId) {
       setHistoryMessages([]);
       setHistoryPage(1);
@@ -239,11 +314,21 @@ function ChatPanel({ collapsed }: ChatPanelProps) {
     void loadHistoryMessages(currentSessionId);
   }, [currentSessionId]);
 
+  useUpdateEffect(() => {
+    if (currentSessionId) return;
+    if (!chatPanelDraftOpen) {
+      setHistoryMessages([]);
+      setHistoryPage(1);
+      setHistoryTotalPage(1);
+      setLiveMessages([]);
+    }
+  }, [chatPanelDraftOpen, currentSessionId, setLiveMessages]);
+
   return (
-    <div className={styles.panel}>
+    <div className={`${styles.panel} ${fullWidth ? styles.fullWidth : ''}`}>
       <div className={`${styles.header} ${collapsed ? styles.collapsedHeader : ''}`}>
         <div className={styles.headerLeft}>
-          {!collapsed && (
+          {!collapsed && !fullWidth && (
             <button
               type="button"
               onClick={handleCollapsePanel}
@@ -255,21 +340,43 @@ function ChatPanel({ collapsed }: ChatPanelProps) {
           )}
           {!collapsed && (
             <div className={styles.titleWrap}>
-              <div className={styles.title}>{currentSessionTitle || '新对话'}</div>
+              <div className={styles.title}>{panelTitle}</div>
             </div>
           )}
         </div>
+
+        {!collapsed && (
+          <div className={styles.headerRight}>
+            <AdvancedModeToggle compact={!fullWidth} />
+            <div className={styles.agentSelectorShell}>
+              <AgentSelector
+                compact={!fullWidth}
+                options={agentOptions}
+                selectedAgent={selectedAgent}
+                onChange={handleAgentChange}
+              />
+            </div>
+          </div>
+        )}
       </div>
+
       {!collapsed && (
         <>
           <div className={styles.content}>
-            <MessageList
-              messages={messages}
-              canLoadMoreHistory={Boolean(currentSessionId) && historyPage < historyTotalPage}
-              loadingMoreHistory={loadingMoreHistory}
-              onLoadMoreHistory={loadMoreHistoryMessages}
-            />
+            <div className={styles.contentTopBar}>
+              <NewChatButton onClick={onNewChat} compact={!fullWidth} />
+            </div>
+
+            <div className={styles.messageViewport}>
+              <MessageList
+                messages={messages}
+                canLoadMoreHistory={Boolean(currentSessionId) && historyPage < historyTotalPage}
+                loadingMoreHistory={loadingMoreHistory}
+                onLoadMoreHistory={loadMoreHistoryMessages}
+              />
+            </div>
           </div>
+
           <div className={styles.footer}>
             <ChatInput
               currentModelId={chatInputModelId}
@@ -279,6 +386,11 @@ function ChatPanel({ collapsed }: ChatPanelProps) {
               hasSelectedContext={hasSelectedContext}
               selectedContextText={selectedContextText}
               onClearSelectedContext={handleClearSelectedContext}
+              selectedAgent={selectedAgent}
+              primarySkills={primarySkills}
+              advancedMode={advancedMode}
+              advancedSkillGroups={advancedSkillGroups}
+              currentModelVision={currentModel?.vision ?? false}
             />
           </div>
         </>

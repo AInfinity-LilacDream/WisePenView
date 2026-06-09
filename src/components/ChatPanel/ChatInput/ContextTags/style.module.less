@@ -1,0 +1,68 @@
+.tags {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 13px;
+}
+
+.docTag {
+  background-color: var(--ant-color-fill-tertiary);
+  color: var(--ant-color-text);
+}
+
+.attachmentTag {
+  background-color: var(--ant-color-fill-quaternary);
+  color: var(--ant-color-text);
+}
+
+.tagRemove {
+  cursor: pointer;
+  opacity: 0.55;
+  margin-left: 2px;
+  display: inline-flex;
+  align-items: center;
+
+  &:hover {
+    opacity: 1;
+  }
+}
+
+.imageTag {
+  background-color: var(--ant-color-primary-bg);
+  color: var(--ant-color-text);
+}
+
+.imageThumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 2px;
+  object-fit: cover;
+}
+
+.uploadingTag {
+  background-color: var(--ant-color-warning-bg);
+  color: var(--ant-color-text);
+}
+
+.failedTag {
+  background-color: var(--ant-color-error-bg);
+  color: var(--ant-color-error);
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.spinIcon {
+  animation: spin 1s linear infinite;
+}

@@ -5,8 +5,12 @@ import type {
   ListSessionsRequest,
   MessageResponse,
   PageResult,
+  ToolOption,
+  UploadAttachmentParams,
+  UploadAttachmentResult,
 } from '@/domains/Chat';
 import { MODEL_TYPE } from '@/domains/Chat';
+import type { Group } from '@/domains/Group';
 
 type MockModelSeed = {
   name: string;
@@ -48,38 +52,62 @@ const providerToVendor = (provider: string): string => {
 const getModels: IChatService['getModels'] = async () => {
   return new Promise((resolve) => {
     setTimeout(() => {
-      resolve({
-        standard_models: MOCK_MODELS.slice(0, 3).map((item: MockModelSeed, index: number) => ({
-          id: index + 1,
-          name: item.name,
+      const rawModels = [
+        ...MOCK_MODELS.slice(0, 3).map((item, i) => ({
+          id: `mock-system-${i + 1}`,
+          scope: 'system',
+          display_name: item.name,
           vendor: providerToVendor(item.provider),
           type: MODEL_TYPE.STANDARD_MODEL,
-          ratio: 1,
+          billing_ratio: 1,
           support_thinking: item.category === 'reasoning',
           support_vision: item.vision,
-          is_default: index === 0,
+          support_tools: true,
+          support_streaming: true,
+          is_active: true,
         })),
-        advanced_models: MOCK_MODELS.slice(3, 5).map((item: MockModelSeed, index: number) => ({
-          id: 101 + index,
-          name: item.name,
+        ...MOCK_MODELS.slice(3, 5).map((item, i) => ({
+          id: `mock-user-${i + 1}`,
+          scope: 'user',
+          display_name: item.name,
           vendor: providerToVendor(item.provider),
           type: MODEL_TYPE.ADVANCED_MODEL,
-          ratio: 10,
+          billing_ratio: 10,
           support_thinking: true,
           support_vision: item.vision,
-          is_default: false,
+          support_tools: true,
+          support_streaming: true,
+          is_active: true,
         })),
-        other_models: MOCK_MODELS.slice(5).map((item: MockModelSeed, index: number) => ({
-          id: 201 + index,
-          name: item.name,
-          vendor: providerToVendor(item.provider),
-          type: MODEL_TYPE.UNKNOWN_MODEL,
-          ratio: 1,
-          support_thinking: false,
-          support_vision: item.vision,
-          is_default: false,
-        })),
-      });
+      ];
+      resolve(
+        rawModels.map((item, index) => ({
+          id: String(item.id),
+          name: item.display_name,
+          vendor: item.vendor,
+          provider: providerToVendor(item.vendor).toLowerCase(),
+          ratio: item.billing_ratio,
+          supportThinking: item.support_thinking,
+          tags: [
+            ...(item.is_active && index === 0
+              ? ([{ text: 'Default', type: 'blue' }] as Array<{ text: string; type: string }>)
+              : []),
+            ...(item.support_thinking
+              ? ([{ text: 'Thinking', type: 'purple' }] as Array<{ text: string; type: string }>)
+              : []),
+          ],
+          multiplier: item.billing_ratio >= 1 ? `${item.billing_ratio}x 消耗` : null,
+          isDefault: item.is_active && index === 0,
+          vision: item.support_vision,
+          usageRank: index + 1,
+          category:
+            item.type === MODEL_TYPE.ADVANCED_MODEL
+              ? 'reasoning'
+              : item.type === MODEL_TYPE.STANDARD_MODEL
+                ? 'all-round'
+                : 'chat',
+        }))
+      );
     }, 200);
   });
 };
@@ -132,7 +160,7 @@ const buildMockHistoryMessages = (sessionId: string, total: number): MessageResp
     return {
       id: `${sessionId}-msg-${messageSeq}`,
       role,
-      model_id: isUser ? null : 1,
+      model_id: isUser ? null : 'mock-system-1',
       content: isUser
         ? `【${sessionId}】第 ${round} 轮：请解释一下这个需求，并给出步骤。`
         : `【${sessionId}】第 ${round} 轮回复：已整理需求背景、约束条件与执行步骤。`,
@@ -224,7 +252,6 @@ const listHistoryMessages: IChatService['listHistoryMessages'] = async (
   const allMessages = mockHistoryMessagesBySessionId[params.sessionId] ?? [];
   const total = allMessages.length;
 
-  // 无限滚动语义：page=1 返回最新一段；page 递增返回更老一段；每段内部保持时间升序。
   const end = Math.max(0, total - (page - 1) * size);
   const start = Math.max(0, end - size);
   const list = allMessages.slice(start, end);
@@ -239,11 +266,145 @@ const listHistoryMessages: IChatService['listHistoryMessages'] = async (
   };
 };
 
+const getWorkspace: IChatService['getWorkspace'] = async () => {
+  return {
+    groups: [
+      {
+        groupId: '1',
+        groupName: '示例小组',
+        groupType: 2,
+        groupDesc: '',
+        groupCoverUrl: '',
+        memberCount: 5,
+        ownerId: '1',
+        createTime: '',
+        inviteCode: '',
+        tokenUsed: 0,
+        tokenBalance: 0,
+      },
+      {
+        groupId: '2',
+        groupName: '前端开发组',
+        groupType: 2,
+        groupDesc: '',
+        groupCoverUrl: '',
+        memberCount: 12,
+        ownerId: '1',
+        createTime: '',
+        inviteCode: '',
+        tokenUsed: 0,
+        tokenBalance: 0,
+      },
+    ] as Group[],
+    skills: [
+      {
+        skillId: 'skill-personal-translation',
+        displayName: '翻译助手',
+        description: '',
+        scopeType: 'PERSONAL' as const,
+      },
+      {
+        skillId: 'skill-personal-summary',
+        displayName: '文档总结',
+        description: '',
+        scopeType: 'PERSONAL' as const,
+      },
+      {
+        skillId: 'skill-personal-math',
+        displayName: '数学计算',
+        description: '',
+        scopeType: 'PERSONAL' as const,
+      },
+      {
+        skillId: 'skill-group-1-weekly',
+        displayName: '团队周报生成',
+        description: '',
+        scopeType: 'GROUP' as const,
+        groupId: '1',
+        groupName: '示例小组',
+      },
+      {
+        skillId: 'skill-group-1-tracker',
+        displayName: '项目进度追踪',
+        description: '',
+        scopeType: 'GROUP' as const,
+        groupId: '1',
+        groupName: '示例小组',
+      },
+      {
+        skillId: 'skill-group-2-component',
+        displayName: '组件生成器',
+        description: '',
+        scopeType: 'GROUP' as const,
+        groupId: '2',
+        groupName: '前端开发组',
+      },
+      {
+        skillId: 'skill-group-2-lint',
+        displayName: '样式检查',
+        description: '',
+        scopeType: 'GROUP' as const,
+        groupId: '2',
+        groupName: '前端开发组',
+      },
+    ],
+    personalAgents: [
+      {
+        agentId: 'agent-custom-translation',
+        agentType: 'PERSONAL' as const,
+        label: '翻译助手Agent',
+        isDefault: false,
+        defaultSkillIds: ['skill-personal-translation', 'skill-personal-codereview'],
+      },
+      {
+        agentId: 'agent-custom-writing',
+        agentType: 'PERSONAL' as const,
+        label: '写作Agent',
+        isDefault: false,
+        defaultSkillIds: ['skill-personal-summary'],
+      },
+    ],
+    groupAgents: [
+      {
+        agentId: 'agent-group-1-design',
+        agentType: 'GROUP' as const,
+        label: '设计评审Agent',
+        groupId: '1',
+        groupName: '示例小组',
+        isDefault: false,
+        defaultSkillIds: ['skill-group-1-weekly'],
+      },
+    ],
+  };
+};
+
+const getTools = async (): Promise<ToolOption[]> => {
+  return [
+    { toolId: 'search_historical_messages', label: 'Search History' },
+    { toolId: 'mock-tool-2', label: 'Mock Tool 2' },
+  ];
+};
+
+const uploadAttachment = async ({
+  file,
+}: UploadAttachmentParams): Promise<UploadAttachmentResult> => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve({
+        attachmentId: 'mock-attachment-' + Date.now(),
+        filename: file.name,
+      });
+    }, 500);
+  });
+};
 export const ChatServicesMock: IChatService = {
+  getWorkspace,
   getModels,
   createSession,
   renameSession,
   deleteSession,
   listSessions,
   listHistoryMessages,
+  getTools,
+  uploadAttachment,
 };

@@ -18,7 +18,7 @@ import type { IWalletService } from '@/domains/Wallet';
 import { ServicesContext } from './context';
 import type { ServicesContextValue } from './registry';
 
-/** 内部 hook，供各 useXxxService 复用；必须在 ServicesProvider 内使用 */
+/** 内部 hook，供 useXxxService 复用；必须在 ServicesProvider 内使用 */
 function useServicesContext(): ServicesContextValue {
   const ctx = use(ServicesContext);
   if (!ctx) {
@@ -40,4 +40,5 @@ export const useResourceService = (): IResourceService => useServicesContext().r
 export const useStickerService = (): IStickerService => useServicesContext().stickerService;
 export const useTagService = (): ITagService => useServicesContext().tagService;
 export const useUserService = (): IUserService => useServicesContext().userService;
+/** 个人中心钱包、高级组 token 相关页注入 */
 export const useWalletService = (): IWalletService => useServicesContext().walletService;

@@ -1,22 +1,68 @@
-import type { Model as BackendModel } from '@/domains/Chat';
+import type { Group, IGroupService } from '@/domains/Group';
+import type { IResourceService, SkillSummary } from '@/domains/Resource';
+import type { ChatAgentOption } from '@/store';
+
+export interface ToolOption {
+  toolId: string;
+  label: string;
+}
+
+export interface ChatModelTag {
+  text: string;
+  type: string;
+}
+
+export interface ChatModel {
+  id: string;
+  name: string;
+  vendor: string;
+  provider: string;
+  ratio: number;
+  supportThinking: boolean;
+  tags: ChatModelTag[];
+  multiplier: string | null;
+  isDefault: boolean;
+  vision: boolean;
+  usageRank: number;
+  category: 'reasoning' | 'chat' | 'coding' | 'all-round';
+}
+
+export interface UploadAttachmentParams {
+  file: File;
+  saveToLibrary?: boolean;
+}
+
+export interface UploadAttachmentResult {
+  attachmentId: string;
+  filename?: string;
+}
+
+export interface ChatServiceDeps {
+  groupService: IGroupService;
+  resourceService: IResourceService;
+}
+
+export interface ChatWorkspace {
+  groups: Group[];
+  skills: SkillSummary[];
+  personalAgents: ChatAgentOption[];
+  groupAgents: ChatAgentOption[];
+}
 
 /** ChatService 接口 */
 export interface IChatService {
-  getModels(): Promise<ModelListResponse>;
+  getModels(): Promise<ChatModel[]>;
+  getWorkspace(): Promise<ChatWorkspace>;
   createSession(params?: CreateSessionRequest): Promise<ChatSession>;
   renameSession(params: RenameSessionRequest): Promise<ChatSession>;
   deleteSession(params: DeleteSessionRequest): Promise<void>;
   listSessions(params?: ListSessionsRequest): Promise<PageResult<ChatSession>>;
   listHistoryMessages(params: ListHistoryMessagesRequest): Promise<PageResult<MessageResponse>>;
+  getTools(): Promise<ToolOption[]>;
+  uploadAttachment(params: UploadAttachmentParams): Promise<UploadAttachmentResult>;
 }
 
-/** `GET /model/listModels` 的 data 字段结构 */
-export interface ModelListResponse {
-  standard_models: BackendModel[];
-  advanced_models: BackendModel[];
-  other_models: BackendModel[];
-}
-
+/** `GET /chat/model/listAvailableModels` 的 data 字段结构 */
 /** 会话重命名请求参数（UI 侧使用 camelCase，Service 内部映射为接口字段） */
 export interface RenameSessionRequest {
   sessionId: string;
