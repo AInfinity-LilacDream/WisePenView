@@ -49,7 +49,7 @@ const buildColumns = (props: ColumnBuildProps): DataTableColumn<ResourceTableRow
           className={styles.nameCell}
           icon={<EntryIcon entryType="resource" resourceType={record.resourceType} color="#666" />}
           iconSize={18}
-          gap="var(--ant-margin-sm)"
+          gap="var(--space-sm)"
           ellipsis
         >
           {record.resourceName || '未命名'}
@@ -155,17 +155,17 @@ const buildColumns = (props: ColumnBuildProps): DataTableColumn<ResourceTableRow
               }}
             >
               <Dropdown.Item key="editTag" id="editTag" textValue="编辑标签">
-                <IconText icon={<TagIcon />} iconSize={14} gap="var(--ant-margin-xs)">
+                <IconText icon={<TagIcon />} iconSize={14} gap="var(--space-xs)">
                   编辑标签
                 </IconText>
               </Dropdown.Item>
               <Dropdown.Item key="rename" id="rename" textValue="重命名">
-                <IconText icon={<Pencil />} iconSize={14} gap="var(--ant-margin-xs)">
+                <IconText icon={<Pencil />} iconSize={14} gap="var(--space-xs)">
                   重命名
                 </IconText>
               </Dropdown.Item>
               <Dropdown.Item key="delete" id="delete" textValue="删除" variant="danger">
-                <IconText icon={<Trash2 />} iconSize={14} gap="var(--ant-margin-xs)">
+                <IconText icon={<Trash2 />} iconSize={14} gap="var(--space-xs)">
                   删除
                 </IconText>
               </Dropdown.Item>

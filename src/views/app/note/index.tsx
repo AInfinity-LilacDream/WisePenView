@@ -52,7 +52,7 @@ function NoteToolbarTitle({ resourceId, fallbackTitle }: NoteToolbarTitleProps) 
       className={rvhStyles.inlineTitleText}
       icon={<EntryIcon entryType="resource" resourceType={RESOURCE_TYPE.NOTE} />}
       iconSize={18}
-      gap="var(--ant-margin-sm)"
+      gap="var(--space-sm)"
       ellipsis
     >
       {title}

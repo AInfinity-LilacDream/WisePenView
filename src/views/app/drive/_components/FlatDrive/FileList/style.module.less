@@ -14,7 +14,7 @@
 .rowSelected,
 .rowSelected:hover {
   :global(.table__cell) {
-    background: var(--ant-table-row-hover-bg) !important;
+    background: var(--table-row-hover-bg) !important;
   }
 }
 
@@ -26,7 +26,7 @@
   display: flex;
   align-items: center;
   min-width: 0;
-  gap: var(--ant-margin-sm);
+  gap: var(--space-sm);
   font-weight: 500;
   cursor: pointer;
 }
@@ -48,7 +48,7 @@
 .tagList {
   display: inline-flex;
   flex-wrap: wrap;
-  gap: var(--ant-margin-xs);
+  gap: var(--space-xs);
 }
 
 .tagChip {
@@ -59,19 +59,19 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: var(--ant-padding-xs);
-  color: var(--ant-color-text-secondary);
+  padding: var(--space-xs);
+  color: var(--muted);
   background: transparent;
   border: none;
-  border-radius: var(--ant-border-radius-sm);
+  border-radius: var(--radius-sm);
   cursor: pointer;
   transition:
     color 0.2s,
     background-color 0.2s;
 
   &:hover {
-    color: var(--ant-color-text);
-    background-color: var(--ant-color-fill-tertiary);
+    color: var(--foreground);
+    background-color: var(--surface-tertiary);
   }
 }
 

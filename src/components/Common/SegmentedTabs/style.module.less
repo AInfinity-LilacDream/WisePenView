@@ -14,7 +14,7 @@
   padding: 3px;
   border: 1px solid var(--border-light, #f2f4f5);
   border-radius: var(--radius-md, 8px);
-  background: var(--surface-muted, var(--ant-color-fill-tertiary));
+  background: var(--surface-muted, var(--surface-tertiary));
 }
 
 .tab {
@@ -24,8 +24,8 @@
   border: 0;
   border-radius: calc(var(--radius-md, 8px) - 3px);
   background: transparent;
-  color: var(--muted, var(--ant-color-text-secondary));
-  font-size: var(--font-size-sm, var(--ant-font-size-sm));
+  color: var(--muted);
+  font-size: var(--font-size-sm);
   font-weight: 500;
   cursor: pointer;
   transition:
@@ -44,16 +44,16 @@
 }
 
 .tab:hover {
-  color: var(--foreground, var(--ant-color-text));
+  color: var(--foreground);
 }
 
 .tabSelected {
-  background: var(--surface, var(--ant-color-bg-container));
-  color: var(--foreground, var(--ant-color-text));
-  box-shadow: var(--shadow-sm, var(--ant-box-shadow));
+  background: var(--surface);
+  color: var(--foreground);
+  box-shadow: var(--shadow-sm);
 }
 
 .tabDisabled {
-  color: var(--text-disabled, var(--ant-color-text-disabled));
+  color: var(--text-disabled);
   cursor: not-allowed;
 }

@@ -157,7 +157,7 @@ function PdfPreview() {
                 />
               }
               iconSize={18}
-              gap="var(--ant-margin-sm)"
+              gap="var(--space-sm)"
               ellipsis
             >
               {docInfo.resourceInfo.resourceName}
@@ -197,7 +197,7 @@ function PdfPreview() {
               />
             }
             iconSize={18}
-            gap="var(--ant-margin-sm)"
+            gap="var(--space-sm)"
             ellipsis
           >
             {docInfo.resourceInfo.resourceName}
