@@ -1,0 +1,58 @@
+.steps {
+  display: flex;
+  align-items: flex-start;
+  width: 100%;
+}
+
+.item {
+  position: relative;
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  color: var(--muted, var(--ant-color-text-secondary));
+  font-size: var(--font-size-sm, var(--ant-font-size-sm));
+  line-height: 1.4;
+}
+
+.item:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  top: 5px;
+  left: calc(50% + 12px);
+  right: calc(-50% + 12px);
+  height: 1px;
+  background: var(--border, var(--ant-color-border));
+}
+
+.dot {
+  position: relative;
+  z-index: 1;
+  width: 10px;
+  height: 10px;
+  border: 2px solid var(--border, var(--ant-color-border));
+  border-radius: 999px;
+  background: var(--surface, var(--ant-color-bg-container));
+}
+
+.active {
+  color: var(--foreground, var(--ant-color-text));
+  font-weight: 600;
+}
+
+.active .dot {
+  border-color: var(--accent, var(--ant-color-primary));
+  background: var(--accent, var(--ant-color-primary));
+  box-shadow: 0 0 0 3px var(--accent-soft, var(--ant-color-primary-bg));
+}
+
+.done .dot {
+  border-color: var(--accent, var(--ant-color-primary));
+}
+
+.title {
+  text-align: center;
+  overflow-wrap: anywhere;
+}
