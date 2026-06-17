@@ -37,7 +37,7 @@ const PDF_FEATURE_CONFIG: Record<string, boolean> = {
 
   // panel
   panel: true,
-  'panel-comment': false,
+  'panel-comment': true,
 
   // tools
   tools: false,

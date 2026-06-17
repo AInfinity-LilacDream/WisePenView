@@ -3,7 +3,6 @@ import { ResultState, Spin } from '@/components/Common/Feedback';
 import IconText from '@/components/Common/IconText';
 import PdfViewer from '@/components/Pdf/PdfViewer/index';
 import ResourceInteractBar from '@/components/Resource/ResourceInteractBar';
-import ResourceInteractFooter from '@/components/Resource/ResourceInteractFooter';
 import ResourceViewerHeader from '@/components/Resource/ResourceViewerHeader';
 import rvhStyles from '@/components/Resource/ResourceViewerHeader/style.module.less';
 import { useDocumentService, useResourceService } from '@/domains';
@@ -24,7 +23,6 @@ function PdfPreview() {
     data: docInfo,
     error: docInfoError,
     loading: isDocInfoLoading,
-    refresh: refreshDocInfo,
   } = useRequest(
     async () => {
       return await documentService.getDocInfo(resourceId as string);
@@ -40,8 +38,6 @@ function PdfPreview() {
     ready: Boolean(resourceId),
     refreshDeps: [resourceId],
   });
-
-  const resourceInfo = docInfo?.resourceInfo;
 
   const currentResourceId = resourceId ?? '';
   const viewerError = viewerErrorMap[currentResourceId];
@@ -203,14 +199,15 @@ function PdfPreview() {
             {docInfo.resourceInfo.resourceName}
           </IconText>
         }
+        extra={<ResourceInteractBar resourceId={resourceId as string} />}
       />
       <div className={styles.content}>
         <div className={styles.root}>
-          <ResourceInteractBar resourceId={resourceId as string} />
-          <PdfViewer key={resourceId} resourceId={resourceId} onLoadError={handleViewerLoadError} />
-          <ResourceInteractFooter
-            resourceId={resourceId as string}
-            onRateSuccess={() => void refreshDocInfo()}
+          <PdfViewer
+            key={resourceId}
+            className={styles.viewer}
+            resourceId={resourceId}
+            onLoadError={handleViewerLoadError}
           />
         </div>
       </div>

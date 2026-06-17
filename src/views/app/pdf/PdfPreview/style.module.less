@@ -1,5 +1,5 @@
 .container {
-  --resource-view-max-width: 1400px;
+  --resource-view-max-width: 100%;
 
   position: absolute;
   inset: 0;
@@ -24,7 +24,6 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  overflow-y: auto;
 }
 
 .headerTypeIcon {
@@ -41,9 +40,13 @@
   flex: 1;
   min-height: 0;
   width: 100%;
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: var(--space-lg) var(--space-xl);
+  margin: 0;
+  padding: 0;
+}
+
+.viewer {
+  flex: 1;
+  min-height: 0;
 }
 
 .middleOverlay {
@@ -80,4 +83,3 @@
   font-size: var(--font-size-sm);
   flex-shrink: 0;
 }
-
