@@ -85,10 +85,18 @@ export interface IDocumentService {
 
 export interface UploadDocumentParams {
   file: File;
+  /** 初始化上传成功后触发，供上传队列提前关联后端任务 */
+  onUploadInitialized?: (payload: UploadDocumentInitializedPayload) => void;
   /** MD5 分块计算进度 0–100 */
   onHashProgress?: (percent: number) => void;
   /** 直传 OSS 进度 0–100（秒传时不触发） */
   onUploadProgress?: (percent: number) => void;
+}
+
+export interface UploadDocumentInitializedPayload {
+  documentId: string;
+  objectKey: string;
+  flashUploaded: boolean;
 }
 
 export interface UploadDocumentResult {
