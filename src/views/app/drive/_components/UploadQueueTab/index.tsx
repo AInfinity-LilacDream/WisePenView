@@ -1,4 +1,3 @@
-import { Empty } from '@/components/Feedback';
 import { DataTable, type DataTableColumn } from '@/components/Table';
 import { useDocumentService } from '@/domains';
 import type { PendingDocItem } from '@/domains/Document';
@@ -8,22 +7,35 @@ import {
   isDocumentRetryableStatus,
   isDocumentTerminalStatus,
 } from '@/domains/Document';
+import { useDriveUploadQueueStore, type DriveUploadQueueItem } from '@/store';
 import { parseErrorMessage } from '@/utils/error';
 import { formatFileSize } from '@/utils/format/formatFileSize';
-import { Button, toast } from '@heroui/react';
+import { Button, ProgressBar, toast } from '@heroui/react';
 import { useInterval, useMount, useRequest, useUnmount } from 'ahooks';
 import { useImperativeHandle, useMemo, useState, type Ref } from 'react';
 import styles from './style.module.less';
 
-const SYNC_INTERVAL_MS = 5000;
+const REFRESH_INTERVAL_MS = 5000;
 
 const formatFileType = (fileType: string): string => {
   const value = fileType.toUpperCase();
   return value === '' ? 'UNKNOWN' : value;
 };
 
-type UploadQueueRow = PendingDocItem & {
+type UploadProgressColor = 'accent' | 'warning' | 'danger';
+
+type UploadQueueRow = {
   queueRowKey: string;
+  documentId?: string;
+  uploadMeta: {
+    documentName: string;
+    uploaderId: number | null;
+    fileType: string;
+    size: number;
+  };
+  documentStatus: PendingDocItem['documentStatus'];
+  maxPreviewPages: number | null;
+  localUpload?: DriveUploadQueueItem;
 };
 
 export interface UploadQueueTabRef {
@@ -32,44 +44,34 @@ export interface UploadQueueTabRef {
 
 function UploadQueueTab({ ref }: { ref?: Ref<UploadQueueTabRef> }) {
   const documentService = useDocumentService();
+  const localUploads = useDriveUploadQueueStore((s) => s.uploads);
   const [list, setList] = useState<PendingDocItem[]>([]);
   const [pollingActive, setPollingActive] = useState(false);
   const [retryingId, setRetryingId] = useState<string | null>(null);
   const [cancelingId, setCancelingId] = useState<string | null>(null);
 
+  const hasActiveLocalUploads = useMemo(
+    () => localUploads.some(isActiveLocalUpload),
+    [localUploads]
+  );
+
   const {
     run: runFetchPendingList,
     loading: listLoading,
     cancel: cancelPolling,
-  } = useRequest(
-    async (withSync: boolean) => {
-      if (withSync) {
-        const current = await documentService.listPendingDocs();
-        const nonTerminalItems = current.filter(
-          (item) => !isDocumentTerminalStatus(item.documentStatus.status)
-        );
-        await Promise.all(
-          nonTerminalItems
-            .filter((item) => item.documentId != null && item.documentId !== '')
-            .map((item) => documentService.syncPendingDocStatus(item.documentId as string))
-        );
-      }
-      return await documentService.listPendingDocs();
+  } = useRequest(async () => documentService.listPendingDocs(), {
+    manual: true,
+    onSuccess: (nextList) => {
+      setList(nextList);
+      setPollingActive(
+        nextList.some((item) => !isDocumentTerminalStatus(item.documentStatus.status))
+      );
     },
-    {
-      manual: true,
-      onSuccess: (nextList) => {
-        setList(nextList);
-        setPollingActive(
-          nextList.some((item) => !isDocumentTerminalStatus(item.documentStatus.status))
-        );
-      },
-      onError: (err) => {
-        setPollingActive(false);
-        toast.danger(parseErrorMessage(err));
-      },
-    }
-  );
+    onError: (err) => {
+      setPollingActive(false);
+      toast.danger(parseErrorMessage(err));
+    },
+  });
 
   const { run: runRetryPendingDoc } = useRequest(
     async (documentId: string) => {
@@ -83,7 +85,7 @@ function UploadQueueTab({ ref }: { ref?: Ref<UploadQueueTabRef> }) {
       },
       onSuccess: () => {
         toast.success('已提交重试');
-        runFetchPendingList(false);
+        runFetchPendingList();
       },
       onError: (err) => {
         toast.danger(parseErrorMessage(err));
@@ -106,7 +108,7 @@ function UploadQueueTab({ ref }: { ref?: Ref<UploadQueueTabRef> }) {
       },
       onSuccess: () => {
         toast.success('已取消处理');
-        runFetchPendingList(false);
+        runFetchPendingList();
       },
       onError: (err) => {
         toast.danger(parseErrorMessage(err));
@@ -118,15 +120,15 @@ function UploadQueueTab({ ref }: { ref?: Ref<UploadQueueTabRef> }) {
   );
 
   useMount(() => {
-    runFetchPendingList(false);
+    runFetchPendingList();
   });
 
   useInterval(
     () => {
       if (listLoading) return;
-      runFetchPendingList(true);
+      runFetchPendingList();
     },
-    pollingActive ? SYNC_INTERVAL_MS : undefined
+    pollingActive || hasActiveLocalUploads ? REFRESH_INTERVAL_MS : undefined
   );
 
   useUnmount(() => {
@@ -137,22 +139,45 @@ function UploadQueueTab({ ref }: { ref?: Ref<UploadQueueTabRef> }) {
     ref,
     () => ({
       refresh: () => {
-        runFetchPendingList(false);
+        runFetchPendingList();
       },
     }),
     [runFetchPendingList]
   );
 
-  const items = useMemo<UploadQueueRow[]>(
-    () =>
-      list.map((item, index) => ({
-        ...item,
-        queueRowKey:
-          item.documentId ??
-          `${item.uploadMeta.documentName}-${item.uploadMeta.uploaderId ?? 'unknown'}-${String(index)}`,
-      })),
-    [list]
-  );
+  const items = useMemo<UploadQueueRow[]>(() => {
+    const pendingDocumentIds = new Set<string>();
+    const localUploadByDocumentId = new Map<string, DriveUploadQueueItem>();
+
+    localUploads.forEach((upload) => {
+      if (upload.documentId != null && upload.documentId !== '') {
+        localUploadByDocumentId.set(upload.documentId, upload);
+      }
+    });
+
+    list.forEach((item) => {
+      if (item.documentId != null && item.documentId !== '') {
+        pendingDocumentIds.add(item.documentId);
+      }
+    });
+
+    const localRows = localUploads
+      .filter((upload) => upload.documentId == null || !pendingDocumentIds.has(upload.documentId))
+      .map(mapLocalUploadToRow);
+
+    const pendingRows = list.map((item, index) => ({
+      ...item,
+      queueRowKey:
+        item.documentId ??
+        `${item.uploadMeta.documentName}-${item.uploadMeta.uploaderId ?? 'unknown'}-${String(index)}`,
+      localUpload:
+        item.documentId != null && item.documentId !== ''
+          ? localUploadByDocumentId.get(item.documentId)
+          : undefined,
+    }));
+
+    return [...localRows, ...pendingRows];
+  }, [list, localUploads]);
 
   const columns = useMemo<DataTableColumn<UploadQueueRow>[]>(
     () => [
@@ -178,10 +203,10 @@ function UploadQueueTab({ ref }: { ref?: Ref<UploadQueueTabRef> }) {
         renderCell: (row) => formatFileSize(row.uploadMeta.size),
       },
       {
-        id: 'status',
-        label: '状态',
-        width: 'md',
-        renderCell: (row) => DOCUMENT_PROCESS.getLabel(row.documentStatus.status),
+        id: 'progress',
+        label: '上传进度',
+        width: 'lg',
+        renderCell: (row) => <UploadProgressCell row={row} />,
       },
       {
         id: 'action',
@@ -233,12 +258,126 @@ function UploadQueueTab({ ref }: { ref?: Ref<UploadQueueTabRef> }) {
           columns={columns}
           loading={listLoading}
           emptyText="暂无上传队列"
-          emptyIcon={<Empty description="暂无上传队列" />}
           summary={false}
         />
       </main>
     </div>
   );
+}
+
+function UploadProgressCell({ row }: { row: UploadQueueRow }) {
+  const progress = resolveRowUploadProgress(row);
+  const label = resolveRowUploadProgressLabel(row);
+
+  return (
+    <div className={styles.progressCell}>
+      <div className={styles.progressMeta}>
+        <span className={styles.progressLabel} title={label}>
+          {label}
+        </span>
+        <span className={styles.progressValue}>{progress}%</span>
+      </div>
+      <ProgressBar
+        aria-label={`${row.uploadMeta.documentName || '未命名文档'} 上传进度`}
+        color={resolveRowUploadProgressColor(row)}
+        size="sm"
+        value={progress}
+      >
+        <ProgressBar.Track className={styles.progressTrack}>
+          <ProgressBar.Fill className={styles.progressFill} />
+        </ProgressBar.Track>
+      </ProgressBar>
+    </div>
+  );
+}
+
+function mapLocalUploadToRow(upload: DriveUploadQueueItem): UploadQueueRow {
+  return {
+    queueRowKey: upload.id,
+    documentId: upload.documentId,
+    uploadMeta: {
+      documentName: upload.filename,
+      uploaderId: null,
+      fileType: upload.fileType,
+      size: upload.size,
+    },
+    documentStatus: {
+      status: resolveLocalUploadStatus(upload),
+    },
+    maxPreviewPages: null,
+    localUpload: upload,
+  };
+}
+
+function isActiveLocalUpload(upload: DriveUploadQueueItem): boolean {
+  return (
+    upload.phase === 'hashing' || upload.phase === 'uploading' || upload.phase === 'confirming'
+  );
+}
+
+function resolveLocalUploadStatus(upload: DriveUploadQueueItem): string {
+  if (upload.phase === 'confirming' || upload.phase === 'done') return DOCUMENT_PROCESS.UPLOADED;
+  if (upload.phase === 'failed') return DOCUMENT_PROCESS.FAILED;
+  return DOCUMENT_PROCESS.UPLOADING;
+}
+
+function resolveRowUploadProgress(row: UploadQueueRow): number {
+  if (row.localUpload != null) {
+    return clampProgress(row.localUpload.progress);
+  }
+
+  const status = row.documentStatus.status;
+  if (status === DOCUMENT_PROCESS.TRANSFER_TIMEOUT) {
+    return 0;
+  }
+  return 100;
+}
+
+function resolveRowUploadProgressLabel(row: UploadQueueRow): string {
+  const status = row.documentStatus.status;
+  if (
+    status === DOCUMENT_PROCESS.FAILED ||
+    status === DOCUMENT_PROCESS.TRANSFER_TIMEOUT ||
+    status === DOCUMENT_PROCESS.REGISTERING_RES_TIMEOUT
+  ) {
+    return DOCUMENT_PROCESS.getLabel(status);
+  }
+
+  const localUpload = row.localUpload;
+  if (localUpload != null) {
+    if (localUpload.phase === 'hashing') return '计算校验值';
+    if (localUpload.phase === 'uploading') return '上传中';
+    if (localUpload.phase === 'confirming') return '处理中';
+    if (localUpload.phase === 'done') return '上传完成';
+    return localUpload.errorMessage ?? '上传失败';
+  }
+
+  if (status === DOCUMENT_PROCESS.UPLOADING) {
+    return '处理中';
+  }
+  return DOCUMENT_PROCESS.getLabel(status);
+}
+
+function resolveRowUploadProgressColor(row: UploadQueueRow): UploadProgressColor {
+  const status = row.documentStatus.status;
+  if (
+    row.localUpload?.phase === 'failed' ||
+    status === DOCUMENT_PROCESS.FAILED ||
+    status === DOCUMENT_PROCESS.TRANSFER_TIMEOUT
+  ) {
+    return 'danger';
+  }
+
+  if (status === DOCUMENT_PROCESS.REGISTERING_RES_TIMEOUT) {
+    return 'warning';
+  }
+
+  return 'accent';
+}
+
+function clampProgress(value: number): number {
+  if (!Number.isFinite(value)) return 0;
+  return Math.min(100, Math.max(0, Math.round(value)));
 }
 
 export default UploadQueueTab;

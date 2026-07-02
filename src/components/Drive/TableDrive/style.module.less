@@ -7,18 +7,79 @@
   min-height: 0;
 }
 
+.tableLayout {
+  display: flex;
+  align-items: stretch;
+  gap: var(--space-md);
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+
+.table {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+
+.selectionPanel {
+  flex: 0 0 220px;
+  min-width: 180px;
+  padding: var(--space-md);
+  border-left: 1px solid var(--border-light);
+  background: var(--surface-secondary);
+  color: var(--foreground);
+}
+
+.selectionPanelTitle {
+  margin-bottom: var(--space-sm);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-md);
+}
+
+.selectionMeta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  min-width: 0;
+}
+
+.selectionLabel {
+  color: var(--muted);
+  font-size: var(--font-size-xs);
+  line-height: var(--line-height-xs);
+}
+
+.selectionValue {
+  min-width: 0;
+  color: var(--foreground);
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-md);
+  overflow-wrap: anywhere;
+}
+
 .toolbarActions {
   display: flex;
   align-items: center;
   gap: var(--space-xs);
 }
 
-.table {
-  min-height: 0;
-}
-
 .droppableOver {
   :global(.table__cell) {
     background: var(--accent-soft) !important;
+  }
+}
+
+@media (max-width: 960px) {
+  .tableLayout {
+    flex-direction: column;
+  }
+
+  .selectionPanel {
+    flex-basis: auto;
+    min-width: 0;
+    border-left: 0;
+    border-top: 1px solid var(--border-light);
   }
 }

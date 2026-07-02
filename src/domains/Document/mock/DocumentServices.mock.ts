@@ -9,11 +9,25 @@ import type {
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const uploadDocument = async (params: UploadDocumentParams): Promise<UploadDocumentResult> => {
-  await delay(400);
+  params.onHashProgress?.(100);
+  await delay(100);
   const name = params.file.name.replace(/\s+/g, '-');
+  const now = Date.now();
+  const documentId = `mock-doc-${now}`;
+  const objectKey = `mock/private/doc/${now}-${name}`;
+  params.onUploadInitialized?.({
+    documentId,
+    objectKey,
+    flashUploaded: false,
+  });
+  params.onUploadProgress?.(35);
+  await delay(100);
+  params.onUploadProgress?.(75);
+  await delay(100);
+  params.onUploadProgress?.(100);
   return {
-    documentId: `mock-doc-${Date.now()}`,
-    objectKey: `mock/private/doc/${Date.now()}-${name}`,
+    documentId,
+    objectKey,
     flashUploaded: false,
   };
 };

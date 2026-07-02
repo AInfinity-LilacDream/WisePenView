@@ -15,6 +15,12 @@ export {
   useDrivePreferencesStore,
   type DriveViewMode,
 } from './useDrivePreferencesStore';
+export {
+  clearDriveUploadQueueStore,
+  useDriveUploadQueueStore,
+  type DriveUploadQueueItem,
+  type DriveUploadQueuePhase,
+} from './useDriveUploadQueueStore';
 export { clearNewChatSessionStore, useNewChatSessionStore } from './useNewChatSessionStore';
 export { clearNewNoteStore, useNewNoteStore } from './useNewNoteStore';
 export { clearNoteSelectionStore, useNoteSelectionStore } from './useNoteSelectionStore';

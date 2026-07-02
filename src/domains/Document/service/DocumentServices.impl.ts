@@ -49,7 +49,7 @@ const initUpload = async (
 };
 
 const uploadDocument = async (params: UploadDocumentParams): Promise<UploadDocumentResult> => {
-  const { file, onHashProgress, onUploadProgress } = params;
+  const { file, onHashProgress, onUploadInitialized, onUploadProgress } = params;
   assertDocumentUploadAllowed(file);
 
   const md5 = await computeFileMd5(file, onHashProgress);
@@ -60,6 +60,12 @@ const uploadDocument = async (params: UploadDocumentParams): Promise<UploadDocum
     extension,
     md5,
     expectedSize: file.size,
+  });
+
+  onUploadInitialized?.({
+    documentId: init.documentId,
+    objectKey: init.objectKey,
+    flashUploaded: init.flashUploaded,
   });
 
   if (init.flashUploaded) {

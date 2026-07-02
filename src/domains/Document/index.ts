@@ -17,6 +17,7 @@ export type {
   DocumentUploadInitResponse,
   IDocumentService,
   PendingDocItem,
+  UploadDocumentInitializedPayload,
   UploadDocumentParams,
   UploadDocumentResult,
 } from './service/index.type';

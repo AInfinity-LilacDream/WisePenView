@@ -143,7 +143,7 @@ function UploadZone({
                       size="sm"
                     >
                       <ProgressBar.Track className={styles.fileProgressTrack}>
-                        <ProgressBar.Fill />
+                        <ProgressBar.Fill className={styles.fileProgressFill} />
                       </ProgressBar.Track>
                     </ProgressBar>
                   )}

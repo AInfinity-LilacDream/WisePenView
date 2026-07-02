@@ -8,6 +8,7 @@ import { clearChatPageStore } from './useChatPageStore';
 import { clearChatPanelStore } from './useChatPanelStore';
 import { clearCurrentChatSessionStore } from './useCurrentChatSessionStore';
 import { clearDrivePreferencesStore } from './useDrivePreferencesStore';
+import { clearDriveUploadQueueStore } from './useDriveUploadQueueStore';
 import { clearNewChatSessionStore } from './useNewChatSessionStore';
 import { clearNewNoteStore } from './useNewNoteStore';
 import { clearNoteSelectionStore } from './useNoteSelectionStore';
@@ -23,6 +24,7 @@ export function clearAllZustandStores(): void {
   clearResourceDisplayNameStore();
   clearPdfPreviewProgressStore();
   clearDrivePreferencesStore();
+  clearDriveUploadQueueStore();
   clearAiDiffDisplayStore();
   clearNoteSelectionStore();
   clearTrashTagStore();
