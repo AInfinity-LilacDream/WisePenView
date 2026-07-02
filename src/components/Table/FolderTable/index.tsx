@@ -119,6 +119,8 @@ function FolderTable<T extends FolderTableRow>({
   toolbar,
   expandedRowKeys = [],
   onExpandedChange,
+  selectedRowKey,
+  onRowSelect,
   onRowActivate,
   getRowProps,
   rowActions,
@@ -223,6 +225,17 @@ function FolderTable<T extends FolderTableRow>({
     [rowActions]
   );
 
+  const handleRowPress = useCallback(
+    (row: T) => {
+      if (onRowSelect) {
+        onRowSelect(row);
+        return;
+      }
+      onRowActivate?.(row);
+    },
+    [onRowActivate, onRowSelect]
+  );
+
   const renderCellContent = useCallback(
     (column: FolderTableColumn<T>, row: FolderTableVisibleRow, ctx: FolderTableRowContext<T>) => {
       if (column.isNameColumn) {
@@ -264,13 +277,7 @@ function FolderTable<T extends FolderTableRow>({
 
       return null;
     },
-    [
-      expandedKeySet,
-      handleRowAction,
-      handleToggleExpand,
-      onExpandedChange,
-      rowActions,
-    ]
+    [expandedKeySet, handleRowAction, handleToggleExpand, onExpandedChange, rowActions]
   );
 
   const resolveColumnHeaderClass = useCallback(
@@ -368,6 +375,7 @@ function FolderTable<T extends FolderTableRow>({
                     const rowProps = getRowProps?.(row as T, ctx) ?? {};
                     const { className: rowClassName, ...restRowProps } = rowProps;
                     const isLoadMoreRow = row.entryType === 'loading';
+                    const isSelected = selectedRowKey === rowId;
 
                     return (
                       <Table.Row
@@ -375,12 +383,14 @@ function FolderTable<T extends FolderTableRow>({
                         key={rowId}
                         id={rowId}
                         textValue={row.name}
+                        data-selected={isSelected ? 'true' : undefined}
                         className={joinClassNames(
                           styles.bodyRow,
+                          isSelected ? styles.selectedRow : undefined,
                           isLoadMoreRow ? styles.inlineLoadMoreRow : undefined,
                           rowClassName
                         )}
-                        onAction={() => onRowActivate?.(row as T)}
+                        onAction={() => handleRowPress(row as T)}
                       >
                         {columns.map((column) => {
                           const cellContent = renderCellContent(column, row, ctx);

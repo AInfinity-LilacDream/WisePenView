@@ -1,5 +1,5 @@
-import type { DragEventHandler, ReactNode } from 'react';
 import type { ResourceIconType } from '@/domains/Resource';
+import type { DragEventHandler, ReactNode } from 'react';
 import type { FolderColumnWidth } from '../shared/TableBase/columnWidth';
 import type { TableColumnBase, TableLoadMore } from '../shared/TableBase/index.type';
 import type { TableRowAction } from '../shared/TableRowActions/index.type';
@@ -76,7 +76,11 @@ export interface FolderTableProps<T extends FolderTableRow> {
   /** 已展开的文件夹 id */
   expandedRowKeys?: string[];
   onExpandedChange?: (keys: string[]) => void;
-  /** 单击行（文件夹进入 / 资源打开） */
+  /** 当前选中的行 id */
+  selectedRowKey?: string;
+  /** 单击行选中；未传时单击沿用激活行为 */
+  onRowSelect?: (row: T) => void;
+  /** 行激活（例如进入文件夹 / 打开资源） */
   onRowActivate?: (row: T) => void;
   /** 行级属性扩展，供拖放等业务注入属性 */
   getRowProps?: (row: T, ctx: FolderTableRowContext<T>) => FolderTableRowProps;

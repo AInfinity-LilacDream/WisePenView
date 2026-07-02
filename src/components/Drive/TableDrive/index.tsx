@@ -7,7 +7,7 @@ import {
 import type { DriveNode } from '@/domains/Drive';
 import { Button } from '@heroui/react';
 import { CloudUpload } from 'lucide-react';
-import React, { useMemo, useRef } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { getDriveNodeLabel, resolveDriveScope } from '../common/driveComponentModel';
 import { useClickNode } from '../common/useClickNode';
 import {
@@ -73,7 +73,7 @@ function toBreadcrumbItems(pathNodes: DriveNode[]): FolderTableBreadcrumbItem[] 
 }
 
 function TableDrive({ groupId, rootId, scope, actions }: TableDriveProps) {
-  const resolvedScope = React.useMemo(() => resolveDriveScope(scope, groupId), [scope, groupId]);
+  const resolvedScope = useMemo(() => resolveDriveScope(scope, groupId), [scope, groupId]);
   const finalRootId = rootId ?? resolvedScope.rootId;
   const finalGroupId = resolvedScope.groupId;
   const {
@@ -86,13 +86,25 @@ function TableDrive({ groupId, rootId, scope, actions }: TableDriveProps) {
     handleExpand,
     refresh,
   } = useTableDrive({ rootId: finalRootId, groupId: finalGroupId });
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
 
+  const handleEnterFolder = useCallback(
+    (nodeId: string) => {
+      setSelectedNodeId(null);
+      enterFolder(nodeId);
+    },
+    [enterFolder]
+  );
   const handleClickNode = useClickNode({
-    enterFolder,
+    enterFolder: handleEnterFolder,
     groupId: finalGroupId,
   });
   const { onDrop } = useDriveDrop({ refresh, groupId: finalGroupId });
   const rows = useMemo(() => dataSource.map((node) => toDriveTableRow(node)), [dataSource]);
+  const selectedNode = useMemo(
+    () => (selectedNodeId ? findRowById(rows, selectedNodeId) : undefined),
+    [rows, selectedNodeId]
+  );
   const currentDirectoryItemCount = useMemo(
     () => rows.filter((row) => row.entryType !== 'loading').length,
     [rows]
@@ -193,48 +205,68 @@ function TableDrive({ groupId, rootId, scope, actions }: TableDriveProps) {
     handleClickNode(row.node);
   };
 
+  const handleRowSelect = (row: DriveTableRow) => {
+    if (isDraggingRef.current || row.node.type === 'loading') return;
+    if (selectedNodeId === row.node.id) {
+      handleRowActivate(row);
+      return;
+    }
+    setSelectedNodeId(row.node.id);
+  };
+
   return (
     <main className={styles.listArea}>
-      <FolderTable<DriveTableRow>
-        ariaLabel="云盘文件列表"
-        items={rows}
-        loading={loading}
-        breadcrumb={
-          <FolderTable.Breadcrumb
-            items={breadcrumbItems}
-            onJump={(nodeId) => enterFolder(nodeId)}
-          />
-        }
-        toolbar={
-          <div className={styles.toolbarActions}>
-            {showUploadToGroup ? (
-              <Button variant="secondary" size="sm" onPress={openUploadToGroup}>
-                <IconText icon={<CloudUpload />} iconSize={16}>
-                  上传文件
-                </IconText>
-              </Button>
-            ) : null}
-            {showManagePermission ? (
-              <Button variant="secondary" size="sm" onPress={openTagPermission}>
-                标签权限管理
-              </Button>
-            ) : null}
-            {showCreateFolder ? (
-              <Button variant="secondary" size="sm" onPress={openNewFolder}>
-                新建文件夹
-              </Button>
-            ) : null}
+      <div className={styles.tableLayout}>
+        <FolderTable<DriveTableRow>
+          ariaLabel="云盘文件列表"
+          items={rows}
+          loading={loading}
+          breadcrumb={
+            <FolderTable.Breadcrumb
+              items={breadcrumbItems}
+              onJump={(nodeId) => handleEnterFolder(nodeId)}
+            />
+          }
+          toolbar={
+            <div className={styles.toolbarActions}>
+              {showUploadToGroup ? (
+                <Button variant="secondary" size="sm" onPress={openUploadToGroup}>
+                  <IconText icon={<CloudUpload />} iconSize={16}>
+                    上传文件
+                  </IconText>
+                </Button>
+              ) : null}
+              {showManagePermission ? (
+                <Button variant="secondary" size="sm" onPress={openTagPermission}>
+                  标签权限管理
+                </Button>
+              ) : null}
+              {showCreateFolder ? (
+                <Button variant="secondary" size="sm" onPress={openNewFolder}>
+                  新建文件夹
+                </Button>
+              ) : null}
+            </div>
+          }
+          expandedRowKeys={expandedRowKeys}
+          onExpandedChange={(keys) => void handleExpandedChange(keys)}
+          selectedRowKey={selectedNode?.id}
+          onRowSelect={handleRowSelect}
+          onRowActivate={handleRowActivate}
+          getRowProps={getRowProps}
+          rowActions={rowActions}
+          totalCount={currentDirectoryItemCount}
+          summary={`当前目录共 ${currentDirectoryItemCount} 项`}
+          className={styles.table}
+        />
+        <aside className={styles.selectionPanel} aria-label="选中节点操作区域">
+          <div className={styles.selectionPanelTitle}>选中节点</div>
+          <div className={styles.selectionMeta}>
+            <span className={styles.selectionLabel}>节点 ID</span>
+            <span className={styles.selectionValue}>{selectedNode?.id ?? '未选中'}</span>
           </div>
-        }
-        expandedRowKeys={expandedRowKeys}
-        onExpandedChange={(keys) => void handleExpandedChange(keys)}
-        onRowActivate={handleRowActivate}
-        getRowProps={getRowProps}
-        rowActions={rowActions}
-        totalCount={currentDirectoryItemCount}
-        summary={`当前目录共 ${currentDirectoryItemCount} 项`}
-        className={styles.table}
-      />
+        </aside>
+      </div>
       {ModalHost}
     </main>
   );
