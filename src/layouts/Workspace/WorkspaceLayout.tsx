@@ -7,10 +7,8 @@ import clsx from 'clsx';
 import { Bot } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 import { Outlet } from 'react-router-dom';
-import WorkspaceActionFooter from './_common/WorkspaceActionFooter';
 import WorkspaceFrame from './_common/WorkspaceFrame';
 import WorkspaceHeader from './_common/WorkspaceHeader';
-import WorkspaceStatsBar from './_common/WorkspaceStatsBar';
 import styles from './WorkspaceLayout.module.less';
 import type { WorkspaceLayoutConfig, WorkspaceOutletContextValue } from './WorkspaceOutletContext';
 
@@ -56,32 +54,18 @@ function WorkspaceLayout() {
     setLayoutConfigState({});
   }, []);
 
-  const renderInteractStats = useCallback((resourceId: string) => {
-    return resourceId ? <WorkspaceStatsBar resourceId={resourceId} /> : null;
-  }, []);
-
   const outletContext = useMemo<WorkspaceOutletContextValue>(
     () => ({
       setLayoutConfig,
       resetLayoutConfig,
-      renderInteractStats,
     }),
-    [renderInteractStats, resetLayoutConfig, setLayoutConfig]
+    [resetLayoutConfig, setLayoutConfig]
   );
 
   const renderHeader = () => {
     if (layoutConfig.header === false) return null;
-    const { statsResourceId, extra, ...headerProps } = layoutConfig.header ?? {};
-    const headerExtra = statsResourceId ? (
-      <>
-        {extra}
-        <WorkspaceStatsBar resourceId={statsResourceId} />
-      </>
-    ) : (
-      extra
-    );
 
-    return <WorkspaceHeader {...headerProps} extra={headerExtra} />;
+    return <WorkspaceHeader {...(layoutConfig.header ?? {})} />;
   };
 
   return (
@@ -119,14 +103,6 @@ function WorkspaceLayout() {
             className={layoutConfig.className}
             bodyClassName={layoutConfig.bodyClassName}
             header={renderHeader()}
-            footer={
-              layoutConfig.footer ? (
-                <WorkspaceActionFooter
-                  resourceId={layoutConfig.footer.resourceId}
-                  onRateSuccess={layoutConfig.footer.onRateSuccess}
-                />
-              ) : null
-            }
           >
             <Outlet context={outletContext} />
           </WorkspaceFrame>

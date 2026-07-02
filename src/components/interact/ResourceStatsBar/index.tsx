@@ -1,14 +1,14 @@
 import { Eye, Star, ThumbsUp } from 'lucide-react';
-/** 详情页顶部互动信息展示条（只读，Note 与 PDF 详情页共用） */
+/** 资源互动信息展示条（只读） */
 import { Separator } from '@heroui/react';
 import { useRequest } from 'ahooks';
 
 import { useResourceService } from '@/domains';
 import { formatReadCount } from '@/utils/format/formatNumber';
-import type { WorkspaceStatsBarProps } from './index.type';
+import type { ResourceStatsBarProps } from './index.type';
 import styles from './style.module.less';
 
-function WorkspaceStatsBar({ resourceId }: WorkspaceStatsBarProps) {
+function ResourceStatsBar({ resourceId }: ResourceStatsBarProps) {
   const resourceService = useResourceService();
 
   const { data } = useRequest(() => resourceService.getInteractStats(resourceId), {
@@ -50,4 +50,4 @@ function WorkspaceStatsBar({ resourceId }: WorkspaceStatsBarProps) {
   );
 }
 
-export default WorkspaceStatsBar;
+export default ResourceStatsBar;

@@ -1,4 +1,4 @@
-import { useLayoutEffect, useMemo, type ReactNode } from 'react';
+import { useLayoutEffect, type ReactNode } from 'react';
 import { useOutletContext } from 'react-router-dom';
 
 export interface WorkspaceHeaderConfig {
@@ -8,25 +8,17 @@ export interface WorkspaceHeaderConfig {
   extra?: ReactNode;
   titleBlock?: ReactNode;
   className?: string;
-  statsResourceId?: string;
-}
-
-export interface WorkspaceFooterConfig {
-  resourceId: string;
-  onRateSuccess?: () => void;
 }
 
 export interface WorkspaceLayoutConfig {
   className?: string;
   bodyClassName?: string;
   header?: WorkspaceHeaderConfig | false;
-  footer?: WorkspaceFooterConfig | null;
 }
 
 export interface WorkspaceOutletContextValue {
   setLayoutConfig: (config: WorkspaceLayoutConfig) => void;
   resetLayoutConfig: () => void;
-  renderInteractStats: (resourceId: string) => ReactNode;
 }
 
 function useWorkspaceOutletContext() {
@@ -44,10 +36,4 @@ export function useWorkspaceLayoutConfig(config: WorkspaceLayoutConfig) {
     setLayoutConfig(config);
     return resetLayoutConfig;
   }, [config, resetLayoutConfig, setLayoutConfig]);
-}
-
-export function useWorkspaceInteractStats(resourceId: string) {
-  const { renderInteractStats } = useWorkspaceOutletContext();
-
-  return useMemo(() => renderInteractStats(resourceId), [renderInteractStats, resourceId]);
 }

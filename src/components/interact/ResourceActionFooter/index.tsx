@@ -1,4 +1,4 @@
-/** 文档末尾互动区（Note 与 PDF 详情页通用）：大圆形点赞按钮 + 星级评分 */
+/** 资源互动区：大圆形点赞按钮 + 星级评分 */
 import LikeButton from '@/components/LikeButton';
 import Rating from '@/components/Rating';
 import { useResourceService } from '@/domains';
@@ -6,7 +6,7 @@ import { parseErrorMessage } from '@/utils/error';
 import { toast } from '@heroui/react';
 import { useDebounceFn, useRequest } from 'ahooks';
 import { useMemo, useState } from 'react';
-import type { WorkspaceActionFooterProps } from './index.type';
+import type { ResourceActionFooterProps } from './index.type';
 import styles from './style.module.less';
 
 const TOGGLE_LIKE_DEBOUNCE_MS = 2000;
@@ -20,7 +20,7 @@ const RATE_HINT: Record<number, string> = {
   5: '很棒',
 };
 
-function WorkspaceActionFooter({ resourceId, onRateSuccess }: WorkspaceActionFooterProps) {
+function ResourceActionFooter({ resourceId, onRateSuccess }: ResourceActionFooterProps) {
   const resourceService = useResourceService();
   const [displayLiked, setDisplayLiked] = useState<boolean | undefined>(undefined);
   const [displayUserScore, setDisplayUserScore] = useState<number | null | undefined>(undefined);
@@ -93,4 +93,4 @@ function WorkspaceActionFooter({ resourceId, onRateSuccess }: WorkspaceActionFoo
   );
 }
 
-export default WorkspaceActionFooter;
+export default ResourceActionFooter;

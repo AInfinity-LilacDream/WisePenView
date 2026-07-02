@@ -35,17 +35,9 @@ interface PdfLayoutConfigProps {
   children: ReactNode;
   resourceName?: string;
   resourceType?: string;
-  statsResourceId?: string;
-  footerResourceId?: string;
 }
 
-function PdfLayoutConfig({
-  children,
-  resourceName,
-  resourceType,
-  statsResourceId,
-  footerResourceId,
-}: PdfLayoutConfigProps) {
+function PdfLayoutConfig({ children, resourceName, resourceType }: PdfLayoutConfigProps) {
   const frameConfig = useMemo(
     () => ({
       className: styles.container,
@@ -54,12 +46,10 @@ function PdfLayoutConfig({
             inlineTitle: (
               <PdfToolbarTitle resourceName={resourceName} resourceType={resourceType} />
             ),
-            statsResourceId,
           }
         : {},
-      footer: footerResourceId ? { resourceId: footerResourceId } : null,
     }),
-    [footerResourceId, resourceName, resourceType, statsResourceId]
+    [resourceName, resourceType]
   );
   useWorkspaceLayoutConfig(frameConfig);
 
@@ -210,8 +200,6 @@ function DocumentPreview({ resourceId }: DocumentPreviewProps = {}) {
     <PdfLayoutConfig
       resourceName={docInfo.resourceInfo.resourceName}
       resourceType={docInfo.resourceInfo.resourceType}
-      statsResourceId={resourceId}
-      footerResourceId={resourceId}
     >
       <div className={styles.content}>
         <div className={styles.root}>

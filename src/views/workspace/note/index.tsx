@@ -276,10 +276,6 @@ function NoteViewConnected({
           </div>
         ),
       },
-      footer: {
-        resourceId,
-        onRateSuccess: onRefreshNoteInfo,
-      },
     }),
     [
       aiDiffDisplayMode,
@@ -287,7 +283,6 @@ function NoteViewConnected({
       handleMoreAction,
       headerMorePending,
       noteInfoDisplay?.noteTitle,
-      onRefreshNoteInfo,
       resourceId,
       setAiDiffDisplayMode,
       showAiDiffDisplayModeSwitch,

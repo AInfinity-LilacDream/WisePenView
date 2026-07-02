@@ -1,6 +1,4 @@
-import EntryIcon from '@/components/EntryIcon';
 import { ResultState, Spin } from '@/components/Feedback';
-import IconText from '@/components/IconText';
 import { useNoteService, useResourceService, useUserService } from '@/domains';
 import type {
   DrawIoLatestSnapshotData,
@@ -21,9 +19,19 @@ import { useCallback, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import styles from './style.module.less';
 
-const DEFAULT_DRAWIO_EMBED_URL = 'https://embed.diagrams.net/';
+const DRAWIO_EMBED_URL =
+  import.meta.env.VITE_DRAWIO_EMBED_URL?.trim() || 'https://embed.diagrams.net/';
 
 const EMPTY_DRAWIO_XML = `<mxfile host="WisePen"><diagram name="Page-1"><mxGraphModel dx="1422" dy="794" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0"><root><mxCell id="0"/><mxCell id="1" parent="0"/></root></mxGraphModel></diagram></mxfile>`;
+const WISEPEN_COLOR_SCHEME_STORAGE_KEY = 'heroui-color-scheme';
+const WISEPEN_COLOR_SCHEMES = new Set([
+  'default',
+  'warm',
+  'academic',
+  'violet',
+  'forest',
+  'minimal',
+]);
 
 type SaveState = 'saved' | 'dirty' | 'saving' | 'failed';
 
@@ -35,11 +43,6 @@ interface DrawioViewData {
   noteInfoDisplay: NoteInfoDisplayData;
   snapshot: DrawIoLatestSnapshotData;
   initialXml: string;
-}
-
-interface DrawioToolbarTitleProps {
-  resourceId: string;
-  fallbackTitle?: string;
 }
 
 interface DrawioViewConnectedProps {
@@ -90,48 +93,68 @@ function hasAction(actions: unknown, action: string): boolean {
 }
 
 function readDrawioEmbedUrl(): URL {
-  return new URL(DEFAULT_DRAWIO_EMBED_URL, window.location.origin);
+  return new URL(DRAWIO_EMBED_URL, window.location.origin);
 }
 
 function readDrawioEmbedOrigin(): string {
   return readDrawioEmbedUrl().origin;
 }
 
+function readWisePenTheme(): 'light' | 'dark' {
+  const root = document.documentElement;
+  const dataTheme = root.getAttribute('data-theme');
+
+  if (dataTheme === 'dark' || root.classList.contains('dark')) {
+    return 'dark';
+  }
+
+  return 'light';
+}
+
+function readWisePenColorScheme(): string {
+  const rootScheme = document.documentElement.getAttribute('data-color-scheme');
+
+  if (rootScheme && WISEPEN_COLOR_SCHEMES.has(rootScheme)) {
+    return rootScheme;
+  }
+
+  try {
+    const storedScheme = window.localStorage.getItem(WISEPEN_COLOR_SCHEME_STORAGE_KEY);
+
+    if (storedScheme && WISEPEN_COLOR_SCHEMES.has(storedScheme)) {
+      return storedScheme;
+    }
+  } catch {
+    // localStorage 不可用时使用默认主题。
+  }
+
+  return 'default';
+}
+
 function buildDrawioUrl(canEdit: boolean): string {
   const url = readDrawioEmbedUrl();
+  const wisePenTheme = readWisePenTheme();
+  const wisePenColorScheme = readWisePenColorScheme();
   url.searchParams.set('embed', '1');
   url.searchParams.set('proto', 'json');
   url.searchParams.set('spin', '1');
-  url.searchParams.set('ui', 'min');
+  url.searchParams.set('pages', '0');
+  url.searchParams.set('hide-pages', '1');
+  url.searchParams.delete('ui');
   url.searchParams.set('libraries', '1');
   url.searchParams.set('noExitBtn', '1');
   url.searchParams.set('saveAndExit', '0');
+  url.searchParams.set('wisepenTheme', wisePenTheme);
+  url.searchParams.set('wisepenColorScheme', wisePenColorScheme);
+  url.searchParams.set('dark', wisePenTheme === 'dark' ? '1' : '0');
   if (!canEdit) {
     url.searchParams.set('noSaveBtn', '1');
   }
   return url.toString();
 }
 
-function DrawioToolbarTitle({ resourceId, fallbackTitle }: DrawioToolbarTitleProps) {
-  const title = useResourceDisplayName(resourceId, fallbackTitle, '未命名图表');
-
-  return (
-    <IconText
-      className={styles.toolbarTitleText}
-      icon={<EntryIcon entryType="resource" resourceType="DRAWIO" />}
-      iconSize={18}
-      gap="var(--space-sm)"
-      ellipsis
-    >
-      {title}
-    </IconText>
-  );
-}
-
 function DrawioLayoutConfig({
   children,
-  resourceId,
-  noteInfoDisplay,
   extra,
 }: {
   children: ReactNode;
@@ -142,22 +165,11 @@ function DrawioLayoutConfig({
   const frameConfig = useMemo(
     () => ({
       className: styles.container,
-      header:
-        resourceId && noteInfoDisplay
-          ? {
-              inlineTitle: (
-                <DrawioToolbarTitle
-                  resourceId={resourceId}
-                  fallbackTitle={noteInfoDisplay.noteTitle}
-                />
-              ),
-              statsResourceId: resourceId,
-              extra,
-            }
-          : {},
-      footer: resourceId ? { resourceId } : null,
+      header: {
+        extra,
+      },
     }),
-    [extra, noteInfoDisplay, resourceId]
+    [extra]
   );
   useWorkspaceLayoutConfig(frameConfig);
 
@@ -413,7 +425,6 @@ function DrawioViewConnected({ resourceId, data }: DrawioViewConnectedProps) {
           noExitBtn: 1,
           noSaveBtn: canEdit ? 0 : 1,
           saveAndExit: 0,
-          title,
           xml: initialXml,
         });
         return;
@@ -453,16 +464,7 @@ function DrawioViewConnected({ resourceId, data }: DrawioViewConnectedProps) {
         toast.danger(message.message || 'Draw.io 编辑器加载失败');
       }
     },
-    [
-      canEdit,
-      clearExportTimer,
-      drawioOrigin,
-      initialXml,
-      persistXml,
-      postToEditor,
-      saveState,
-      title,
-    ]
+    [canEdit, clearExportTimer, drawioOrigin, initialXml, persistXml, postToEditor, saveState]
   );
 
   useEventListener('message', handleMessage);

@@ -1,14 +1,12 @@
 import { Separator } from '@heroui/react';
 
 import UserCapsule from '@/components/UserCapsule';
-import { useWorkspaceInteractStats } from '@/layouts/Workspace/WorkspaceOutletContext';
 import type { NoteInfoBarProps } from './index.type';
 import styles from './style.module.less';
 
 function NoteInfoBar({ noteInfoDisplay }: NoteInfoBarProps) {
   const authors = noteInfoDisplay?.authors ?? [];
   const lastEditedAtText = noteInfoDisplay?.lastEditedAtText ?? '暂无';
-  const interactStats = useWorkspaceInteractStats(noteInfoDisplay?.resourceInfo?.resourceId ?? '');
 
   return (
     <div className={styles.noteInfoBar}>
@@ -36,8 +34,6 @@ function NoteInfoBar({ noteInfoDisplay }: NoteInfoBarProps) {
           <span className={styles.noteInfoValue}>{lastEditedAtText}</span>
         </div>
       </div>
-      {/* 第二行：阅读量 / 点赞量 / 平均分 */}
-      <div className={styles.interactRow}>{interactStats}</div>
     </div>
   );
 }
