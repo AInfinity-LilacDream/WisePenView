@@ -1,11 +1,10 @@
 import type { Message } from '@/components/ChatPanel/index.type';
 import { Spin } from '@/components/Feedback';
-import IconText from '@/components/IconText';
 import { Button, toast } from '@heroui/react';
 import { useInterval } from 'ahooks';
 import { Check, Copy } from 'lucide-react';
 import { useState } from 'react';
-import ProviderLogo from '../../ProviderLogo';
+import ProviderLogo from '../../../Icons/ProviderLogo';
 import styles from './AiMessage.module.less';
 import MessageContent from './MessageContent';
 import ThinkingBlock from './ThinkingBlock';
@@ -63,15 +62,14 @@ function AiMessage({ message }: { message: Message }) {
         )}
         <ToolCallBlock content={message.toolContent || ''} />
         {showLoadingIndicator && (
-          <IconText
-            className={styles.loadingHint}
-            textClassName={styles.loadingHintText}
-            icon={<Spin size="small" />}
-            iconSize={14}
-            gap="var(--space-xs)"
-          >
-            <span key={loadingHintIndex}>{LOADING_HINTS[loadingHintIndex]}</span>
-          </IconText>
+          <span className={styles.loadingHint}>
+            <span className={styles.loadingHintIcon} aria-hidden="true">
+              <Spin size="small" />
+            </span>
+            <span key={loadingHintIndex} className={styles.loadingHintText}>
+              {LOADING_HINTS[loadingHintIndex]}
+            </span>
+          </span>
         )}
         {/* 正文内容 */}
         {/* 只有当正文有内容，或者没有思考过程且非 loading 时（避免空白占位），才渲染正文 */}

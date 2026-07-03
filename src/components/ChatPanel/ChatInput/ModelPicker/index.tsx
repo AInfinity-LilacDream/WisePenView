@@ -1,27 +1,72 @@
+import type { Model } from '@/components/ChatPanel/index.type';
+import ProviderLogo from '@/components/Icons/ProviderLogo';
 import { Popover } from '@/components/Overlay';
+import { useChatService } from '@/domains';
 import { ListBox, ListBoxItem } from '@heroui/react';
+import { useRequest } from 'ahooks';
 import { Check, ChevronDown, LoaderCircle } from 'lucide-react';
-import ProviderLogo from '../../ProviderLogo';
+import { useMemo } from 'react';
+import { useShallow } from 'zustand/react/shallow';
+import { useChatInputStore, useChatInputStoreApi } from '../ChatInputStore';
 import styles from '../style.module.less';
-import type { ModelPickerProps } from './index.type';
+import { useChatInputFiles } from '../useChatInputFiles';
 
-function ModelPicker({
-  open,
-  loading,
-  models,
-  selectedModel,
-  onOpenChange,
-  onChange,
-}: ModelPickerProps) {
-  const renderProviderText = (model: ModelPickerProps['models'][number]): string => {
+function ModelPicker() {
+  const chatService = useChatService();
+  const store = useChatInputStoreApi();
+  const { convertPendingImagesToAttachments } = useChatInputFiles();
+  const { availableModels, modelOpen, selectedModelId } = useChatInputStore(
+    useShallow((state) => ({
+      availableModels: state.availableModels,
+      modelOpen: state.modelOpen,
+      selectedModelId: state.selectedModelId,
+    }))
+  );
+  const { setModelOpen, setSelectedModelId } = store.getState();
+  const { loading } = useRequest(() => chatService.getModels(), {
+    onSuccess: (nextModels) => {
+      const state = store.getState();
+      state.setAvailableModels(nextModels);
+      if (nextModels.length === 0) {
+        if (state.selectedModelId) state.setSelectedModelId(null);
+        return;
+      }
+
+      const selectedExists = state.selectedModelId
+        ? nextModels.some((model) => model.id === state.selectedModelId)
+        : false;
+      if (!selectedExists) {
+        state.setSelectedModelId((nextModels.find((model) => model.isDefault) ?? nextModels[0]).id);
+      }
+    },
+  });
+  const models = availableModels;
+  const selectedModel = useMemo(() => {
+    if (models.length === 0) return null;
+    const explicitModel = selectedModelId
+      ? models.find((model) => model.id === selectedModelId)
+      : undefined;
+    return explicitModel ?? models.find((model) => model.isDefault) ?? models[0];
+  }, [models, selectedModelId]);
+
+  const renderProviderText = (model: Model): string => {
     if (model.providerName && model.providerModelName) {
       return `${model.providerName} · ${model.providerModelName}`;
     }
     return model.providerModelName || model.providerName || model.provider;
   };
 
+  function handleModelChange(model: Model): void {
+    const wasVision = selectedModel?.vision ?? false;
+    setSelectedModelId(model.id);
+    setModelOpen(false);
+    if (wasVision && !model.vision) {
+      void convertPendingImagesToAttachments();
+    }
+  }
+
   return (
-    <Popover isOpen={open} onOpenChange={onOpenChange}>
+    <Popover isOpen={modelOpen} onOpenChange={setModelOpen}>
       <Popover.Trigger>
         <button type="button" className={styles.modelTrigger} aria-label="选择模型">
           {loading ? (
@@ -57,7 +102,7 @@ function ModelPicker({
                         key={model.id}
                         id={model.id}
                         textValue={model.name}
-                        onPress={() => onChange(model)}
+                        onPress={() => handleModelChange(model)}
                       >
                         <span className={styles.modelItem}>
                           <ProviderLogo provider={model.provider} size={18} />

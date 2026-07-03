@@ -6,10 +6,9 @@ import { ArrowUpAZ, ChartBar, Check, ChevronDown, ChevronUp, LayoutGrid } from '
 import { useMemo, useState } from 'react';
 
 import { EmptyState } from '@/components/Feedback';
-import IconText from '@/components/IconText';
 import { useChatService } from '@/domains';
 import { useChatModelPreferenceStore } from '@/store/useChatModelPreferenceStore';
-import ProviderLogo from '../ProviderLogo';
+import ProviderLogo from '../../Icons/ProviderLogo';
 import type { Model } from '../index.type';
 
 import styles from './style.module.less';
@@ -108,21 +107,19 @@ function ModelSelector({ value, onChange }: ModelSelectorProps) {
             onClick={() => setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'))}
             aria-label={sortOrder === 'asc' ? '切换为降序' : '切换为升序'}
           >
-            <IconText
-              icon={sortOrder === 'asc' ? <ChevronUp /> : <ChevronDown />}
-              iconSize={14}
-              gap={2}
-            >
-              {sortOrder === 'asc' ? '升序' : '降序'}
-            </IconText>
+            {sortOrder === 'asc' ? (
+              <ChevronUp size={14} aria-hidden="true" />
+            ) : (
+              <ChevronDown size={14} aria-hidden="true" />
+            )}
+            {sortOrder === 'asc' ? '升序' : '降序'}
           </button>
 
           <Dropdown>
             <Dropdown.Trigger>
               <button type="button" className={styles.sortTrigger}>
-                <IconText icon={<ChevronDown />} iconPosition="end" iconSize={10} gap={4}>
-                  {SORT_OPTIONS.find((o) => o.value === currentSort)?.label}
-                </IconText>
+                {SORT_OPTIONS.find((o) => o.value === currentSort)?.label}
+                <ChevronDown size={10} aria-hidden="true" />
               </button>
             </Dropdown.Trigger>
             <Dropdown.Popover placement="bottom end" className={styles.sortDropdownPopover}>
@@ -139,9 +136,8 @@ function ModelSelector({ value, onChange }: ModelSelectorProps) {
                     textValue={opt.label}
                     className={styles.sortDropdownItem}
                   >
-                    <IconText icon={<opt.icon />} iconSize={14} gap="var(--space-xs)">
-                      {opt.label}
-                    </IconText>
+                    <opt.icon size={14} aria-hidden="true" />
+                    <span>{opt.label}</span>
                   </Dropdown.Item>
                 ))}
               </Dropdown.Menu>
@@ -173,16 +169,12 @@ function ModelSelector({ value, onChange }: ModelSelectorProps) {
               {currentSort === 'ratio' && <div className={styles.rankNum}>#{index + 1}</div>}
 
               <div className={styles.itemLeft}>
-                <IconText
-                  className={styles.modelTitle}
-                  textClassName={styles.modelName}
-                  icon={<ProviderLogo provider={model.provider} size={20} />}
-                  iconSize={20}
-                  gap="var(--space-xs)"
-                  ellipsis
-                >
-                  {model.name}
-                </IconText>
+                <span className={styles.modelTitle}>
+                  <span className={styles.modelTitleIcon} aria-hidden="true">
+                    <ProviderLogo provider={model.provider} size={20} />
+                  </span>
+                  <span className={styles.modelName}>{model.name}</span>
+                </span>
 
                 {/* {model.vision && (
                   <Tooltip title="支持视觉识别" classNames={{ container: styles.tooltipBody }}>
@@ -224,21 +216,19 @@ function ModelSelector({ value, onChange }: ModelSelectorProps) {
       <Popover.Trigger>
         <button type="button" className={styles.trigger}>
           {/* 如果正在加载，显示 Loading 图标或占位符 */}
-          <IconText
-            icon={
-              loading ? (
+          <span className={styles.triggerModel}>
+            <span className={styles.triggerModelIcon} aria-hidden="true">
+              {loading ? (
                 <Spinner size="sm" />
               ) : (
                 <ProviderLogo provider={currentModel?.provider ?? 'openai'} size={16} />
-              )
-            }
-            iconSize={16}
-            gap="4px"
-            ellipsis
-          >
-            {loading ? '模型加载中' : (currentModel?.name ?? '请选择模型')}
-          </IconText>
-          <IconText icon={<ChevronDown />} iconSize={10} aria-hidden />
+              )}
+            </span>
+            <span className={styles.triggerModelName}>
+              {loading ? '模型加载中' : (currentModel?.name ?? '请选择模型')}
+            </span>
+          </span>
+          <ChevronDown className={styles.triggerArrow} size={10} aria-hidden="true" />
         </button>
       </Popover.Trigger>
       <Popover.Content className={styles.popoverBody} placement="bottom">

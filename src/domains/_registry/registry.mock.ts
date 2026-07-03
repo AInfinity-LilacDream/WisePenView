@@ -3,7 +3,7 @@
  */
 import { AdminServicesMock } from '@/domains/Admin/mock/AdminServices.mock';
 import { AuthServicesMock } from '@/domains/Auth/mock/AuthServices.mock';
-import { ChatServicesMock } from '@/domains/Chat/mock/ChatServices.mock';
+import { createChatServicesMock } from '@/domains/Chat/mock/ChatServices.mock';
 import { DocumentServicesMock } from '@/domains/Document/mock/DocumentServices.mock';
 import { DriveServicesMock } from '@/domains/Drive/mock/DriveServices.mock';
 import { GroupServicesMock } from '@/domains/Group/mock/GroupServices.mock';
@@ -17,10 +17,16 @@ import { WalletServicesMock } from '@/domains/Wallet/mock/WalletServices.mock';
 
 import type { ServicesContextValue } from './registry.types';
 
+const chatService = createChatServicesMock({
+  groupService: GroupServicesMock,
+  resourceService: ResourceServicesMock,
+  driveService: DriveServicesMock,
+});
+
 const mockServicesValue: ServicesContextValue = {
   adminService: AdminServicesMock,
   authService: AuthServicesMock,
-  chatService: ChatServicesMock,
+  chatService: chatService,
   documentService: DocumentServicesMock,
   driveService: DriveServicesMock,
   groupService: GroupServicesMock,

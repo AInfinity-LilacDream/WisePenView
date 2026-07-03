@@ -1,14 +1,8 @@
-import {
-  buildDriveTreeData,
-  replaceTreeNodeChildren,
-} from '@/components/Drive/DriveNav/buildTreeData';
-import { resolveDriveScope } from '@/components/Drive/common/driveComponentModel';
 import { EmptyState, LoadingState } from '@/components/Feedback';
-import IconText from '@/components/IconText';
 import type { DataNode } from '@/components/Tree';
 import Tree from '@/components/Tree';
-import { useDriveService, useGroupService } from '@/domains';
-import type { DriveNode } from '@/domains/Drive';
+import { useChatService } from '@/domains';
+import type { ChatDocumentPickerNode, ChatDocumentPickerScope } from '@/domains/Chat';
 import { parseErrorMessage } from '@/utils/error';
 import { Modal } from '@/components/Overlay';
 import { Button, toast } from '@heroui/react';
@@ -16,64 +10,45 @@ import { useRequest } from 'ahooks';
 import { Folder, Users } from 'lucide-react';
 import type { Key } from 'react';
 import { useRef, useState } from 'react';
-import type { DocumentPickerModalProps } from './index.type';
+import { useChatInputStore, useChatInputStoreApi } from '../ChatInputStore';
 import styles from './style.module.less';
 
-const SCOPE_KEY_PREFIX = '__document_picker_scope__';
 const CHILD_KEY_SEPARATOR = '>';
 
-interface ScopeInfo {
-  label: string;
-  rootId: string;
-  groupId?: string;
-}
-
-type RenderableType = 'root' | 'folder' | 'resource' | 'link';
-type SelectableType = 'root' | 'folder' | 'resource' | 'link';
-
-function buildScopeKey(scopeId: string): string {
-  return `${SCOPE_KEY_PREFIX}:${scopeId}`;
-}
-
 function isScopeRootKey(key: string): boolean {
-  return key.startsWith(SCOPE_KEY_PREFIX) && !key.includes(CHILD_KEY_SEPARATOR);
+  return !key.includes(CHILD_KEY_SEPARATOR);
 }
 
-function buildScopedKey(scopeKey: string, driveNodeId: string): string {
-  return `${scopeKey}${CHILD_KEY_SEPARATOR}${driveNodeId}`;
+function buildScopedKey(scopeKey: string, nodeId: string): string {
+  return `${scopeKey}${CHILD_KEY_SEPARATOR}${nodeId}`;
 }
 
-function parseDriveTreeKey(key: string): { scopeKey: string; driveNodeId: string } | null {
+function parseDocumentTreeKey(key: string): { scopeKey: string; nodeId: string } | null {
   const idx = key.indexOf(CHILD_KEY_SEPARATOR);
   if (idx === -1) return null;
   return {
     scopeKey: key.slice(0, idx),
-    driveNodeId: key.slice(idx + CHILD_KEY_SEPARATOR.length),
+    nodeId: key.slice(idx + CHILD_KEY_SEPARATOR.length),
   };
 }
 
-function prefixTreeKeys(scopeKey: string, nodes: DataNode[]): DataNode[] {
-  return nodes.map((node) => ({
-    ...node,
-    key: buildScopedKey(scopeKey, String(node.key)),
-    children: node.children ? prefixTreeKeys(scopeKey, node.children) : undefined,
-  }));
-}
-
-function buildScopeRootNode(key: string, title: string, scopeType: 'personal' | 'group'): DataNode {
+function buildScopeRootNode(scope: ChatDocumentPickerScope): DataNode {
   const icon =
-    scopeType === 'personal' ? (
+    scope.type === 'personal' ? (
       <Folder size={14} color="var(--warning)" />
     ) : (
       <Users size={14} color="var(--accent)" />
     );
 
   return {
-    key,
+    key: scope.scopeKey,
     title: (
-      <IconText className={styles.scopeTitle} icon={icon} iconSize={14} gap="4px" ellipsis>
-        {title}
-      </IconText>
+      <span className={styles.scopeTitle}>
+        <span className={styles.scopeIcon} aria-hidden="true">
+          {icon}
+        </span>
+        <span className={styles.scopeLabel}>{scope.label}</span>
+      </span>
     ),
     isLeaf: false,
     selectable: false,
@@ -81,158 +56,120 @@ function buildScopeRootNode(key: string, title: string, scopeType: 'personal' | 
   };
 }
 
-const RENDERABLE_TYPES = new Set<RenderableType>(['root', 'folder', 'resource', 'link']);
-const SELECTABLE_TYPES = new Set<SelectableType>(['resource', 'link']);
-const EMPTY_STRING_SET = new Set<string>();
-
-function isSelectableNode(node: DriveNode | undefined): boolean {
-  return node?.type === 'resource' || node?.type === 'link';
+function isSelectableDocumentNode(node: ChatDocumentPickerNode | undefined): boolean {
+  if (!node) return false;
+  if (node.selectable) return true;
+  return node.type === 'resource' || node.type === 'link';
 }
 
-function DocumentPickerContent({
-  onClose,
-  onConfirm,
-}: Pick<DocumentPickerModalProps, 'onClose' | 'onConfirm'>) {
-  const driveService = useDriveService();
-  const groupService = useGroupService();
+function isExpandableDocumentNode(node: ChatDocumentPickerNode | undefined): boolean {
+  if (!node) return false;
+  if (node.isLeaf) return false;
+  return node.type === 'root' || node.type === 'folder';
+}
+
+function replaceTreeNodeChildren(
+  nodes: DataNode[],
+  targetKey: string,
+  children: DataNode[]
+): DataNode[] {
+  return nodes.map((node) => {
+    if (String(node.key) === targetKey) {
+      return { ...node, children };
+    }
+    if (!node.children || node.children.length === 0) return node;
+    return {
+      ...node,
+      children: replaceTreeNodeChildren(node.children, targetKey, children),
+    };
+  });
+}
+
+function DocumentPickerContent() {
+  const chatService = useChatService();
+  const { addDocRefs, setDocumentPickerOpen } = useChatInputStoreApi().getState();
   const [treeData, setTreeData] = useState<DataNode[]>([]);
   const [checkedKeys, setCheckedKeys] = useState<string[]>([]);
-  const scopeMapRef = useRef<Map<string, ScopeInfo>>(new Map());
-  const scopedDriveNodeMapRef = useRef<Map<string, DriveNode>>(new Map());
+  const scopeMapRef = useRef<Map<string, ChatDocumentPickerScope>>(new Map());
+  const documentNodeMapRef = useRef<Map<string, ChatDocumentPickerNode>>(new Map());
 
-  function buildScopedChildren(scopeKey: string, driveNodes: DriveNode[]): DataNode[] {
-    const rawNodeMap = new Map<string, DriveNode>();
-    const children = buildDriveTreeData(
-      driveNodes,
-      {
-        renderableTypes: RENDERABLE_TYPES,
-        selectableTypes: SELECTABLE_TYPES,
-        disabledNodeIds: EMPTY_STRING_SET,
-      },
-      rawNodeMap
-    );
-
-    for (const [nodeId, node] of rawNodeMap) {
-      scopedDriveNodeMapRef.current.set(buildScopedKey(scopeKey, nodeId), node);
-    }
-
-    return prefixTreeKeys(scopeKey, children);
+  function buildDocumentTreeNodes(
+    scopeKey: string,
+    documentNodes: ChatDocumentPickerNode[]
+  ): DataNode[] {
+    return documentNodes.map((node) => {
+      const key = buildScopedKey(scopeKey, node.nodeId);
+      const selectable = isSelectableDocumentNode(node);
+      documentNodeMapRef.current.set(key, node);
+      return {
+        key,
+        title: node.title,
+        isLeaf: node.isLeaf,
+        selectable,
+        checkable: selectable,
+      };
+    });
   }
 
-  async function loadScopeChildren(scopeKey: string): Promise<void> {
-    const scopeInfo = scopeMapRef.current.get(scopeKey);
-    if (!scopeInfo) return;
-
+  async function loadChildren(
+    scope: ChatDocumentPickerScope,
+    targetKey: string,
+    parentNodeId?: string
+  ): Promise<void> {
     try {
-      const rootNode = await driveService.getRootNode({
-        rootId: scopeInfo.rootId,
-        groupId: scopeInfo.groupId,
-      });
-      if (rootNode.type !== 'root') {
-        setTreeData((prev) => replaceTreeNodeChildren(prev, scopeKey, []));
-        return;
-      }
-
-      const driveChildren = await driveService.listNodeChildren({
-        nodeId: rootNode.id,
-        groupId: scopeInfo.groupId,
+      const children = await chatService.listDocumentPickerChildren({
+        rootId: scope.rootId,
+        groupId: scope.groupId,
+        parentNodeId,
       });
       setTreeData((prev) =>
-        replaceTreeNodeChildren(prev, scopeKey, buildScopedChildren(scopeKey, driveChildren))
+        replaceTreeNodeChildren(prev, targetKey, buildDocumentTreeNodes(scope.scopeKey, children))
       );
     } catch (err) {
       toast.danger(parseErrorMessage(err));
     }
   }
 
-  async function loadFolderChildren(scopeKey: string, driveNodeId: string): Promise<void> {
-    const scopedKey = buildScopedKey(scopeKey, driveNodeId);
-    const scopeInfo = scopeMapRef.current.get(scopeKey);
-    const driveNode = scopedDriveNodeMapRef.current.get(scopedKey);
-    if (!driveNode || (driveNode.type !== 'root' && driveNode.type !== 'folder')) return;
+  const { loading: loadingScopes } = useRequest(async () => {
+    scopeMapRef.current.clear();
+    documentNodeMapRef.current.clear();
+    setCheckedKeys([]);
 
     try {
-      const driveChildren = await driveService.listNodeChildren({
-        nodeId: driveNodeId,
-        groupId: scopeInfo?.groupId,
-      });
-      setTreeData((prev) =>
-        replaceTreeNodeChildren(prev, scopedKey, buildScopedChildren(scopeKey, driveChildren))
-      );
+      const scopes = await chatService.getDocumentPickerScopes();
+      scopes.forEach((scope) => scopeMapRef.current.set(scope.scopeKey, scope));
+      setTreeData(scopes.map(buildScopeRootNode));
     } catch (err) {
       toast.danger(parseErrorMessage(err));
+      setTreeData([]);
     }
-  }
-
-  const { loading: loadingScopes } = useRequest(
-    async () => {
-      scopeMapRef.current.clear();
-      scopedDriveNodeMapRef.current.clear();
-      setCheckedKeys([]);
-
-      const nodes: DataNode[] = [];
-      const personalKey = buildScopeKey('personal');
-      const personalScope = resolveDriveScope({ type: 'personal' });
-      scopeMapRef.current.set(personalKey, {
-        label: '个人文件',
-        rootId: personalScope.rootId,
-      });
-      nodes.push(buildScopeRootNode(personalKey, '个人文件', 'personal'));
-
-      try {
-        const [joinedData, managedData] = await Promise.all([
-          groupService.fetchGroupList({ groupRoleFilter: 'JOINED', page: 1, size: 100 }),
-          groupService.fetchGroupList({ groupRoleFilter: 'MANAGED', page: 1, size: 100 }),
-        ]);
-
-        const seenGroupIds = new Set<string>();
-        const allGroups = [...(joinedData?.groups ?? []), ...(managedData?.groups ?? [])].filter(
-          (group) => {
-            if (seenGroupIds.has(group.groupId)) return false;
-            seenGroupIds.add(group.groupId);
-            return true;
-          }
-        );
-
-        for (const group of allGroups) {
-          const groupKey = buildScopeKey(`group:${group.groupId}`);
-          const groupScope = resolveDriveScope({ type: 'group', groupId: group.groupId });
-          scopeMapRef.current.set(groupKey, {
-            label: group.groupName,
-            rootId: groupScope.rootId,
-            groupId: groupScope.groupId,
-          });
-          nodes.push(buildScopeRootNode(groupKey, group.groupName, 'group'));
-        }
-      } catch (err) {
-        toast.danger(parseErrorMessage(err));
-      }
-
-      setTreeData(nodes);
-    }
-  );
+  });
 
   async function handleLoadData(treeNode: DataNode): Promise<void> {
     const key = String(treeNode.key);
     if (treeNode.children) return;
 
     if (isScopeRootKey(key)) {
-      await loadScopeChildren(key);
+      const scope = scopeMapRef.current.get(key);
+      if (scope) await loadChildren(scope, key);
       return;
     }
 
-    const parsed = parseDriveTreeKey(key);
+    const parsed = parseDocumentTreeKey(key);
     if (!parsed) return;
-    await loadFolderChildren(parsed.scopeKey, parsed.driveNodeId);
+    const scope = scopeMapRef.current.get(parsed.scopeKey);
+    const documentNode = documentNodeMapRef.current.get(key);
+    if (!scope || !isExpandableDocumentNode(documentNode)) return;
+    await loadChildren(scope, key, parsed.nodeId);
   }
 
   function normalizeSelectableKeys(keys: string[]): string[] {
-    return keys.filter((key) => isSelectableNode(scopedDriveNodeMapRef.current.get(key)));
+    return keys.filter((key) => isSelectableDocumentNode(documentNodeMapRef.current.get(key)));
   }
 
   function handleSelect(_keys: Key[], info: { node: DataNode; selected: boolean }): void {
     const clickedKey = String(info.node.key);
-    if (!isSelectableNode(scopedDriveNodeMapRef.current.get(clickedKey))) return;
+    if (!isSelectableDocumentNode(documentNodeMapRef.current.get(clickedKey))) return;
 
     setCheckedKeys((prev) => {
       const next = prev.includes(clickedKey)
@@ -249,30 +186,30 @@ function DocumentPickerContent({
 
   function resetModalState(): void {
     scopeMapRef.current.clear();
-    scopedDriveNodeMapRef.current.clear();
+    documentNodeMapRef.current.clear();
     setTreeData([]);
     setCheckedKeys([]);
   }
 
   function handleClose(): void {
     resetModalState();
-    onClose();
+    setDocumentPickerOpen(false);
   }
 
   function handleConfirm(): void {
     const resources = checkedKeys
-      .map((key) => scopedDriveNodeMapRef.current.get(key))
-      .filter((node): node is Extract<DriveNode, { type: 'resource' | 'link' }> =>
-        Boolean(node && (node.type === 'resource' || node.type === 'link'))
+      .map((key) => documentNodeMapRef.current.get(key))
+      .filter((node): node is ChatDocumentPickerNode =>
+        Boolean(node && isSelectableDocumentNode(node) && node.resourceId)
       )
       .map((node) => ({
-        resourceId: node.resourceId,
-        resourceName: node.title || node.resourceId,
+        resourceId: node.resourceId!,
+        resourceName: node.resourceName || node.title || node.resourceId!,
         resourceType: node.resourceType ?? '',
         enabled: true,
       }));
 
-    onConfirm(resources);
+    addDocRefs(resources);
     handleClose();
   }
 
@@ -323,10 +260,13 @@ function DocumentPickerContent({
   );
 }
 
-function DocumentPickerModal({ open, onClose, onConfirm }: DocumentPickerModalProps) {
+function DocumentPickerModal() {
+  const open = useChatInputStore((state) => state.documentPickerOpen);
+  const { setDocumentPickerOpen } = useChatInputStoreApi().getState();
+
   function handleOpenChange(visible: boolean): void {
     if (visible) return;
-    onClose();
+    setDocumentPickerOpen(false);
   }
 
   return (
@@ -349,7 +289,7 @@ function DocumentPickerModal({ open, onClose, onConfirm }: DocumentPickerModalPr
                     </div>
                   </Modal.Body>
                   <Modal.Footer>
-                    <Button variant="secondary" onPress={onClose}>
+                    <Button variant="secondary" onPress={() => setDocumentPickerOpen(false)}>
                       取消
                     </Button>
                     <Button variant="primary" isDisabled>
@@ -359,7 +299,7 @@ function DocumentPickerModal({ open, onClose, onConfirm }: DocumentPickerModalPr
                 </>
               }
             >
-              {() => <DocumentPickerContent onClose={onClose} onConfirm={onConfirm} />}
+              {() => <DocumentPickerContent />}
             </Modal.DeferredContent>
           </Modal.Dialog>
         </Modal.Container>

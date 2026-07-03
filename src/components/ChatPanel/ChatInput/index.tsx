@@ -1,5 +1,6 @@
 import { TextArea } from '@heroui/react';
 import AttachmentStrip from './AttachmentStrip';
+import { ChatInputFileProvider } from './ChatInputFileContext';
 import { ChatInputStoreProvider } from './ChatInputStoreProvider';
 import DocumentPickerModal from './DocumentPickerModal';
 import DropOverlay from './DropOverlay';
@@ -19,14 +20,9 @@ function ChatInputContent({
   const {
     attachmentStripProps,
     containerProps,
-    documentPickerModalProps,
     dropOverlayProps,
-    fileInputRef,
-    handleFileInputChange,
-    otherSkillModalProps,
     textAreaProps,
     toolbarProps,
-    workspaceLoading,
   } = useChatInputController({
     onSend,
     sending,
@@ -52,21 +48,11 @@ function ChatInputContent({
         <InputToolbar {...toolbarProps} />
       </div>
 
-      <input
-        ref={fileInputRef}
-        type="file"
-        multiple
-        style={{ display: 'none' }}
-        onChange={handleFileInputChange}
-      />
+      <OtherSkillModal />
 
-      <OtherSkillModal {...otherSkillModalProps} />
+      <DocumentPickerModal />
 
-      <DocumentPickerModal {...documentPickerModalProps} />
-
-      <div className={styles.footerTip}>
-        {workspaceLoading ? '正在加载可用 Agent' : 'AI 内容仅供参考，请仔细甄别'}
-      </div>
+      <div className={styles.footerTip}>AI 内容仅供参考，请仔细甄别</div>
     </div>
   );
 }
@@ -74,7 +60,9 @@ function ChatInputContent({
 function ChatInput(props: ChatInputProps) {
   return (
     <ChatInputStoreProvider>
-      <ChatInputContent {...props} />
+      <ChatInputFileProvider>
+        <ChatInputContent {...props} />
+      </ChatInputFileProvider>
     </ChatInputStoreProvider>
   );
 }

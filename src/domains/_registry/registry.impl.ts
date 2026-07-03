@@ -37,16 +37,19 @@ const userService = createUserServices();
 const walletService = createWalletServices();
 
 // Level 1：依赖 Level 0
-const chatService = createChatServices({
-  groupService: groupService,
-  resourceService: resourceService,
-});
 const documentService = createDocumentServices({ resourceService: resourceService });
 const noteService = createNoteServices({ resourceService: resourceService });
 const tagService = createTagServices({ resourceService: resourceService });
 const driveService = createDriveServices({
   tagService: tagService,
   resourceService: resourceService,
+});
+
+// Level 2：依赖已装配的领域服务
+const chatService = createChatServices({
+  groupService: groupService,
+  resourceService: resourceService,
+  driveService: driveService,
 });
 
 const servicesValue: ServicesContextValue = {

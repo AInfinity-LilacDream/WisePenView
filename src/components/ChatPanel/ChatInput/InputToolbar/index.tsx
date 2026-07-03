@@ -1,72 +1,24 @@
 import { Button } from '@heroui/react';
 import { Send } from 'lucide-react';
 import AgentPicker from '../AgentPicker';
-import CapabilityMenu from '../CapabilityMenu';
 import ModelPicker from '../ModelPicker';
+import SkillMenu from '../SkillMenu';
 import UploadMenu from '../UploadMenu';
 import type { InputToolbarProps } from './index.type';
 import styles from '../style.module.less';
 
-function InputToolbar({
-  attachmentOpen,
-  capabilityOpen,
-  modelOpen,
-  agentOptions,
-  selectedAgent,
-  selectedModel,
-  models,
-  modelsLoading,
-  selectedSkills,
-  selectedTools,
-  capabilitySections,
-  sendDisabled,
-  onAttachmentOpenChange,
-  onCapabilityOpenChange,
-  onModelOpenChange,
-  onLocalAttachPress,
-  onCloudAttachPress,
-  onAgentChange,
-  onModelChange,
-  onToggleSkill,
-  onToggleTool,
-  onRemoveSkill,
-  onSelectOtherSkill,
-  onSend,
-}: InputToolbarProps) {
+function InputToolbar({ sendDisabled, onSend }: InputToolbarProps) {
   return (
     <div className={styles.actionToolbar}>
       <div className={styles.toolbarLeft}>
-        <UploadMenu
-          open={attachmentOpen}
-          onOpenChange={onAttachmentOpenChange}
-          onLocalPress={onLocalAttachPress}
-          onCloudPress={onCloudAttachPress}
-        />
-        <AgentPicker selectedAgent={selectedAgent} agents={agentOptions} onChange={onAgentChange} />
-        <CapabilityMenu
-          open={capabilityOpen}
-          capabilityCount={selectedSkills.length + selectedTools.length}
-          sections={capabilitySections}
-          selectedSkills={selectedSkills}
-          selectedTools={selectedTools}
-          onOpenChange={onCapabilityOpenChange}
-          onToggleSkill={onToggleSkill}
-          onToggleTool={onToggleTool}
-          onRemoveSkill={onRemoveSkill}
-          onSelectOther={onSelectOtherSkill}
-        />
+        <UploadMenu />
+        <AgentPicker />
+        <SkillMenu />
       </div>
 
       <div className={styles.toolsRight}>
         <div className={styles.modelSelectorShell}>
-          <ModelPicker
-            open={modelOpen}
-            loading={modelsLoading}
-            models={models}
-            selectedModel={selectedModel}
-            onOpenChange={onModelOpenChange}
-            onChange={onModelChange}
-          />
+          <ModelPicker />
         </div>
         <Button
           variant="primary"

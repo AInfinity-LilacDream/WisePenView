@@ -1,28 +1,50 @@
 import type { TreeDataNode } from '@/components/Tree';
 import Tree from '@/components/Tree';
+import { useChatService } from '@/domains';
 import { buildAgentFromSkillTreeGroup } from '@/domains/Chat/mapper/agent.mapper';
 import type { SkillSummary } from '@/domains/Resource';
 import type { ChatAgentOption } from '@/store';
+import { parseErrorMessage } from '@/utils/error';
 import { Modal } from '@/components/Overlay';
-import { Button } from '@heroui/react';
+import { Button, toast } from '@heroui/react';
+import { useRequest } from 'ahooks';
 import { ChevronDown, Folder } from 'lucide-react';
 import type { Key } from 'react';
 import { useMemo, useState } from 'react';
-import type { OtherSkillModalProps } from './index.type';
+import { useShallow } from 'zustand/react/shallow';
+import { useChatInputStore, useChatInputStoreApi } from '../ChatInputStore';
 import styles from './style.module.less';
 
-function OtherSkillModal({
-  open,
-  groups,
-  currentAgent,
-  selectedSkills,
-  onClose,
-  onConfirm,
-}: OtherSkillModalProps) {
-  const [selectedKeys, setSelectedKeys] = useState<Key[]>([]);
+function OtherSkillModal() {
+  const open = useChatInputStore((state) => state.otherSkillModalOpen);
+  if (!open) return null;
+  return <OtherSkillModalContent />;
+}
+
+function OtherSkillModalContent() {
+  const chatService = useChatService();
+  const { currentAgent, selectedSkills } = useChatInputStore(
+    useShallow((state) => ({
+      currentAgent: state.selectedAgent,
+      selectedSkills: state.selectedSkills,
+    }))
+  );
+  const { replaceExternalSkills, setOtherSkillModalOpen } = useChatInputStoreApi().getState();
+  const [selectedKeys, setSelectedKeys] = useState<Key[]>(() =>
+    selectedSkills.filter((s) => s.external).map((s) => s.skillId)
+  );
+  const { data, loading } = useRequest(
+    () => chatService.getChatInputCapabilityOptions({ agent: currentAgent }),
+    {
+      refreshDeps: [currentAgent.agentId],
+      onError: (error) => toast.danger(parseErrorMessage(error)),
+    }
+  );
+  const rawGroups = data?.otherSkillGroups;
 
   const { skillMap, treeData } = useMemo(() => {
     const mapping = new Map<string, { skill: SkillSummary; sourceAgent: ChatAgentOption | null }>();
+    const groups = rawGroups ?? [];
     const data: TreeDataNode[] = groups.map((group) => {
       const sourceAgent = buildAgentFromSkillTreeGroup(group, currentAgent);
       return {
@@ -45,14 +67,14 @@ function OtherSkillModal({
     });
 
     return { skillMap: mapping, treeData: data };
-  }, [currentAgent, groups]);
+  }, [currentAgent, rawGroups]);
+
+  function handleClose(): void {
+    setOtherSkillModalOpen(false);
+  }
 
   const handleOpenChange = (visible: boolean) => {
-    if (visible) {
-      setSelectedKeys(selectedSkills.filter((s) => s.external).map((s) => s.skillId));
-      return;
-    }
-    onClose();
+    if (!visible) handleClose();
   };
 
   const handleConfirm = () => {
@@ -60,12 +82,12 @@ function OtherSkillModal({
       skill: SkillSummary;
       sourceAgent: ChatAgentOption | null;
     }>;
-    onConfirm(selected);
-    onClose();
+    replaceExternalSkills(selected);
+    handleClose();
   };
 
   return (
-    <Modal isOpen={open} onOpenChange={handleOpenChange}>
+    <Modal isOpen onOpenChange={handleOpenChange}>
       <Modal.Backdrop isDismissable>
         <Modal.Container size="md" placement="center">
           <Modal.Dialog>
@@ -87,27 +109,31 @@ function OtherSkillModal({
                   <div className={styles.wrapper}>
                     <div className={styles.hint}>选择要添加的 Skill（可多选）</div>
                     <div className={styles.treeNav}>
-                      <Tree
-                        treeData={treeData}
-                        className={styles.tree}
-                        multiple
-                        selectedKeys={selectedKeys}
-                        defaultExpandAll
-                        blockNode
-                        switcherIcon={
-                          <span>
-                            <ChevronDown size={14} />
-                          </span>
-                        }
-                        onSelect={(keys: Key[]) => setSelectedKeys(keys)}
-                      />
+                      {loading ? (
+                        <div className={styles.hint}>正在加载 Skill</div>
+                      ) : (
+                        <Tree
+                          treeData={treeData}
+                          className={styles.tree}
+                          multiple
+                          selectedKeys={selectedKeys}
+                          defaultExpandAll
+                          blockNode
+                          switcherIcon={
+                            <span>
+                              <ChevronDown size={14} />
+                            </span>
+                          }
+                          onSelect={(keys: Key[]) => setSelectedKeys(keys)}
+                        />
+                      )}
                     </div>
                   </div>
                 </Modal.Body>
               )}
             </Modal.DeferredContent>
             <Modal.Footer>
-              <Button variant="secondary" onPress={onClose}>
+              <Button variant="secondary" onPress={handleClose}>
                 取消
               </Button>
               <Button variant="primary" onPress={handleConfirm}>

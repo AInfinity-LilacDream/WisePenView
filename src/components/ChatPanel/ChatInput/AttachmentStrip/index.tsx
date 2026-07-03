@@ -1,6 +1,11 @@
 import { Chip } from '@heroui/react';
 import clsx from 'clsx';
-import { Image, LoaderCircle, Paperclip, Sparkles, TriangleAlert, Wrench, X } from 'lucide-react';
+import { Image, LoaderCircle, Paperclip, TriangleAlert, X } from 'lucide-react';
+import { useShallow } from 'zustand/react/shallow';
+import {
+  useChatInputStore,
+  useChatInputStoreApi,
+} from '../ChatInputStore';
 import type { AttachmentStripProps } from './index.type';
 import styles from '../style.module.less';
 
@@ -8,28 +13,30 @@ function AttachmentStrip({
   selectedContextText,
   selectedPreview,
   hasSelectedContext,
-  resources,
-  attachments,
-  images,
-  uploads,
-  skills,
-  tools,
   onClearSelectedContext,
-  onRemoveResource,
-  onRemoveAttachment,
-  onRemoveImage,
-  onRemoveUpload,
-  onRemoveSkill,
-  onRemoveTool,
 }: AttachmentStripProps) {
+  const store = useChatInputStoreApi();
+  const { resources, attachments, images, uploads } = useChatInputStore(
+    useShallow((state) => ({
+      resources: state.activeDocRefs,
+      attachments: state.activeAttachments,
+      images: state.pendingImageMetas,
+      uploads: state.pendingAttachmentUploads,
+    }))
+  );
+  const {
+    removeActiveAttachment,
+    removeDocRef,
+    removePendingAttachmentUpload,
+    removePendingImageMeta,
+  } = store.getState();
+
   const hasAny =
     hasSelectedContext ||
     resources.length > 0 ||
     attachments.length > 0 ||
     images.length > 0 ||
-    uploads.length > 0 ||
-    skills.length > 0 ||
-    tools.length > 0;
+    uploads.length > 0;
 
   if (!hasAny) return null;
 
@@ -56,7 +63,7 @@ function AttachmentStrip({
           <button
             type="button"
             className={styles.chipRemoveButton}
-            onClick={() => onRemoveResource(resource.resourceId)}
+            onClick={() => removeDocRef(resource.resourceId)}
             aria-label={`移除文档 ${resource.resourceName}`}
           >
             <X size={12} />
@@ -76,7 +83,7 @@ function AttachmentStrip({
           <button
             type="button"
             className={styles.chipRemoveButton}
-            onClick={() => onRemoveAttachment(attachment.attachmentId)}
+            onClick={() => removeActiveAttachment(attachment.attachmentId)}
             aria-label={`移除附件 ${attachment.filename}`}
           >
             <X size={12} />
@@ -95,7 +102,7 @@ function AttachmentStrip({
           <button
             type="button"
             className={styles.chipRemoveButton}
-            onClick={() => onRemoveImage(imageMeta.id)}
+            onClick={() => removePendingImageMeta(imageMeta.id)}
             aria-label={`移除图片 ${imageMeta.filename}`}
           >
             <X size={12} />
@@ -119,38 +126,8 @@ function AttachmentStrip({
           <button
             type="button"
             className={styles.chipRemoveButton}
-            onClick={() => onRemoveUpload(upload.id)}
+            onClick={() => removePendingAttachmentUpload(upload.id)}
             aria-label={`移除上传项 ${upload.filename}`}
-          >
-            <X size={12} />
-          </button>
-        </Chip>
-      ))}
-
-      {skills.map((skill) => (
-        <Chip key={skill.skillId} size="sm" variant="soft" className={styles.skillChip}>
-          <Sparkles size={13} />
-          <Chip.Label>{skill.displayName}</Chip.Label>
-          <button
-            type="button"
-            className={styles.chipRemoveButton}
-            onClick={() => onRemoveSkill(skill.skillId)}
-            aria-label={`移除 Skill ${skill.displayName}`}
-          >
-            <X size={12} />
-          </button>
-        </Chip>
-      ))}
-
-      {tools.map((tool) => (
-        <Chip key={tool.toolId} size="sm" variant="soft" className={styles.toolChip}>
-          <Wrench size={13} />
-          <Chip.Label>{tool.label}</Chip.Label>
-          <button
-            type="button"
-            className={styles.chipRemoveButton}
-            onClick={() => onRemoveTool(tool)}
-            aria-label={`移除工具 ${tool.label}`}
           >
             <X size={12} />
           </button>

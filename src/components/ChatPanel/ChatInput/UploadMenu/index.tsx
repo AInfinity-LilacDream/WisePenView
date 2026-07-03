@@ -2,22 +2,29 @@ import { Popover } from '@/components/Overlay';
 import { Button, ListBox, ListBoxItem } from '@heroui/react';
 import { Cloud, Plus, Upload } from 'lucide-react';
 import type { Key } from 'react';
+import { useChatInputStore, useChatInputStoreApi } from '../ChatInputStore';
 import styles from '../style.module.less';
-import type { UploadMenuProps } from './index.type';
+import { useChatInputFiles } from '../useChatInputFiles';
 
-function UploadMenu({ open, onOpenChange, onLocalPress, onCloudPress }: UploadMenuProps) {
+function UploadMenu() {
+  const { openLocalFilePicker } = useChatInputFiles();
+  const store = useChatInputStoreApi();
+  const open = useChatInputStore((state) => state.attachmentOpen);
+  const { setAttachmentOpen, setDocumentPickerOpen } = store.getState();
+
   const handleAction = (key: Key) => {
     if (key === 'local-file') {
-      onLocalPress();
+      openLocalFilePicker();
       return;
     }
     if (key === 'cloud-file') {
-      onCloudPress();
+      setAttachmentOpen(false);
+      setDocumentPickerOpen(true);
     }
   };
 
   return (
-    <Popover isOpen={open} onOpenChange={onOpenChange}>
+    <Popover isOpen={open} onOpenChange={setAttachmentOpen}>
       <Popover.Trigger title="上传附件">
         <Button
           variant="ghost"

@@ -28,6 +28,8 @@
   display: flex;
   align-items: center;
   gap: 4px;
+  min-width: 0;
+  max-width: 100%;
   cursor: pointer;
   padding: 4px var(--space-xs);
   border-radius: var(--radius);
@@ -71,6 +73,7 @@
     .sortTrigger {
       display: flex;
       align-items: center;
+      gap: 4px;
       cursor: pointer;
       padding: 2px var(--space-xs);
       border: 1px solid var(--border-light);
@@ -84,6 +87,10 @@
       &:hover {
         border-color: var(--accent);
         color: var(--accent);
+      }
+
+      svg {
+        flex-shrink: 0;
       }
     }
 
@@ -104,6 +111,10 @@
       &:hover {
         border-color: var(--accent);
         color: var(--accent);
+      }
+
+      svg {
+        flex-shrink: 0;
       }
     }
   }
@@ -171,9 +182,32 @@
           flex-shrink: 0;
         }
 
+        .modelTitle {
+          display: inline-flex;
+          flex: 0 1 auto;
+          align-items: center;
+          min-width: 0;
+          max-width: 100%;
+          gap: var(--space-xs);
+        }
+
+        .modelTitleIcon {
+          display: inline-flex;
+          flex: 0 0 20px;
+          width: 20px;
+          height: 20px;
+          align-items: center;
+          justify-content: center;
+          line-height: 0;
+        }
+
         .modelName {
+          min-width: 0;
+          overflow: hidden;
           font-size: var(--font-size-base);
           color: var(--foreground);
+          text-overflow: ellipsis;
+          white-space: nowrap;
         }
 
         .visionWrapper {
@@ -222,6 +256,16 @@
   }
 }
 
+.sortDropdownItem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+
+  svg {
+    flex-shrink: 0;
+  }
+}
+
 .sortArrow {
   margin-left: 4px;
   font-size: 10px;
@@ -244,6 +288,33 @@
   margin-right: 8px;
 }
 
+.triggerModel {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  max-width: 100%;
+  gap: 4px;
+}
+
+.triggerModelIcon {
+  display: inline-flex;
+  flex: 0 0 16px;
+  width: 16px;
+  height: 16px;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+}
+
+.triggerModelName {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .triggerArrow {
-  font-size: 10px;
+  flex-shrink: 0;
+  width: 10px;
+  height: 10px;
 }

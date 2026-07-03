@@ -1,6 +1,1 @@
-export interface UploadMenuProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onLocalPress: () => void;
-  onCloudPress: () => void;
-}
+export type UploadMenuProps = Record<string, never>;
