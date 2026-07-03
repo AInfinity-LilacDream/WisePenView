@@ -1,4 +1,14 @@
-import { Claude, DeepSeek, Doubao, Gemini, Grok, Meta, Mistral, OpenAI } from '@lobehub/icons';
+import {
+  Claude,
+  DeepSeek,
+  Doubao,
+  Gemini,
+  Grok,
+  Meta,
+  Mistral,
+  OpenAI,
+  Qwen,
+} from '@lobehub/icons';
 import type { ProviderLogoProps } from './index.type';
 
 function ProviderLogo({ provider, size = 16 }: ProviderLogoProps) {
@@ -20,6 +30,8 @@ function ProviderLogo({ provider, size = 16 }: ProviderLogoProps) {
       return <Doubao.Avatar {...props} />;
     case 'mistral':
       return <Mistral.Avatar {...props} />;
+    case 'qwen':
+      return <Qwen.Avatar {...props} />;
     default:
       return <OpenAI.Avatar {...props} />;
   }

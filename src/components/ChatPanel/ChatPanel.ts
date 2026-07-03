@@ -211,7 +211,7 @@ export const mapHistoryMessage = (
     createAt: toTimestamp(message.createdAt || message.created_at),
     meta: {
       provider: modelMetaFromMap?.provider || ctx.currentModel?.provider || 'openai',
-      modelId: historyModelId || ctx.currentModel?.id,
+      modelId: historyModelId || ctx.currentModel?.modelId,
       modelName: modelMetaFromMap?.name || ctx.currentModel?.name,
     },
   };
@@ -246,7 +246,7 @@ export const mapLiveMessagesToPanelMessages = (
       error: hasError || (isLastMessage && status === 'error'),
       meta: {
         provider: currentModel?.provider || 'openai',
-        modelId: currentModel?.id,
+        modelId: currentModel?.modelId,
         modelName: currentModel?.name,
       },
     };

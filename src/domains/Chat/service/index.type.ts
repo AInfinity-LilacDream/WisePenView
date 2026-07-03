@@ -12,18 +12,40 @@ export interface ChatModelTag {
   type: string;
 }
 
-export interface ChatModel {
-  id: string;
-  name: string;
-  vendor: string;
+export interface ChatModelProviderOption {
+  providerId: string;
+  providerName?: string | null;
+  providerModelName: string;
   provider: string;
+  supportRuntimeOptions: Record<string, unknown>;
+  isPreferred: boolean;
+  isActive: boolean;
+  priority: number;
+}
+
+export interface ChatModel {
+  /** 前端选择项 ID；同一个模型存在多个 provider mapping 时用于区分选项 */
+  id: string;
+  /** 后端模型 ID；发送 /chat/completions 时使用 */
+  modelId: string;
+  name: string;
+  provider: string;
+  providerId?: string;
+  providerName?: string | null;
+  providerModelName?: string;
+  providerOptions: ChatModelProviderOption[];
+  scope: string;
+  modelFamily: string;
   ratio: number;
   supportThinking: boolean;
+  supportTools: boolean;
   tags: ChatModelTag[];
   multiplier: string | null;
   isDefault: boolean;
   vision: boolean;
   usageRank: number;
+  contextWindowTokens?: number | null;
+  maxOutputTokens?: number | null;
   category: 'reasoning' | 'chat' | 'coding' | 'all-round';
 }
 

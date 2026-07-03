@@ -1,22 +1,7 @@
-export interface ModelTag {
-  text: string;
-  type: string;
-}
+import type { ChatModel, ChatModelTag, ChatWorkspaceContext } from '@/domains/Chat';
 
-export interface Model {
-  id: string;
-  name: string;
-  vendor: string;
-  provider: string; // 'openai' | 'anthropic' | ...
-  ratio: number;
-  supportThinking: boolean;
-  tags: ModelTag[];
-  multiplier: string | null;
-  isDefault: boolean;
-  vision: boolean;
-  usageRank: number;
-  category: 'reasoning' | 'chat' | 'coding' | 'all-round';
-}
+export type ModelTag = ChatModelTag;
+export type Model = ChatModel;
 
 export type MessageRole = 'user' | 'ai' | 'system';
 
@@ -24,6 +9,7 @@ export interface ChatPanelProps {
   collapsed: boolean;
   fullWidth?: boolean;
   onNewChat?: () => void;
+  workspaceContext?: ChatWorkspaceContext;
 }
 
 export interface Message {

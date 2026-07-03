@@ -1,5 +1,3 @@
-import type { Model as BackendModel } from '@/domains/Chat';
-
 export interface ChatSession {
   id: string;
   user_id: string;
@@ -39,8 +37,35 @@ export interface PageResult<T> {
 }
 
 export interface ListModelsApiResponse {
-  system_models: BackendModel[];
-  user_models: BackendModel[];
+  system_models: ModelResponse[];
+  user_models: ModelResponse[];
+}
+
+export interface ModelProviderMappingResponse {
+  model_id: string;
+  provider_id: string;
+  provider_name?: string | null;
+  provider_model_name: string;
+  support_runtime_options?: Record<string, unknown>;
+  is_preferred: boolean;
+  is_active: boolean;
+  priority: number;
+}
+
+export interface ModelResponse {
+  id: string;
+  scope: string;
+  display_name: string;
+  type: number;
+  model_family: string;
+  billing_ratio: number;
+  support_thinking: boolean;
+  support_vision: boolean;
+  support_tools: boolean;
+  context_window_tokens?: number | null;
+  max_output_tokens?: number | null;
+  is_active: boolean;
+  mappings?: ModelProviderMappingResponse[] | null;
 }
 export type CreateSessionApiRequest = { title?: string };
 export type CreateSessionApiResponse = ChatSession;

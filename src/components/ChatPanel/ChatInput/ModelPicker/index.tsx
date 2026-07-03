@@ -1,8 +1,8 @@
 import { ListBox, ListBoxItem, Popover } from '@heroui/react';
 import { Check, ChevronDown, LoaderCircle } from 'lucide-react';
 import ProviderLogo from '../ProviderLogo';
-import type { ModelPickerProps } from './index.type';
 import styles from '../style.module.less';
+import type { ModelPickerProps } from './index.type';
 
 function ModelPicker({
   open,
@@ -12,6 +12,13 @@ function ModelPicker({
   onOpenChange,
   onChange,
 }: ModelPickerProps) {
+  const renderProviderText = (model: ModelPickerProps['models'][number]): string => {
+    if (model.providerName && model.providerModelName) {
+      return `${model.providerName} · ${model.providerModelName}`;
+    }
+    return model.providerModelName || model.providerName || model.provider;
+  };
+
   return (
     <Popover isOpen={open} onOpenChange={onOpenChange}>
       <Popover.Trigger>
@@ -49,7 +56,7 @@ function ModelPicker({
                       <ProviderLogo provider={model.provider} size={18} />
                       <span className={styles.modelInfo}>
                         <span className={styles.modelName}>{model.name}</span>
-                        <span className={styles.modelMeta}>{model.provider}</span>
+                        <span className={styles.modelMeta}>{renderProviderText(model)}</span>
                       </span>
                       {selectedModel?.id === model.id ? (
                         <Check size={14} className={styles.checkIcon} />

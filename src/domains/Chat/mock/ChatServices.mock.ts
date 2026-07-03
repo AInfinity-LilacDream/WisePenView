@@ -28,7 +28,7 @@ const MOCK_MODELS: MockModelSeed[] = [
   { name: 'Mistral Large', provider: 'mistral', category: 'general', vision: false },
 ];
 
-const providerToVendor = (provider: string): string => {
+const providerToName = (provider: string): string => {
   switch (provider) {
     case 'anthropic':
       return 'Anthropic';
@@ -55,39 +55,59 @@ const getModels: IChatService['getModels'] = async () => {
       const rawModels = [
         ...MOCK_MODELS.slice(0, 3).map((item, i) => ({
           id: `mock-system-${i + 1}`,
+          provider_id: `mock-provider-system-${i + 1}`,
           scope: 'system',
           display_name: item.name,
-          vendor: providerToVendor(item.provider),
+          provider_name: providerToName(item.provider),
+          provider_key: item.provider,
           type: MODEL_TYPE.STANDARD_MODEL,
           billing_ratio: 1,
           support_thinking: item.category === 'reasoning',
           support_vision: item.vision,
           support_tools: true,
-          support_streaming: true,
           is_active: true,
         })),
         ...MOCK_MODELS.slice(3, 5).map((item, i) => ({
           id: `mock-user-${i + 1}`,
+          provider_id: `mock-provider-user-${i + 1}`,
           scope: 'user',
           display_name: item.name,
-          vendor: providerToVendor(item.provider),
+          provider_name: providerToName(item.provider),
+          provider_key: item.provider,
           type: MODEL_TYPE.ADVANCED_MODEL,
           billing_ratio: 10,
           support_thinking: true,
           support_vision: item.vision,
           support_tools: true,
-          support_streaming: true,
           is_active: true,
         })),
       ];
       resolve(
         rawModels.map((item, index) => ({
           id: String(item.id),
+          modelId: String(item.id),
           name: item.display_name,
-          vendor: item.vendor,
-          provider: providerToVendor(item.vendor).toLowerCase(),
+          provider: item.provider_key,
+          providerId: item.provider_id,
+          providerName: item.provider_name,
+          providerModelName: item.display_name,
+          providerOptions: [
+            {
+              providerId: item.provider_id,
+              providerName: item.provider_name,
+              providerModelName: item.display_name,
+              provider: item.provider_key,
+              supportRuntimeOptions: {},
+              isPreferred: true,
+              isActive: true,
+              priority: 0,
+            },
+          ],
+          scope: item.scope,
+          modelFamily: 'GENERIC',
           ratio: item.billing_ratio,
           supportThinking: item.support_thinking,
+          supportTools: item.support_tools,
           tags: [
             ...(item.is_active && index === 0
               ? ([{ text: 'Default', type: 'blue' }] as Array<{ text: string; type: string }>)
@@ -100,6 +120,8 @@ const getModels: IChatService['getModels'] = async () => {
           isDefault: item.is_active && index === 0,
           vision: item.support_vision,
           usageRank: index + 1,
+          contextWindowTokens: null,
+          maxOutputTokens: null,
           category:
             item.type === MODEL_TYPE.ADVANCED_MODEL
               ? 'reasoning'

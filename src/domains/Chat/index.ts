@@ -19,6 +19,7 @@ export { buildAdvancedSkillTreeGroups, getPrimarySkillsForAgent } from './mapper
 export type { SkillScopeTreeGroup } from './mapper/skillScope.mapper';
 export type {
   ChatModel,
+  ChatModelProviderOption,
   ChatModelTag,
   ChatServiceDeps,
   ChatSession,
@@ -35,4 +36,13 @@ export type {
   UploadAttachmentParams,
   UploadAttachmentResult,
 } from './service/index.type';
+export type {
+  ChatCompletionRequest,
+  ChatFrontendState,
+  ChatSelectedResourceContext,
+  ChatUploadedAttachmentContext,
+  ChatWorkspaceContext,
+  SendSessionMessageOptions,
+  UseChatSessionOptions,
+} from './session/index.type';
 export { useChatSession } from './session/useChatSession';

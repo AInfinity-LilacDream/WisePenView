@@ -1,4 +1,5 @@
 import type { Model } from '@/components/ChatPanel/index.type';
+import type { CapabilitySkillSelection, CapabilityToolOption } from '@/domains/Chat';
 
 export interface ChatInputProps {
   onSend: (text: string, opts?: SendOptions) => void | Promise<void>;
@@ -6,12 +7,6 @@ export interface ChatInputProps {
   hasSelectedContext: boolean;
   selectedContextText: string;
   onClearSelectedContext: () => void;
-}
-
-export interface PendingImagePayload {
-  mimeType: string;
-  base64: string;
-  filename?: string;
 }
 
 export interface LocalAttachmentPayload {
@@ -43,6 +38,7 @@ export interface LocalAttachmentUpload {
 export interface SendOptions {
   model?: Model;
   activeDocRefs?: LocalResourcePayload[];
-  pendingImages?: PendingImagePayload[];
   activeAttachments?: LocalAttachmentPayload[];
+  selectedSkills?: CapabilitySkillSelection[];
+  selectedTools?: CapabilityToolOption[];
 }

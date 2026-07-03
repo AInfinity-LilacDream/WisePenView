@@ -7,6 +7,7 @@ export const MODEL_PROVIDER_ID = {
 export type ModelProviderId = (typeof MODEL_PROVIDER_ID)[keyof typeof MODEL_PROVIDER_ID];
 
 export const MODEL_TYPE = {
+  CUSTOM_MODEL: 0,
   STANDARD_MODEL: 1,
   ADVANCED_MODEL: 2,
   UNKNOWN_MODEL: 3,

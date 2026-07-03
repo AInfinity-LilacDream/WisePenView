@@ -4,7 +4,17 @@ import clsx from 'clsx';
 import { ArrowUpAZ, ChartBar, Check, ChevronDown, ChevronUp, LayoutGrid } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
-import { Claude, DeepSeek, Doubao, Gemini, Grok, Meta, Mistral, OpenAI } from '@lobehub/icons';
+import {
+  Claude,
+  DeepSeek,
+  Doubao,
+  Gemini,
+  Grok,
+  Meta,
+  Mistral,
+  OpenAI,
+  Qwen,
+} from '@lobehub/icons';
 
 import { EmptyState } from '@/components/Feedback';
 import IconText from '@/components/IconText';
@@ -33,6 +43,8 @@ export const LogoFactory = ({ provider, size = 20 }: { provider: string; size?: 
       return <Doubao.Avatar {...props} />;
     case 'mistral':
       return <Mistral.Avatar {...props} />;
+    case 'qwen':
+      return <Qwen.Avatar {...props} />;
     default:
       return <OpenAI.Avatar {...props} />;
   }
@@ -43,6 +55,13 @@ const SORT_OPTIONS = [
   { label: '按名字', value: 'name', icon: ArrowUpAZ },
   { label: '深度思考模型', value: 'thinking', icon: LayoutGrid },
 ];
+
+const renderProviderText = (model: Model): string => {
+  if (model.providerName && model.providerModelName) {
+    return `${model.providerName} · ${model.providerModelName}`;
+  }
+  return model.providerModelName || model.providerName || model.provider;
+};
 
 interface ModelSelectorProps {
   value: string;
@@ -210,6 +229,9 @@ function ModelSelector({ value, onChange }: ModelSelectorProps) {
                 )} */}
 
                 <div className={styles.tagsRow}>
+                  <Chip size="sm" variant="soft" className={styles.miniTag}>
+                    <Chip.Label>{renderProviderText(model)}</Chip.Label>
+                  </Chip>
                   {model.tags.map((tag, idx) => (
                     <Chip key={idx} size="sm" variant="soft" className={styles.miniTag}>
                       <Chip.Label>{tag.text}</Chip.Label>

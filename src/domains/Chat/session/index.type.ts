@@ -1,63 +1,58 @@
-interface ChatState {
+export interface ChatFrontendState {
   key: string;
-  value: string;
+  value: unknown;
   disabled?: boolean;
 }
 
-interface ChatAgentContext {
-  agent_id: string;
-  agent_type: 'PERSONAL' | 'GROUP';
-  group_id?: string;
-  advanced_mode_enabled: boolean;
-  system_prompt_override?: string;
-  tools?: string[];
+export interface ChatWorkspaceContext {
+  resourceId: string;
+  editorType: string;
 }
 
-interface ChatAttachmentRef {
-  attachment_id: string;
-  filename?: string;
+export interface ChatSelectedResourceContext {
+  resourceId: string;
+  resourceName: string;
+  resourceType: string;
   enabled: boolean;
-  context_mode?: string;
 }
 
-interface ChatResourceRef {
-  resource_id: string;
-  resource_type?: string;
+export interface ChatUploadedAttachmentContext {
+  attachmentId: string;
+  filename: string;
   enabled: boolean;
-  context_mode?: string;
 }
 
-interface ImageB64Item {
-  mime_type: string;
-  base64: string;
-  filename?: string;
-}
-
-interface ChatRequestBody {
+export interface ChatCompletionRequest {
   session_id: string;
   query: string;
   model?: string;
-  states?: ChatState[];
-  attachment_refs?: ChatAttachmentRef[];
-  resource_refs?: ChatResourceRef[];
-  agent_context?: ChatAgentContext;
-  allowed_skill_ids?: string[];
-  selected_skill_ids?: string[];
-  image_b64_list?: ImageB64Item[];
+  provider_id?: string;
+  runtime_options?: Record<string, unknown>;
+  frontend_states?: ChatFrontendState[];
+  user_defined_attachment_ids?: string[];
+  user_defined_allow_tool_names?: string[];
+  user_defined_deny_tool_names?: string[];
+  user_defined_on_demand_skill_ids?: string[];
+  user_defined_force_enabled_skill_ids?: string[];
 }
 
-interface UseChatSessionOptions {
+export interface SendSessionMessageOptions {
+  sessionId?: string;
+  model?: string;
+  providerId?: string;
+  runtimeOptions?: Record<string, unknown>;
+  selectedText?: string;
+  enableSelected?: boolean;
+  workspaceContext?: ChatWorkspaceContext;
+  selectedResources?: ChatSelectedResourceContext[];
+  uploadedAttachments?: ChatUploadedAttachmentContext[];
+  allowToolNames?: string[];
+  denyToolNames?: string[];
+  onDemandSkillIds?: string[];
+  forceEnabledSkillIds?: string[];
+}
+
+export interface UseChatSessionOptions {
   sessionId: string;
   model?: string;
-  enableSelected?: boolean;
 }
-
-export type {
-  ChatAgentContext,
-  ChatAttachmentRef,
-  ChatRequestBody,
-  ChatResourceRef,
-  ChatState,
-  ImageB64Item,
-  UseChatSessionOptions,
-};

@@ -4,7 +4,6 @@ import { clearAiDiffDisplayStore } from './useAiDiffDisplayStore';
 import { clearChatAgentStore } from './useChatAgentStore';
 import { clearChatCapabilityStore } from './useChatCapabilityStore';
 import { clearChatModelPreferenceStore } from './useChatModelPreferenceStore';
-import { clearChatPageStore } from './useChatPageStore';
 import { clearChatPanelStore } from './useChatPanelStore';
 import { clearCurrentChatSessionStore } from './useCurrentChatSessionStore';
 import { clearDrivePreferencesStore } from './useDrivePreferencesStore';
@@ -30,7 +29,6 @@ export function clearAllZustandStores(): void {
   clearTrashTagStore();
   clearNewNoteStore();
   clearNewChatSessionStore();
-  clearChatPageStore();
   clearChatAgentStore();
   clearAdvancedModeStore();
   clearChatCapabilityStore();

@@ -1,3 +1,4 @@
+import type { ChatWorkspaceContext } from '@/domains/Chat';
 import { useLayoutEffect, type ReactNode } from 'react';
 import { useOutletContext } from 'react-router-dom';
 
@@ -14,6 +15,7 @@ export interface WorkspaceLayoutConfig {
   className?: string;
   bodyClassName?: string;
   header?: WorkspaceHeaderConfig | false;
+  chatContext?: ChatWorkspaceContext;
 }
 
 export interface WorkspaceOutletContextValue {

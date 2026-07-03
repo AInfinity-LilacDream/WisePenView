@@ -48,5 +48,3 @@ export {
   type TemporarySkillSelection,
   type TemporaryToolSelection,
 } from './useChatCapabilityStore';
-export { clearChatPageStore, useChatPageStore } from './useChatPageStore';
-export type { ActiveAttachment, ActiveDocRef } from './useChatPageStore';

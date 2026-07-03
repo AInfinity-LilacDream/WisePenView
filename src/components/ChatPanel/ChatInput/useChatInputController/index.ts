@@ -28,7 +28,7 @@ import {
   useChatInputStore,
   useChatInputStoreApi,
 } from '../ChatInputStore';
-import type { ChatInputProps, PendingImagePayload } from '../index.type';
+import type { ChatInputProps, LocalAttachmentPayload } from '../index.type';
 
 const MAX_IMAGE_BASE64_BYTES = 5 * 1024 * 1024;
 const MAX_IMAGE_RAW_BYTES_APPROX = Math.floor(MAX_IMAGE_BASE64_BYTES * 0.75);
@@ -260,7 +260,7 @@ export function useChatInputController({
     replaceExternalSkills(selected);
   }
 
-  async function uploadAndAddAttachment(file: File): Promise<void> {
+  async function uploadAndAddAttachment(file: File): Promise<LocalAttachmentPayload | null> {
     const id = crypto.randomUUID();
     addPendingAttachmentUpload({ id, filename: file.name, status: 'uploading' });
     try {
@@ -269,21 +269,24 @@ export function useChatInputController({
         saveToLibrary: false,
       });
       removeStoredUpload(id);
-      addActiveAttachment({
+      const attachment: LocalAttachmentPayload = {
         attachmentId: result.attachmentId,
         filename: result.filename ?? file.name,
         enabled: true,
-      });
+      };
+      addActiveAttachment(attachment);
+      return attachment;
     } catch (err) {
       setPendingAttachmentUploadFailed(id);
       toast.danger(`附件上传失败: ${parseErrorMessage(err)}`);
+      return null;
     }
   }
 
   async function addPendingVisionImage(file: File): Promise<void> {
     try {
       if (file.size > MAX_IMAGE_RAW_BYTES_APPROX) {
-        toast.warning(`${file.name} 过大，图片直传约限制原图 3.75MB`);
+        toast.warning(`${file.name} 过大，图片大小约限制原图 3.75MB`);
         return;
       }
       const { mimeType, base64 } = await fileToBase64(file);
@@ -296,15 +299,24 @@ export function useChatInputController({
     }
   }
 
-  async function convertPendingImagesToAttachments(): Promise<void> {
-    if (pendingImageMetas.length === 0) return;
+  async function convertPendingImagesToAttachments(): Promise<LocalAttachmentPayload[] | null> {
+    if (pendingImageMetas.length === 0) return [];
+    const attachments: LocalAttachmentPayload[] = [];
     for (const meta of pendingImageMetas) {
       const base64 = base64MapRef.current.get(meta.id);
-      if (!base64) continue;
+      if (!base64) {
+        toast.danger(`${meta.filename} 图片数据已失效，请重新添加`);
+        return null;
+      }
       const file = base64ToFile(base64, meta.mimeType, meta.filename);
-      await uploadAndAddAttachment(file);
+      const attachment = await uploadAndAddAttachment(file);
+      if (!attachment) {
+        return null;
+      }
+      attachments.push(attachment);
       removePendingImage(meta.id);
     }
+    return attachments;
   }
 
   async function routeFiles(fileList: FileList | File[]): Promise<void> {
@@ -327,7 +339,7 @@ export function useChatInputController({
         continue;
       }
       if (file.size > MAX_IMAGE_RAW_BYTES_APPROX) {
-        toast.warning(`${file.name} 过大，图片直传约限制原图 3.75MB`);
+        toast.warning(`${file.name} 过大，图片大小约限制原图 3.75MB`);
         continue;
       }
       acceptedImageCount += 1;
@@ -352,21 +364,15 @@ export function useChatInputController({
       return;
     }
 
-    const pendingImages: PendingImagePayload[] = currentModelVision
-      ? completionState.pendingImageMetas.reduce<PendingImagePayload[]>((images, meta) => {
-          const base64 = base64MapRef.current.get(meta.id);
-          if (!base64) return images;
-          images.push({ mimeType: meta.mimeType, base64, filename: meta.filename });
-          return images;
-        }, [])
-      : [];
-
     try {
+      const imageAttachments = await convertPendingImagesToAttachments();
+      if (!imageAttachments) return;
       await onSend(text, {
         model: selectedModel,
         activeDocRefs: completionState.activeDocRefs,
-        activeAttachments: completionState.activeAttachments,
-        pendingImages: pendingImages.length > 0 ? pendingImages : undefined,
+        activeAttachments: [...completionState.activeAttachments, ...imageAttachments],
+        selectedSkills: completionState.selectedSkills,
+        selectedTools: completionState.selectedTools,
       });
       clearAfterSend();
       base64MapRef.current.clear();

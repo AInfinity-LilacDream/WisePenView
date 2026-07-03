@@ -2,11 +2,12 @@ import ChatPanel from '@/components/ChatPanel';
 import DriveSidebar from '@/layouts/_common/Sidebar/DriveSidebar';
 import { useChatPanelResize } from '@/layouts/_common/useChatPanelResize';
 import { useChatPanelStore, useCurrentChatSessionStore } from '@/store';
+import { normalizeResourceEditorType } from '@/utils/navigation/workspaceRoute';
 import { useUpdateEffect } from 'ahooks';
 import clsx from 'clsx';
 import { Bot } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useMatch } from 'react-router-dom';
 import WorkspaceFrame from './_common/WorkspaceFrame';
 import WorkspaceHeader from './_common/WorkspaceHeader';
 import styles from './WorkspaceLayout.module.less';
@@ -23,8 +24,16 @@ function WorkspaceLayout() {
   const hasSessionId = Boolean(currentSessionId);
   const shouldRenderChatPanel = hasSessionId || chatPanelDraftOpen;
   const safeChatPanelCollapsed = !shouldRenderChatPanel || chatPanelCollapsed;
+  const resourceRouteMatch = useMatch('/app/workspace/:editorType/:id');
   const { rootRef, chatResizeGuideRef, chatPanelWidth, chatResizing, onResizeStart } =
     useChatPanelResize();
+  const routeChatContext = useMemo(() => {
+    const resourceId = resourceRouteMatch?.params.id;
+    const editorType = normalizeResourceEditorType(resourceRouteMatch?.params.editorType);
+    if (!resourceId || !editorType) return undefined;
+    return { resourceId, editorType };
+  }, [resourceRouteMatch?.params.editorType, resourceRouteMatch?.params.id]);
+  const chatWorkspaceContext = layoutConfig.chatContext ?? routeChatContext;
 
   useUpdateEffect(() => {
     if (shouldRenderChatPanel) {
@@ -123,7 +132,9 @@ function WorkspaceLayout() {
           />
         )}
         <div className={styles.rightSiderInner}>
-          {shouldRenderChatPanel ? <ChatPanel collapsed={safeChatPanelCollapsed} /> : null}
+          {shouldRenderChatPanel ? (
+            <ChatPanel collapsed={safeChatPanelCollapsed} workspaceContext={chatWorkspaceContext} />
+          ) : null}
         </div>
       </aside>
     </div>

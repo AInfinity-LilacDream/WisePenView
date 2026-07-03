@@ -2,7 +2,6 @@ import type { ChatPanelProps, Message, Model } from '@/components/ChatPanel/inde
 import { useChatService } from '@/domains';
 import { useChatSession } from '@/domains/Chat/session/useChatSession';
 import {
-  clearChatPageStore,
   clearNewChatSessionStore,
   useChatPanelStore,
   useCurrentChatSessionStore,
@@ -29,7 +28,7 @@ import MessageList from './MessageList';
 import NewChatButton from './NewChatButton';
 import styles from './style.module.less';
 
-function ChatPanel({ collapsed, fullWidth = false, onNewChat }: ChatPanelProps) {
+function ChatPanel({ collapsed, fullWidth = false, onNewChat, workspaceContext }: ChatPanelProps) {
   const navigate = useNavigate();
   const chatService = useChatService();
   const setChatPanelCollapsed = useChatPanelStore((state) => state.setChatPanelCollapsed);
@@ -60,7 +59,7 @@ function ChatPanel({ collapsed, fullWidth = false, onNewChat }: ChatPanelProps) 
     sendSessionMessage,
   } = useChatSession({
     sessionId: currentSessionId ?? '',
-    model: currentModel?.id,
+    model: currentModel?.modelId,
   });
 
   const { runAsync: runLoadSessionHistory } = useRequest(
@@ -76,6 +75,9 @@ function ChatPanel({ collapsed, fullWidth = false, onNewChat }: ChatPanelProps) 
   const modelMetaMap = useMemo<Record<string, ModelMeta>>(() => {
     return models.reduce<Record<string, ModelMeta>>((acc, model) => {
       acc[model.id] = { provider: model.provider, name: model.name };
+      if (!acc[model.modelId]) {
+        acc[model.modelId] = { provider: model.provider, name: model.name };
+      }
       return acc;
     }, {});
   }, [models]);
@@ -190,12 +192,16 @@ function ChatPanel({ collapsed, fullWidth = false, onNewChat }: ChatPanelProps) 
     }
 
     const sendPromise = sendSessionMessage(text, {
-      model: targetModel.id,
+      model: targetModel.modelId,
+      providerId: targetModel.providerId,
       enableSelected: hasSelectedContext,
+      selectedText: selectedContextText,
       sessionId: targetSessionId,
-      activeDocRefs: opts?.activeDocRefs,
-      activeAttachments: opts?.activeAttachments,
-      pendingImages: opts?.pendingImages,
+      workspaceContext,
+      selectedResources: opts?.activeDocRefs,
+      uploadedAttachments: opts?.activeAttachments,
+      onDemandSkillIds: opts?.selectedSkills?.map((skill) => skill.skillId),
+      allowToolNames: opts?.selectedTools?.map((tool) => tool.toolId),
     });
 
     if (hasSelectedContext) {
@@ -226,7 +232,6 @@ function ChatPanel({ collapsed, fullWidth = false, onNewChat }: ChatPanelProps) 
   });
 
   useUpdateEffect(() => {
-    clearChatPageStore();
     if (!currentSessionId) {
       setHistoryMessages([]);
       setHistoryPage(1);
