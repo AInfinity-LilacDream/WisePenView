@@ -12,14 +12,14 @@ import { parseErrorMessage } from '@/utils/error';
 import { toast } from '@heroui/react';
 import { useMount, useRequest, useUpdateEffect } from 'ahooks';
 import { IndentIncrease } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { memo, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ChatInput from './ChatInput';
 import type { SendOptions } from './ChatInput/index.type';
 import {
   HISTORY_PAGE_SIZE,
   buildPanelMessages,
-  collectMessagesPlainText,
+  hasMessagesPlainText,
   isSessionInvalidMessage,
   mapHistoryMessage,
   type ModelMeta,
@@ -105,8 +105,11 @@ function ChatPanel({ collapsed, fullWidth = false, onNewChat, workspaceContext }
     );
   }, [modelMetaMap]);
 
-  const messages = buildPanelMessages(historyMessages, liveMessages, currentModel, status);
-  const hasRenderableChatContent = collectMessagesPlainText(messages).trim().length > 0;
+  const messages = useMemo(
+    () => buildPanelMessages(historyMessages, liveMessages, currentModel, status),
+    [currentModel, historyMessages, liveMessages, status]
+  );
+  const hasRenderableChatContent = useMemo(() => hasMessagesPlainText(messages), [messages]);
 
   useUpdateEffect(() => {
     if (currentSessionId == null || currentSessionId === '') return;
@@ -310,4 +313,4 @@ function ChatPanel({ collapsed, fullWidth = false, onNewChat, workspaceContext }
   );
 }
 
-export default ChatPanel;
+export default memo(ChatPanel);

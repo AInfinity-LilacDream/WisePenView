@@ -1,5 +1,6 @@
 import { useChatPanelStore, useCurrentChatSessionStore } from '@/store';
 import { useUpdateEffect } from 'ahooks';
+import clsx from 'clsx';
 import { useImperativeHandle, useMemo, useRef, useState, type Ref } from 'react';
 import { useLocation } from 'react-router-dom';
 import SessionListGroup, { type SessionListGroupRef } from '../SessionListGroup';
@@ -47,8 +48,11 @@ function AppSessionMenu({
   }, [collapsed, pendingCreatedSessionId]);
 
   return (
-    <div className={styles.menuContainer}>
-      {!collapsed && <SessionListGroup ref={sessionListGroupRef} selectedKeys={selectedKeys} />}
+    <div
+      className={clsx(styles.menuContainer, collapsed && styles.menuContainerCollapsed)}
+      aria-hidden={collapsed}
+    >
+      <SessionListGroup ref={sessionListGroupRef} selectedKeys={selectedKeys} />
     </div>
   );
 }

@@ -84,99 +84,103 @@ function UserProfile({ collapsed, menuMode = 'app' }: UserProfileProps) {
     setFeedbackModalOpen(false);
   };
 
+  const userAvatar = (
+    <Avatar size="sm" className={styles.avatar}>
+      {user?.avatar ? <Avatar.Image src={user.avatar} alt={displayName} /> : null}
+      <Avatar.Fallback>{displayName.charAt(0).toUpperCase()}</Avatar.Fallback>
+    </Avatar>
+  );
+
+  const userMenu = (
+    <Dropdown.Popover placement="top left">
+      <Dropdown.Menu
+        aria-label="用户菜单"
+        className={styles.profileMenu}
+        onAction={handleMenuAction}
+      >
+        {menuMode === 'admin' ? (
+          <>
+            <Dropdown.Item
+              id="back-app"
+              textValue="回到用户端"
+              className={styles.profileMenuItem}
+            >
+              <Home size={16} />
+              <span>回到用户端</span>
+            </Dropdown.Item>
+            <Dropdown.Item id="logout" textValue="退出登录" className={styles.profileMenuItem}>
+              <LogOut size={16} />
+              <span>退出登录</span>
+            </Dropdown.Item>
+          </>
+        ) : (
+          <>
+            <Dropdown.Item
+              id="usage"
+              textValue="余额与使用量"
+              className={styles.profileMenuItem}
+            >
+              <ChartPie size={16} />
+              <span>余额与使用量</span>
+            </Dropdown.Item>
+            <Dropdown.Item id="account" textValue="账号" className={styles.profileMenuItem}>
+              <ShieldUser size={16} />
+              <span>账号</span>
+            </Dropdown.Item>
+            <Dropdown.Item id="appearance" textValue="外观" className={styles.profileMenuItem}>
+              <Palette size={16} />
+              <span>外观</span>
+            </Dropdown.Item>
+            <Dropdown.Item id="feedback" textValue="用户反馈" className={styles.profileMenuItem}>
+              <MessageSquare size={16} />
+              <span>用户反馈</span>
+            </Dropdown.Item>
+            {isAdmin && (
+              <Dropdown.Item
+                id="enter-admin"
+                textValue="进入管理"
+                className={styles.profileMenuItem}
+              >
+                <Shield size={16} />
+                <span>进入管理</span>
+              </Dropdown.Item>
+            )}
+            <Dropdown.Item id="logout" textValue="退出登录" className={styles.profileMenuItem}>
+              <LogOut size={16} />
+              <span>退出登录</span>
+            </Dropdown.Item>
+          </>
+        )}
+      </Dropdown.Menu>
+    </Dropdown.Popover>
+  );
+
   return (
     <>
-      <Dropdown>
-        <div className={clsx(styles.profile, !collapsed && styles.expanded)}>
-          {collapsed ? (
+      <div className={clsx(styles.profile, !collapsed && styles.expanded)}>
+        {collapsed ? (
+          <Dropdown>
             <Dropdown.Trigger aria-label="打开用户菜单" className={styles.avatarTrigger}>
-              <Avatar size="sm" className={styles.avatar}>
-                {user?.avatar ? <Avatar.Image src={user.avatar} alt={displayName} /> : null}
-                <Avatar.Fallback>{displayName.charAt(0).toUpperCase()}</Avatar.Fallback>
-              </Avatar>
+              {userAvatar}
             </Dropdown.Trigger>
-          ) : (
-            <>
-              <Avatar size="sm" className={styles.avatar}>
-                {user?.avatar ? <Avatar.Image src={user.avatar} alt={displayName} /> : null}
-                <Avatar.Fallback>{displayName.charAt(0).toUpperCase()}</Avatar.Fallback>
-              </Avatar>
-              <div className={styles.info}>
-                <span className={styles.username}>{displayName}</span>
-                <span className={styles.tag}>{identityLabel}</span>
-              </div>
+            {userMenu}
+          </Dropdown>
+        ) : (
+          <>
+            {userAvatar}
+            <div className={styles.info}>
+              <span className={styles.username}>{displayName}</span>
+              <span className={styles.tag}>{identityLabel}</span>
+            </div>
+            <Dropdown>
               <Dropdown.Trigger aria-label="打开用户设置菜单" className={styles.menuTrigger}>
                 <Settings className={styles.icon} />
               </Dropdown.Trigger>
-            </>
-          )}
-        </div>
-        <Dropdown.Popover placement="top left">
-          <Dropdown.Menu
-            aria-label="用户菜单"
-            className={styles.profileMenu}
-            onAction={handleMenuAction}
-          >
-            {menuMode === 'admin' ? (
-              <>
-                <Dropdown.Item
-                  id="back-app"
-                  textValue="回到用户端"
-                  className={styles.profileMenuItem}
-                >
-                  <Home size={16} />
-                  <span>回到用户端</span>
-                </Dropdown.Item>
-                <Dropdown.Item id="logout" textValue="退出登录" className={styles.profileMenuItem}>
-                  <LogOut size={16} />
-                  <span>退出登录</span>
-                </Dropdown.Item>
-              </>
-            ) : (
-              <>
-                <Dropdown.Item
-                  id="usage"
-                  textValue="余额与使用量"
-                  className={styles.profileMenuItem}
-                >
-                  <ChartPie size={16} />
-                  <span>余额与使用量</span>
-                </Dropdown.Item>
-                <Dropdown.Item id="account" textValue="账号" className={styles.profileMenuItem}>
-                  <ShieldUser size={16} />
-                  <span>账号</span>
-                </Dropdown.Item>
-                <Dropdown.Item id="appearance" textValue="外观" className={styles.profileMenuItem}>
-                  <Palette size={16} />
-                  <span>外观</span>
-                </Dropdown.Item>
-                <Dropdown.Item
-                  id="feedback"
-                  textValue="用户反馈"
-                  className={styles.profileMenuItem}
-                >
-                  <MessageSquare size={16} />
-                  <span>用户反馈</span>
-                </Dropdown.Item>
-                {isAdmin && (
-                  <Dropdown.Item
-                    id="enter-admin"
-                    textValue="进入管理"
-                    className={styles.profileMenuItem}
-                  >
-                    <Shield size={16} />
-                    <span>进入管理</span>
-                  </Dropdown.Item>
-                )}
-                <Dropdown.Item id="logout" textValue="退出登录" className={styles.profileMenuItem}>
-                  <LogOut size={16} />
-                  <span>退出登录</span>
-                </Dropdown.Item>
-              </>
-            )}
-          </Dropdown.Menu>
-        </Dropdown.Popover>
-      </Dropdown>
+              {userMenu}
+            </Dropdown>
+          </>
+        )}
+      </div>
 
       <Modal isOpen={feedbackModalOpen} onOpenChange={setFeedbackModalOpen}>
         <Modal.Backdrop isDismissable>

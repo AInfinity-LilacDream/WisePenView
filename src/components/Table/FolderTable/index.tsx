@@ -30,10 +30,34 @@ import styles from './style.module.less';
 
 import { Table } from '@heroui/react';
 import { Folder } from 'lucide-react';
-import { useCallback, useMemo, useRef, type CSSProperties, type ReactNode } from 'react';
+import {
+  memo,
+  useCallback,
+  useMemo,
+  useRef,
+  type CSSProperties,
+  type KeyboardEvent,
+  type MouseEvent,
+  type PointerEvent,
+  type ReactNode,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 
 const LOAD_MORE_THRESHOLD_PX = 48;
+const ROW_ID_ATTRIBUTE = 'data-folder-row-id';
+const IMMEDIATE_SELECTED_ATTRIBUTE = 'data-folder-row-immediate-selected';
+const INTERACTIVE_ROW_TARGET_SELECTOR = [
+  'a',
+  'button',
+  'input',
+  'select',
+  'textarea',
+  '[contenteditable="true"]',
+  '[role="button"]',
+  '[role="link"]',
+  '[role="menuitem"]',
+  '[data-row-click-ignore="true"]',
+].join(',');
 
 function flattenFolderRows<T extends FolderTableRow>(
   rows: T[],
@@ -110,6 +134,132 @@ function isPlainTextContent(content: ReactNode): content is string | number {
   return typeof content === 'string' || typeof content === 'number';
 }
 
+interface DelegatedRowTarget {
+  row: HTMLElement;
+  rowId: string;
+}
+
+function getDelegatedRowTarget(
+  event:
+    | KeyboardEvent<HTMLTableSectionElement>
+    | MouseEvent<HTMLTableSectionElement>
+    | PointerEvent<HTMLTableSectionElement>
+): DelegatedRowTarget | null {
+  const target = event.target;
+  if (!(target instanceof Element)) {
+    return null;
+  }
+  if (target.closest(INTERACTIVE_ROW_TARGET_SELECTOR)) {
+    return null;
+  }
+  const row = target.closest<HTMLElement>(`[${ROW_ID_ATTRIBUTE}]`);
+  if (!row || !event.currentTarget.contains(row)) {
+    return null;
+  }
+  const rowId = row.getAttribute(ROW_ID_ATTRIBUTE);
+  return rowId ? { row, rowId } : null;
+}
+
+function markImmediateSelectedRow(body: HTMLTableSectionElement, selectedRow: HTMLElement) {
+  const previousRows = body.querySelectorAll<HTMLElement>(
+    `[${ROW_ID_ATTRIBUTE}][data-selected="true"], [${ROW_ID_ATTRIBUTE}][${IMMEDIATE_SELECTED_ATTRIBUTE}="true"]`
+  );
+  previousRows.forEach((row) => {
+    if (row === selectedRow) {
+      return;
+    }
+    row.removeAttribute('data-selected');
+    row.removeAttribute(IMMEDIATE_SELECTED_ATTRIBUTE);
+    row.classList.remove(styles.selectedRow);
+  });
+
+  selectedRow.setAttribute('data-selected', 'true');
+  selectedRow.setAttribute(IMMEDIATE_SELECTED_ATTRIBUTE, 'true');
+  selectedRow.classList.add(styles.selectedRow);
+}
+
+interface FolderTableBodyRowProps<T extends FolderTableRow> {
+  columns: FolderTableColumn<T>[];
+  isLoadMoreRow: boolean;
+  isSelected: boolean;
+  renderCellContent: (
+    column: FolderTableColumn<T>,
+    row: FolderTableVisibleRow & T,
+    ctx: FolderTableRowContext<T>
+  ) => ReactNode;
+  resolveBodyCellClass: (column: FolderTableColumn<T>) => string;
+  row: FolderTableVisibleRow & T;
+}
+
+function areBodyRowPropsEqual<T extends FolderTableRow>(
+  prev: FolderTableBodyRowProps<T>,
+  next: FolderTableBodyRowProps<T>
+): boolean {
+  return (
+    prev.row === next.row &&
+    prev.columns === next.columns &&
+    prev.isLoadMoreRow === next.isLoadMoreRow &&
+    prev.isSelected === next.isSelected &&
+    prev.renderCellContent === next.renderCellContent &&
+    prev.resolveBodyCellClass === next.resolveBodyCellClass
+  );
+}
+
+function FolderTableBodyRowBase<T extends FolderTableRow>({
+  columns,
+  isLoadMoreRow,
+  isSelected,
+  renderCellContent,
+  resolveBodyCellClass,
+  row,
+}: FolderTableBodyRowProps<T>) {
+  const rowId = row.id;
+  const ctx: FolderTableRowContext<T> = {
+    row,
+    rowId,
+    depth: row.depth,
+  };
+
+  return (
+    <Table.Row
+      id={rowId}
+      textValue={row.name}
+      data-folder-row-id={rowId}
+      data-selected={isSelected ? 'true' : undefined}
+      className={joinClassNames(
+        styles.bodyRow,
+        isSelected ? styles.selectedRow : undefined,
+        isLoadMoreRow ? styles.inlineLoadMoreRow : undefined
+      )}
+    >
+      {columns.map((column) => {
+        const cellContent = renderCellContent(column, row, ctx);
+        return (
+          <Table.Cell key={column.id} className={resolveBodyCellClass(column)}>
+            <TableCellAlign
+              align={column.isActionColumn ? 'center' : resolveColumnAlign(column.align)}
+              stretch={shouldStretchTableCellContent(column)}
+            >
+              {column.isNameColumn || column.isActionColumn ? (
+                cellContent
+              ) : isPlainTextContent(cellContent) ? (
+                <TableTextCell muted>{cellContent}</TableTextCell>
+              ) : (
+                cellContent
+              )}
+            </TableCellAlign>
+          </Table.Cell>
+        );
+      })}
+    </Table.Row>
+  );
+}
+
+const FolderTableBodyRow = memo(
+  FolderTableBodyRowBase,
+  areBodyRowPropsEqual
+) as typeof FolderTableBodyRowBase;
+
 function FolderTable<T extends FolderTableRow>({
   ariaLabel,
   items,
@@ -122,7 +272,6 @@ function FolderTable<T extends FolderTableRow>({
   selectedRowKey,
   onRowSelect,
   onRowActivate,
-  getRowProps,
   rowActions,
   loadMore,
   totalCount,
@@ -153,6 +302,13 @@ function FolderTable<T extends FolderTableRow>({
     () => flattenFolderRows(items, expandedKeySet),
     [items, expandedKeySet]
   );
+  const visibleRowMap = useMemo(() => {
+    const map = new Map<string, FolderTableVisibleRow & T>();
+    for (const row of visibleRows) {
+      map.set(row.id, row as FolderTableVisibleRow & T);
+    }
+    return map;
+  }, [visibleRows]);
 
   const showSkeletonBody = loading && items.length === 0;
   const showEmptyState = !loading && visibleRows.length === 0;
@@ -234,6 +390,66 @@ function FolderTable<T extends FolderTableRow>({
       onRowActivate?.(row);
     },
     [onRowActivate, onRowSelect]
+  );
+
+  const handleDelegatedRowPress = useCallback(
+    (rowId: string) => {
+      const row = visibleRowMap.get(rowId);
+      if (!row) {
+        return;
+      }
+      handleRowPress(row as T);
+    },
+    [handleRowPress, visibleRowMap]
+  );
+
+  const handleBodyClick = useCallback(
+    (event: MouseEvent<HTMLTableSectionElement>) => {
+      if (event.defaultPrevented) {
+        return;
+      }
+      const target = getDelegatedRowTarget(event);
+      if (!target) {
+        return;
+      }
+      if (onRowSelect) {
+        markImmediateSelectedRow(event.currentTarget, target.row);
+      }
+      handleDelegatedRowPress(target.rowId);
+    },
+    [handleDelegatedRowPress, onRowSelect]
+  );
+
+  const handleBodyPointerDown = useCallback(
+    (event: PointerEvent<HTMLTableSectionElement>) => {
+      if (!onRowSelect) {
+        return;
+      }
+      const target = getDelegatedRowTarget(event);
+      if (!target) {
+        return;
+      }
+      markImmediateSelectedRow(event.currentTarget, target.row);
+    },
+    [onRowSelect]
+  );
+
+  const handleBodyKeyDown = useCallback(
+    (event: KeyboardEvent<HTMLTableSectionElement>) => {
+      if (event.defaultPrevented || (event.key !== 'Enter' && event.key !== ' ')) {
+        return;
+      }
+      const target = getDelegatedRowTarget(event);
+      if (!target) {
+        return;
+      }
+      event.preventDefault();
+      if (onRowSelect) {
+        markImmediateSelectedRow(event.currentTarget, target.row);
+      }
+      handleDelegatedRowPress(target.rowId);
+    },
+    [handleDelegatedRowPress, onRowSelect]
   );
 
   const renderCellContent = useCallback(
@@ -347,6 +563,9 @@ function FolderTable<T extends FolderTableRow>({
             </Table.Header>
 
             <Table.Body
+              onClick={handleBodyClick}
+              onKeyDown={handleBodyKeyDown}
+              onPointerDown={handleBodyPointerDown}
               renderEmptyState={() =>
                 showEmptyState ? (
                   <TableBodyState
@@ -367,55 +586,19 @@ function FolderTable<T extends FolderTableRow>({
                 <>
                   {visibleRows.map((row) => {
                     const rowId = row.id;
-                    const ctx: FolderTableRowContext<T> = {
-                      row: row as T,
-                      rowId,
-                      depth: row.depth,
-                    };
-                    const rowProps = getRowProps?.(row as T, ctx) ?? {};
-                    const { className: rowClassName, ...restRowProps } = rowProps;
                     const isLoadMoreRow = row.entryType === 'loading';
                     const isSelected = selectedRowKey === rowId;
 
                     return (
-                      <Table.Row
-                        {...restRowProps}
+                      <FolderTableBodyRow
                         key={rowId}
-                        id={rowId}
-                        textValue={row.name}
-                        data-selected={isSelected ? 'true' : undefined}
-                        className={joinClassNames(
-                          styles.bodyRow,
-                          isSelected ? styles.selectedRow : undefined,
-                          isLoadMoreRow ? styles.inlineLoadMoreRow : undefined,
-                          rowClassName
-                        )}
-                        onAction={() => handleRowPress(row as T)}
-                      >
-                        {columns.map((column) => {
-                          const cellContent = renderCellContent(column, row, ctx);
-                          return (
-                            <Table.Cell key={column.id} className={resolveBodyCellClass(column)}>
-                              <TableCellAlign
-                                align={
-                                  column.isActionColumn
-                                    ? 'center'
-                                    : resolveColumnAlign(column.align)
-                                }
-                                stretch={shouldStretchTableCellContent(column)}
-                              >
-                                {column.isNameColumn || column.isActionColumn ? (
-                                  cellContent
-                                ) : isPlainTextContent(cellContent) ? (
-                                  <TableTextCell muted>{cellContent}</TableTextCell>
-                                ) : (
-                                  cellContent
-                                )}
-                              </TableCellAlign>
-                            </Table.Cell>
-                          );
-                        })}
-                      </Table.Row>
+                        columns={columns}
+                        isLoadMoreRow={isLoadMoreRow}
+                        isSelected={isSelected}
+                        renderCellContent={renderCellContent}
+                        resolveBodyCellClass={resolveBodyCellClass}
+                        row={row as FolderTableVisibleRow & T}
+                      />
                     );
                   })}
                   {loadMore?.loading ? (
@@ -446,4 +629,6 @@ function FolderTable<T extends FolderTableRow>({
   );
 }
 
-export default FolderTable;
+const MemoizedFolderTable = memo(FolderTable) as typeof FolderTable;
+
+export default MemoizedFolderTable;

@@ -4,6 +4,7 @@ import {
   isPdfEditorType,
   resolveResourceEditorType,
 } from '@/utils/navigation/workspaceRoute';
+import { startTransition, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 export interface NavigateResourceTarget {
@@ -24,7 +25,7 @@ export interface NavigateResourceFn {
 export const useNavigateResource = (groupId?: string): NavigateResourceFn => {
   const navigate = useNavigate();
 
-  return (resourceId, target) => {
+  return useCallback((resourceId, target) => {
     if (!resourceId) return;
     useActiveDriveScopeStore.getState().setGroupId(groupId);
 
@@ -35,7 +36,9 @@ export const useNavigateResource = (groupId?: string): NavigateResourceFn => {
     const basePath = buildWorkspaceResourcePath(editorType, resourceId);
 
     if (!isPdfEditorType(editorType)) {
-      navigate(basePath);
+      startTransition(() => {
+        navigate(basePath);
+      });
       return;
     }
 
@@ -45,6 +48,8 @@ export const useNavigateResource = (groupId?: string): NavigateResourceFn => {
       qs.set('page', String(progress.page));
       qs.set('zoom', progress.zoom);
     }
-    navigate(qs.size > 0 ? `${basePath}?${qs.toString()}` : basePath);
-  };
+    startTransition(() => {
+      navigate(qs.size > 0 ? `${basePath}?${qs.toString()}` : basePath);
+    });
+  }, [groupId, navigate]);
 };

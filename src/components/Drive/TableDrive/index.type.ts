@@ -1,6 +1,6 @@
 import type { FolderTableRow } from '@/components/Table';
 import type { DriveNode } from '@/domains/Drive';
-import type { DriveActionTarget, DriveScope } from '../common/driveComponentModel';
+import type { DriveScope } from '../common/driveComponentModel';
 
 /** TableDrive 行类型：DriveNode 本身（含 loading 占位节点），可选挂 children */
 export type DriveRow = DriveNode & { children?: DriveRow[] };
@@ -11,19 +11,11 @@ export type DriveTableRow = FolderTableRow & {
   children?: DriveTableRow[];
 };
 
-export type DriveRowPredicate = boolean | ((node: DriveActionTarget) => boolean);
-
 export interface TableDriveActionConfig {
   toolbar?: {
     canCreateFolder?: boolean;
     canUploadToGroup?: boolean;
     canManageTagPermission?: boolean;
-  };
-  row?: {
-    canRename?: DriveRowPredicate;
-    canDelete?: DriveRowPredicate;
-    canMove?: DriveRowPredicate;
-    canManageNodePermission?: DriveRowPredicate;
   };
 }
 

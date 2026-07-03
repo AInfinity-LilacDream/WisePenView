@@ -1,5 +1,6 @@
 import type { DriveNode } from '@/domains/Drive';
 import { useNavigateResource } from '@/hooks/useNavigateResource';
+import { useCallback } from 'react';
 
 export interface UseClickNodeParams {
   /** 进入 root / folder 等容器型节点（通常由 useTableDrive.enterFolder 提供） */
@@ -16,7 +17,7 @@ export interface UseClickNodeParams {
 export const useClickNode = ({ enterFolder, groupId }: UseClickNodeParams) => {
   const navigateResource = useNavigateResource(groupId);
 
-  return (node: DriveNode) => {
+  return useCallback((node: DriveNode) => {
     if (node.type === 'root' || node.type === 'folder') {
       enterFolder(node.id);
       return;
@@ -29,5 +30,5 @@ export const useClickNode = ({ enterFolder, groupId }: UseClickNodeParams) => {
       resourceType: node.resourceType,
       resourceName: node.title,
     });
-  };
+  }, [enterFolder, navigateResource]);
 };

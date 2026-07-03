@@ -1,6 +1,7 @@
 import ChatPanel from '@/components/ChatPanel';
 import { clearNewChatSessionStore, useCurrentChatSessionStore } from '@/store';
 import { useMount, useUpdateEffect } from 'ahooks';
+import { useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import styles from './style.module.less';
 
@@ -31,11 +32,11 @@ function ChatPage() {
     }
   }, [routeSessionId]);
 
-  const handleNewChat = async () => {
+  const handleNewChat = useCallback(async () => {
     clearCurrentSession();
     clearNewChatSessionStore();
     navigate(BASE, { replace: true });
-  };
+  }, [clearCurrentSession, navigate]);
 
   return (
     <div className={styles.root}>

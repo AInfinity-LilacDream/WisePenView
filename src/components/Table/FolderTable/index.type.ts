@@ -1,5 +1,5 @@
 import type { ResourceIconType } from '@/domains/Resource';
-import type { DragEventHandler, ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import type { FolderColumnWidth } from '../shared/TableBase/columnWidth';
 import type { TableColumnBase, TableLoadMore } from '../shared/TableBase/index.type';
 import type { TableRowAction } from '../shared/TableRowActions/index.type';
@@ -31,17 +31,6 @@ export interface FolderTableRowContext<T extends FolderTableRow> {
   row: T;
   rowId: string;
   depth: number;
-}
-
-export interface FolderTableRowProps {
-  className?: string;
-  draggable?: boolean;
-  'aria-busy'?: boolean;
-  onDragStart?: DragEventHandler<HTMLElement>;
-  onDragEnd?: DragEventHandler<HTMLElement>;
-  onDragOver?: DragEventHandler<HTMLElement>;
-  onDragLeave?: DragEventHandler<HTMLElement>;
-  onDrop?: DragEventHandler<HTMLElement>;
 }
 
 export interface FolderTableColumn<T extends FolderTableRow> extends Omit<
@@ -82,8 +71,6 @@ export interface FolderTableProps<T extends FolderTableRow> {
   onRowSelect?: (row: T) => void;
   /** 行激活（例如进入文件夹 / 打开资源） */
   onRowActivate?: (row: T) => void;
-  /** 行级属性扩展，供拖放等业务注入属性 */
-  getRowProps?: (row: T, ctx: FolderTableRowContext<T>) => FolderTableRowProps;
   rowActions?: FolderTableRowAction<T>[] | ((row: T) => FolderTableRowAction<T>[]);
   /** 滚动加载更多；Folder 型不做分页 */
   loadMore?: FolderTableLoadMore;

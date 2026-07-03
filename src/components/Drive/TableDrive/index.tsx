@@ -2,25 +2,42 @@ import IconText from '@/components/IconText';
 import {
   FolderTable,
   type FolderTableBreadcrumbItem,
-  type FolderTableRowProps,
+  type FolderTableColumn,
 } from '@/components/Table';
 import type { DriveNode } from '@/domains/Drive';
 import { findTreeNodeById } from '@/utils/tree/findTreeNodeById';
 import { Button } from '@heroui/react';
 import { CloudUpload } from 'lucide-react';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { getDriveNodeLabel, resolveDriveScope } from '../common/driveComponentModel';
 import { useClickNode } from '../common/useClickNode';
-import {
-  DRAG_TYPE_DRIVE_NODE,
-  isDraggableDriveNode,
-  isDropTargetDriveNode,
-  useDriveDrop,
-} from '../common/useDriveDrop';
 import type { DriveRow, DriveTableRow, TableDriveProps } from './index.type';
 import styles from './style.module.less';
 import { useTableDrive } from './useTableDrive';
 import { useTableDriveActions } from './useTableDriveActions';
+
+const DRIVE_TABLE_COLUMNS: FolderTableColumn<DriveTableRow>[] = [
+  {
+    id: 'name',
+    label: '名称',
+    width: 'fill',
+    align: 'start',
+    isRowHeader: true,
+    isNameColumn: true,
+  },
+  {
+    id: 'size',
+    label: '大小',
+    width: 'folderSize',
+    renderCell: (row) => (row.entryType === 'loading' ? '' : (row.sizeLabel ?? '—')),
+  },
+  {
+    id: 'type',
+    label: '类型',
+    width: 'folderType',
+    renderCell: (row) => (row.entryType === 'loading' ? '' : row.typeLabel),
+  },
+];
 
 function getTypeLabel(node: DriveNode): string {
   switch (node.type) {
@@ -73,6 +90,16 @@ function toBreadcrumbItems(pathNodes: DriveNode[]): FolderTableBreadcrumbItem[] 
     }));
 }
 
+function buildDriveTableRowMap(rows: DriveTableRow[]): Map<string, DriveTableRow> {
+  const map = new Map<string, DriveTableRow>();
+  const visit = (row: DriveTableRow) => {
+    map.set(row.id, row);
+    row.children?.forEach(visit);
+  };
+  rows.forEach(visit);
+  return map;
+}
+
 function TableDrive({ groupId, rootId, scope, actions }: TableDriveProps) {
   const resolvedScope = useMemo(
     () => resolveDriveScope(scope, groupId, rootId),
@@ -91,23 +118,56 @@ function TableDrive({ groupId, rootId, scope, actions }: TableDriveProps) {
     refresh,
   } = useTableDrive({ rootId: finalRootId, groupId: finalGroupId, scope: resolvedScope.scope });
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const selectedNodeIdRef = useRef<string | null>(null);
+  const selectedCommitFrameRef = useRef<number | null>(null);
+  const selectedCommitTimerRef = useRef<number | null>(null);
+
+  const cancelSelectedNodeIdCommit = useCallback(() => {
+    if (selectedCommitFrameRef.current !== null) {
+      window.cancelAnimationFrame(selectedCommitFrameRef.current);
+      selectedCommitFrameRef.current = null;
+    }
+    if (selectedCommitTimerRef.current !== null) {
+      window.clearTimeout(selectedCommitTimerRef.current);
+      selectedCommitTimerRef.current = null;
+    }
+  }, []);
+
+  const scheduleSelectedNodeIdCommit = useCallback(
+    (nextNodeId: string | null) => {
+      cancelSelectedNodeIdCommit();
+      selectedCommitFrameRef.current = window.requestAnimationFrame(() => {
+        selectedCommitFrameRef.current = null;
+        selectedCommitTimerRef.current = window.setTimeout(() => {
+          selectedCommitTimerRef.current = null;
+          startTransition(() => {
+            setSelectedNodeId(nextNodeId);
+          });
+        }, 0);
+      });
+    },
+    [cancelSelectedNodeIdCommit]
+  );
+
+  useEffect(() => cancelSelectedNodeIdCommit, [cancelSelectedNodeIdCommit]);
 
   const handleEnterFolder = useCallback(
     (nodeId: string) => {
-      setSelectedNodeId(null);
+      selectedNodeIdRef.current = null;
+      scheduleSelectedNodeIdCommit(null);
       enterFolder(nodeId);
     },
-    [enterFolder]
+    [enterFolder, scheduleSelectedNodeIdCommit]
   );
   const handleClickNode = useClickNode({
     enterFolder: handleEnterFolder,
     groupId: finalGroupId,
   });
-  const { onDrop } = useDriveDrop({ refresh, groupId: finalGroupId });
   const rows = useMemo(() => dataSource.map((node) => toDriveTableRow(node)), [dataSource]);
+  const rowMap = useMemo(() => buildDriveTableRowMap(rows), [rows]);
   const selectedNode = useMemo(
-    () => (selectedNodeId ? findTreeNodeById(rows, selectedNodeId) : undefined),
-    [rows, selectedNodeId]
+    () => (selectedNodeId ? rowMap.get(selectedNodeId) : undefined),
+    [rowMap, selectedNodeId]
   );
   const currentDirectoryItemCount = useMemo(
     () => rows.filter((row) => row.entryType !== 'loading').length,
@@ -115,7 +175,6 @@ function TableDrive({ groupId, rootId, scope, actions }: TableDriveProps) {
   );
   const breadcrumbItems = useMemo(() => toBreadcrumbItems(pathNodes), [pathNodes]);
   const {
-    rowActions,
     showCreateFolder,
     showUploadToGroup,
     showManagePermission,
@@ -126,97 +185,87 @@ function TableDrive({ groupId, rootId, scope, actions }: TableDriveProps) {
   } = useTableDriveActions({
     currentNodeId,
     currentRows: rows,
-    rootId: finalRootId,
     groupId: finalGroupId,
     actions,
     refresh,
   });
+  const breadcrumb = useMemo(
+    () => <FolderTable.Breadcrumb items={breadcrumbItems} onJump={handleEnterFolder} />,
+    [breadcrumbItems, handleEnterFolder]
+  );
+  const toolbar = useMemo(
+    () => (
+      <div className={styles.toolbarActions}>
+        {showUploadToGroup ? (
+          <Button variant="secondary" size="sm" onPress={openUploadToGroup}>
+            <IconText icon={<CloudUpload />} iconSize={16}>
+              上传文件
+            </IconText>
+          </Button>
+        ) : null}
+        {showManagePermission ? (
+          <Button variant="secondary" size="sm" onPress={openTagPermission}>
+            标签权限管理
+          </Button>
+        ) : null}
+        {showCreateFolder ? (
+          <Button variant="secondary" size="sm" onPress={openNewFolder}>
+            新建文件夹
+          </Button>
+        ) : null}
+      </div>
+    ),
+    [
+      openNewFolder,
+      openTagPermission,
+      openUploadToGroup,
+      showCreateFolder,
+      showManagePermission,
+      showUploadToGroup,
+    ]
+  );
 
-  // 拖拽结束前屏蔽行点击，避免拖放动作额外触发进入/打开。
-  const isDraggingRef = useRef(false);
-
-  const handleExpandedChange = async (keys: string[]) => {
-    const addedKey = keys.find((key) => !expandedRowKeys.includes(key));
-    if (addedKey) {
-      const row = findTreeNodeById(dataSource, addedKey);
-      if (row) {
-        await handleExpand(true, row);
-        return;
-      }
-    }
-    const removedKey = expandedRowKeys.find((key) => !keys.includes(key));
-    if (removedKey) {
-      const row = findTreeNodeById(dataSource, removedKey);
-      if (row) {
-        await handleExpand(false, row);
-        return;
-      }
-    }
-  };
-
-  const getRowProps = (row: DriveTableRow): FolderTableRowProps => {
-    const node = row.node;
-    const base: FolderTableRowProps = {};
-
-    if (node.type === 'loading') {
-      base['aria-busy'] = true;
-      return base;
-    }
-
-    if (isDraggableDriveNode(node)) {
-      base.draggable = true;
-      base.onDragStart = (event) => {
-        isDraggingRef.current = true;
-        event.dataTransfer.setData(DRAG_TYPE_DRIVE_NODE, JSON.stringify(node));
-        event.dataTransfer.effectAllowed = 'move';
-      };
-      base.onDragEnd = (event) => {
-        isDraggingRef.current = false;
-        event.currentTarget.classList.remove(styles.droppableOver);
-      };
-    }
-
-    if (isDropTargetDriveNode(node)) {
-      base.onDragOver = (event) => {
-        event.preventDefault();
-        event.dataTransfer.dropEffect = 'move';
-        event.currentTarget.classList.add(styles.droppableOver);
-      };
-      base.onDragLeave = (event) => {
-        event.currentTarget.classList.remove(styles.droppableOver);
-      };
-      base.onDrop = (event) => {
-        event.preventDefault();
-        event.currentTarget.classList.remove(styles.droppableOver);
-        const raw = event.dataTransfer.getData(DRAG_TYPE_DRIVE_NODE);
-        if (!raw) return;
-        try {
-          const source = JSON.parse(raw) as DriveNode;
-          void onDrop(source, node);
-        } catch {
-          // 忽略非 Drive 节点拖拽数据。
-        } finally {
-          isDraggingRef.current = false;
+  const handleExpandedChange = useCallback(
+    async (keys: string[]) => {
+      const addedKey = keys.find((key) => !expandedRowKeys.includes(key));
+      if (addedKey) {
+        const row = findTreeNodeById(dataSource, addedKey);
+        if (row) {
+          await handleExpand(true, row);
+          return;
         }
-      };
-    }
+      }
+      const removedKey = expandedRowKeys.find((key) => !keys.includes(key));
+      if (removedKey) {
+        const row = findTreeNodeById(dataSource, removedKey);
+        if (row) {
+          await handleExpand(false, row);
+          return;
+        }
+      }
+    },
+    [dataSource, expandedRowKeys, handleExpand]
+  );
 
-    return base;
-  };
+  const handleRowActivate = useCallback(
+    (row: DriveTableRow) => {
+      handleClickNode(row.node);
+    },
+    [handleClickNode]
+  );
 
-  const handleRowActivate = (row: DriveTableRow) => {
-    if (isDraggingRef.current) return;
-    handleClickNode(row.node);
-  };
-
-  const handleRowSelect = (row: DriveTableRow) => {
-    if (isDraggingRef.current || row.node.type === 'loading') return;
-    if (selectedNodeId === row.node.id) {
-      handleRowActivate(row);
-      return;
-    }
-    setSelectedNodeId(row.node.id);
-  };
+  const handleRowSelect = useCallback(
+    (row: DriveTableRow) => {
+      if (row.node.type === 'loading') return;
+      if (selectedNodeIdRef.current === row.node.id) {
+        handleRowActivate(row);
+        return;
+      }
+      selectedNodeIdRef.current = row.node.id;
+      scheduleSelectedNodeIdCommit(row.node.id);
+    },
+    [handleRowActivate, scheduleSelectedNodeIdCommit]
+  );
 
   return (
     <main className={styles.listArea}>
@@ -224,41 +273,14 @@ function TableDrive({ groupId, rootId, scope, actions }: TableDriveProps) {
         <FolderTable<DriveTableRow>
           ariaLabel="云盘文件列表"
           items={rows}
+          columns={DRIVE_TABLE_COLUMNS}
           loading={loading}
-          breadcrumb={
-            <FolderTable.Breadcrumb
-              items={breadcrumbItems}
-              onJump={(nodeId) => handleEnterFolder(nodeId)}
-            />
-          }
-          toolbar={
-            <div className={styles.toolbarActions}>
-              {showUploadToGroup ? (
-                <Button variant="secondary" size="sm" onPress={openUploadToGroup}>
-                  <IconText icon={<CloudUpload />} iconSize={16}>
-                    上传文件
-                  </IconText>
-                </Button>
-              ) : null}
-              {showManagePermission ? (
-                <Button variant="secondary" size="sm" onPress={openTagPermission}>
-                  标签权限管理
-                </Button>
-              ) : null}
-              {showCreateFolder ? (
-                <Button variant="secondary" size="sm" onPress={openNewFolder}>
-                  新建文件夹
-                </Button>
-              ) : null}
-            </div>
-          }
+          breadcrumb={breadcrumb}
+          toolbar={toolbar}
           expandedRowKeys={expandedRowKeys}
-          onExpandedChange={(keys) => void handleExpandedChange(keys)}
-          selectedRowKey={selectedNode?.id}
+          onExpandedChange={handleExpandedChange}
           onRowSelect={handleRowSelect}
           onRowActivate={handleRowActivate}
-          getRowProps={getRowProps}
-          rowActions={rowActions}
           totalCount={currentDirectoryItemCount}
           summary={`当前目录共 ${currentDirectoryItemCount} 项`}
           className={styles.table}

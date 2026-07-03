@@ -1,6 +1,7 @@
 import SidebarDrive from '@/components/Drive/SidebarDrive';
 import clsx from 'clsx';
 import { ChevronLeft, IndentDecrease, IndentIncrease } from 'lucide-react';
+import { memo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import UserProfile from '../_common/UserProfile';
 import type { DriveSidebarProps } from './index.type';
@@ -9,9 +10,9 @@ import styles from './style.module.less';
 function DriveSidebar({ collapsed, onToggle }: DriveSidebarProps) {
   const navigate = useNavigate();
 
-  const handleBack = () => {
+  const handleBack = useCallback(() => {
     navigate('/app/drive');
-  };
+  }, [navigate]);
 
   return (
     <div className={clsx(styles.sider, collapsed && styles.collapsed)}>
@@ -32,11 +33,16 @@ function DriveSidebar({ collapsed, onToggle }: DriveSidebarProps) {
         )}
       </div>
 
-      <div className={styles.body}>{!collapsed && <SidebarDrive />}</div>
+      <div
+        className={clsx(styles.body, collapsed && styles.bodyCollapsed)}
+        aria-hidden={collapsed}
+      >
+        <SidebarDrive />
+      </div>
 
       <UserProfile collapsed={collapsed} />
     </div>
   );
 }
 
-export default DriveSidebar;
+export default memo(DriveSidebar);

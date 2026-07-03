@@ -25,6 +25,14 @@ export const collectMessagesPlainText = (messageList: Message[]): string =>
     )
     .join('\n');
 
+/** 快速判断消息列表是否已有可展示文本，避免为长对话拼接整段字符串。 */
+export const hasMessagesPlainText = (messageList: readonly Message[]): boolean =>
+  messageList.some((message) =>
+    [message.content, message.reasoningContent, message.toolContent].some(
+      (chunk) => typeof chunk === 'string' && chunk.trim().length > 0
+    )
+  );
+
 export const mapRole = (role: string): MessageRole => {
   if (role === 'user') return 'user';
   return 'ai';

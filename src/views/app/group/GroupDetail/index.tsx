@@ -114,12 +114,6 @@ function GroupDetail() {
                   canUploadToGroup: true,
                   canManageTagPermission: groupDisplayConfig.canManageTag,
                 },
-                row: {
-                  canRename: groupDisplayConfig.canCreateTag,
-                  canDelete: groupDisplayConfig.canCreateTag,
-                  canMove: groupDisplayConfig.canCreateTag,
-                  canManageNodePermission: groupDisplayConfig.canManageTag,
-                },
               }}
             />
           </div>

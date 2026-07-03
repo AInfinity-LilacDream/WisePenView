@@ -5,7 +5,7 @@ import { useChatPanelStore, useCurrentChatSessionStore } from '@/store';
 import { useUpdateEffect } from 'ahooks';
 import clsx from 'clsx';
 import { Bot } from 'lucide-react';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import styles from './AppLayout.module.less';
 
@@ -44,6 +44,9 @@ function AppLayout() {
     if (!shouldRenderChatPanel) return;
     setChatPanelCollapsed(false);
   };
+  const handleSidebarToggle = useCallback(() => {
+    setSidebarCollapsed((collapsed) => !collapsed);
+  }, []);
 
   return (
     <div
@@ -58,7 +61,7 @@ function AppLayout() {
       >
         <AppSidebar
           collapsed={sidebarCollapsed}
-          onToggle={() => setSidebarCollapsed((collapsed) => !collapsed)}
+          onToggle={handleSidebarToggle}
         />
       </aside>
 

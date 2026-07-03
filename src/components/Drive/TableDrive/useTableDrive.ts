@@ -3,7 +3,7 @@ import type { DriveNode, DriveNodeScope } from '@/domains/Drive';
 import { parseErrorMessage } from '@/utils/error';
 import { toast } from '@heroui/react';
 import { useRequest, useUpdateEffect } from 'ahooks';
-import { useMemo, useState } from 'react';
+import { startTransition, useCallback, useMemo, useState } from 'react';
 import { useDriveTreeChildren } from '../common/useDriveTreeChildren';
 import type { DriveRow } from './index.type';
 
@@ -25,7 +25,7 @@ interface UseTableDriveReturn {
   enterFolder: (nodeId: string) => void;
   /** Table 的 onExpand 回调 */
   handleExpand: (expanded: boolean, record: DriveRow) => Promise<void>;
-  /** 重新拉取当前层级 children（drop / 重命名 / 删除 等操作后调用） */
+  /** 重新拉取当前层级 children（移动 / 重命名 / 删除 等操作后调用） */
   refresh: () => void;
 }
 
@@ -79,11 +79,13 @@ export function useTableDrive({
     }
   );
 
-  const enterFolder = (nodeId: string) => {
-    setCurrentNodeId(nodeId);
-  };
+  const enterFolder = useCallback((nodeId: string) => {
+    startTransition(() => {
+      setCurrentNodeId(nodeId);
+    });
+  }, []);
 
-  const handleExpand = async (expanded: boolean, record: DriveRow) => {
+  const handleExpand = useCallback(async (expanded: boolean, record: DriveRow) => {
     if (!expanded || (record.type !== 'root' && record.type !== 'folder')) {
       setExpandedRowKeys((keys) => keys.filter((k) => k !== record.id));
       return;
@@ -92,7 +94,7 @@ export function useTableDrive({
       await loadChildren(record.id);
     }
     setExpandedRowKeys((keys) => (keys.includes(record.id) ? keys : [...keys, record.id]));
-  };
+  }, [childrenMap, loadChildren]);
 
   // 浅 map：folder 命中 expandedChildrenMap 时挂 children，否则原样返回
   const dataSource = useMemo<DriveRow[]>(() => {

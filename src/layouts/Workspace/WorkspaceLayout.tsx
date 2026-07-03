@@ -54,6 +54,9 @@ function WorkspaceLayout() {
     if (!shouldRenderChatPanel) return;
     setChatPanelCollapsed(false);
   };
+  const handleSidebarToggle = useCallback(() => {
+    setSidebarCollapsed((collapsed) => !collapsed);
+  }, []);
 
   const setLayoutConfig = useCallback((config: WorkspaceLayoutConfig) => {
     setLayoutConfigState(config);
@@ -90,7 +93,7 @@ function WorkspaceLayout() {
       >
         <DriveSidebar
           collapsed={sidebarCollapsed}
-          onToggle={() => setSidebarCollapsed((collapsed) => !collapsed)}
+          onToggle={handleSidebarToggle}
         />
       </aside>
 
