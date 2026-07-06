@@ -90,6 +90,7 @@ export const createSkillServices = (deps: SkillServicesDeps): ISkillService => {
   };
 
   const deleteAssets = async (resourceId: string, draftVersion: number, assetIds: string[]) => {
+    if (assetIds.length === 0) return;
     await SkillApi.deleteSkillAssets({ resourceId, draftVersion, assetIds });
   };
 
@@ -113,12 +114,13 @@ export const createSkillServices = (deps: SkillServicesDeps): ISkillService => {
       ],
     });
     const ticket = res?.assetUploadTickets?.[0];
-    if (!ticket?.putUrl || !ticket.callbackHeader) return;
+    if (!ticket?.putUrl || !ticket.callbackHeader) return ticket?.assetId;
     await putOssPresignedUrl({
       putUrl: ticket.putUrl,
       callbackHeader: ticket.callbackHeader,
       body,
     });
+    return ticket.assetId;
   };
 
   const saveAsset = async (
@@ -126,7 +128,7 @@ export const createSkillServices = (deps: SkillServicesDeps): ISkillService => {
     draftVersion: number,
     params: { name: string; path: string; content: string }
   ) => {
-    await uploadAsset(resourceId, draftVersion, params);
+    return uploadAsset(resourceId, draftVersion, params);
   };
 
   return {

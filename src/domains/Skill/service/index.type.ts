@@ -20,10 +20,10 @@ export interface ISkillService {
     resourceId: string,
     draftVersion: number,
     params: UploadSkillAssetRequest
-  ): Promise<void>;
+  ): Promise<string | undefined>;
   saveAsset(
     resourceId: string,
     draftVersion: number,
     params: { name: string; path: string; content: string }
-  ): Promise<void>;
+  ): Promise<string | undefined>;
 }

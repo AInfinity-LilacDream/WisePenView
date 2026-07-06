@@ -1,7 +1,7 @@
 import { useEffectForce } from '@/hooks/useEffectForce';
 import clsx from 'clsx';
 import { ChevronRight, LoaderCircle } from 'lucide-react';
-import type { CSSProperties, Key, ReactNode } from 'react';
+import type { CSSProperties, DragEvent, Key, ReactNode } from 'react';
 import { useCallback, useMemo, useState } from 'react';
 import styles from './style.module.less';
 
@@ -13,6 +13,7 @@ export interface DataNode {
   selectable?: boolean;
   checkable?: boolean;
   isLeaf?: boolean;
+  draggable?: boolean;
 }
 
 export type TreeDataNode = DataNode;
@@ -29,6 +30,16 @@ interface TreeExpandInfo {
   expanded: boolean;
 }
 
+export type TreeDropPosition = 'before' | 'inside' | 'after';
+
+interface TreeAllowDropInfo {
+  dragNode: DataNode;
+  dropNode: DataNode;
+  dropPosition: TreeDropPosition;
+}
+
+type TreeDropInfo = TreeAllowDropInfo;
+
 export interface TreeProps {
   treeData?: DataNode[];
   className?: string;
@@ -44,6 +55,8 @@ export interface TreeProps {
   defaultExpandAll?: boolean;
   expandAction?: 'click' | 'doubleClick' | false;
   switcherIcon?: ReactNode;
+  draggable?: boolean | ((node: DataNode) => boolean);
+  allowDrop?: (info: TreeAllowDropInfo) => boolean;
   loadData?: (node: DataNode) => Promise<void> | void;
   onSelect?: (selectedKeys: Key[], info: TreeSelectInfo) => void;
   onCheck?: (
@@ -51,6 +64,7 @@ export interface TreeProps {
     info: { node: DataNode; checked: boolean }
   ) => void;
   onExpand?: (expandedKeys: Key[], info: TreeExpandInfo) => void;
+  onDrop?: (info: TreeDropInfo) => void;
 }
 
 interface FlatNode {
@@ -134,10 +148,13 @@ function Tree({
   defaultExpandAll = false,
   expandAction,
   switcherIcon,
+  draggable,
+  allowDrop,
   loadData,
   onSelect,
   onCheck,
   onExpand,
+  onDrop,
 }: TreeProps) {
   const defaultExpandedSignature = keysSignature(defaultExpandedKeys);
   const [internalSelectedKeys, setInternalSelectedKeys] = useState<string[]>([]);
@@ -148,6 +165,11 @@ function Tree({
       : parseKeysSignature(defaultExpandedSignature)
   );
   const [loadingKeys, setLoadingKeys] = useState<string[]>([]);
+  const [draggingKey, setDraggingKey] = useState('');
+  const [dropTarget, setDropTarget] = useState<{
+    key: string;
+    position: TreeDropPosition;
+  } | null>(null);
 
   const finalSelectedKeys = selectedKeys ? normalizeKeys(selectedKeys) : internalSelectedKeys;
   const finalCheckedKeys = checkedKeys ? normalizeCheckedKeys(checkedKeys) : internalCheckedKeys;
@@ -251,6 +273,39 @@ function Tree({
     return <ChevronRight size={14} />;
   };
 
+  const canDragNode = useCallback(
+    (node: DataNode): boolean => {
+      if (node.disabled || node.draggable === false) return false;
+      if (typeof draggable === 'function') return draggable(node);
+      return Boolean(draggable);
+    },
+    [draggable]
+  );
+
+  const resolveDropPosition = (
+    event: DragEvent<HTMLElement>,
+    expandable: boolean
+  ): TreeDropPosition => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    const offsetRatio = rect.height > 0 ? (event.clientY - rect.top) / rect.height : 0.5;
+    if (offsetRatio < 0.25) return 'before';
+    if (offsetRatio > 0.75) return 'after';
+    return expandable ? 'inside' : 'after';
+  };
+
+  const findFlatNode = useCallback(
+    (key: string) => flatNodes.find((item) => item.key === key)?.node,
+    [flatNodes]
+  );
+
+  const canDropNode = useCallback(
+    (dragNode: DataNode, dropNode: DataNode, dropPosition: TreeDropPosition): boolean => {
+      if (String(dragNode.key) === String(dropNode.key)) return false;
+      return allowDrop?.({ dragNode, dropNode, dropPosition }) ?? true;
+    },
+    [allowDrop]
+  );
+
   return (
     <div
       className={clsx(
@@ -279,13 +334,52 @@ function Tree({
               'file-tree-item',
               'wisepen-tree__item',
               selected && styles.selected,
-              node.disabled && styles.disabled
+              node.disabled && styles.disabled,
+              draggingKey === key && styles.dragging,
+              dropTarget?.key === key && dropTarget.position === 'before' && styles.dropBefore,
+              dropTarget?.key === key && dropTarget.position === 'inside' && styles.dropInside,
+              dropTarget?.key === key && dropTarget.position === 'after' && styles.dropAfter
             )}
+            draggable={canDragNode(node)}
             role="treeitem"
             aria-expanded={expandable ? expanded : undefined}
             aria-selected={canSelect ? selected : undefined}
             aria-disabled={node.disabled || undefined}
             style={{ '--tree-node-level': level } as CSSProperties}
+            onDragStart={(event) => {
+              if (!canDragNode(node)) {
+                event.preventDefault();
+                return;
+              }
+              setDraggingKey(key);
+              event.dataTransfer.effectAllowed = 'move';
+              event.dataTransfer.setData('application/x-wisepen-tree-node', key);
+              event.dataTransfer.setData('text/plain', key);
+            }}
+            onDragOver={(event) => {
+              const dragNode = findFlatNode(draggingKey);
+              if (!dragNode || !onDrop) return;
+              const dropPosition = resolveDropPosition(event, expandable);
+              if (!canDropNode(dragNode, node, dropPosition)) return;
+              event.preventDefault();
+              event.dataTransfer.dropEffect = 'move';
+              setDropTarget({ key, position: dropPosition });
+            }}
+            onDrop={(event) => {
+              const dragNode = findFlatNode(draggingKey);
+              setDropTarget(null);
+              setDraggingKey('');
+              if (!dragNode || !onDrop) return;
+              const dropPosition = resolveDropPosition(event, expandable);
+              if (!canDropNode(dragNode, node, dropPosition)) return;
+              event.preventDefault();
+              event.stopPropagation();
+              onDrop({ dragNode, dropNode: node, dropPosition });
+            }}
+            onDragEnd={() => {
+              setDraggingKey('');
+              setDropTarget(null);
+            }}
           >
             <div className={styles.indent} aria-hidden />
 

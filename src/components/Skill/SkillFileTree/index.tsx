@@ -1,4 +1,4 @@
-import type { DataNode } from '@/components/Tree';
+import type { DataNode, TreeDropPosition } from '@/components/Tree';
 import Tree from '@/components/Tree';
 import type { SkillFileNode } from '@/domains/Skill';
 import { FileCode2, FileText, Folder, X } from 'lucide-react';
@@ -20,6 +20,7 @@ function buildTreeData(nodes: SkillFileNode[], opts: BuildTreeOptions): DataNode
 
     return {
       key: node.id,
+      draggable: opts.isOwner,
       title: (
         <span className={styles.nodeRow}>
           <span className={styles.nodeTitle}>
@@ -57,6 +58,21 @@ function buildTreeData(nodes: SkillFileNode[], opts: BuildTreeOptions): DataNode
   return nodes.map(mapNode);
 }
 
+function isDescendantNode(nodes: SkillFileNode[], parentId: string, childId: string): boolean {
+  const parent = findSkillNode(nodes, parentId);
+  if (!parent?.children) return false;
+  return Boolean(findSkillNode(parent.children, childId));
+}
+
+function findSkillNode(nodes: SkillFileNode[], id: string): SkillFileNode | null {
+  for (const node of nodes) {
+    if (node.id === id) return node;
+    const child = node.children ? findSkillNode(node.children, id) : null;
+    if (child) return child;
+  }
+  return null;
+}
+
 function buildPendingNode(
   pendingCreate: SkillPendingCreate,
   onCommitCreate: SkillFileTreeProps['onCommitCreate'],
@@ -66,6 +82,7 @@ function buildPendingNode(
 
   return {
     key: PENDING_KEY,
+    draggable: false,
     title: (
       <span className={styles.inlineInput}>
         {isFolder ? (
@@ -133,6 +150,7 @@ function SkillFileTree({
   onCancelCreate,
   isOwner = false,
   onDeleteFile,
+  onMoveFile,
 }: SkillFileTreeProps) {
   const opts = useMemo<BuildTreeOptions>(
     () => ({ isOwner, onDeleteFile }),
@@ -158,6 +176,23 @@ function SkillFileTree({
     if (key && key !== PENDING_KEY) onSelect(key);
   };
 
+  const handleAllowDrop = ({
+    dragNode,
+    dropNode,
+    dropPosition,
+  }: {
+    dragNode: DataNode;
+    dropNode: DataNode;
+    dropPosition: TreeDropPosition;
+  }) => {
+    const dragId = String(dragNode.key);
+    const dropId = String(dropNode.key);
+    const target = findSkillNode(files, dropId);
+    if (!target || dragId === dropId) return false;
+    if (dropPosition === 'inside' && target.kind !== 'folder') return false;
+    return !isDescendantNode(files, dragId, dropId);
+  };
+
   return (
     <Tree
       key={`${files.length}:${pendingCreate?.kind ?? ''}:${pendingCreate?.parentFolderId ?? 'root'}`}
@@ -171,6 +206,15 @@ function SkillFileTree({
         ...(pendingCreate?.parentFolderId ? [pendingCreate.parentFolderId] : []),
       ]}
       onSelect={handleSelect}
+      draggable={isOwner}
+      allowDrop={handleAllowDrop}
+      onDrop={({ dragNode, dropNode, dropPosition }) => {
+        onMoveFile?.({
+          dragId: String(dragNode.key),
+          dropId: String(dropNode.key),
+          dropPosition,
+        });
+      }}
     />
   );
 }

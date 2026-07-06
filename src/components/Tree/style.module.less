@@ -14,11 +14,42 @@
 .row {
   --tree-node-level: 0;
 
+  position: relative;
   display: flex;
   align-items: center;
   width: 100%;
   min-height: 28px;
   color: var(--muted);
+}
+
+.dragging {
+  opacity: 0.45;
+}
+
+.dropBefore::before,
+.dropAfter::after {
+  position: absolute;
+  left: calc(var(--tree-node-level) * 18px + 28px);
+  right: 4px;
+  z-index: 1;
+  height: 2px;
+  border-radius: 999px;
+  background: var(--primary);
+  content: '';
+}
+
+.dropBefore::before {
+  top: 0;
+}
+
+.dropAfter::after {
+  bottom: 0;
+}
+
+.dropInside .content {
+  color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--primary) 36%, transparent);
 }
 
 .disabled {
