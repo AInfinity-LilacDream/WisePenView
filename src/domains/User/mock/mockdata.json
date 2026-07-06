@@ -4,22 +4,22 @@
     "nickname": "Mock User",
     "realName": "张三",
     "avatar": "",
-    "identityType": 1,
+    "identityType": "1",
     "username": "mockuser",
     "campusNo": "20300000000",
     "email": "mock@example.com",
     "mobile": "13800138000",
     "verificationMode": null,
-    "status": 1
+    "status": "NORMAL"
   },
   "userProfile": {
-    "sex": 1,
+    "sex": "MALE",
     "university": "复旦大学",
     "college": "计算机科学技术学院",
     "major": "计算机科学与技术",
     "className": "计算机1班",
-    "enrollmentYear": "2023",
-    "degreeLevel": 1,
+    "enrollmentYear": 2023,
+    "degreeLevel": "UNDERGRADUATE",
     "academicTitle": "学生"
   },
   "readonlyFields": null

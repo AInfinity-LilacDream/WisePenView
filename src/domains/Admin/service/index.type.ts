@@ -29,9 +29,7 @@ export interface GetAdminUserInfoRequest {
 }
 
 export interface GetAdminUserInfoResponse {
-  user: AdminUser;
-  userProfile?: Record<string, unknown> | null;
-  readonlyFields?: string[] | null;
+  userProfile: Record<string, unknown>;
 }
 
 export interface ChangeAdminUserInfoRequest {
@@ -59,4 +57,5 @@ export interface ChangeAdminUserProfileRequest {
 
 export interface ResetAdminUserPasswordRequest {
   userId: string;
+  newPassword?: string;
 }

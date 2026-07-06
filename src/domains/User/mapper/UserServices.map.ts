@@ -15,6 +15,14 @@ import type {
   SendEmailVerifyRequest,
   UpdateUserInfoRequest,
 } from '../service/index.type';
+import {
+  mapDegreeLevelToApi,
+  mapSexToApi,
+  normalizeDegreeLevelFromApi,
+  normalizeIdentityTypeFromApi,
+  normalizeSexFromApi,
+  normalizeUserStatusFromApi,
+} from './userEnum.mapper';
 
 type CachedUserSafe = Pick<User, 'id' | 'username' | 'nickname' | 'avatar' | 'identityType'>;
 
@@ -26,22 +34,23 @@ const mapAccountProfileFromApi = (data: GetUserInfoApiResponse): UserAccountProf
       nickname: userInfo.nickname ?? undefined,
       realName: userInfo.realName ?? undefined,
       avatar: userInfo.avatar ?? undefined,
-      identityType: userInfo.identityType,
+      identityType: normalizeIdentityTypeFromApi(userInfo.identityType),
       username: userInfo.username,
       campusNo: userInfo.campusNo,
       email: userInfo.email ?? undefined,
       mobile: userInfo.mobile ?? undefined,
       verificationMode: userInfo.verificationMode,
-      status: userInfo.status,
+      status: normalizeUserStatusFromApi(userInfo.status),
     },
     userProfile: {
-      sex: userProfile.sex,
+      sex: normalizeSexFromApi(userProfile.sex),
       university: userProfile.university,
       college: userProfile.college ?? undefined,
       major: userProfile.major ?? undefined,
       className: userProfile.className ?? undefined,
-      enrollmentYear: userProfile.enrollmentYear ?? undefined,
-      degreeLevel: userProfile.degreeLevel ?? undefined,
+      enrollmentYear:
+        userProfile.enrollmentYear == null ? undefined : String(userProfile.enrollmentYear),
+      degreeLevel: normalizeDegreeLevelFromApi(userProfile.degreeLevel),
       academicTitle: userProfile.academicTitle ?? undefined,
     },
     readonlyFields: data.readonlyFields ?? [],
@@ -72,13 +81,9 @@ const mapInitiateUISVerifyRequest = (
 const mapFudanUISVerifyStatusFromApi = (raw: unknown): FudanUISVerifyStatusData => {
   if (!raw || typeof raw !== 'object') {
     return {
-      // fallback：接口异常空响应时按未完成处理
       completed: false,
-      // fallback：接口异常空响应时不要求前端动作
       requireAction: false,
-      // fallback：接口异常空响应时无动作载荷
       actionPayload: '',
-      // fallback：接口异常空响应时无提示文案
       message: '',
     };
   }
@@ -86,9 +91,7 @@ const mapFudanUISVerifyStatusFromApi = (raw: unknown): FudanUISVerifyStatusData 
   return {
     completed: Boolean(data.completed),
     requireAction: Boolean(data.requireAction),
-    // fallback：非字符串二维码载荷按空字符串处理
     actionPayload: typeof data.actionPayload === 'string' ? data.actionPayload : '',
-    // fallback：非字符串提示按空字符串处理
     message: typeof data.message === 'string' ? data.message : '',
   };
 };
@@ -111,15 +114,20 @@ const mapUpdateUserInfoRequests = (
   if (params.avatar !== undefined) userInfoPayload.avatar = params.avatar;
 
   const userProfilePayload: ChangeUserProfileApiRequest = {};
-  if (params.sex !== undefined) userProfilePayload.sex = params.sex;
+  if (params.sex !== undefined) userProfilePayload.sex = mapSexToApi(params.sex);
   if (params.university !== undefined) userProfilePayload.university = params.university;
   if (params.college !== undefined) userProfilePayload.college = params.college;
   if (params.major !== undefined) userProfilePayload.major = params.major;
   if (params.className !== undefined) userProfilePayload.className = params.className;
   if (params.enrollmentYear !== undefined) {
-    userProfilePayload.enrollmentYear = params.enrollmentYear;
+    const enrollmentYear = Number(params.enrollmentYear);
+    if (Number.isInteger(enrollmentYear)) {
+      userProfilePayload.enrollmentYear = enrollmentYear;
+    }
   }
-  if (params.degreeLevel !== undefined) userProfilePayload.degreeLevel = params.degreeLevel;
+  if (params.degreeLevel !== undefined) {
+    userProfilePayload.degreeLevel = mapDegreeLevelToApi(params.degreeLevel);
+  }
   if (params.academicTitle !== undefined) userProfilePayload.academicTitle = params.academicTitle;
 
   return { userInfoPayload, userProfilePayload };

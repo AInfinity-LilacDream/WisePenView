@@ -6,6 +6,7 @@ import type {
   GetOnlyOfficeEditorConfigApiRequest,
   ListPendingDocsApiResponse,
   OnlyOfficeEditorConfigApiResponse,
+  PendingDocumentStatusApiResponse,
   UploadDocApiRequest,
   UploadDocApiResponse,
 } from './DocumentApi.type';
@@ -14,15 +15,11 @@ function uploadDoc(req: UploadDocApiRequest): Promise<UploadDocApiResponse> {
   return apiPost('/document/uploadDoc', req, { timeout: 30_000 });
 }
 
-function retryDocConvert(req: DocumentIdApiRequest): Promise<void> {
-  return apiPost('/document/retryDocConvert', null, { params: req });
-}
-
 function listPendingDocs(): Promise<ListPendingDocsApiResponse> {
   return apiGet('/document/listPendingDocs');
 }
 
-function syncDocStatus(req: DocumentIdApiRequest): Promise<void> {
+function syncDocStatus(req: DocumentIdApiRequest): Promise<PendingDocumentStatusApiResponse> {
   return apiPost('/document/syncDocStatus', null, { params: req });
 }
 
@@ -46,7 +43,6 @@ function getOnlyOfficeEditorConfig(
 
 export const DocumentApi = {
   uploadDoc,
-  retryDocConvert,
   listPendingDocs,
   syncDocStatus,
   retryDocProcess,

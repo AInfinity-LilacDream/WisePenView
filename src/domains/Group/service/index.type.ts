@@ -36,16 +36,16 @@ export interface GroupMemberBaseInfo {
   nickname: string;
   realName: string | null;
   avatar: string | null;
-  identityType: number;
+  identityType: string | number | null;
 }
 
 export interface GroupMemberRawResponse {
-  role: number;
+  role: string | number | null;
   joinTime: string;
   tokenLimit: number;
   tokenUsed: number;
-  groupId: string;
-  memberId: string;
+  groupId: string | number;
+  memberId: string | number;
   memberInfo: GroupMemberBaseInfo;
 }
 

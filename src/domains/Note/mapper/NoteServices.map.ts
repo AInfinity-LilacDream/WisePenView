@@ -1,5 +1,8 @@
 import type { NoteInfoResponse } from '@/domains/Note';
-import type { SaveDrawIoSnapshotApiRequest } from '@/domains/Note/apis/NoteApi.type';
+import type {
+  AddNoteApiRequest,
+  SaveDrawIoSnapshotApiRequest,
+} from '@/domains/Note/apis/NoteApi.type';
 import {
   coerceResourceActions,
   maskNoteConfigurableResourceActions,
@@ -9,6 +12,7 @@ import {
 import { normalizeResourceItem } from '@/domains/Resource/mapper/ResourceServices.map';
 import { normalizeId } from '@/utils/normalize/normalizeId';
 import type {
+  CreateNoteRequest,
   CreateNoteResponse,
   DrawIoLatestSnapshotData,
   ForkNoteResponse,
@@ -29,6 +33,11 @@ const mapSyncTitleRequest = (
 
 const mapCreateNoteFromApi = (resourceId: string): CreateNoteResponse => ({
   resourceId: resourceId || undefined,
+});
+
+const mapCreateNoteRequest = (params: CreateNoteRequest): AddNoteApiRequest => ({
+  title: params.title,
+  ...(params.resourceType ? { resourceType: params.resourceType } : {}),
 });
 
 const mapForkNoteFromApi = (resourceId: string): ForkNoteResponse => ({
@@ -155,6 +164,7 @@ const mapNoteVersionListPageFromApi = (raw: unknown): NoteVersionListPage => {
 
 export const NoteServicesMap = {
   mapSyncTitleRequest,
+  mapCreateNoteRequest,
   mapCreateNoteFromApi,
   mapForkNoteFromApi,
   mapNoteInfoDisplayFromApi,

@@ -2,7 +2,6 @@ export interface ChatSession {
   id: string;
   user_id: string;
   title: string;
-  is_pinned: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -32,7 +31,6 @@ export interface PageResult<T> {
   total: number;
   page: number;
   size: number;
-  totalPage?: number;
   total_page: number;
 }
 
@@ -67,24 +65,29 @@ export interface ModelResponse {
   is_active: boolean;
   mappings?: ModelProviderMappingResponse[] | null;
 }
-export type CreateSessionApiRequest = { title?: string };
+export type CreateSessionApiRequest = { title?: string | null; agent_id?: string | null };
 export type CreateSessionApiResponse = ChatSession;
-export type RenameSessionApiRequest = { sessionId: string; newTitle?: string };
+export type RenameSessionApiRequest = { session_id: string; new_title?: string | null };
 export type RenameSessionApiResponse = ChatSession;
-export type DeleteSessionApiRequest = { sessionId: string };
+export type DeleteSessionApiRequest = { session_id: string };
 export type DeleteSessionApiResponse = null;
 export type ListSessionsApiRequest = { page?: number; size?: number };
 export type ListSessionsApiResponse = PageResult<ChatSession>;
-export type ListHistoryMessagesApiRequest = { sessionId: string; page?: number; size?: number };
+export type ListHistoryMessagesApiRequest = { session_id: string; page?: number; size?: number };
 export type ListHistoryMessagesApiResponse = PageResult<MessageResponse>;
 
-export interface ToolOption {
-  toolId: string;
-  label: string;
+export interface InitTemporaryAttachmentUploadApiRequest {
+  session_id: string;
+  filename: string;
+  extension: string;
+  file_size: number;
+  md5: string;
+  enable_library?: boolean;
 }
-export type ListToolsApiResponse = ToolOption[];
 
-export interface UploadAttachmentResponse {
+export interface InitTemporaryAttachmentUploadApiResponse {
   attachment_id: string;
-  filename?: string;
+  object_key: string;
+  put_url: string;
+  callback_header?: string;
 }

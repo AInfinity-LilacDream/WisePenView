@@ -1,21 +1,9 @@
 import type { UserDisplayBase } from '@/domains/User';
 import type { ResourceAction } from '../enum';
-/**
- * Resource 领域模型
- * path 与 tags：path 为路径/文件夹归属；currentTags 与 docs/apis/resource.openapi.json ResourceItemResponse 字段一致
- */
+/** Resource 领域模型 */
 
 export type ResourceIconType =
-  | 'file'
-  | 'doc'
-  | 'ppt'
-  | 'xls'
-  | 'pdf'
-  | 'md'
-  | 'note'
-  | 'drawio'
-  | 'skill'
-  | 'agent';
+  'file' | 'doc' | 'ppt' | 'xls' | 'pdf' | 'md' | 'note' | 'drawio' | 'skill' | 'agent';
 
 export interface ResourceTagInfo {
   tagName?: string;
@@ -46,7 +34,7 @@ export interface ResourceItem {
   readCount?: number | null;
   /** 归属路径（文件夹），如 '/' 或 '/documents/notes' */
   path?: string;
-  /** 当前上下文标签映射（tagId → tagName），优先由 tagBinds 派生，兼容旧接口 currentTags。 */
+  /** 当前上下文标签映射（tagId → tagName），由 tagBinds 派生。 */
   currentTags?: Record<string, string>;
   /** 后端按 group 维度返回的有序标签绑定，tags 使用 LinkedHashMap 保持 tagIds 顺序。 */
   tagBinds?: ResourceTagBind[];

@@ -1,6 +1,22 @@
-import type { DocumentResourceType } from '@/domains/Document';
-import type { ResourceItem } from '@/domains/Resource';
+import type { ResourceItemApiResponse } from '@/domains/Resource/apis/ResourceApi.type';
+import type { UserDisplayBase } from '@/domains/User';
 import type { Config } from '@onlyoffice/doceditor-types';
+
+interface GetDocInfoResourceInteractionInfoApiResponse {
+  readCount?: number;
+  likeCount?: number;
+  scoreCount?: number;
+  scoreTotal?: number;
+  favoriteCount?: number;
+  commentCount?: number;
+}
+
+interface GetDocInfoResourceInfoApiResponse extends Omit<
+  ResourceItemApiResponse,
+  'resourceInteractionInfo'
+> {
+  resourceInteractionInfo?: GetDocInfoResourceInteractionInfoApiResponse;
+}
 
 export interface UploadDocApiRequest {
   filename: string;
@@ -23,6 +39,7 @@ export interface DocumentIdApiRequest {
 
 export interface GetDocInfoApiRequest {
   resourceId: string;
+  targetVersion?: number;
 }
 
 export interface GetOnlyOfficeEditorConfigApiRequest {
@@ -37,30 +54,36 @@ export interface OnlyOfficeEditorConfigApiResponse {
   documentServerPublicUrl?: string | null;
 }
 
-export interface DocumentUploadMeta {
+export interface DocumentUploadMetaApiResponse {
   documentName: string;
-  uploaderId: number | null;
-  fileType: DocumentResourceType;
+  uploaderId?: string | number;
+  fileType: string;
   size: number;
 }
 
-export interface PendingDocumentStatus {
+export interface PendingDocumentStatusApiResponse {
   status: string;
+  errorMessage?: string | null;
 }
 
-export interface DocMetaInfo {
-  uploadMeta: DocumentUploadMeta;
-  documentStatus: PendingDocumentStatus;
+export interface DocMetaInfoApiResponse {
+  uploadMeta: DocumentUploadMetaApiResponse;
+  documentStatus: PendingDocumentStatusApiResponse;
   maxPreviewPages: number | null;
 }
 
-export interface PendingDocItemApiResponse extends DocMetaInfo {
+export interface DocumentVersionInfoApiResponse extends DocMetaInfoApiResponse {
+  version: number;
+}
+
+export interface PendingDocItemApiResponse extends DocMetaInfoApiResponse {
   documentId?: string;
 }
 
 export type ListPendingDocsApiResponse = PendingDocItemApiResponse[];
 
 export interface GetDocInfoApiResponse {
-  docMetaInfo: DocMetaInfo;
-  resourceInfo: ResourceItem;
+  resourceInfo: GetDocInfoResourceInfoApiResponse;
+  documentVersionInfo?: DocumentVersionInfoApiResponse;
+  authorsDisplay?: Record<string, UserDisplayBase> | null;
 }

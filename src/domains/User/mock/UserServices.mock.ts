@@ -6,6 +6,7 @@ import type {
 } from '@/domains/User';
 import type { GetUserInfoApiResponse } from '../apis/UserApi.type';
 import { UserServicesMap } from '../mapper/UserServices.map';
+import { normalizeIdentityTypeFromApi } from '../mapper/userEnum.mapper';
 import mockdata from './mockdata.json';
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -20,7 +21,7 @@ const getUserInfo = async (_options?: { forceRefresh?: boolean }): Promise<User>
     username: userInfo.username,
     nickname: userInfo.nickname ?? undefined,
     avatar: userInfo.avatar ?? undefined,
-    identityType: userInfo.identityType,
+    identityType: normalizeIdentityTypeFromApi(userInfo.identityType),
   };
 };
 

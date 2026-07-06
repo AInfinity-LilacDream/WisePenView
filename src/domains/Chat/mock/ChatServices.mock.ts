@@ -154,7 +154,6 @@ let mockSessions: ChatSession[] = [
     id: 'mock-session-1',
     user_id: 'mock-user',
     title: '项目需求讨论',
-    is_pinned: false,
     created_at: '2026-04-08T09:00:00Z',
     updated_at: '2026-04-08T09:00:00Z',
   },
@@ -162,7 +161,6 @@ let mockSessions: ChatSession[] = [
     id: 'mock-session-2',
     user_id: 'mock-user',
     title: '接口联调记录',
-    is_pinned: false,
     created_at: '2026-04-07T10:00:00Z',
     updated_at: '2026-04-07T10:00:00Z',
   },
@@ -170,7 +168,6 @@ let mockSessions: ChatSession[] = [
     id: 'mock-session-3',
     user_id: 'mock-user',
     title: '代码评审',
-    is_pinned: false,
     created_at: '2026-04-06T11:00:00Z',
     updated_at: '2026-04-06T11:00:00Z',
   },
@@ -215,7 +212,6 @@ const createSession: IChatService['createSession'] = async (params) => {
     id: `mock-session-${mockSessionSerial}`,
     user_id: 'mock-user',
     title: params?.title?.trim() ? params.title : 'New Chat',
-    is_pinned: false,
     created_at: now,
     updated_at: now,
   };
@@ -234,7 +230,6 @@ const renameSession: IChatService['renameSession'] = async (params) => {
     id: params.sessionId,
     user_id: target?.user_id ?? 'mock-user',
     title: params.newTitle?.trim() ? params.newTitle : 'New Chat',
-    is_pinned: target?.is_pinned ?? false,
     created_at: target?.created_at ?? now,
     updated_at: now,
   };
@@ -256,12 +251,9 @@ const listSessions: IChatService['listSessions'] = async (params?: ListSessionsR
   const size = Math.max(1, params?.size ?? 20);
   const start = (page - 1) * size;
   const end = start + size;
-  const sortedSessions = [...mockSessions].sort((a, b) => {
-    if (a.is_pinned !== b.is_pinned) {
-      return a.is_pinned ? -1 : 1;
-    }
-    return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
-  });
+  const sortedSessions = [...mockSessions].sort(
+    (a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+  );
   const total = sortedSessions.length;
   const list = sortedSessions.slice(start, end);
 

@@ -2,6 +2,9 @@ import type { Group } from '@/domains/Group';
 import type { ResourceItem } from '@/domains/Resource';
 import { useCurrentChatSessionStore, useNewChatSessionStore, useNoteSelectionStore } from '@/store';
 import { createClientError, FRONTEND_CLIENT_ERROR } from '@/utils/error';
+import { computeFileMd5 } from '@/utils/oss/computeFileMd5';
+import { putOssPresignedUrl } from '@/utils/oss/ossPresignedPut';
+import { parseExtension } from '@/utils/parser/extensionParser';
 import { ChatApi, ChatSessionApi } from '../apis/ChatApi';
 import { buildAgentFromResourceItem, buildDefaultPersonalAgent } from '../mapper/agent.mapper';
 import { ChatServicesMap } from '../mapper/ChatServices.map';
@@ -236,7 +239,7 @@ const renameSession = async (params: RenameSessionRequest): Promise<ChatSession>
 };
 
 const deleteSession = async (params: DeleteSessionRequest): Promise<void> => {
-  await ChatSessionApi.deleteSession({ sessionId: params.sessionId });
+  await ChatSessionApi.deleteSession({ session_id: params.sessionId });
   useCurrentChatSessionStore.getState().clearCurrentSessionById(params.sessionId);
   useNewChatSessionStore.getState().clearNewChatSessionById(params.sessionId);
   useNoteSelectionStore.getState().clearSelectedText(params.sessionId);
@@ -257,20 +260,36 @@ const listHistoryMessages = async (
 };
 
 const getTools = async (): Promise<ToolOption[]> => {
-  return await ChatApi.getTools();
+  // 新版 OpenAPI 已移除 /chat/tools；后端未提供工具发现契约前隐藏工具选择。
+  return [];
 };
 
 const uploadAttachment = async ({
+  sessionId,
   file,
   saveToLibrary,
 }: UploadAttachmentParams): Promise<UploadAttachmentResult> => {
-  const formData = new FormData();
-  formData.append('file', file);
-  formData.append('save_to_library', String(Boolean(saveToLibrary)));
-  const res = await ChatApi.uploadAttachment(formData);
+  const md5 = await computeFileMd5(file);
+  const extension = parseExtension(file.name);
+  const res = await ChatApi.initTemporaryAttachmentUpload({
+    session_id: sessionId,
+    filename: file.name,
+    extension,
+    file_size: file.size,
+    md5,
+    enable_library: Boolean(saveToLibrary),
+  });
+  if (!res?.put_url || !res.attachment_id) {
+    throw new Error('附件上传初始化失败');
+  }
+  await putOssPresignedUrl({
+    putUrl: res.put_url,
+    body: file,
+    callbackHeader: res.callback_header ?? '',
+  });
   return {
     attachmentId: res.attachment_id,
-    filename: res.filename,
+    filename: file.name,
   };
 };
 

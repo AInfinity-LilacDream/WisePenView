@@ -186,19 +186,25 @@ const mapCreateSessionRequest = (params?: CreateSessionRequest): CreateSessionAp
   };
 };
 
-const mapCreateSessionFromApi = (data: CreateSessionApiResponse): ChatSession => data;
+const mapSessionFromApi = (data: CreateSessionApiResponse): ChatSession => ({
+  ...data,
+});
+
+const mapCreateSessionFromApi = (data: CreateSessionApiResponse): ChatSession =>
+  mapSessionFromApi(data);
 
 const mapRenameSessionRequest = (params: RenameSessionRequest): RenameSessionApiRequest => {
   const newTitle = params.newTitle;
   const hasNewTitle = newTitle !== undefined;
 
   return {
-    sessionId: params.sessionId,
-    ...(hasNewTitle ? { newTitle } : {}),
+    session_id: params.sessionId,
+    ...(hasNewTitle ? { new_title: newTitle } : {}),
   };
 };
 
-const mapRenameSessionFromApi = (data: RenameSessionApiResponse): ChatSession => data;
+const mapRenameSessionFromApi = (data: RenameSessionApiResponse): ChatSession =>
+  mapSessionFromApi(data);
 
 const mapListSessionsRequest = (params?: ListSessionsRequest): ListSessionsApiRequest => ({
   ...(params?.page !== undefined ? { page: params.page } : {}),
@@ -206,20 +212,19 @@ const mapListSessionsRequest = (params?: ListSessionsRequest): ListSessionsApiRe
 });
 
 const mapListSessionsFromApi = (data: ListSessionsApiResponse): PageResult<ChatSession> => {
-  const totalPage = data.totalPage ?? data.total_page ?? 1;
   return {
-    list: data.list,
+    list: data.list.map(mapSessionFromApi),
     total: data.total,
     page: data.page,
     size: data.size,
-    totalPage,
+    totalPage: data.total_page,
   };
 };
 
 const mapListHistoryMessagesRequest = (
   params: ListHistoryMessagesRequest
 ): ListHistoryMessagesApiRequest => ({
-  sessionId: params.sessionId,
+  session_id: params.sessionId,
   ...(params.page !== undefined ? { page: params.page } : {}),
   ...(params.size !== undefined ? { size: params.size } : {}),
 });
@@ -227,13 +232,12 @@ const mapListHistoryMessagesRequest = (
 const mapListHistoryMessagesFromApi = (
   data: ListHistoryMessagesApiResponse
 ): PageResult<MessageResponse> => {
-  const totalPage = data.totalPage ?? data.total_page ?? 1;
   return {
     list: data.list,
     total: data.total,
     page: data.page,
     size: data.size,
-    totalPage,
+    totalPage: data.total_page,
   };
 };
 

@@ -64,7 +64,7 @@ const getDocInfo = async (documentId: string): Promise<DocDisplayInfoResponse> =
     docMetaInfo: {
       uploadMeta: {
         documentName: `mock-${documentId}.pdf`,
-        uploaderId: 1,
+        uploaderId: '1',
         fileType: 'pdf',
         size: 1024 * 1024 * 2,
       },

@@ -4,11 +4,8 @@ import { base64ToFile, fileToBase64, generateThumbnail } from '@/utils/file/uplo
 import { toast } from '@heroui/react';
 import { useMount, useUnmount } from 'ahooks';
 import { useRef, type ChangeEvent, type ReactNode } from 'react';
-import {
-  selectChatInputSelectedModel,
-  useChatInputStoreApi,
-} from './ChatInputStore';
 import { ChatInputFileContext, type ChatInputFileContextValue } from './ChatInputFileContextValue';
+import { selectChatInputSelectedModel, useChatInputStoreApi } from './ChatInputStore';
 import type { LocalAttachmentPayload } from './index.type';
 
 const MAX_IMAGE_BASE64_BYTES = 5 * 1024 * 1024;
@@ -16,7 +13,13 @@ const MAX_IMAGE_RAW_BYTES_APPROX = Math.floor(MAX_IMAGE_BASE64_BYTES * 0.75);
 const MAX_IMAGE_COUNT = 10;
 const IMAGE_EXTENSIONS = new Set(['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp']);
 
-export function ChatInputFileProvider({ children }: { children: ReactNode }) {
+export function ChatInputFileProvider({
+  children,
+  getUploadSessionId,
+}: {
+  children: ReactNode;
+  getUploadSessionId: () => Promise<string>;
+}) {
   const chatService = useChatService();
   const store = useChatInputStoreApi();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -58,7 +61,9 @@ export function ChatInputFileProvider({ children }: { children: ReactNode }) {
     const id = crypto.randomUUID();
     addPendingAttachmentUpload({ id, filename: file.name, status: 'uploading' });
     try {
+      const sessionId = await getUploadSessionId();
       const result = await chatService.uploadAttachment({
+        sessionId,
         file,
         saveToLibrary: false,
       });

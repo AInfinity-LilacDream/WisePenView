@@ -1,28 +1,33 @@
+import type {
+  UserDegreeLevelApiValue,
+  UserIdentityTypeApiValue,
+  UserSexApiValue,
+  UserStatusApiValue,
+} from '@/domains/User/apis/UserApi.type';
 import type { UserVerificationMode } from '@/domains/User/enum';
 
 export interface AdminUserApiModel {
-  id?: string | number | null;
-  userId?: string | number | null;
-  username?: string | null;
-  nickname?: string | null;
-  realName?: string | null;
-  avatar?: string | null;
-  identityType?: number | null;
-  campusNo?: string | null;
-  email?: string | null;
-  mobile?: string | null;
-  verificationMode?: UserVerificationMode | null;
-  status?: number | null;
-  createTime?: string | null;
-  updateTime?: string | null;
+  userId?: string | number;
+  username?: string;
+  nickname?: string;
+  realName?: string;
+  avatar?: string;
+  identityType?: UserIdentityTypeApiValue;
+  campusNo?: string;
+  email?: string;
+  mobile?: string;
+  verificationMode?: UserVerificationMode;
+  status?: UserStatusApiValue;
+  createTime?: string;
+  updateTime?: string;
 }
 
 export interface FetchAdminUserListApiRequest {
   page: number;
   size: number;
   keyword: string;
-  status: number;
-  identityType: number;
+  status?: string;
+  identityType?: string;
 }
 
 export interface PageR<T> {
@@ -40,9 +45,17 @@ export interface GetAdminUserInfoApiRequest {
 }
 
 export interface GetAdminUserInfoApiResponse {
-  userInfo: AdminUserApiModel;
-  userProfile?: Record<string, unknown> | null;
-  readonlyFields?: string[] | null;
+  sex?: UserSexApiValue;
+  university?: string;
+  college?: string;
+  major?: string;
+  className?: string;
+  enrollmentYear?: number;
+  degreeLevel?: UserDegreeLevelApiValue;
+  academicTitle?: string;
+  userId?: string | number;
+  createTime?: string;
+  updateTime?: string;
 }
 
 export interface ChangeAdminUserInfoApiRequest {
@@ -52,22 +65,23 @@ export interface ChangeAdminUserInfoApiRequest {
   avatar?: string;
   email?: string | null;
   mobile?: string | null;
-  status?: number;
-  identityType?: number;
+  status?: string;
+  identityType?: string;
 }
 
 export interface ChangeAdminUserProfileApiRequest {
   userId: string;
-  sex?: number;
+  sex?: string;
   university?: string | null;
   college?: string;
   major?: string;
   className?: string;
-  enrollmentYear?: string;
-  degreeLevel?: number;
+  enrollmentYear?: number;
+  degreeLevel?: string;
   academicTitle?: string;
 }
 
 export interface ResetAdminUserPasswordApiRequest {
   userId: string;
+  newPassword?: string;
 }

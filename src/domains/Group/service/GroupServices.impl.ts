@@ -49,11 +49,7 @@ const fetchGroupResConfig = async (groupId: string): Promise<GroupResConfig> => 
   const query = GroupServicesMap.mapFetchGroupResConfigRequest(groupId);
   const data = await GroupResConfigApi.getConfig(query);
   if (!data) throw createClientError(FRONTEND_CLIENT_ERROR.GROUP_RES_CONFIG_FETCH_FAILED);
-  const config = GroupServicesMap.mapFetchGroupResConfigFromApi(data, groupId);
-  if (!config) {
-    throw createClientError(FRONTEND_CLIENT_ERROR.GROUP_RES_CONFIG_INVALID);
-  }
-  return config;
+  return GroupServicesMap.mapFetchGroupResConfigFromApi(data);
 };
 
 const updateGroupResConfig = async (params: UpdateGroupResConfigRequest) => {
@@ -63,7 +59,7 @@ const updateGroupResConfig = async (params: UpdateGroupResConfigRequest) => {
 
 const createGroup = async (params: CreateGroupRequest): Promise<string> => {
   const { defaultMemberActions, ...groupParams } = params;
-  const payload = await GroupApi.addGroup(groupParams);
+  const payload = await GroupApi.addGroup(GroupServicesMap.mapCreateGroupRequest(groupParams));
   if (payload == null) {
     throw createClientError(FRONTEND_CLIENT_ERROR.GROUP_CREATE_FAILED);
   }
@@ -79,7 +75,7 @@ const createGroup = async (params: CreateGroupRequest): Promise<string> => {
 };
 
 const editGroup = async (params: EditGroupRequest) => {
-  await GroupApi.changeGroup(params);
+  await GroupApi.changeGroup(GroupServicesMap.mapEditGroupRequest(params));
 };
 
 const deleteGroup = async (params: DeleteGroupRequest) => {
@@ -118,7 +114,7 @@ const quitGroup = async (params: QuitGroupRequest) => {
 };
 
 const updateMemberRole = async (params: UpdateMemberRoleRequest) => {
-  await GroupMemberApi.changeRole(params);
+  await GroupMemberApi.changeRole(GroupServicesMap.mapUpdateMemberRoleRequest(params));
 };
 
 const kickMembers = async (params: KickMembersRequest) => {

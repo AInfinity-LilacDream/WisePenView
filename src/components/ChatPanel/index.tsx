@@ -123,6 +123,24 @@ function ChatPanel({ collapsed, fullWidth = false, onNewChat, workspaceContext }
   const hasSelectedContext = enableSelectedText && Boolean(selectedContextText.trim());
   const panelTitle = currentSessionTitle || '新对话';
 
+  const ensureChatSession = async (): Promise<string> => {
+    const existingSessionId =
+      useCurrentChatSessionStore.getState().currentSessionId ?? currentSessionId;
+    if (existingSessionId) return existingSessionId;
+
+    const createdSession = await runCreateSession();
+    useNewChatSessionStore.getState().setNewChatSession({
+      id: createdSession.id,
+      title: createdSession.title,
+    });
+    setCurrentSession({ id: createdSession.id, title: createdSession.title });
+    setChatPanelDraftOpen(false);
+    if (fullWidth) {
+      navigate(`/app/chat/${createdSession.id}`, { replace: true });
+    }
+    return createdSession.id;
+  };
+
   const loadHistoryMessages = async (sessionId: string) => {
     try {
       const payload = await runLoadSessionHistory(sessionId, 1);
@@ -177,17 +195,7 @@ function ChatPanel({ collapsed, fullWidth = false, onNewChat, workspaceContext }
 
     if (!targetSessionId) {
       try {
-        const createdSession = await runCreateSession();
-        targetSessionId = createdSession.id;
-        useNewChatSessionStore.getState().setNewChatSession({
-          id: createdSession.id,
-          title: createdSession.title,
-        });
-        setCurrentSession({ id: createdSession.id, title: createdSession.title });
-        setChatPanelDraftOpen(false);
-        if (fullWidth) {
-          navigate(`/app/chat/${createdSession.id}`, { replace: true });
-        }
+        targetSessionId = await ensureChatSession();
       } catch (error) {
         toast.danger(parseErrorMessage(error));
         return;
@@ -301,6 +309,7 @@ function ChatPanel({ collapsed, fullWidth = false, onNewChat, workspaceContext }
           <div className={styles.footer}>
             <ChatInput
               onSend={handleSend}
+              getUploadSessionId={ensureChatSession}
               sending={sending}
               hasSelectedContext={hasSelectedContext}
               selectedContextText={selectedContextText}

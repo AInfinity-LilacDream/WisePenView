@@ -1,4 +1,4 @@
-import { apiGet, apiPost, apiPut } from '@/apis/request';
+import { apiGet, apiPost } from '@/apis/request';
 import type {
   ChangeAdminUserInfoApiRequest,
   ChangeAdminUserProfileApiRequest,
@@ -20,15 +20,15 @@ function getUserInfo(req: GetAdminUserInfoApiRequest): Promise<GetAdminUserInfoA
 }
 
 function changeUserInfo(req: ChangeAdminUserInfoApiRequest): Promise<void> {
-  return apiPut('/admin/user/changeUserInfo', req);
+  return apiPost('/admin/user/changeUserInfo', req);
 }
 
 function changeUserProfile(req: ChangeAdminUserProfileApiRequest): Promise<void> {
-  return apiPut('/admin/user/changeUserProfile', req);
+  return apiPost('/admin/user/changeUserProfile', req);
 }
 
 function resetPassword(req: ResetAdminUserPasswordApiRequest): Promise<void> {
-  return apiPost('/admin/user/resetPassword', null, { params: req });
+  return apiPost('/admin/user/resetPassword', req);
 }
 
 export const AdminUserApi = {

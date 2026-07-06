@@ -1,26 +1,31 @@
-import type { DegreeLevel, UserVerificationMode } from '@/domains/User';
+import type { UserVerificationMode } from '@/domains/User';
+
+export type UserIdentityTypeApiValue = '1' | '2' | '3';
+export type UserStatusApiValue = 'NORMAL' | 'UNIDENTIFIED' | 'BANNED';
+export type UserSexApiValue = 'MALE' | 'FEMALE' | 'UNKNOWN';
+export type UserDegreeLevelApiValue = 'UNKNOWN' | 'UNDERGRADUATE' | 'MASTER' | 'DOCTOR';
 
 export interface GetUserInfoApiResponseUserInfo {
   nickname: string | null;
   realName: string | null;
   avatar: string | null;
-  identityType: number;
+  identityType: UserIdentityTypeApiValue;
   username: string;
   campusNo: string;
   email: string | null;
   mobile: string | null;
   verificationMode: UserVerificationMode | null;
-  status: number;
+  status: UserStatusApiValue;
 }
 
 export interface GetUserInfoApiResponseUserProfile {
-  sex: number;
+  sex: UserSexApiValue;
   university: string | null;
   college: string | null;
   major: string | null;
   className: string | null;
-  enrollmentYear: string | null;
-  degreeLevel: DegreeLevel | null;
+  enrollmentYear: number | string | null;
+  degreeLevel: UserDegreeLevelApiValue;
   academicTitle: string | null;
 }
 
@@ -38,13 +43,13 @@ export interface ChangeUserInfoApiRequest {
 }
 
 export interface ChangeUserProfileApiRequest {
-  sex?: number;
+  sex?: string;
   university?: string | null;
   college?: string;
   major?: string;
   className?: string;
-  enrollmentYear?: string;
-  degreeLevel?: DegreeLevel;
+  enrollmentYear?: number;
+  degreeLevel?: string;
   academicTitle?: string;
 }
 

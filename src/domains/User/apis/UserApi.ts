@@ -33,11 +33,11 @@ function checkEmailVerify(req: CheckEmailVerifyApiRequest): Promise<void> {
   return apiGet('/user/verify/checkEmailVerify', { params: req });
 }
 
-function changeUserInfo(req: ChangeUserInfoApiRequest): Promise<unknown> {
+function changeUserInfo(req: ChangeUserInfoApiRequest): Promise<void> {
   return apiPut('/user/changeUserInfo', req);
 }
 
-function changeUserProfile(req: ChangeUserProfileApiRequest): Promise<unknown> {
+function changeUserProfile(req: ChangeUserProfileApiRequest): Promise<void> {
   return apiPut('/user/changeUserProfile', req);
 }
 

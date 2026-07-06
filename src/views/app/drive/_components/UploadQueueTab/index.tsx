@@ -29,7 +29,7 @@ type UploadQueueRow = {
   documentId?: string;
   uploadMeta: {
     documentName: string;
-    uploaderId: number | null;
+    uploaderId: string | null;
     fileType: string;
     size: number;
   };

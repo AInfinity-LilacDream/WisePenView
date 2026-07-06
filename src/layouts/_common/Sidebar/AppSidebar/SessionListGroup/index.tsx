@@ -82,8 +82,6 @@ const useSessionListGroup = ({ onActiveSessionMenuKeyChange }: SessionListGroupP
     void refresh();
   });
 
-  const pinnedSessions = sessionItems.filter((item) => item.is_pinned);
-  const normalSessions = sessionItems.filter((item) => !item.is_pinned);
   const hasMoreSessions = sessionPage < sessionTotalPage;
 
   const handleDeleted = (sessionId: string) => {
@@ -111,8 +109,6 @@ const useSessionListGroup = ({ onActiveSessionMenuKeyChange }: SessionListGroupP
     handleDeleted,
     loadMoreSessions,
     loadingMoreSessions,
-    normalSessions,
-    pinnedSessions,
     refresh,
     selectSession,
     sessionItems,
@@ -130,8 +126,6 @@ function SessionListGroup({
     hasMoreSessions,
     loadMoreSessions,
     loadingMoreSessions,
-    normalSessions,
-    pinnedSessions,
     refresh,
     selectSession,
     sessionItems,
@@ -147,22 +141,6 @@ function SessionListGroup({
       className={styles.sessionMenu}
       selectedKeys={selectedKeys}
     >
-      {pinnedSessions.length > 0 && (
-        <ListBoxSection id="pinned-session" className={styles.section}>
-          <Header className={styles.sectionTitle}>置顶会话</Header>
-          {pinnedSessions.map((session) => (
-            <ListBoxItem
-              key={session.id}
-              id={`session-${session.id}`}
-              textValue={session.title || '未命名会话'}
-              className={clsx(styles.sessionItem, styles.sessionItemWithActions)}
-              onPress={() => selectSession(session)}
-            >
-              <SessionMenuItem session={session} onUpdated={refresh} onDeleted={handleDeleted} />
-            </ListBoxItem>
-          ))}
-        </ListBoxSection>
-      )}
       <ListBoxSection id="recent-session" className={styles.section}>
         <Header className={styles.sectionTitle}>聊天记录</Header>
         {sessionListLoading && sessionItems.length === 0 ? (
@@ -176,7 +154,7 @@ function SessionListGroup({
           </ListBoxItem>
         ) : (
           <>
-            {normalSessions.length === 0 ? (
+            {sessionItems.length === 0 ? (
               <ListBoxItem
                 id="empty-normal-session"
                 textValue="暂无会话"
@@ -186,7 +164,7 @@ function SessionListGroup({
                 暂无会话
               </ListBoxItem>
             ) : (
-              normalSessions.map((session) => (
+              sessionItems.map((session) => (
                 <ListBoxItem
                   key={session.id}
                   id={`session-${session.id}`}

@@ -53,6 +53,7 @@ export interface ChatModel {
 }
 
 export interface UploadAttachmentParams {
+  sessionId: string;
   file: File;
   saveToLibrary?: boolean;
 }
@@ -162,7 +163,6 @@ export interface ChatSession {
   id: string;
   user_id: string;
   title: string;
-  is_pinned: boolean;
   created_at: string;
   updated_at: string;
 }

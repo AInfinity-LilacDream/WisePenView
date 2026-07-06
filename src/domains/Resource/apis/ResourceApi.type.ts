@@ -1,8 +1,53 @@
 import type { ResourceActionKey, ResourceItem } from '@/domains/Resource';
 import type { AccessControlScope, TagResourceActionKey } from '@/domains/Tag';
+import type { UserDisplayBase } from '@/domains/User';
+import type { UserIdentityTypeApiValue } from '@/domains/User/apis/UserApi.type';
+
+export interface ResourceInteractionInfoApiResponse {
+  readCount?: number;
+  likeCount?: number;
+  scoreCount?: number;
+  scoreTotal?: number;
+  favoriteCount?: number;
+  commentCount?: number;
+}
+
+export interface ResourceTagInfoApiResponse {
+  tagName?: string;
+  tagDesc?: string;
+  tagIcon?: string;
+  tagColor?: string;
+  tagCreator?: string;
+  isPath?: boolean;
+}
+
+export interface ResourceTagBindApiResponse {
+  groupId?: string;
+  primaryTagId?: string;
+  tags?: Record<string, ResourceTagInfoApiResponse | null | undefined>;
+}
+
+export interface ResourceItemApiResponse extends Omit<
+  ResourceItem,
+  | 'size'
+  | 'ownerInfo'
+  | 'readCount'
+  | 'likeCount'
+  | 'scoreAvg'
+  | 'currentTags'
+  | 'tagBinds'
+  | 'resourceIconType'
+  | 'mainTagId'
+  | 'linkTagIds'
+> {
+  size?: number;
+  ownerInfo: Omit<UserDisplayBase, 'identityType'> & { identityType?: UserIdentityTypeApiValue };
+  resourceInteractionInfo?: ResourceInteractionInfoApiResponse;
+  tagBinds?: ResourceTagBindApiResponse[];
+}
 
 export interface ResourceListPageApiResponse {
-  list: ResourceItem[];
+  list: ResourceItemApiResponse[];
   total: number;
   page: number;
   size: number;

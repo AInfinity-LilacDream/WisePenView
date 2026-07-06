@@ -34,14 +34,10 @@ const fetchUserList = async (
 
 const getUserInfo = async (params: GetAdminUserInfoRequest): Promise<GetAdminUserInfoResponse> => {
   await delay(200);
-  const users = AdminUserServicesMap.mapAdminUserListFromApi(rawUsers);
-  const user =
-    users.find((item) => item.id === params.userId) ??
-    AdminUserServicesMap.mapAdminUserListFromApi([rawUsers[0]])[0];
   return {
-    user,
-    userProfile: null,
-    readonlyFields: null,
+    userProfile: {
+      userId: params.userId,
+    },
   };
 };
 

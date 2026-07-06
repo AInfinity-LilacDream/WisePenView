@@ -3,6 +3,7 @@ import type { CapabilitySkillSelection, CapabilityToolOption } from '@/domains/C
 
 export interface ChatInputProps {
   onSend: (text: string, opts?: SendOptions) => void | Promise<void>;
+  getUploadSessionId: () => Promise<string>;
   sending: boolean;
   hasSelectedContext: boolean;
   selectedContextText: string;

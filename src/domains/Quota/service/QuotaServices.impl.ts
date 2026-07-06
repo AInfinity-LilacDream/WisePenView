@@ -16,7 +16,7 @@ const fetchUserGroupQuotas = async (
 };
 
 const fetchGroupQuota = async (groupId: string | number): Promise<GroupQuotaInfo> => {
-  const data = await GroupMemberApi.getGroupToken({ groupId });
+  const data = await GroupMemberApi.getMyGroupMemberInfo({ groupId });
   return QuotaServicesMap.mapFetchGroupQuotaFromApi(data);
 };
 

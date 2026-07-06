@@ -26,7 +26,7 @@ export interface NoteServicesDeps {
 }
 
 const createNote = async (params: CreateNoteRequest): Promise<CreateNoteResponse> => {
-  const resourceId = await NoteApi.addNote(params);
+  const resourceId = await NoteApi.addNote(NoteServicesMap.mapCreateNoteRequest(params));
   return NoteServicesMap.mapCreateNoteFromApi(resourceId);
 };
 

@@ -1,16 +1,15 @@
-import type { Block, NoteInfoResponse } from '@/domains/Note';
+import type { NoteInfoResponse } from '@/domains/Note';
 
 export interface AddNoteApiRequest {
   title: string;
   resourceType?: string;
-  initial_content?: Block[];
-  source?: string;
 }
 
 export type AddNoteApiResponse = string;
 
 export interface GetNoteInfoApiRequest {
   resourceId: string;
+  targetVersion?: number;
 }
 
 export type GetNoteInfoApiResponse = NoteInfoResponse;

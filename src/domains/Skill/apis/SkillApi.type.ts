@@ -23,17 +23,8 @@ export interface SkillAssetApiInfo {
   size?: number;
 }
 
-export interface SkillResourceApiItem {
-  resourceName?: string;
-  resourceType?: string;
-  ownerId?: string;
-  preview?: string;
-  size?: number;
-  resourceId?: string;
-}
-
 export interface SkillInfoApiResponse {
-  resourceInfo?: SkillResourceApiItem;
+  resourceInfo?: ResourceItem;
   skillInfo?: {
     name?: string;
     description?: string;
@@ -139,3 +130,4 @@ export interface RSkillResourceInfoResponse {
 export interface RSkillVersionBundleInfoResponse {
   data?: SkillVersionBundleApiResponse;
 }
+import type { ResourceItem } from '@/domains/Resource';

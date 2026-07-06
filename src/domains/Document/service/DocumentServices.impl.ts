@@ -100,7 +100,7 @@ const uploadDocument = async (params: UploadDocumentParams): Promise<UploadDocum
 };
 
 const retryConvert = async (documentId: string): Promise<void> => {
-  await DocumentApi.retryDocConvert({ documentId });
+  await DocumentApi.retryDocProcess({ documentId });
 };
 
 const listPendingDocs = async (): Promise<PendingDocItem[]> => {

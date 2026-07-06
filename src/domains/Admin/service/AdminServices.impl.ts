@@ -25,15 +25,17 @@ const getUserInfo = async (params: GetAdminUserInfoRequest): Promise<GetAdminUse
 };
 
 const changeUserInfo = async (params: ChangeAdminUserInfoRequest): Promise<void> => {
-  await AdminUserApi.changeUserInfo(params);
+  await AdminUserApi.changeUserInfo(AdminUserServicesMap.mapChangeAdminUserInfoRequest(params));
 };
 
 const changeUserProfile = async (params: ChangeAdminUserProfileRequest): Promise<void> => {
-  await AdminUserApi.changeUserProfile(params);
+  await AdminUserApi.changeUserProfile(
+    AdminUserServicesMap.mapChangeAdminUserProfileRequest(params)
+  );
 };
 
 const resetPassword = async (params: ResetAdminUserPasswordRequest): Promise<void> => {
-  await AdminUserApi.resetPassword(params);
+  await AdminUserApi.resetPassword(AdminUserServicesMap.mapResetAdminUserPasswordRequest(params));
 };
 
 export const createAdminServices = (): IAdminService => ({

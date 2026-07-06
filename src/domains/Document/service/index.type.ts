@@ -1,4 +1,5 @@
 import type { ResourceItem } from '@/domains/Resource';
+import type { UserDisplayBase } from '@/domains/User';
 import type { Config } from '@onlyoffice/doceditor-types';
 
 /** 小写扩展名，不含点 */
@@ -38,13 +39,14 @@ export interface DocumentUploadInitResponse {
 
 export interface DocumentUploadMeta {
   documentName: string;
-  uploaderId: number | null;
-  fileType: DocumentResourceType;
+  uploaderId: string | null;
+  fileType: string;
   size: number;
 }
 
 export interface PendingDocumentStatus {
   status: string;
+  errorMessage?: string | null;
 }
 
 /** 文档元信息（对齐后端 DocumentInfoBase） */
@@ -52,6 +54,7 @@ export interface DocMetaInfo {
   uploadMeta: DocumentUploadMeta;
   documentStatus: PendingDocumentStatus;
   maxPreviewPages: number | null;
+  version?: number;
 }
 
 export interface PendingDocItem extends DocMetaInfo {
@@ -62,6 +65,7 @@ export interface PendingDocItem extends DocMetaInfo {
 export interface DocDisplayInfoResponse {
   docMetaInfo: DocMetaInfo;
   resourceInfo: ResourceItem;
+  authorsDisplay?: Record<string, UserDisplayBase>;
 }
 
 export type OnlyOfficeEditorConfig = Config;

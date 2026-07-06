@@ -1,5 +1,10 @@
-import type { Group, GroupFileOrgLogic } from '@/domains/Group';
-import type { TagResourceAction, TagResourceActionKey } from '@/domains/Tag';
+import type { TagResourceActionKey } from '@/domains/Tag';
+import type { UserDisplayBase } from '@/domains/User';
+import type { UserIdentityTypeApiValue } from '@/domains/User/apis/UserApi.type';
+
+export type GroupFileOrgLogicApiValue = 'FOLDER' | 'TAG';
+export type GroupTypeApiValue = '1' | '2' | '3';
+export type GroupRoleApiValue = '0' | '1' | '2' | '-1';
 
 export interface ListGroupApiRequest {
   groupRoleFilter: 'JOINED' | 'MANAGED';
@@ -7,20 +12,36 @@ export interface ListGroupApiRequest {
   size: number;
 }
 
+export interface GroupApiResponse {
+  groupId?: string | number | null;
+  groupName?: string | null;
+  groupDesc?: string | null;
+  groupCoverUrl?: string | null;
+  groupType?: GroupTypeApiValue;
+  ownerId?: string | number | null;
+  ownerInfo?:
+    (Omit<UserDisplayBase, 'identityType'> & { identityType?: UserIdentityTypeApiValue }) | null;
+  memberCount?: number;
+  createTime?: string;
+  inviteCode?: string | null;
+  tokenUsed?: number;
+  tokenBalance?: number;
+}
+
 export interface ListGroupApiResponse {
   total: number;
-  list: Group[];
+  list: GroupApiResponse[];
 }
 
 export interface GetGroupInfoApiRequest {
   groupId: string;
 }
 
-export type GetGroupInfoApiResponse = Group;
-export type GetGroupBaseInfoApiResponse = Group;
+export type GetGroupInfoApiResponse = GroupApiResponse;
+export type GetGroupBaseInfoApiResponse = GroupApiResponse;
 export type AddGroupApiRequest = {
   groupName: string;
-  groupType: number;
+  groupType: string;
   groupDesc: string;
   groupCoverUrl?: string;
 };
@@ -30,7 +51,7 @@ export type ChangeGroupApiRequest = {
   groupName: string;
   groupDesc: string;
   groupCoverUrl: string;
-  groupType: number;
+  groupType: string;
 };
 export interface RemoveGroupApiRequest {
   groupId: string;
@@ -41,14 +62,14 @@ export interface GetGroupConfigApiRequest {
 }
 
 export interface GetGroupConfigApiResponse {
-  groupId?: string | number;
-  fileOrgLogic?: GroupFileOrgLogic | string;
-  defaultMemberActions?: Array<TagResourceAction | string | number>;
+  groupId?: string;
+  fileOrgLogic?: GroupFileOrgLogicApiValue;
+  defaultMemberActions?: TagResourceActionKey[];
 }
 
 export interface ChangeGroupConfigApiRequest {
   groupId: string;
-  fileOrgLogic: GroupFileOrgLogic;
+  fileOrgLogic: GroupFileOrgLogicApiValue;
   defaultMemberActions?: TagResourceActionKey[];
 }
 
@@ -60,21 +81,21 @@ export interface GroupMemberBaseInfo {
   nickname: string;
   realName: string | null;
   avatar: string | null;
-  identityType: number;
+  identityType: UserIdentityTypeApiValue;
 }
 
 export interface GroupMemberRawResponse {
-  role: number;
+  role: GroupRoleApiValue;
   joinTime: string;
   tokenLimit: number;
   tokenUsed: number;
-  groupId: string;
-  memberId: string;
+  groupId: string | number;
+  memberId: string | number;
   memberInfo: GroupMemberBaseInfo;
 }
 
 export interface FetchGroupMembersApiResponse {
-  total: string;
+  total: number;
   page: number;
   size: number;
   totalPage: number;
@@ -87,9 +108,7 @@ export interface ListMemberApiRequest {
   size: number;
 }
 
-export interface GroupRoleApiResponse {
-  role: number;
-}
+export type GroupRoleApiResponse = GroupRoleApiValue;
 
 export interface QuitGroupApiRequest {
   groupId: string;
@@ -98,7 +117,7 @@ export interface QuitGroupApiRequest {
 export interface ChangeRoleApiRequest {
   groupId: string;
   targetUserIds: string[];
-  role: number;
+  role: string;
 }
 
 export interface KickMemberApiRequest {
@@ -106,15 +125,18 @@ export interface KickMemberApiRequest {
   targetUserIds: string[];
 }
 
-export interface GetGroupTokenApiRequest {
+export interface GetMyGroupMemberInfoApiRequest {
   groupId: string | number;
 }
 
-export interface GetGroupTokenApiResponse {
-  TokenUsed?: number;
-  TokenLimit?: number;
+export interface GetMyGroupMemberInfoApiResponse {
+  role?: GroupRoleApiValue;
+  joinTime?: string;
   tokenUsed?: number;
   tokenLimit?: number;
+  groupId?: string | number;
+  memberId?: string | number;
+  memberInfo?: GroupMemberBaseInfo;
 }
 
 export interface ChangeTokenLimitApiRequest {
@@ -131,23 +153,16 @@ export interface GetAllMyGroupTokenInfoApiRequest {
 export interface GroupTokenInfoApiResponseItem {
   groupDisplayBase?: {
     groupId?: string | number;
-    GroupId?: string | number;
     groupName?: string;
-    GroupName?: string;
   };
-  groupId?: string | number;
-  GroupId?: string | number;
-  groupName?: string;
-  GroupName?: string;
-  tokenLimit?: number | string;
-  TokenLimit?: number | string;
-  tokenUsed?: number | string;
-  TokenUsed?: number | string;
+  tokenLimit?: number;
+  tokenUsed?: number;
 }
 
 export interface GetAllMyGroupTokenInfoApiResponse {
   list?: GroupTokenInfoApiResponseItem[];
-  records?: GroupTokenInfoApiResponseItem[];
-  total?: number | string;
-  Total?: number | string;
+  total?: number;
+  page?: number;
+  size?: number;
+  totalPage?: number;
 }

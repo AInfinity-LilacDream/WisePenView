@@ -17,19 +17,14 @@ function ChatInputContent({
   selectedContextText,
   onClearSelectedContext,
 }: ChatInputProps) {
-  const {
-    attachmentStripProps,
-    containerProps,
-    dropOverlayProps,
-    textAreaProps,
-    toolbarProps,
-  } = useChatInputController({
-    onSend,
-    sending,
-    hasSelectedContext,
-    selectedContextText,
-    onClearSelectedContext,
-  });
+  const { attachmentStripProps, containerProps, dropOverlayProps, textAreaProps, toolbarProps } =
+    useChatInputController({
+      onSend,
+      sending,
+      hasSelectedContext,
+      selectedContextText,
+      onClearSelectedContext,
+    });
 
   return (
     <div className={styles.container} {...containerProps}>
@@ -60,7 +55,7 @@ function ChatInputContent({
 function ChatInput(props: ChatInputProps) {
   return (
     <ChatInputStoreProvider>
-      <ChatInputFileProvider>
+      <ChatInputFileProvider getUploadSessionId={props.getUploadSessionId}>
         <ChatInputContent {...props} />
       </ChatInputFileProvider>
     </ChatInputStoreProvider>
