@@ -7,7 +7,7 @@
  * - 提交：剔除横杠与空格，仅传 16 位纯字符。
  * - 防重复提交：进行中按钮文案为「充值中...」并禁用。
  */
-import AppModal from '@/components/AppModal';
+import AppFormDialog from '@/components/Overlay/AppFormDialog';
 import { InputOTP, REGEXP_ONLY_DIGITS_AND_CHARS } from '@heroui/react';
 import { useRequest, useUpdateEffect } from 'ahooks';
 import React, { useRef, useState } from 'react';
@@ -76,17 +76,16 @@ function RechargeModal({ open, onCancel, groupDisplayName, onSubmit }: RechargeM
   }, [open, value.length]);
 
   return (
-    <AppModal
-      type="confirm"
+    <AppFormDialog
       isOpen={open}
       onOpenChange={(isOpen) => !isOpen && handleCancel()}
       title={title}
       size="lg"
       confirmText={submitting ? '充值中...' : '确认充值'}
       onCancel={handleCancel}
-      onConfirm={handleOk}
-      isConfirmLoading={submitting}
-      isConfirmDisabled={!canSubmit}
+      onSubmit={handleOk}
+      isSubmitting={submitting}
+      isSubmitDisabled={!canSubmit}
       isDismissable={!submitting}
     >
       <InputOTP
@@ -116,7 +115,7 @@ function RechargeModal({ open, onCancel, groupDisplayName, onSubmit }: RechargeM
         ))}
       </InputOTP>
       <p className={styles.hint}>请输入 16 位兑换码，将自动转为大写并分段显示。</p>
-    </AppModal>
+    </AppFormDialog>
   );
 }
 

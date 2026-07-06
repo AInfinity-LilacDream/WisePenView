@@ -1,4 +1,4 @@
-import AppModal from '@/components/AppModal';
+import AppModal from '@/components/Overlay/AppModal';
 import UploadZone from '@/components/UploadZone';
 import { useGroupService, useImageService, useUserService } from '@/domains';
 import type { CreateGroupRequest } from '@/domains/Group';
@@ -19,7 +19,17 @@ import {
   assertImageProxyUploadLimit,
   IMAGE_UPLOAD_MAX_SIZE_LABEL,
 } from '@/utils/image/uploadLimit';
-import { Checkbox, Input, Label, ListBox, Select, TextArea, TextField, toast } from '@heroui/react';
+import {
+  Button,
+  Checkbox,
+  Input,
+  Label,
+  ListBox,
+  Select,
+  TextArea,
+  TextField,
+  toast,
+} from '@heroui/react';
 import { useRequest } from 'ahooks';
 import { useState } from 'react';
 import type { CreateGroupModalProps } from './index.type';
@@ -181,16 +191,27 @@ function CreateGroupModal({ isOpen, onOpenChange, onSuccess }: CreateGroupModalP
 
   return (
     <AppModal
-      type="confirm"
       isOpen={isOpen}
       onOpenChange={onOpenChange}
       title="新建小组"
       size="md"
-      onCancel={handleCancel}
-      onConfirm={handleConfirm}
-      isConfirmLoading={submitting}
       bodyClassName={styles.modalBody}
       isDismissable={!submitting}
+      actions={
+        <>
+          <Button variant="secondary" isDisabled={submitting} onPress={handleCancel}>
+            取消
+          </Button>
+          <Button
+            variant="primary"
+            isDisabled={submitting}
+            aria-busy={submitting || undefined}
+            onPress={handleConfirm}
+          >
+            确定
+          </Button>
+        </>
+      }
     >
       <TextField
         aria-label="小组名称"

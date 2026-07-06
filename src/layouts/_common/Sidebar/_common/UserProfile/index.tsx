@@ -1,4 +1,4 @@
-import AppModal from '@/components/AppModal';
+import AppDisplayDialog from '@/components/Overlay/AppDisplayDialog';
 import { useUserService } from '@/domains';
 import type { User } from '@/domains/User';
 import { IDENTITY } from '@/domains/User';
@@ -79,10 +79,6 @@ function UserProfile({ collapsed, menuMode = 'app' }: UserProfileProps) {
       default:
         break;
     }
-  };
-
-  const handleCloseFeedback = () => {
-    setFeedbackModalOpen(false);
   };
 
   const userAvatar = (
@@ -175,16 +171,15 @@ function UserProfile({ collapsed, menuMode = 'app' }: UserProfileProps) {
         )}
       </div>
 
-      <AppModal
+      <AppDisplayDialog
         isOpen={feedbackModalOpen}
         onOpenChange={setFeedbackModalOpen}
         title="问题反馈"
         size="lg"
         containerClassName={styles.feedbackModal}
         closeText="关闭"
-        onCancel={handleCloseFeedback}
       >
-        <AppModal.DeferredContent fallback={<div className={styles.feedbackIframeWrap} />}>
+        <AppDisplayDialog.DeferredContent fallback={<div className={styles.feedbackIframeWrap} />}>
           {() => (
             <>
               <div className={styles.feedbackIframeWrap}>
@@ -209,8 +204,8 @@ function UserProfile({ collapsed, menuMode = 'app' }: UserProfileProps) {
               </p>
             </>
           )}
-        </AppModal.DeferredContent>
-      </AppModal>
+        </AppDisplayDialog.DeferredContent>
+      </AppDisplayDialog>
     </>
   );
 }

@@ -1,9 +1,9 @@
 import type { ApiErrorBody } from '@/apis/api.type';
-import AppModal from '@/components/AppModal';
 import {
   buildUploadedResourceMountTagIds,
   resolveResourcePrimaryTagId,
 } from '@/components/Drive/common/driveComponentModel';
+import AppModal from '@/components/Overlay/AppModal';
 import UploadZone from '@/components/UploadZone';
 import { useDocumentService, useResourceService } from '@/domains';
 import { useDriveUploadQueueStore } from '@/store';
@@ -253,7 +253,6 @@ function UploadDocumentModal({
 
   return (
     <AppModal
-      type="confirm"
       isOpen={isOpen}
       onOpenChange={handleOpenChange}
       title="上传文档"

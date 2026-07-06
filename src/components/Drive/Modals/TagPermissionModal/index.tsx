@@ -1,6 +1,6 @@
-import AppModal from '@/components/AppModal';
 import DriveNav from '@/components/Drive/DriveNav';
 import { Empty, Spin } from '@/components/Feedback';
+import AppModal from '@/components/Overlay/AppModal';
 import SegmentedTabs from '@/components/SegmentedTabs';
 import { useDriveService, useGroupService, useTagService } from '@/domains';
 import type { DriveNode } from '@/domains/Drive';
@@ -21,7 +21,7 @@ import {
 } from '@/domains/Tag';
 import { useEffectForce } from '@/hooks/useEffectForce';
 import { createClientError, FRONTEND_CLIENT_ERROR, parseErrorMessage } from '@/utils/error';
-import { Checkbox, toast } from '@heroui/react';
+import { Button, Checkbox, toast } from '@heroui/react';
 import { useRequest } from 'ahooks';
 import { useState } from 'react';
 import {
@@ -458,17 +458,27 @@ const TagPermissionModal = ({
 
   return (
     <AppModal
-      type="confirm"
       isOpen={isOpen}
       onOpenChange={handleOpenChange}
       title="标签权限管理"
       size="lg"
       containerClassName={styles.modalContainer}
-      confirmText="保存"
-      onConfirm={handleSubmit}
-      isConfirmLoading={saving}
-      isConfirmDisabled={saving || !selectedTag || !groupId}
       isDismissable={!saving}
+      actions={
+        <>
+          <Button variant="secondary" isDisabled={saving} onPress={() => handleOpenChange(false)}>
+            取消
+          </Button>
+          <Button
+            variant="primary"
+            isDisabled={saving || !selectedTag || !groupId}
+            aria-busy={saving || undefined}
+            onPress={handleSubmit}
+          >
+            保存
+          </Button>
+        </>
+      }
     >
       <div className={styles.modalFormPadding}>
         <div className={styles.wrapper}>

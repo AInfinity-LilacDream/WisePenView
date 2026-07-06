@@ -1,4 +1,4 @@
-import AppModal from '@/components/AppModal';
+import AppFormDialog from '@/components/Overlay/AppFormDialog';
 import { useDriveService } from '@/domains';
 import { parseErrorMessage } from '@/utils/error';
 import { Input, TextField, toast } from '@heroui/react';
@@ -49,13 +49,12 @@ function RenameNodeModal({ isOpen, node, groupId, onOpenChange, onSuccess }: Ren
   const title = node?.type === 'folder' ? '重命名文件夹' : '重命名文件';
 
   return (
-    <AppModal
-      type="confirm"
+    <AppFormDialog
       isOpen={isOpen && !!node}
       onOpenChange={onOpenChange}
       title={title}
-      onConfirm={handleSubmit}
-      isConfirmLoading={loading}
+      onSubmit={handleSubmit}
+      isSubmitting={loading}
       isDismissable={!loading}
     >
       <TextField
@@ -65,17 +64,9 @@ function RenameNodeModal({ isOpen, node, groupId, onOpenChange, onSuccess }: Ren
         autoFocus
         onChange={setName}
       >
-        <Input
-          placeholder="请输入新名称"
-          onKeyDown={(event) => {
-            if (event.key === 'Enter') {
-              event.preventDefault();
-              handleSubmit();
-            }
-          }}
-        />
+        <Input placeholder="请输入新名称" />
       </TextField>
-    </AppModal>
+    </AppFormDialog>
   );
 }
 

@@ -1,4 +1,4 @@
-import AppModal from '@/components/AppModal';
+import AppDisplayDialog from '@/components/Overlay/AppDisplayDialog';
 import { useAuthService } from '@/domains';
 import type { NewPasswordRequest } from '@/domains/Auth';
 import { parseErrorMessage } from '@/utils/error';
@@ -131,34 +131,27 @@ function NewPassword() {
           </div>
         </div>
       </Form>
-      <AppModal
+      <AppDisplayDialog
         isOpen={successModalOpen}
         onOpenChange={setSuccessModalOpen}
         title={t('newPassword.successTitle')}
-        actions={
-          <>
-            <Button
-              onPress={() => {
-                setSuccessModalOpen(false);
-                resetForm();
-              }}
-            >
-              {t('newPassword.stayHere')}
-            </Button>
-            <Button
-              variant="primary"
-              onPress={() => {
-                setSuccessModalOpen(false);
-                navigate('/login');
-              }}
-            >
-              {t('newPassword.goToLogin')}
-            </Button>
-          </>
-        }
+        secondaryAction={{
+          label: t('newPassword.stayHere'),
+          onPress: () => {
+            setSuccessModalOpen(false);
+            resetForm();
+          },
+        }}
+        primaryAction={{
+          label: t('newPassword.goToLogin'),
+          onPress: () => {
+            setSuccessModalOpen(false);
+            navigate('/login');
+          },
+        }}
       >
         <p>{t('newPassword.successDescription')}</p>
-      </AppModal>
+      </AppDisplayDialog>
     </div>
   );
 }

@@ -1,9 +1,9 @@
-import AppModal from '@/components/AppModal';
 import DriveNav from '@/components/Drive/DriveNav';
+import AppModal from '@/components/Overlay/AppModal';
 import { useDriveService } from '@/domains';
 import type { FolderNode, IDriveService } from '@/domains/Drive';
 import { parseErrorMessage } from '@/utils/error';
-import { toast } from '@heroui/react';
+import { Button, toast } from '@heroui/react';
 import { useRequest } from 'ahooks';
 import { useMemo, useState } from 'react';
 import { getDriveScopeGroupId, type DriveActionTarget } from '../../../common/driveComponentModel';
@@ -110,15 +110,26 @@ function MoveNodeModal({
 
   return (
     <AppModal
-      type="confirm"
       isOpen={isOpen && !!node}
       onOpenChange={handleOpenChange}
       title="移动到文件夹"
       size="md"
-      onConfirm={handleConfirm}
-      isConfirmLoading={moving}
-      isConfirmDisabled={moving || !selectedTargetId}
       isDismissable={!moving}
+      actions={
+        <>
+          <Button variant="secondary" isDisabled={moving} onPress={() => handleOpenChange(false)}>
+            取消
+          </Button>
+          <Button
+            variant="primary"
+            isDisabled={moving || !selectedTargetId}
+            aria-busy={moving || undefined}
+            onPress={handleConfirm}
+          >
+            确定
+          </Button>
+        </>
+      }
     >
       <div className={styles.wrapper}>
         {node ? <div className={styles.hint}>即将移动：{getNodeName(node)}</div> : null}

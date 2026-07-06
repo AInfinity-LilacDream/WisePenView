@@ -1,4 +1,4 @@
-import AppModal from '@/components/AppModal';
+import AppModal from '@/components/Overlay/AppModal';
 import { useNoteService, useResourceService } from '@/domains';
 import {
   coerceResourceActions,
@@ -183,16 +183,30 @@ function NotePermissionModal({
 
   return (
     <AppModal
-      type="confirm"
       isOpen={isOpen}
       onOpenChange={handleModalOpenChange}
       title="权限配置"
       size="lg"
-      confirmText={saving ? '保存中...' : '保存'}
-      onConfirm={runSavePermission}
-      isConfirmLoading={saving}
-      isConfirmDisabled={loading || Boolean(error) || saving}
       isDismissable={!saving}
+      actions={
+        <>
+          <Button
+            variant="secondary"
+            isDisabled={saving}
+            onPress={() => handleModalOpenChange(false)}
+          >
+            取消
+          </Button>
+          <Button
+            variant="primary"
+            isDisabled={loading || Boolean(error) || saving}
+            aria-busy={saving || undefined}
+            onPress={runSavePermission}
+          >
+            {saving ? '保存中...' : '保存'}
+          </Button>
+        </>
+      }
     >
       {loading ? (
         renderStatusAlert('default', '正在加载权限配置...')

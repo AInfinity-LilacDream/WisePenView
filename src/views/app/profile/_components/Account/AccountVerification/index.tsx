@@ -1,10 +1,12 @@
-import AppModal from '@/components/AppModal';
+import AppDisplayDialog from '@/components/Overlay/AppDisplayDialog';
+import AppModal from '@/components/Overlay/AppModal';
 import { useUserService } from '@/domains';
 import type { InitiateUISVerifyRequest, SendEmailVerifyRequest } from '@/domains/User';
 import { USER_STATUS } from '@/domains/User';
 import { parseErrorMessage } from '@/utils/error';
 import {
   Alert,
+  Button,
   ErrorMessage,
   Form,
   Input,
@@ -233,16 +235,30 @@ function AccountVerification({ user, onUserInfoReload }: AccountVerificationProp
       <VerifyBanner visible={showBanner} onGoVerify={handleVerify} />
 
       <AppModal
-        type="confirm"
         isOpen={verifyModalOpen}
         onOpenChange={handleVerifyModalOpenChange}
         title="账号验证"
         size="md"
-        confirmText={verifyMode === 'email' ? '发送验证邮件' : '发起 UIS 认证'}
-        onCancel={handleVerifyModalClose}
-        onConfirm={handleVerifySubmit}
-        isConfirmLoading={verifySubmitting}
         isDismissable={!verifySubmitting}
+        actions={
+          <>
+            <Button
+              variant="secondary"
+              isDisabled={verifySubmitting}
+              onPress={handleVerifyModalClose}
+            >
+              取消
+            </Button>
+            <Button
+              variant="primary"
+              isDisabled={verifySubmitting}
+              aria-busy={verifySubmitting || undefined}
+              onPress={handleVerifySubmit}
+            >
+              {verifyMode === 'email' ? '发送验证邮件' : '发起 UIS 认证'}
+            </Button>
+          </>
+        }
       >
         <Tabs
           className={styles.verifyModeTabs}
@@ -352,7 +368,7 @@ function AccountVerification({ user, onUserInfoReload }: AccountVerificationProp
         </Form>
       </AppModal>
 
-      <AppModal
+      <AppDisplayDialog
         isOpen={uisOutcomeOpen && uisOutcome != null}
         onOpenChange={(nextOpen) => {
           if (!nextOpen) handleUisOutcomeModalClose();
@@ -361,7 +377,6 @@ function AccountVerification({ user, onUserInfoReload }: AccountVerificationProp
         isDismissable={!uisAwaitingScan}
         footer={uisAwaitingScan ? null : undefined}
         closeText="知道了"
-        onCancel={handleUisOutcomeModalClose}
       >
         {uisOutcome != null && (
           <div className={styles.uisOutcomeBody}>
@@ -420,7 +435,7 @@ function AccountVerification({ user, onUserInfoReload }: AccountVerificationProp
             )}
           </div>
         )}
-      </AppModal>
+      </AppDisplayDialog>
     </>
   );
 }

@@ -1,4 +1,4 @@
-import AppModal from '@/components/AppModal';
+import AppAlertDialog from '@/components/Overlay/AppAlertDialog';
 import SelectedMemberList from '@/components/SelectedMemberList';
 import { useGroupService } from '@/domains';
 import { parseErrorMessage } from '@/utils/error';
@@ -52,7 +52,7 @@ function DeleteMemberModal({
       : '确定要删除以下成员吗？此操作不可撤销！';
 
   return (
-    <AppModal
+    <AppAlertDialog
       type="danger"
       isOpen={isOpen}
       onOpenChange={onOpenChange}
@@ -66,7 +66,7 @@ function DeleteMemberModal({
       isDismissable={!loading}
     >
       <SelectedMemberList members={members} />
-    </AppModal>
+    </AppAlertDialog>
   );
 }
 

@@ -1,5 +1,5 @@
-import AppModal from '@/components/AppModal';
 import DriveNav from '@/components/Drive/DriveNav';
+import AppModal from '@/components/Overlay/AppModal';
 import StepDots from '@/components/StepDots';
 import { useResourceService } from '@/domains';
 import { useEffectForce } from '@/hooks/useEffectForce';
@@ -89,7 +89,6 @@ function UploadFileToGroupModal({
 
   return (
     <AppModal
-      type="confirm"
       isOpen={isOpen}
       onOpenChange={handleOpenChange}
       title="上传文件到小组"

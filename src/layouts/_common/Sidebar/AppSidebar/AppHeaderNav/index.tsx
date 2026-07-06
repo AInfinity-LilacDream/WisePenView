@@ -1,4 +1,4 @@
-import AppModal from '@/components/AppModal';
+import AppFormDialog from '@/components/Overlay/AppFormDialog';
 import { useChatService, useNoteService } from '@/domains';
 import {
   clearNewChatSessionStore,
@@ -239,30 +239,20 @@ function AppHeaderNav({ collapsed, onSessionCreated }: AppHeaderNavProps) {
           {!collapsed && <span className={styles.menuLabel}>我的小组</span>}
         </ListBoxItem>
       </ListBox>
-      <AppModal
-        type="confirm"
+      <AppFormDialog
         isOpen={drawioModalOpen}
         onOpenChange={setDrawioModalOpen}
         title="新建 Draw.io 图"
         confirmText="创建"
-        onConfirm={handleConfirmCreateDrawio}
-        isConfirmLoading={creatingDrawio}
-        isConfirmDisabled={creatingDrawio || !drawioName.trim()}
+        onSubmit={handleConfirmCreateDrawio}
+        isSubmitting={creatingDrawio}
+        isSubmitDisabled={creatingDrawio || !drawioName.trim()}
         isDismissable={!creatingDrawio}
       >
         <TextField aria-label="Draw.io 图名称" value={drawioName} onChange={setDrawioName}>
-          <Input
-            placeholder="请输入名称"
-            autoFocus
-            onKeyDown={(event) => {
-              if (event.key === 'Enter') {
-                event.preventDefault();
-                handleConfirmCreateDrawio();
-              }
-            }}
-          />
+          <Input placeholder="请输入名称" autoFocus />
         </TextField>
-      </AppModal>
+      </AppFormDialog>
     </>
   );
 }

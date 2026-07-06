@@ -1,4 +1,4 @@
-import AppModal from '@/components/AppModal';
+import AppFormDialog from '@/components/Overlay/AppFormDialog';
 import { useGroupService } from '@/domains';
 import type { JoinGroupRequest } from '@/domains/Group';
 import { parseErrorMessage } from '@/utils/error';
@@ -25,7 +25,7 @@ const normalizeInviteCode = (raw = ''): string =>
 function JoinGroupModal({ isOpen, onOpenChange, onSuccess }: JoinGroupModalProps) {
   const groupService = useGroupService();
   const [inviteCode, setInviteCode] = useState('');
-  const isConfirmDisabled = normalizeInviteCode(inviteCode).length !== INVITE_CODE_LENGTH;
+  const isSubmitDisabled = normalizeInviteCode(inviteCode).length !== INVITE_CODE_LENGTH;
   const resetForm = () => {
     setInviteCode('');
   };
@@ -63,15 +63,14 @@ function JoinGroupModal({ isOpen, onOpenChange, onSuccess }: JoinGroupModalProps
   };
 
   return (
-    <AppModal
-      type="confirm"
+    <AppFormDialog
       isOpen={isOpen}
       onOpenChange={onOpenChange}
       title="加入小组"
       onCancel={handleCancel}
-      onConfirm={handleConfirm}
-      isConfirmLoading={loading}
-      isConfirmDisabled={isConfirmDisabled || loading}
+      onSubmit={handleConfirm}
+      isSubmitting={loading}
+      isSubmitDisabled={isSubmitDisabled || loading}
       isDismissable={!loading}
     >
       <label className={styles.fieldLabel} htmlFor="join-group-invite-code">
@@ -103,7 +102,7 @@ function JoinGroupModal({ isOpen, onOpenChange, onSuccess }: JoinGroupModalProps
         ))}
       </InputOTP>
       <p className={styles.hint}>请输入 8 位邀请码，将自动转为大写并分段显示。</p>
-    </AppModal>
+    </AppFormDialog>
   );
 }
 

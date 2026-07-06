@@ -1,6 +1,4 @@
-import AppModal from '@/components/AppModal';
-
-import styles from './style.module.less';
+import AppAlertDialog from '@/components/Overlay/AppAlertDialog';
 
 type UnsavedSkillChangesMode = 'publish' | 'leave';
 
@@ -42,23 +40,20 @@ function UnsavedSkillChangesModal({
   const copy = modalCopy[mode];
 
   return (
-    <AppModal
+    <AppAlertDialog
       type="confirm"
       isOpen={isOpen}
       onOpenChange={(open: boolean) => {
         if (!open && !isLoading) onCancel();
       }}
       title={copy.title}
+      description={copy.description}
       confirmText={copy.confirmText}
       onCancel={onCancel}
       onConfirm={onConfirm}
       isConfirmLoading={isLoading}
       isDismissable={!isLoading}
-      dialogClassName={styles.dialog}
-      bodyClassName={styles.body}
-    >
-      <p className={styles.description}>{copy.description}</p>
-    </AppModal>
+    />
   );
 }
 

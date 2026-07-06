@@ -1,10 +1,10 @@
-import AppModal from '@/components/AppModal';
+import AppDisplayDialog from '@/components/Overlay/AppDisplayDialog';
 import type { ContractModalProps } from './index.type';
 import styles from './style.module.less';
 
 function ServiceAgreement({ isOpen, onOpenChange }: ContractModalProps) {
   return (
-    <AppModal
+    <AppDisplayDialog
       isOpen={isOpen}
       onOpenChange={onOpenChange}
       title="服务协议"
@@ -243,7 +243,7 @@ function ServiceAgreement({ isOpen, onOpenChange }: ContractModalProps) {
         3、您可随时通知我们终止向您提供服务或直接取消本平台服务。自您终止或取消服务之日起，我们不再向您承担任何形式的责任。
         <br />
       </div>
-    </AppModal>
+    </AppDisplayDialog>
   );
 }
 

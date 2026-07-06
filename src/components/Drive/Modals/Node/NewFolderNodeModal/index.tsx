@@ -1,4 +1,4 @@
-import AppModal from '@/components/AppModal';
+import AppFormDialog from '@/components/Overlay/AppFormDialog';
 import { useDriveService } from '@/domains';
 import { parseErrorMessage } from '@/utils/error';
 import { validateReservedName } from '@/utils/tag/validateReservedName';
@@ -59,15 +59,14 @@ function NewFolderNodeModal({
   };
 
   return (
-    <AppModal
-      type="confirm"
+    <AppFormDialog
       isOpen={isOpen}
       onOpenChange={onOpenChange}
       title="新建文件夹"
       confirmText="创建"
       onCancel={handleCancel}
-      onConfirm={handleSubmit}
-      isConfirmLoading={loading}
+      onSubmit={handleSubmit}
+      isSubmitting={loading}
       isDismissable={!loading}
     >
       <div className={styles.pathHint}>
@@ -80,17 +79,9 @@ function NewFolderNodeModal({
         autoFocus
         onChange={setName}
       >
-        <Input
-          placeholder="请输入文件夹名称"
-          onKeyDown={(event) => {
-            if (event.key === 'Enter') {
-              event.preventDefault();
-              handleSubmit();
-            }
-          }}
-        />
+        <Input placeholder="请输入文件夹名称" />
       </TextField>
-    </AppModal>
+    </AppFormDialog>
   );
 }
 

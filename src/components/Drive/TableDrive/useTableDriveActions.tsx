@@ -1,10 +1,10 @@
-import AppModal from '@/components/AppModal';
 import {
   NewFolderNodeModal,
   TagPermissionModal,
   UploadDocumentModal,
   UploadFileToGroupModal,
 } from '@/components/Drive/Modals';
+import AppFormDialog from '@/components/Overlay/AppFormDialog';
 import { useDocumentService, useNoteService, useResourceService } from '@/domains';
 import { useNewNoteStore } from '@/store';
 import { createClientError, FRONTEND_CLIENT_ERROR, parseErrorMessage } from '@/utils/error';
@@ -200,32 +200,20 @@ export function useTableDriveActions({
             onSuccess={refresh}
           />
         ) : null}
-        <AppModal
-          type="confirm"
+        <AppFormDialog
           isOpen={drawioModalOpen}
           onOpenChange={setDrawioModalOpen}
           title="新建图表"
           confirmText="创建"
-          onConfirm={() => runCreateDrawio()}
-          isConfirmLoading={creatingDrawio}
-          isConfirmDisabled={creatingDrawio || !drawioName.trim()}
+          onSubmit={() => runCreateDrawio()}
+          isSubmitting={creatingDrawio}
+          isSubmitDisabled={creatingDrawio || !drawioName.trim()}
           isDismissable={!creatingDrawio}
         >
           <TextField aria-label="图表名称" value={drawioName} onChange={setDrawioName}>
-            <Input
-              placeholder="请输入名称"
-              autoFocus
-              onKeyDown={(event) => {
-                if (event.key === 'Enter') {
-                  event.preventDefault();
-                  if (!creatingDrawio && drawioName.trim()) {
-                    runCreateDrawio();
-                  }
-                }
-              }}
-            />
+            <Input placeholder="请输入名称" autoFocus />
           </TextField>
-        </AppModal>
+        </AppFormDialog>
       </>
     ),
     [

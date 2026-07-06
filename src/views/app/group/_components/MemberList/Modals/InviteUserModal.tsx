@@ -1,5 +1,5 @@
-import AppModal from '@/components/AppModal';
-import { Button, toast } from '@heroui/react';
+import AppDisplayDialog from '@/components/Overlay/AppDisplayDialog';
+import { toast } from '@heroui/react';
 import { Copy } from 'lucide-react';
 import { useState } from 'react';
 import type { InviteUserModalProps } from './index.type';
@@ -13,6 +13,14 @@ function InviteUserModal({ isOpen, onOpenChange, inviteCode }: InviteUserModalPr
     onOpenChange(false);
   };
 
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (!nextOpen) {
+      handleClose();
+      return;
+    }
+    onOpenChange(true);
+  };
+
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(inviteCode ?? '');
@@ -24,21 +32,20 @@ function InviteUserModal({ isOpen, onOpenChange, inviteCode }: InviteUserModalPr
   };
 
   return (
-    <AppModal
+    <AppDisplayDialog
       isOpen={isOpen}
-      onOpenChange={onOpenChange}
+      onOpenChange={handleOpenChange}
       title="邀请用户"
-      actions={
-        <>
-          <Button variant="secondary" onPress={handleClose}>
-            关闭
-          </Button>
-          <Button variant="primary" onPress={handleCopy} isDisabled={!inviteCode}>
-            <Copy size={16} aria-hidden="true" />
-            {copied ? '已复制' : '复制'}
-          </Button>
-        </>
-      }
+      secondaryAction={{
+        label: '关闭',
+        onPress: handleClose,
+      }}
+      primaryAction={{
+        label: copied ? '已复制' : '复制',
+        icon: <Copy size={16} aria-hidden="true" />,
+        onPress: handleCopy,
+        isDisabled: !inviteCode,
+      }}
     >
       <div className={styles.inviteContainer}>
         <div className={styles.inviteCodeWrap}>
@@ -46,7 +53,7 @@ function InviteUserModal({ isOpen, onOpenChange, inviteCode }: InviteUserModalPr
         </div>
         <div className={styles.inviteHint}>分享此邀请码给其他用户，他们可以使用此码加入小组</div>
       </div>
-    </AppModal>
+    </AppDisplayDialog>
   );
 }
 

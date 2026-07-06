@@ -1,7 +1,7 @@
-import AppModal from '@/components/AppModal';
+import AppModal from '@/components/Overlay/AppModal';
 import { useSkillService } from '@/domains';
 import { parseErrorMessage } from '@/utils/error';
-import { Input, Label, TextArea, TextField, toast } from '@heroui/react';
+import { Button, Input, Label, TextArea, TextField, toast } from '@heroui/react';
 import { useRequest } from 'ahooks';
 import { useState } from 'react';
 
@@ -45,17 +45,26 @@ function CreateSkillModal({ isOpen, onOpenChange, onSuccess }: CreateSkillModalP
 
   return (
     <AppModal
-      type="confirm"
       isOpen={isOpen}
       onOpenChange={onOpenChange}
       title="创建新 Skill"
       size="lg"
-      confirmText="创建"
-      onCancel={handleClose}
-      onConfirm={() => runCreate()}
-      isConfirmLoading={loading}
-      isConfirmDisabled={!title.trim() || loading}
       isDismissable={!loading}
+      actions={
+        <>
+          <Button variant="secondary" isDisabled={loading} onPress={handleClose}>
+            取消
+          </Button>
+          <Button
+            variant="primary"
+            isDisabled={!title.trim() || loading}
+            aria-busy={loading || undefined}
+            onPress={() => runCreate()}
+          >
+            创建
+          </Button>
+        </>
+      }
     >
       <div className={styles.createForm}>
         <TextField

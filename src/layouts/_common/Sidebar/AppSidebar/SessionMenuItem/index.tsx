@@ -1,4 +1,5 @@
-import AppModal from '@/components/AppModal';
+import AppAlertDialog from '@/components/Overlay/AppAlertDialog';
+import AppFormDialog from '@/components/Overlay/AppFormDialog';
 import { useChatService } from '@/domains';
 import { parseErrorMessage } from '@/utils/error';
 import { Input, TextField, toast } from '@heroui/react';
@@ -105,8 +106,7 @@ function SessionMenuItem({ session, onUpdated, onDeleted }: SessionMenuItemProps
           <Trash2 size={16} />
         </button>
       </div>
-      <AppModal
-        type="confirm"
+      <AppFormDialog
         isOpen={renameModalOpen}
         onOpenChange={setRenameModalOpen}
         title="修改对话标题"
@@ -115,24 +115,13 @@ function SessionMenuItem({ session, onUpdated, onDeleted }: SessionMenuItemProps
           setRenameModalOpen(false);
           setEditingTitle(session.title || '');
         }}
-        onConfirm={() => void submitRename()}
+        onSubmit={() => void submitRename()}
       >
-        <TextField
-          aria-label="对话标题"
-          value={editingTitle}
-          autoFocus
-          onChange={setEditingTitle}
-          onKeyDown={(event) => {
-            if (event.key === 'Enter') {
-              event.preventDefault();
-              void submitRename();
-            }
-          }}
-        >
+        <TextField aria-label="对话标题" value={editingTitle} autoFocus onChange={setEditingTitle}>
           <Input placeholder="请输入对话标题" />
         </TextField>
-      </AppModal>
-      <AppModal
+      </AppFormDialog>
+      <AppAlertDialog
         type="danger"
         isOpen={deleteConfirmOpen}
         onOpenChange={setDeleteConfirmOpen}
@@ -141,6 +130,7 @@ function SessionMenuItem({ session, onUpdated, onDeleted }: SessionMenuItemProps
         confirmText="删除"
         onConfirm={() => void confirmDeleteSession()}
         isConfirmLoading={deleting}
+        isDismissable={!deleting}
       />
     </div>
   );

@@ -1,10 +1,10 @@
-import AppModal from '@/components/AppModal';
+import AppModal from '@/components/Overlay/AppModal';
 import SelectedMemberList from '@/components/SelectedMemberList';
 import { useGroupService } from '@/domains';
 import { ROLE } from '@/domains/Group';
 import type { EnumKey } from '@/utils/enum';
 import { parseErrorMessage } from '@/utils/error';
-import { Alert, ListBox, Select, toast } from '@heroui/react';
+import { Alert, Button, ListBox, Select, toast } from '@heroui/react';
 import { useRequest } from 'ahooks';
 import { useState } from 'react';
 import type { EditPermissionModalProps } from './index.type';
@@ -61,15 +61,26 @@ function EditPermissionModal({
 
   return (
     <AppModal
-      type="confirm"
       isOpen={isOpen}
       onOpenChange={handleOpenChange}
       title="修改权限"
       size="md"
-      onConfirm={handleConfirm}
-      isConfirmLoading={loading}
-      isConfirmDisabled={confirmDisabled || loading}
       isDismissable={!loading}
+      actions={
+        <>
+          <Button variant="secondary" isDisabled={loading} onPress={() => handleOpenChange(false)}>
+            取消
+          </Button>
+          <Button
+            variant="primary"
+            isDisabled={confirmDisabled || loading}
+            aria-busy={loading || undefined}
+            onPress={handleConfirm}
+          >
+            确定
+          </Button>
+        </>
+      }
     >
       {memberContainsOwner ? (
         <Alert status="danger">

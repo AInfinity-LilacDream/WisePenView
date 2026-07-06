@@ -1,8 +1,6 @@
 import type { ComponentProps, ReactNode } from 'react';
 
-import type { Modal } from '@/components/Overlay';
-
-export type AppModalType = 'info' | 'confirm' | 'warning' | 'danger';
+import type { Modal } from '../Modal';
 
 export type AppModalSize = ComponentProps<typeof Modal.Container>['size'];
 
@@ -16,26 +14,14 @@ export interface AppModalClassNames {
   description?: string;
   body?: string;
   footer?: string;
-  banner?: string;
 }
 
 export interface AppModalProps {
-  type?: AppModalType;
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   title?: ReactNode;
   description?: ReactNode;
   children?: ReactNode;
-  alert?: ReactNode;
-  bannerTitle?: ReactNode;
-  bannerDescription?: ReactNode;
-  confirmText?: ReactNode;
-  cancelText?: ReactNode;
-  closeText?: ReactNode;
-  onConfirm?: () => void;
-  onCancel?: () => void;
-  isConfirmLoading?: boolean;
-  isConfirmDisabled?: boolean;
   size?: AppModalSize;
   placement?: AppModalPlacement;
   isDismissable?: boolean;
