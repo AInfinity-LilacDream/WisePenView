@@ -1,4 +1,4 @@
-import AppModal from '@/components/AppModal';
+import AppAlertDialog from '@/components/AppAlertDialog';
 import { useGroupService } from '@/domains';
 import type { QuitGroupRequest } from '@/domains/Group';
 import { parseErrorMessage } from '@/utils/error';
@@ -47,7 +47,7 @@ function ExitGroupModal({
   };
 
   return (
-    <AppModal
+    <AppAlertDialog
       type="danger"
       isOpen={isOpen}
       onOpenChange={onOpenChange}
@@ -59,7 +59,7 @@ function ExitGroupModal({
       isDismissable={!loading}
     >
       <div className={styles.exitGroupName}>将要退出：{groupName}</div>
-    </AppModal>
+    </AppAlertDialog>
   );
 }
 

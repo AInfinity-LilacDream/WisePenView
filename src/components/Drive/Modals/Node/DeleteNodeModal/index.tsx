@@ -1,4 +1,4 @@
-import AppModal from '@/components/AppModal';
+import AppAlertDialog from '@/components/AppAlertDialog';
 import { useDriveService } from '@/domains';
 import { parseErrorMessage } from '@/utils/error';
 import { toast } from '@heroui/react';
@@ -57,7 +57,7 @@ function DeleteNodeModal({ isOpen, node, groupId, onOpenChange, onSuccess }: Del
   const confirmText = isGroupResource ? '移除' : '移入最近删除';
 
   return (
-    <AppModal
+    <AppAlertDialog
       type="danger"
       isOpen={isOpen && !!node}
       onOpenChange={onOpenChange}

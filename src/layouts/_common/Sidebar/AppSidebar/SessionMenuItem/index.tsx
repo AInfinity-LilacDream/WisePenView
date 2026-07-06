@@ -1,3 +1,4 @@
+import AppAlertDialog from '@/components/AppAlertDialog';
 import AppModal from '@/components/AppModal';
 import { useChatService } from '@/domains';
 import { parseErrorMessage } from '@/utils/error';
@@ -132,7 +133,7 @@ function SessionMenuItem({ session, onUpdated, onDeleted }: SessionMenuItemProps
           <Input placeholder="请输入对话标题" />
         </TextField>
       </AppModal>
-      <AppModal
+      <AppAlertDialog
         type="danger"
         isOpen={deleteConfirmOpen}
         onOpenChange={setDeleteConfirmOpen}
@@ -141,6 +142,7 @@ function SessionMenuItem({ session, onUpdated, onDeleted }: SessionMenuItemProps
         confirmText="删除"
         onConfirm={() => void confirmDeleteSession()}
         isConfirmLoading={deleting}
+        isDismissable={!deleting}
       />
     </div>
   );

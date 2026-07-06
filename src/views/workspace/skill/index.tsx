@@ -1,4 +1,4 @@
-import AppModal from '@/components/AppModal';
+import AppAlertDialog from '@/components/AppAlertDialog';
 import { Empty, ResultState, Spin } from '@/components/Feedback';
 import EntryIcon from '@/components/Icons/EntryIcon';
 import SkillEditor from '@/components/Skill/SkillEditor';
@@ -785,7 +785,7 @@ function SkillView({ resourceId = '' }: SkillViewProps = {}) {
         </div>
       </div>
 
-      <AppModal
+      <AppAlertDialog
         type="danger"
         isOpen={!!deleteTarget}
         onOpenChange={() => setDeleteTarget(null)}
