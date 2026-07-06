@@ -1,5 +1,5 @@
-import AppAlertDialog from '@/components/AppAlertDialog';
-import AppFormDialog from '@/components/AppFormDialog';
+import AppAlertDialog from '@/components/Overlay/AppAlertDialog';
+import AppFormDialog from '@/components/Overlay/AppFormDialog';
 import { useChatService } from '@/domains';
 import { parseErrorMessage } from '@/utils/error';
 import { Input, TextField, toast } from '@heroui/react';

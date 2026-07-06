@@ -1,6 +1,6 @@
-import AppFormDialog from '@/components/AppFormDialog';
-import AppModal from '@/components/AppModal';
 import { ResultState, Spin } from '@/components/Feedback';
+import AppDisplayDialog from '@/components/Overlay/AppDisplayDialog';
+import AppFormDialog from '@/components/Overlay/AppFormDialog';
 import { useNoteService, useResourceService, useUserService } from '@/domains';
 import type {
   DrawIoLatestSnapshotData,
@@ -204,13 +204,12 @@ function VersionModal({
   onClose: () => void;
 }) {
   return (
-    <AppModal
+    <AppDisplayDialog
       isOpen={open}
       onOpenChange={(visible) => !visible && onClose()}
       title="版本记录"
       size="md"
       closeText="关闭"
-      onCancel={onClose}
     >
       {loading ? (
         <div className={styles.modalState}>
@@ -236,7 +235,7 @@ function VersionModal({
           ))}
         </div>
       )}
-    </AppModal>
+    </AppDisplayDialog>
   );
 }
 

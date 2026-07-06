@@ -1,4 +1,4 @@
-import AppFormDialog from '@/components/AppFormDialog';
+import AppFormDialog from '@/components/Overlay/AppFormDialog';
 import { useGroupService } from '@/domains';
 import type { JoinGroupRequest } from '@/domains/Group';
 import { parseErrorMessage } from '@/utils/error';

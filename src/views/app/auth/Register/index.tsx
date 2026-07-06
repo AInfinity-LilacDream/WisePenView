@@ -1,4 +1,4 @@
-import AppModal from '@/components/AppModal';
+import AppDisplayDialog from '@/components/Overlay/AppDisplayDialog';
 import { useAuthService } from '@/domains';
 import type { RegisterRequest } from '@/domains/Auth';
 import { parseErrorMessage } from '@/utils/error';
@@ -165,34 +165,27 @@ function Register() {
         </div>
       </Form>
       <ServiceAgreement isOpen={contractOpen} onOpenChange={setContractOpen} />
-      <AppModal
+      <AppDisplayDialog
         isOpen={successModalOpen}
         onOpenChange={setSuccessModalOpen}
         title={t('register.registerSuccessTitle')}
-        actions={
-          <>
-            <Button
-              onPress={() => {
-                setSuccessModalOpen(false);
-                resetForm();
-              }}
-            >
-              {t('register.stayHere')}
-            </Button>
-            <Button
-              variant="primary"
-              onPress={() => {
-                setSuccessModalOpen(false);
-                navigate('/login');
-              }}
-            >
-              {t('register.goToLogin')}
-            </Button>
-          </>
-        }
+        secondaryAction={{
+          label: t('register.stayHere'),
+          onPress: () => {
+            setSuccessModalOpen(false);
+            resetForm();
+          },
+        }}
+        primaryAction={{
+          label: t('register.goToLogin'),
+          onPress: () => {
+            setSuccessModalOpen(false);
+            navigate('/login');
+          },
+        }}
       >
         <p>{t('register.registerSuccessDescription')}</p>
-      </AppModal>
+      </AppDisplayDialog>
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import AppAlertDialog from '@/components/AppAlertDialog';
+import AppAlertDialog from '@/components/Overlay/AppAlertDialog';
 import { useDriveService } from '@/domains';
 import { parseErrorMessage } from '@/utils/error';
 import { toast } from '@heroui/react';

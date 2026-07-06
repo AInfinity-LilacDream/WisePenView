@@ -1,9 +1,9 @@
-import AppModal from '@/components/AppModal';
+import AppModal from '@/components/Overlay/AppModal';
 import SelectedMemberList from '@/components/SelectedMemberList';
 import { useQuotaService } from '@/domains';
 import { useEffectForce } from '@/hooks/useEffectForce';
 import { parseErrorMessage } from '@/utils/error';
-import { Alert, Input, Label, TextField, toast } from '@heroui/react';
+import { Alert, Button, Input, Label, TextField, toast } from '@heroui/react';
 import { useRequest } from 'ahooks';
 import { useState } from 'react';
 import type { AssignQuotaModalProps } from './index.type';
@@ -150,15 +150,26 @@ function AssignQuotaModal({
 
   return (
     <AppModal
-      type="confirm"
       isOpen={isOpen}
       onOpenChange={handleOpenChange}
       title="分配配额"
       size="md"
-      onConfirm={handleConfirm}
-      isConfirmLoading={loading}
-      isConfirmDisabled={loading || confirmDisabled || quotaOverGlobalMax}
       isDismissable={!loading}
+      actions={
+        <>
+          <Button variant="secondary" isDisabled={loading} onPress={() => handleOpenChange(false)}>
+            取消
+          </Button>
+          <Button
+            variant="primary"
+            isDisabled={loading || confirmDisabled || quotaOverGlobalMax}
+            aria-busy={loading || undefined}
+            onPress={handleConfirm}
+          >
+            确定
+          </Button>
+        </>
+      }
     >
       <div className={styles.modalFormPadding}>
         {!canEdit && (

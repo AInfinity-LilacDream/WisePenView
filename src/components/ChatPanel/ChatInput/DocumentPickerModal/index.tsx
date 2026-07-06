@@ -1,5 +1,5 @@
-import AppModal from '@/components/AppModal';
 import { EmptyState, LoadingState } from '@/components/Feedback';
+import AppModal from '@/components/Overlay/AppModal';
 import type { DataNode } from '@/components/Tree';
 import Tree from '@/components/Tree';
 import { useChatService } from '@/domains';

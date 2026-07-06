@@ -1,4 +1,4 @@
-import AppAlertDialog from '@/components/AppAlertDialog';
+import AppAlertDialog from '@/components/Overlay/AppAlertDialog';
 
 type UnsavedSkillChangesMode = 'publish' | 'leave';
 

@@ -1,4 +1,4 @@
-import AppFormDialog from '@/components/AppFormDialog';
+import AppFormDialog from '@/components/Overlay/AppFormDialog';
 import { useDriveService } from '@/domains';
 import { parseErrorMessage } from '@/utils/error';
 import { validateReservedName } from '@/utils/tag/validateReservedName';

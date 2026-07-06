@@ -1,0 +1,62 @@
+import type { ComponentProps, ReactNode } from 'react';
+
+import type { Button } from '@heroui/react';
+
+import type { Modal } from '../Modal';
+
+export type AppDisplayDialogSize = ComponentProps<typeof Modal.Container>['size'];
+
+export type AppDisplayDialogPlacement = ComponentProps<typeof Modal.Container>['placement'];
+
+export type AppDisplayDialogButtonVariant = ComponentProps<typeof Button>['variant'];
+
+export interface AppDisplayDialogAction extends Omit<
+  ComponentProps<typeof Button>,
+  'children' | 'variant'
+> {
+  label: ReactNode;
+  icon?: ReactNode;
+  variant?: AppDisplayDialogButtonVariant;
+}
+
+export interface AppDisplayDialogClassNames {
+  container?: string;
+  dialog?: string;
+  closeTrigger?: string;
+  header?: string;
+  heading?: string;
+  description?: string;
+  body?: string;
+  footer?: string;
+}
+
+export interface AppDisplayDialogProps {
+  isOpen: boolean;
+  onOpenChange: (open: boolean) => void;
+  title: ReactNode;
+  description?: ReactNode;
+  children?: ReactNode;
+  closeText?: ReactNode | false | null;
+  primaryAction?: AppDisplayDialogAction;
+  secondaryAction?: AppDisplayDialogAction;
+  actions?: ReactNode;
+  footer?: ReactNode | false | null;
+  size?: AppDisplayDialogSize;
+  placement?: AppDisplayDialogPlacement;
+  isDismissable?: boolean;
+  showCloseTrigger?: boolean;
+  contentDelay?: number;
+  deferContent?: boolean;
+  className?: string;
+  containerClassName?: string;
+  dialogClassName?: string;
+  closeTriggerClassName?: string;
+  headerClassName?: string;
+  bodyClassName?: string;
+  footerClassName?: string;
+  classNames?: AppDisplayDialogClassNames;
+}
+
+export type AppDisplayDialogBodyProps = ComponentProps<typeof Modal.Body>;
+
+export type AppDisplayDialogFooterProps = ComponentProps<typeof Modal.Footer>;

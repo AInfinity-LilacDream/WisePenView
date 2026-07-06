@@ -1,4 +1,4 @@
-import AppAlertDialog from '@/components/AppAlertDialog';
+import AppAlertDialog from '@/components/Overlay/AppAlertDialog';
 import SelectedMemberList from '@/components/SelectedMemberList';
 import { useGroupService } from '@/domains';
 import { parseErrorMessage } from '@/utils/error';

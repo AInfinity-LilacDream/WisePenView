@@ -1,4 +1,4 @@
-import AppAlertDialog from '@/components/AppAlertDialog';
+import AppAlertDialog from '@/components/Overlay/AppAlertDialog';
 import { useGroupService } from '@/domains';
 import type { QuitGroupRequest } from '@/domains/Group';
 import { parseErrorMessage } from '@/utils/error';

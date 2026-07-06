@@ -1,4 +1,4 @@
-import AppModal from '@/components/AppModal';
+import AppModal from '@/components/Overlay/AppModal';
 import UploadZone from '@/components/UploadZone';
 import { useGroupService, useImageService } from '@/domains';
 import type { EditGroupRequest, GroupResConfig } from '@/domains/Group';
@@ -18,7 +18,7 @@ import {
   assertImageProxyUploadLimit,
   IMAGE_UPLOAD_MAX_SIZE_LABEL,
 } from '@/utils/image/uploadLimit';
-import { Checkbox, Input, Label, TextArea, TextField, toast } from '@heroui/react';
+import { Button, Checkbox, Input, Label, TextArea, TextField, toast } from '@heroui/react';
 import { useMount, useRequest, useUpdateEffect } from 'ahooks';
 import { useState } from 'react';
 import type { EditGroupInfoModalProps } from './index.type';
@@ -232,7 +232,6 @@ function EditGroupInfoModal({
 
   return (
     <AppModal
-      type="confirm"
       isOpen={open}
       onOpenChange={(isOpen) => {
         if (!isOpen) {
@@ -242,11 +241,30 @@ function EditGroupInfoModal({
       }}
       title="编辑小组信息"
       size="md"
-      confirmText="确定"
-      onConfirm={handleConfirm}
-      isConfirmLoading={loading || configLoading}
       bodyClassName={styles.modalBody}
       isDismissable={!loading}
+      actions={
+        <>
+          <Button
+            variant="secondary"
+            isDisabled={loading}
+            onPress={() => {
+              resetForm();
+              onCancel();
+            }}
+          >
+            取消
+          </Button>
+          <Button
+            variant="primary"
+            isDisabled={loading || configLoading}
+            aria-busy={loading || configLoading || undefined}
+            onPress={handleConfirm}
+          >
+            确定
+          </Button>
+        </>
+      }
     >
       <TextField
         aria-label="小组名称"

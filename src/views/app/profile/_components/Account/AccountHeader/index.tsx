@@ -1,11 +1,11 @@
-import AppModal from '@/components/AppModal';
+import AppModal from '@/components/Overlay/AppModal';
 import UploadZone from '@/components/UploadZone';
 import { useImageService, useUserService } from '@/domains';
 import { assertImageProxyUploadLimit } from '@/domains/Image';
 import { getVerificationModeLabel, IDENTITY, USER_STATUS } from '@/domains/User';
 import { parseErrorMessage } from '@/utils/error';
 import { IMAGE_UPLOAD_MAX_SIZE_LABEL } from '@/utils/image/uploadLimit';
-import { Avatar, toast, Tooltip } from '@heroui/react';
+import { Avatar, Button, toast, Tooltip } from '@heroui/react';
 import { useRequest } from 'ahooks';
 import { Check, TriangleAlert, X } from 'lucide-react';
 import { useState } from 'react';
@@ -170,16 +170,29 @@ function AccountHeader({ user, onUserInfoReload }: AccountHeaderProps) {
       </div>
 
       <AppModal
-        type="confirm"
         isOpen={avatarModalOpen}
         onOpenChange={handleAvatarModalOpenChange}
         title="更换头像"
-        confirmText="上传并保存"
-        onCancel={handleAvatarModalClose}
-        onConfirm={handleAvatarModalOk}
-        isConfirmLoading={avatarSubmitting}
-        isConfirmDisabled={!avatarFile || avatarSubmitting}
         isDismissable={!avatarSubmitting}
+        actions={
+          <>
+            <Button
+              variant="secondary"
+              isDisabled={avatarSubmitting}
+              onPress={handleAvatarModalClose}
+            >
+              取消
+            </Button>
+            <Button
+              variant="primary"
+              isDisabled={!avatarFile || avatarSubmitting}
+              aria-busy={avatarSubmitting || undefined}
+              onPress={handleAvatarModalOk}
+            >
+              上传并保存
+            </Button>
+          </>
+        }
       >
         <p className={styles.avatarModalHint}>
           支持 JPG、PNG、GIF、WebP，单张不超过 {IMAGE_UPLOAD_MAX_SIZE_LABEL}。

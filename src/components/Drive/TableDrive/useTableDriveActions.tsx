@@ -1,10 +1,10 @@
-import AppFormDialog from '@/components/AppFormDialog';
 import {
   NewFolderNodeModal,
   TagPermissionModal,
   UploadDocumentModal,
   UploadFileToGroupModal,
 } from '@/components/Drive/Modals';
+import AppFormDialog from '@/components/Overlay/AppFormDialog';
 import { useDocumentService, useNoteService, useResourceService } from '@/domains';
 import { useNewNoteStore } from '@/store';
 import { createClientError, FRONTEND_CLIENT_ERROR, parseErrorMessage } from '@/utils/error';

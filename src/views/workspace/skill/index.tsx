@@ -1,6 +1,6 @@
-import AppAlertDialog from '@/components/AppAlertDialog';
 import { Empty, ResultState, Spin } from '@/components/Feedback';
 import EntryIcon from '@/components/Icons/EntryIcon';
+import AppAlertDialog from '@/components/Overlay/AppAlertDialog';
 import SkillEditor from '@/components/Skill/SkillEditor';
 import SkillFileTree from '@/components/Skill/SkillFileTree';
 import type { SkillPendingCreate } from '@/components/Skill/SkillFileTree/index.type';

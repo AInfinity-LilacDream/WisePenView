@@ -1,4 +1,4 @@
-import AppModal from '@/components/AppModal';
+import AppDisplayDialog from '@/components/Overlay/AppDisplayDialog';
 import { useUserService } from '@/domains';
 import type { ConfirmEmailVerifyRequest } from '@/domains/User';
 import { parseErrorMessage } from '@/utils/error';
@@ -64,18 +64,17 @@ function VerifyEmail() {
           {t('verifyEmail.submit')}
         </Button>
       </div>
-      <AppModal
+      <AppDisplayDialog
         isOpen={successModalOpen}
         onOpenChange={(open) => !open && goToAccount()}
         title={t('verifyEmail.successTitle')}
-        actions={
-          <Button variant="primary" onPress={goToAccount}>
-            {t('verifyEmail.goToAccount')}
-          </Button>
-        }
+        primaryAction={{
+          label: t('verifyEmail.goToAccount'),
+          onPress: goToAccount,
+        }}
       >
         <p>{t('verifyEmail.successDescription')}</p>
-      </AppModal>
+      </AppDisplayDialog>
     </div>
   );
 }
