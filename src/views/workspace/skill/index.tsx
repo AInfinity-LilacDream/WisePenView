@@ -1,3 +1,4 @@
+import AppModal from '@/components/AppModal';
 import { Empty, ResultState, Spin } from '@/components/Feedback';
 import EntryIcon from '@/components/Icons/EntryIcon';
 import SkillEditor from '@/components/Skill/SkillEditor';
@@ -17,7 +18,7 @@ import {
   buildWorkspaceResourcePath,
   RESOURCE_EDITOR_TYPE,
 } from '@/utils/navigation/workspaceRoute';
-import { Button, Modal, toast } from '@heroui/react';
+import { Button, toast } from '@heroui/react';
 import { useRequest } from 'ahooks';
 import { FolderPlus, Pencil, Plus, Save, Upload } from 'lucide-react';
 import { useCallback, useMemo, useRef, useState, type ReactNode } from 'react';
@@ -784,44 +785,23 @@ function SkillView({ resourceId = '' }: SkillViewProps = {}) {
         </div>
       </div>
 
-      <Modal isOpen={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
-        <Modal.Backdrop isDismissable>
-          <Modal.Container size="sm" placement="center">
-            <Modal.Dialog>
-              <Modal.Header>
-                <Modal.Heading>
-                  {deleteTarget?.kind === 'folder' ? '删除文件夹' : '删除文件'}
-                </Modal.Heading>
-              </Modal.Header>
-              <Modal.Body className={styles.deleteModalBody}>
-                <p className={styles.deleteModalText}>
-                  {deleteTarget?.kind === 'folder'
-                    ? `确定删除该文件夹「${deleteTarget?.name}」及其所有内容吗？此操作不可撤销。`
-                    : `确定删除该文件「${deleteTarget?.name}」吗？此操作不可撤销。`}
-                </p>
-              </Modal.Body>
-              <Modal.Footer>
-                <Button
-                  variant="secondary"
-                  onPress={() => setDeleteTarget(null)}
-                  isDisabled={deleteLoading}
-                >
-                  取消
-                </Button>
-                <Button
-                  variant="danger"
-                  onPress={() => {
-                    if (deleteTarget) runDelete(deleteTarget);
-                  }}
-                  isDisabled={deleteLoading}
-                >
-                  删除
-                </Button>
-              </Modal.Footer>
-            </Modal.Dialog>
-          </Modal.Container>
-        </Modal.Backdrop>
-      </Modal>
+      <AppModal
+        type="danger"
+        isOpen={!!deleteTarget}
+        onOpenChange={() => setDeleteTarget(null)}
+        title={deleteTarget?.kind === 'folder' ? '删除文件夹' : '删除文件'}
+        description={
+          deleteTarget?.kind === 'folder'
+            ? `确定删除该文件夹「${deleteTarget?.name}」及其所有内容吗？此操作不可撤销。`
+            : `确定删除该文件「${deleteTarget?.name}」吗？此操作不可撤销。`
+        }
+        confirmText="删除"
+        onConfirm={() => {
+          if (deleteTarget) runDelete(deleteTarget);
+        }}
+        isConfirmLoading={deleteLoading}
+        isDismissable={!deleteLoading}
+      />
 
       <UnsavedSkillChangesModal
         isOpen={publishConfirmOpen}

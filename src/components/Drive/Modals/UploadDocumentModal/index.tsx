@@ -1,9 +1,9 @@
 import type { ApiErrorBody } from '@/apis/api.type';
+import AppModal from '@/components/AppModal';
 import {
   buildUploadedResourceMountTagIds,
   resolveResourcePrimaryTagId,
 } from '@/components/Drive/common/driveComponentModel';
-import { Modal } from '@/components/Overlay';
 import UploadZone from '@/components/UploadZone';
 import { useDocumentService, useResourceService } from '@/domains';
 import { useDriveUploadQueueStore } from '@/store';
@@ -252,54 +252,50 @@ function UploadDocumentModal({
   };
 
   return (
-    <Modal isOpen={isOpen} onOpenChange={handleOpenChange}>
-      <Modal.Backdrop>
-        <Modal.Container size="lg" placement="center" className={styles.container}>
-          <Modal.Dialog className={styles.dialog}>
-            <Modal.Header className={styles.header}>
-              <div className={styles.titleRow}>
-                <div>
-                  <Modal.Heading>上传文档</Modal.Heading>
-                  <div className={styles.subtitle}>
-                    {mountsToFolder
-                      ? '文件将上传到当前文件夹，并同步显示在上传队列'
-                      : '上传完成后会同步刷新上传队列'}
-                  </div>
-                </div>
-              </div>
-            </Modal.Header>
-            <Modal.Body className={styles.body}>
-              <UploadZone
-                files={selectedFiles}
-                multiple
-                accept={ACCEPT_DOCUMENT_TYPES}
-                label="点击或拖拽文档到此区域"
-                description="支持一次选择多个文档，也可以逐个添加"
-                onFilesChange={setSelectedFiles}
-              />
+    <AppModal
+      type="confirm"
+      isOpen={isOpen}
+      onOpenChange={handleOpenChange}
+      title="上传文档"
+      description={
+        mountsToFolder
+          ? '文件将上传到当前文件夹，并同步显示在上传队列'
+          : '上传完成后会同步刷新上传队列'
+      }
+      size="lg"
+      containerClassName={styles.container}
+      dialogClassName={styles.dialog}
+      bodyClassName={styles.body}
+      actions={
+        <>
+          <Button variant="secondary" onPress={handleClose}>
+            <X size={14} strokeWidth={1.8} />
+            取消
+          </Button>
+          <Button variant="primary" isDisabled={selectedFiles.length === 0} onPress={handleOk}>
+            <CloudUpload size={15} strokeWidth={1.8} />
+            {mountsToFolder ? '开始上传' : '添加到上传队列'}
+          </Button>
+        </>
+      }
+    >
+      <UploadZone
+        files={selectedFiles}
+        multiple
+        accept={ACCEPT_DOCUMENT_TYPES}
+        label="点击或拖拽文档到此区域"
+        description="支持一次选择多个文档，也可以逐个添加"
+        onFilesChange={setSelectedFiles}
+      />
 
-              <div className={styles.statusPanel}>
-                <div className={styles.statusHeader}>
-                  <div className={styles.statusTitle}>
-                    <span>支持 PDF、Office、文本和 Markdown 文档，单文件最大 100MB。</span>
-                  </div>
-                </div>
-              </div>
-            </Modal.Body>
-            <Modal.Footer className={styles.footer}>
-              <Button variant="secondary" onPress={handleClose}>
-                <X size={14} strokeWidth={1.8} />
-                取消
-              </Button>
-              <Button variant="primary" isDisabled={selectedFiles.length === 0} onPress={handleOk}>
-                <CloudUpload size={15} strokeWidth={1.8} />
-                {mountsToFolder ? '开始上传' : '添加到上传队列'}
-              </Button>
-            </Modal.Footer>
-          </Modal.Dialog>
-        </Modal.Container>
-      </Modal.Backdrop>
-    </Modal>
+      <div className={styles.statusPanel}>
+        <div className={styles.statusHeader}>
+          <div className={styles.statusTitle}>
+            <span>支持 PDF、Office、文本和 Markdown 文档，单文件最大 100MB。</span>
+          </div>
+        </div>
+      </div>
+    </AppModal>
   );
 }
 

@@ -1,3 +1,4 @@
+import AppModal from '@/components/AppModal';
 import { useNoteService, useResourceService } from '@/domains';
 import {
   coerceResourceActions,
@@ -8,7 +9,6 @@ import {
   type ResourceAction,
 } from '@/domains/Resource';
 import { parseErrorMessage } from '@/utils/error';
-import { Modal } from '@/components/Overlay';
 import { Alert, Button, Input, TextField, toast } from '@heroui/react';
 import { useRequest } from 'ahooks';
 import { useMemo, useState } from 'react';
@@ -182,118 +182,102 @@ function NotePermissionModal({
   );
 
   return (
-    <Modal isOpen={isOpen} onOpenChange={handleModalOpenChange}>
-      <Modal.Backdrop isDismissable={!saving}>
-        <Modal.Container size="lg" placement="center">
-          <Modal.Dialog>
-            <Modal.Header>
-              <Modal.Heading>权限配置</Modal.Heading>
-            </Modal.Header>
-            <Modal.Body>
-              {loading ? (
-                renderStatusAlert('default', '正在加载权限配置...')
-              ) : error ? (
-                renderStatusAlert('danger', parseErrorMessage(error))
-              ) : permissionConfig ? (
-                <>
-                  <section>
-                    <div>覆盖权限</div>
+    <AppModal
+      type="confirm"
+      isOpen={isOpen}
+      onOpenChange={handleModalOpenChange}
+      title="权限配置"
+      size="lg"
+      confirmText={saving ? '保存中...' : '保存'}
+      onConfirm={runSavePermission}
+      isConfirmLoading={saving}
+      isConfirmDisabled={loading || Boolean(error) || saving}
+      isDismissable={!saving}
+    >
+      {loading ? (
+        renderStatusAlert('default', '正在加载权限配置...')
+      ) : error ? (
+        renderStatusAlert('danger', parseErrorMessage(error))
+      ) : permissionConfig ? (
+        <>
+          <section>
+            <div>覆盖权限</div>
+            <div>
+              {NOTE_CONFIGURABLE_RESOURCE_ACTION_OPTIONS.map((option) => {
+                const action = option.value as ResourceAction;
+                const selected = overrideActionSet.has(action);
+                return (
+                  <Button
+                    key={option.key}
+                    size="sm"
+                    variant={selected ? 'primary' : 'secondary'}
+                    onPress={() => toggleOverrideAction(action)}
+                  >
+                    {option.label}
+                  </Button>
+                );
+              })}
+            </div>
+          </section>
+          <section>
+            <div>指定用户权限</div>
+            <div>
+              <TextField aria-label="用户 ID" value={newUserId} onChange={setNewUserId}>
+                <Input
+                  placeholder="请输入用户 ID"
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter') {
+                      event.preventDefault();
+                      handleAddSpecifiedUser();
+                    }
+                  }}
+                />
+              </TextField>
+              <Button variant="secondary" onPress={handleAddSpecifiedUser}>
+                添加用户
+              </Button>
+            </div>
+            {displaySpecifiedUserRows.length > 0 ? (
+              <div>
+                {displaySpecifiedUserRows.map((row) => (
+                  <div key={row.userId}>
+                    <span>{row.userId}</span>
+                    <span>{formatActionLabels(row.actions)}</span>
                     <div>
                       {NOTE_CONFIGURABLE_RESOURCE_ACTION_OPTIONS.map((option) => {
                         const action = option.value as ResourceAction;
-                        const selected = overrideActionSet.has(action);
+                        const selected = row.actions.includes(action);
                         return (
                           <Button
                             key={option.key}
                             size="sm"
                             variant={selected ? 'primary' : 'secondary'}
-                            onPress={() => toggleOverrideAction(action)}
+                            onPress={() => toggleSpecifiedUserAction(row.userId, action)}
                           >
                             {option.label}
                           </Button>
                         );
                       })}
                     </div>
-                  </section>
-                  <section>
-                    <div>指定用户权限</div>
-                    <div>
-                      <TextField aria-label="用户 ID" value={newUserId} onChange={setNewUserId}>
-                        <Input
-                          placeholder="请输入用户 ID"
-                          onKeyDown={(event) => {
-                            if (event.key === 'Enter') {
-                              event.preventDefault();
-                              handleAddSpecifiedUser();
-                            }
-                          }}
-                        />
-                      </TextField>
-                      <Button variant="secondary" onPress={handleAddSpecifiedUser}>
-                        添加用户
-                      </Button>
-                    </div>
-                    {displaySpecifiedUserRows.length > 0 ? (
-                      <div>
-                        {displaySpecifiedUserRows.map((row) => (
-                          <div key={row.userId}>
-                            <span>{row.userId}</span>
-                            <span>{formatActionLabels(row.actions)}</span>
-                            <div>
-                              {NOTE_CONFIGURABLE_RESOURCE_ACTION_OPTIONS.map((option) => {
-                                const action = option.value as ResourceAction;
-                                const selected = row.actions.includes(action);
-                                return (
-                                  <Button
-                                    key={option.key}
-                                    size="sm"
-                                    variant={selected ? 'primary' : 'secondary'}
-                                    onPress={() => toggleSpecifiedUserAction(row.userId, action)}
-                                  >
-                                    {option.label}
-                                  </Button>
-                                );
-                              })}
-                            </div>
-                            <Button
-                              size="sm"
-                              variant="danger"
-                              onPress={() => handleRemoveSpecifiedUser(row.userId)}
-                            >
-                              删除
-                            </Button>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      renderStatusAlert('default', '暂无指定用户权限')
-                    )}
-                  </section>
-                </>
-              ) : (
-                renderStatusAlert('default', '暂无权限配置')
-              )}
-            </Modal.Body>
-            <Modal.Footer>
-              <Button
-                variant="secondary"
-                isDisabled={saving}
-                onPress={() => handleModalOpenChange(false)}
-              >
-                取消
-              </Button>
-              <Button
-                variant="primary"
-                isDisabled={loading || Boolean(error) || saving}
-                onPress={runSavePermission}
-              >
-                {saving ? '保存中...' : '保存'}
-              </Button>
-            </Modal.Footer>
-          </Modal.Dialog>
-        </Modal.Container>
-      </Modal.Backdrop>
-    </Modal>
+                    <Button
+                      size="sm"
+                      variant="danger"
+                      onPress={() => handleRemoveSpecifiedUser(row.userId)}
+                    >
+                      删除
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              renderStatusAlert('default', '暂无指定用户权限')
+            )}
+          </section>
+        </>
+      ) : (
+        renderStatusAlert('default', '暂无权限配置')
+      )}
+    </AppModal>
   );
 }
 

@@ -1,9 +1,9 @@
+import AppModal from '@/components/AppModal';
 import DriveNav from '@/components/Drive/DriveNav';
 import StepDots from '@/components/StepDots';
 import { useResourceService } from '@/domains';
 import { useEffectForce } from '@/hooks/useEffectForce';
 import { parseErrorMessage } from '@/utils/error';
-import { Modal } from '@/components/Overlay';
 import { Button, toast } from '@heroui/react';
 import { useRequest } from 'ahooks';
 import { useState } from 'react';
@@ -88,92 +88,78 @@ function UploadFileToGroupModal({
   };
 
   return (
-    <Modal isOpen={isOpen} onOpenChange={handleOpenChange}>
-      <Modal.Backdrop isDismissable={!submitting}>
-        <Modal.Container size="md" placement="center">
-          <Modal.Dialog>
-            <Modal.Header>
-              <Modal.Heading>上传文件到小组</Modal.Heading>
-            </Modal.Header>
-            <Modal.Body>
-              <div className={styles.wrapper}>
-                <div className={styles.stepsRow}>
-                  <StepDots
-                    current={step}
-                    items={[{ title: '选择个人文件' }, { title: '选择目标文件夹' }]}
+    <AppModal
+      type="confirm"
+      isOpen={isOpen}
+      onOpenChange={handleOpenChange}
+      title="上传文件到小组"
+      size="md"
+      isDismissable={!submitting}
+      actions={
+        <>
+          <Button variant="secondary" onPress={() => onOpenChange(false)} isDisabled={submitting}>
+            取消
+          </Button>
+          {step === 1 && (
+            <Button variant="secondary" onPress={() => setStep(0)} isDisabled={submitting}>
+              上一步
+            </Button>
+          )}
+          {step === 0 ? (
+            <Button variant="primary" onPress={() => setStep(1)} isDisabled={!canNext}>
+              下一步
+            </Button>
+          ) : (
+            <Button variant="primary" onPress={handleSubmit} isDisabled={submitting || !canSubmit}>
+              确定
+            </Button>
+          )}
+        </>
+      }
+    >
+      <div className={styles.wrapper}>
+        <div className={styles.stepsRow}>
+          <StepDots
+            current={step}
+            items={[{ title: '选择个人文件' }, { title: '选择目标文件夹' }]}
+          />
+        </div>
+
+        <div className={styles.slideViewport}>
+          <div className={`${styles.slideTrack} ${step === 1 ? styles.slideTrackShift : ''}`}>
+            <div className={styles.slidePane}>
+              <div className={styles.treeSection}>
+                <div className={styles.hint}>选择要上传的文件（可多选）</div>
+                <div className={styles.navTree}>
+                  <DriveNav
+                    key={`personal-${navRefreshKey}`}
+                    renderableTypes={['root', 'folder', 'resource', 'link']}
+                    selectableTypes={['resource', 'link']}
+                    multiple
+                    refreshTrigger={navRefreshKey}
+                    onChange={handleFilesChange}
                   />
                 </div>
-
-                <div className={styles.slideViewport}>
-                  <div
-                    className={`${styles.slideTrack} ${step === 1 ? styles.slideTrackShift : ''}`}
-                  >
-                    <div className={styles.slidePane}>
-                      <div className={styles.treeSection}>
-                        <div className={styles.hint}>选择要上传的文件（可多选）</div>
-                        <div className={styles.navTree}>
-                          <DriveNav
-                            key={`personal-${navRefreshKey}`}
-                            renderableTypes={['root', 'folder', 'resource', 'link']}
-                            selectableTypes={['resource', 'link']}
-                            multiple
-                            refreshTrigger={navRefreshKey}
-                            onChange={handleFilesChange}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                    <div className={styles.slidePane}>
-                      <div className={styles.treeSection}>
-                        <div className={styles.hint}>
-                          选择文件要上传到的小组文件夹（只能选择一个）
-                        </div>
-                        <div className={styles.navTree}>
-                          <DriveNav
-                            key={`group-tree-tag-${groupId}-${navRefreshKey}`}
-                            scope={{ type: 'group', groupId }}
-                            renderableTypes={['root', 'folder']}
-                            selectableTypes={['folder']}
-                            onChange={handleTagsChange}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+              </div>
+            </div>
+            <div className={styles.slidePane}>
+              <div className={styles.treeSection}>
+                <div className={styles.hint}>选择文件要上传到的小组文件夹（只能选择一个）</div>
+                <div className={styles.navTree}>
+                  <DriveNav
+                    key={`group-tree-tag-${groupId}-${navRefreshKey}`}
+                    scope={{ type: 'group', groupId }}
+                    renderableTypes={['root', 'folder']}
+                    selectableTypes={['folder']}
+                    onChange={handleTagsChange}
+                  />
                 </div>
               </div>
-            </Modal.Body>
-            <Modal.Footer>
-              <Button
-                variant="secondary"
-                onPress={() => onOpenChange(false)}
-                isDisabled={submitting}
-              >
-                取消
-              </Button>
-              {step === 1 && (
-                <Button variant="secondary" onPress={() => setStep(0)} isDisabled={submitting}>
-                  上一步
-                </Button>
-              )}
-              {step === 0 ? (
-                <Button variant="primary" onPress={() => setStep(1)} isDisabled={!canNext}>
-                  下一步
-                </Button>
-              ) : (
-                <Button
-                  variant="primary"
-                  onPress={handleSubmit}
-                  isDisabled={submitting || !canSubmit}
-                >
-                  确定
-                </Button>
-              )}
-            </Modal.Footer>
-          </Modal.Dialog>
-        </Modal.Container>
-      </Modal.Backdrop>
-    </Modal>
+            </div>
+          </div>
+        </div>
+      </div>
+    </AppModal>
   );
 }
 

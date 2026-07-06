@@ -1,7 +1,7 @@
+import AppModal from '@/components/AppModal';
 import { useUserService } from '@/domains';
 import type { ConfirmEmailVerifyRequest } from '@/domains/User';
 import { parseErrorMessage } from '@/utils/error';
-import { Modal } from '@/components/Overlay';
 import { Button, toast } from '@heroui/react';
 import { useRequest } from 'ahooks';
 import { useState } from 'react';
@@ -64,25 +64,18 @@ function VerifyEmail() {
           {t('verifyEmail.submit')}
         </Button>
       </div>
-      <Modal isOpen={successModalOpen} onOpenChange={(open) => !open && goToAccount()}>
-        <Modal.Backdrop isDismissable>
-          <Modal.Container size="sm" placement="center">
-            <Modal.Dialog>
-              <Modal.Header>
-                <Modal.Heading>{t('verifyEmail.successTitle')}</Modal.Heading>
-              </Modal.Header>
-              <Modal.Body>
-                <p>{t('verifyEmail.successDescription')}</p>
-              </Modal.Body>
-              <Modal.Footer>
-                <Button variant="primary" onPress={goToAccount}>
-                  {t('verifyEmail.goToAccount')}
-                </Button>
-              </Modal.Footer>
-            </Modal.Dialog>
-          </Modal.Container>
-        </Modal.Backdrop>
-      </Modal>
+      <AppModal
+        isOpen={successModalOpen}
+        onOpenChange={(open) => !open && goToAccount()}
+        title={t('verifyEmail.successTitle')}
+        actions={
+          <Button variant="primary" onPress={goToAccount}>
+            {t('verifyEmail.goToAccount')}
+          </Button>
+        }
+      >
+        <p>{t('verifyEmail.successDescription')}</p>
+      </AppModal>
     </div>
   );
 }

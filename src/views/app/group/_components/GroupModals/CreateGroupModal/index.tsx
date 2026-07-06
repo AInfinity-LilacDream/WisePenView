@@ -1,3 +1,4 @@
+import AppModal from '@/components/AppModal';
 import UploadZone from '@/components/UploadZone';
 import { useGroupService, useImageService, useUserService } from '@/domains';
 import type { CreateGroupRequest } from '@/domains/Group';
@@ -18,21 +19,9 @@ import {
   assertImageProxyUploadLimit,
   IMAGE_UPLOAD_MAX_SIZE_LABEL,
 } from '@/utils/image/uploadLimit';
-import { Modal } from '@/components/Overlay';
-import {
-  Button,
-  Checkbox,
-  Form,
-  Input,
-  Label,
-  ListBox,
-  Select,
-  TextArea,
-  TextField,
-  toast,
-} from '@heroui/react';
+import { Checkbox, Input, Label, ListBox, Select, TextArea, TextField, toast } from '@heroui/react';
 import { useRequest } from 'ahooks';
-import { useState, type FormEvent } from 'react';
+import { useState } from 'react';
 import type { CreateGroupModalProps } from './index.type';
 
 import styles from './index.module.less';
@@ -167,11 +156,6 @@ function CreateGroupModal({ isOpen, onOpenChange, onSuccess }: CreateGroupModalP
     });
   };
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    handleConfirm();
-  };
-
   const selectedActions = normalizeResourceActions(
     formValues.defaultMemberActions ?? DEFAULT_MEMBER_ACTIONS
   );
@@ -196,116 +180,106 @@ function CreateGroupModal({ isOpen, onOpenChange, onSuccess }: CreateGroupModalP
   };
 
   return (
-    <Modal isOpen={isOpen} onOpenChange={onOpenChange}>
-      <Modal.Backdrop isDismissable={!submitting}>
-        <Modal.Container size="md" placement="center">
-          <Modal.Dialog>
-            <Modal.Header>
-              <Modal.Heading>新建小组</Modal.Heading>
-            </Modal.Header>
-            <Form onSubmit={handleSubmit} className={styles.modalForm}>
-              <Modal.Body className={styles.modalBody}>
-                <TextField
-                  aria-label="小组名称"
-                  value={formValues.groupName}
-                  onChange={(value) => updateFormValue('groupName', value)}
-                  isRequired
+    <AppModal
+      type="confirm"
+      isOpen={isOpen}
+      onOpenChange={onOpenChange}
+      title="新建小组"
+      size="md"
+      onCancel={handleCancel}
+      onConfirm={handleConfirm}
+      isConfirmLoading={submitting}
+      bodyClassName={styles.modalBody}
+      isDismissable={!submitting}
+    >
+      <TextField
+        aria-label="小组名称"
+        value={formValues.groupName}
+        onChange={(value) => updateFormValue('groupName', value)}
+        isRequired
+      >
+        <Label>小组名称</Label>
+        <Input placeholder="请输入小组名称" />
+      </TextField>
+      <TextField
+        aria-label="小组描述"
+        value={formValues.groupDesc}
+        onChange={(value) => updateFormValue('groupDesc', value)}
+        isRequired
+      >
+        <Label>小组描述</Label>
+        <TextArea rows={4} placeholder="请输入小组描述" />
+      </TextField>
+      {!isStudent && (
+        <Select
+          aria-label="小组类型"
+          name="groupType"
+          value={String(formValues.groupType)}
+          onChange={(value) => updateFormValue('groupType', Number(value))}
+          isRequired
+        >
+          <Label>小组类型</Label>
+          <Select.Trigger />
+          <Select.Popover>
+            <ListBox>
+              {groupTypeOptions.map((opt) => (
+                <ListBox.Item key={String(opt.value)} id={String(opt.value)}>
+                  {opt.label}
+                </ListBox.Item>
+              ))}
+            </ListBox>
+          </Select.Popover>
+        </Select>
+      )}
+      <div className={styles.coverField}>
+        <span className={styles.fieldLabel}>封面图片</span>
+        <UploadZone
+          file={formValues.cover ?? null}
+          disabled={submitting}
+          accept="image/*"
+          label="点击或拖拽封面图片到此区域"
+          description={`仅可选择单张图片，大小不超过 ${IMAGE_UPLOAD_MAX_SIZE_LABEL}`}
+          onFileChange={handleCoverChange}
+        />
+      </div>
+      <div className={styles.sectionCard}>
+        <div className={styles.sectionTitle}>小组成员默认权限</div>
+        <div className={styles.actionGroup}>新成员默认可用的资源权限</div>
+        <div className={styles.actionList}>
+          {TAG_RESOURCE_ACTION.options.map((item) => {
+            const action = item.value as TagResourceAction;
+            const isHighlighted = actionHighlightSet?.has(action);
+            return (
+              <div
+                key={item.key}
+                className={
+                  isHighlighted
+                    ? `${styles.actionItem} ${styles.actionItemHighlight}`
+                    : styles.actionItem
+                }
+                onMouseEnter={() => setHoveredAction(action)}
+                onMouseLeave={() => setHoveredAction(null)}
+              >
+                <Checkbox
+                  isSelected={selectedActionSet.has(action)}
+                  onChange={(isSelected) => handleActionToggle(action, isSelected)}
+                  variant="secondary"
                 >
-                  <Label>小组名称</Label>
-                  <Input placeholder="请输入小组名称" />
-                </TextField>
-                <TextField
-                  aria-label="小组描述"
-                  value={formValues.groupDesc}
-                  onChange={(value) => updateFormValue('groupDesc', value)}
-                  isRequired
-                >
-                  <Label>小组描述</Label>
-                  <TextArea rows={4} placeholder="请输入小组描述" />
-                </TextField>
-                {!isStudent && (
-                  <Select
-                    aria-label="小组类型"
-                    name="groupType"
-                    value={String(formValues.groupType)}
-                    onChange={(value) => updateFormValue('groupType', Number(value))}
-                    isRequired
-                  >
-                    <Label>小组类型</Label>
-                    <Select.Trigger />
-                    <Select.Popover>
-                      <ListBox>
-                        {groupTypeOptions.map((opt) => (
-                          <ListBox.Item key={String(opt.value)} id={String(opt.value)}>
-                            {opt.label}
-                          </ListBox.Item>
-                        ))}
-                      </ListBox>
-                    </Select.Popover>
-                  </Select>
-                )}
-                <div className={styles.coverField}>
-                  <span className={styles.fieldLabel}>封面图片</span>
-                  <UploadZone
-                    file={formValues.cover ?? null}
-                    disabled={submitting}
-                    accept="image/*"
-                    label="点击或拖拽封面图片到此区域"
-                    description={`仅可选择单张图片，大小不超过 ${IMAGE_UPLOAD_MAX_SIZE_LABEL}`}
-                    onFileChange={handleCoverChange}
-                  />
-                </div>
-                <div className={styles.sectionCard}>
-                  <div className={styles.sectionTitle}>小组成员默认权限</div>
-                  <div className={styles.actionGroup}>新成员默认可用的资源权限</div>
-                  <div className={styles.actionList}>
-                    {TAG_RESOURCE_ACTION.options.map((item) => {
-                      const action = item.value as TagResourceAction;
-                      const isHighlighted = actionHighlightSet?.has(action);
-                      return (
-                        <div
-                          key={item.key}
-                          className={
-                            isHighlighted
-                              ? `${styles.actionItem} ${styles.actionItemHighlight}`
-                              : styles.actionItem
-                          }
-                          onMouseEnter={() => setHoveredAction(action)}
-                          onMouseLeave={() => setHoveredAction(null)}
-                        >
-                          <Checkbox
-                            isSelected={selectedActionSet.has(action)}
-                            onChange={(isSelected) => handleActionToggle(action, isSelected)}
-                            variant="secondary"
-                          >
-                            <Checkbox.Control>
-                              <Checkbox.Indicator />
-                            </Checkbox.Control>
-                            <Checkbox.Content>
-                              <span data-slot="label" className={styles.actionLabel}>
-                                {item.label}
-                              </span>
-                            </Checkbox.Content>
-                          </Checkbox>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              </Modal.Body>
-              <Modal.Footer>
-                <Button variant="secondary" isDisabled={submitting} onPress={handleCancel}>
-                  取消
-                </Button>
-                <Button type="submit" variant="primary" isDisabled={submitting}>
-                  确定
-                </Button>
-              </Modal.Footer>
-            </Form>
-          </Modal.Dialog>
-        </Modal.Container>
-      </Modal.Backdrop>
-    </Modal>
+                  <Checkbox.Control>
+                    <Checkbox.Indicator />
+                  </Checkbox.Control>
+                  <Checkbox.Content>
+                    <span data-slot="label" className={styles.actionLabel}>
+                      {item.label}
+                    </span>
+                  </Checkbox.Content>
+                </Checkbox>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </AppModal>
   );
 }
 

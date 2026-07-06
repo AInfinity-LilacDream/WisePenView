@@ -1,4 +1,4 @@
-import { Modal } from '@/components/Overlay';
+import AppModal from '@/components/AppModal';
 import { useChatService, useNoteService } from '@/domains';
 import {
   clearNewChatSessionStore,
@@ -12,7 +12,7 @@ import {
   buildWorkspaceResourcePath,
   RESOURCE_EDITOR_TYPE,
 } from '@/utils/navigation/workspaceRoute';
-import { Button, Input, ListBox, ListBoxItem, TextField, toast } from '@heroui/react';
+import { Input, ListBox, ListBoxItem, TextField, toast } from '@heroui/react';
 import { useRequest } from 'ahooks';
 import clsx from 'clsx';
 import { Bot, CirclePlus, FileText, PenTool, Puzzle, Users, Workflow } from 'lucide-react';
@@ -239,47 +239,30 @@ function AppHeaderNav({ collapsed, onSessionCreated }: AppHeaderNavProps) {
           {!collapsed && <span className={styles.menuLabel}>我的小组</span>}
         </ListBoxItem>
       </ListBox>
-      <Modal isOpen={drawioModalOpen} onOpenChange={setDrawioModalOpen}>
-        <Modal.Backdrop isDismissable={!creatingDrawio}>
-          <Modal.Container size="sm" placement="center">
-            <Modal.Dialog>
-              <Modal.Header>
-                <Modal.Heading>新建 Draw.io 图</Modal.Heading>
-              </Modal.Header>
-              <Modal.Body>
-                <TextField aria-label="Draw.io 图名称" value={drawioName} onChange={setDrawioName}>
-                  <Input
-                    placeholder="请输入名称"
-                    autoFocus
-                    onKeyDown={(event) => {
-                      if (event.key === 'Enter') {
-                        event.preventDefault();
-                        handleConfirmCreateDrawio();
-                      }
-                    }}
-                  />
-                </TextField>
-              </Modal.Body>
-              <Modal.Footer>
-                <Button
-                  variant="secondary"
-                  onPress={() => setDrawioModalOpen(false)}
-                  isDisabled={creatingDrawio}
-                >
-                  取消
-                </Button>
-                <Button
-                  variant="primary"
-                  onPress={handleConfirmCreateDrawio}
-                  isDisabled={creatingDrawio || !drawioName.trim()}
-                >
-                  创建
-                </Button>
-              </Modal.Footer>
-            </Modal.Dialog>
-          </Modal.Container>
-        </Modal.Backdrop>
-      </Modal>
+      <AppModal
+        type="confirm"
+        isOpen={drawioModalOpen}
+        onOpenChange={setDrawioModalOpen}
+        title="新建 Draw.io 图"
+        confirmText="创建"
+        onConfirm={handleConfirmCreateDrawio}
+        isConfirmLoading={creatingDrawio}
+        isConfirmDisabled={creatingDrawio || !drawioName.trim()}
+        isDismissable={!creatingDrawio}
+      >
+        <TextField aria-label="Draw.io 图名称" value={drawioName} onChange={setDrawioName}>
+          <Input
+            placeholder="请输入名称"
+            autoFocus
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') {
+                event.preventDefault();
+                handleConfirmCreateDrawio();
+              }
+            }}
+          />
+        </TextField>
+      </AppModal>
     </>
   );
 }

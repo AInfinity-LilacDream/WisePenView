@@ -1,10 +1,10 @@
+import AppModal from '@/components/AppModal';
 import {
   NewFolderNodeModal,
   TagPermissionModal,
   UploadDocumentModal,
   UploadFileToGroupModal,
 } from '@/components/Drive/Modals';
-import { Modal } from '@/components/Overlay';
 import { useDocumentService, useNoteService, useResourceService } from '@/domains';
 import { useNewNoteStore } from '@/store';
 import { createClientError, FRONTEND_CLIENT_ERROR, parseErrorMessage } from '@/utils/error';
@@ -12,7 +12,7 @@ import {
   buildWorkspaceResourcePath,
   RESOURCE_EDITOR_TYPE,
 } from '@/utils/navigation/workspaceRoute';
-import { Button, Input, TextField, toast } from '@heroui/react';
+import { Input, TextField, toast } from '@heroui/react';
 import { useRequest } from 'ahooks';
 import { useCallback, useMemo, useState, type ReactElement } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -200,49 +200,32 @@ export function useTableDriveActions({
             onSuccess={refresh}
           />
         ) : null}
-        <Modal isOpen={drawioModalOpen} onOpenChange={setDrawioModalOpen}>
-          <Modal.Backdrop isDismissable={!creatingDrawio}>
-            <Modal.Container size="sm" placement="center">
-              <Modal.Dialog>
-                <Modal.Header>
-                  <Modal.Heading>新建图表</Modal.Heading>
-                </Modal.Header>
-                <Modal.Body>
-                  <TextField aria-label="图表名称" value={drawioName} onChange={setDrawioName}>
-                    <Input
-                      placeholder="请输入名称"
-                      autoFocus
-                      onKeyDown={(event) => {
-                        if (event.key === 'Enter') {
-                          event.preventDefault();
-                          if (!creatingDrawio && drawioName.trim()) {
-                            runCreateDrawio();
-                          }
-                        }
-                      }}
-                    />
-                  </TextField>
-                </Modal.Body>
-                <Modal.Footer>
-                  <Button
-                    variant="secondary"
-                    onPress={() => setDrawioModalOpen(false)}
-                    isDisabled={creatingDrawio}
-                  >
-                    取消
-                  </Button>
-                  <Button
-                    variant="primary"
-                    onPress={() => runCreateDrawio()}
-                    isDisabled={creatingDrawio || !drawioName.trim()}
-                  >
-                    创建
-                  </Button>
-                </Modal.Footer>
-              </Modal.Dialog>
-            </Modal.Container>
-          </Modal.Backdrop>
-        </Modal>
+        <AppModal
+          type="confirm"
+          isOpen={drawioModalOpen}
+          onOpenChange={setDrawioModalOpen}
+          title="新建图表"
+          confirmText="创建"
+          onConfirm={() => runCreateDrawio()}
+          isConfirmLoading={creatingDrawio}
+          isConfirmDisabled={creatingDrawio || !drawioName.trim()}
+          isDismissable={!creatingDrawio}
+        >
+          <TextField aria-label="图表名称" value={drawioName} onChange={setDrawioName}>
+            <Input
+              placeholder="请输入名称"
+              autoFocus
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') {
+                  event.preventDefault();
+                  if (!creatingDrawio && drawioName.trim()) {
+                    runCreateDrawio();
+                  }
+                }
+              }}
+            />
+          </TextField>
+        </AppModal>
       </>
     ),
     [

@@ -1,6 +1,7 @@
+import AppModal from '@/components/AppModal';
 import { useSkillService } from '@/domains';
 import { parseErrorMessage } from '@/utils/error';
-import { Button, Input, Label, Modal, TextArea, TextField, toast } from '@heroui/react';
+import { Input, Label, TextArea, TextField, toast } from '@heroui/react';
 import { useRequest } from 'ahooks';
 import { useState } from 'react';
 
@@ -43,55 +44,40 @@ function CreateSkillModal({ isOpen, onOpenChange, onSuccess }: CreateSkillModalP
   };
 
   return (
-    <Modal isOpen={isOpen} onOpenChange={onOpenChange}>
-      <Modal.Backdrop isDismissable>
-        <Modal.Container size="lg" placement="center">
-          <Modal.Dialog>
-            <Modal.Header>
-              <Modal.Heading>创建新 Skill</Modal.Heading>
-            </Modal.Header>
-            <Modal.Body>
-              <div className={styles.createForm}>
-                <TextField
-                  aria-label="文件名（显示用）"
-                  value={title}
-                  onChange={setTitle}
-                  autoFocus
-                  isRequired
-                >
-                  <Label>文件名（显示用）*</Label>
-                  <Input placeholder="例如：论文精读助手" />
-                </TextField>
-                <TextField aria-label="Skill 名称（模型用）" value={name} onChange={setName}>
-                  <Label>Skill 名称（模型用）</Label>
-                  <Input placeholder="paper_reading_assistant" />
-                </TextField>
-                <TextField
-                  aria-label="描述（模型用）"
-                  value={description}
-                  onChange={setDescription}
-                >
-                  <Label>描述（模型用）</Label>
-                  <TextArea placeholder="描述这个 Skill 适合处理的任务" rows={3} />
-                </TextField>
-              </div>
-            </Modal.Body>
-            <Modal.Footer>
-              <Button variant="ghost" onPress={handleClose} isDisabled={loading}>
-                取消
-              </Button>
-              <Button
-                variant="primary"
-                onPress={() => runCreate()}
-                isDisabled={!title.trim() || loading}
-              >
-                创建
-              </Button>
-            </Modal.Footer>
-          </Modal.Dialog>
-        </Modal.Container>
-      </Modal.Backdrop>
-    </Modal>
+    <AppModal
+      type="confirm"
+      isOpen={isOpen}
+      onOpenChange={onOpenChange}
+      title="创建新 Skill"
+      size="lg"
+      confirmText="创建"
+      onCancel={handleClose}
+      onConfirm={() => runCreate()}
+      isConfirmLoading={loading}
+      isConfirmDisabled={!title.trim() || loading}
+      isDismissable={!loading}
+    >
+      <div className={styles.createForm}>
+        <TextField
+          aria-label="文件名（显示用）"
+          value={title}
+          onChange={setTitle}
+          autoFocus
+          isRequired
+        >
+          <Label>文件名（显示用）*</Label>
+          <Input placeholder="例如：论文精读助手" />
+        </TextField>
+        <TextField aria-label="Skill 名称（模型用）" value={name} onChange={setName}>
+          <Label>Skill 名称（模型用）</Label>
+          <Input placeholder="paper_reading_assistant" />
+        </TextField>
+        <TextField aria-label="描述（模型用）" value={description} onChange={setDescription}>
+          <Label>描述（模型用）</Label>
+          <TextArea placeholder="描述这个 Skill 适合处理的任务" rows={3} />
+        </TextField>
+      </div>
+    </AppModal>
   );
 }
 

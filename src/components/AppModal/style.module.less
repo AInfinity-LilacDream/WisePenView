@@ -1,0 +1,103 @@
+.container {
+  width: min(100%, calc(100vw - var(--space-xl, 32px)));
+}
+
+.dialog {
+  color: var(--foreground);
+  background: var(--overlay);
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs, 8px);
+  padding: var(--space-lg, 24px) var(--space-lg, 24px) 0;
+}
+
+.heading {
+  margin: 0;
+  color: var(--foreground);
+  font-size: var(--font-size-lg, 18px);
+  font-weight: 600;
+  line-height: var(--line-height-md, 22px);
+  letter-spacing: 0;
+}
+
+.description {
+  color: var(--muted);
+  font-size: var(--font-size-sm, 14px);
+  line-height: var(--line-height-sm, 20px);
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md, 16px);
+  padding: var(--space-md, 16px) var(--space-lg, 24px);
+  color: var(--foreground);
+}
+
+.header + .body {
+  padding-top: var(--space-md, 16px);
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-sm, 12px);
+  padding: 0 var(--space-lg, 24px) var(--space-lg, 24px);
+}
+
+.banner {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-sm, 12px);
+  padding: var(--space-sm, 12px);
+  border: var(--line-width, 1px) solid var(--border);
+  border-radius: var(--radius-lg, 8px);
+}
+
+.bannerinfo,
+.bannerconfirm {
+  color: var(--info);
+  background: var(--info-soft);
+  border-color: color-mix(in srgb, var(--info) 34%, var(--border));
+}
+
+.bannerwarning {
+  color: var(--warning);
+  background: var(--warning-soft);
+  border-color: var(--warning-border);
+}
+
+.bannerdanger {
+  color: var(--danger);
+  background: var(--danger-soft);
+  border-color: var(--danger-border);
+}
+
+.bannerIcon {
+  flex: 0 0 auto;
+  margin-top: 1px;
+}
+
+.bannerContent {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2xs, 4px);
+}
+
+.bannerTitle {
+  color: var(--foreground);
+  font-size: var(--font-size-sm, 14px);
+  font-weight: 600;
+  line-height: var(--line-height-sm, 20px);
+}
+
+.bannerDescription {
+  color: var(--muted);
+  font-size: var(--font-size-sm, 14px);
+  line-height: var(--line-height-sm, 20px);
+}

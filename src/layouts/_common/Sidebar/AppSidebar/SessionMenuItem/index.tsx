@@ -1,7 +1,7 @@
+import AppModal from '@/components/AppModal';
 import { useChatService } from '@/domains';
 import { parseErrorMessage } from '@/utils/error';
-import { Modal } from '@/components/Overlay';
-import { Button, Input, TextField, toast } from '@heroui/react';
+import { Input, TextField, toast } from '@heroui/react';
 import { useRequest } from 'ahooks';
 import clsx from 'clsx';
 import { Pencil, Trash2 } from 'lucide-react';
@@ -105,71 +105,43 @@ function SessionMenuItem({ session, onUpdated, onDeleted }: SessionMenuItemProps
           <Trash2 size={16} />
         </button>
       </div>
-      <Modal isOpen={renameModalOpen} onOpenChange={setRenameModalOpen}>
-        <Modal.Backdrop isDismissable>
-          <Modal.Container size="sm" placement="center">
-            <Modal.Dialog>
-              <Modal.Header>
-                <Modal.Heading>修改对话标题</Modal.Heading>
-              </Modal.Header>
-              <Modal.Body>
-                <TextField
-                  aria-label="对话标题"
-                  value={editingTitle}
-                  autoFocus
-                  onChange={setEditingTitle}
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter') {
-                      event.preventDefault();
-                      void submitRename();
-                    }
-                  }}
-                >
-                  <Input placeholder="请输入对话标题" />
-                </TextField>
-              </Modal.Body>
-              <Modal.Footer>
-                <Button
-                  variant="secondary"
-                  onPress={() => {
-                    setRenameModalOpen(false);
-                    setEditingTitle(session.title || '');
-                  }}
-                >
-                  取消
-                </Button>
-                <Button variant="primary" onPress={() => void submitRename()}>
-                  保存
-                </Button>
-              </Modal.Footer>
-            </Modal.Dialog>
-          </Modal.Container>
-        </Modal.Backdrop>
-      </Modal>
-      <Modal isOpen={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
-        <Modal.Backdrop isDismissable>
-          <Modal.Container size="sm" placement="center">
-            <Modal.Dialog>
-              <Modal.Header>
-                <Modal.Heading>删除会话</Modal.Heading>
-              </Modal.Header>
-              <Modal.Body>删除后不可恢复，是否继续？</Modal.Body>
-              <Modal.Footer>
-                <Button variant="secondary" onPress={() => setDeleteConfirmOpen(false)}>
-                  取消
-                </Button>
-                <Button
-                  variant="danger"
-                  isDisabled={deleting}
-                  onPress={() => void confirmDeleteSession()}
-                >
-                  删除
-                </Button>
-              </Modal.Footer>
-            </Modal.Dialog>
-          </Modal.Container>
-        </Modal.Backdrop>
-      </Modal>
+      <AppModal
+        type="confirm"
+        isOpen={renameModalOpen}
+        onOpenChange={setRenameModalOpen}
+        title="修改对话标题"
+        confirmText="保存"
+        onCancel={() => {
+          setRenameModalOpen(false);
+          setEditingTitle(session.title || '');
+        }}
+        onConfirm={() => void submitRename()}
+      >
+        <TextField
+          aria-label="对话标题"
+          value={editingTitle}
+          autoFocus
+          onChange={setEditingTitle}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter') {
+              event.preventDefault();
+              void submitRename();
+            }
+          }}
+        >
+          <Input placeholder="请输入对话标题" />
+        </TextField>
+      </AppModal>
+      <AppModal
+        type="danger"
+        isOpen={deleteConfirmOpen}
+        onOpenChange={setDeleteConfirmOpen}
+        title="删除会话"
+        description="删除后不可恢复，是否继续？"
+        confirmText="删除"
+        onConfirm={() => void confirmDeleteSession()}
+        isConfirmLoading={deleting}
+      />
     </div>
   );
 }

@@ -669,6 +669,8 @@
     --error-soft: color-mix(in srgb, var(--error) 12%, transparent);
     --error-hover: color-mix(in srgb, var(--error) 88%, #000 12%);
     --error-border: color-mix(in srgb, var(--error) 36%, var(--border));
+    --danger-soft: color-mix(in srgb, var(--danger) 12%, transparent);
+    --danger-border: color-mix(in srgb, var(--danger) 36%, var(--border));
     --danger-hover: var(--error-hover);
     --success-soft: color-mix(in srgb, var(--success) 12%, transparent);
     --success-hover: color-mix(in srgb, var(--success) 88%, #000 12%);

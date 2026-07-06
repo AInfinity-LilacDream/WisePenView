@@ -1,8 +1,8 @@
+import AppModal from '@/components/AppModal';
 import { useAuthService } from '@/domains';
 import type { RegisterRequest } from '@/domains/Auth';
 import { parseErrorMessage } from '@/utils/error';
 import ServiceAgreement from '@/views/app/auth/_components/ServiceAgreement/index';
-import { Modal } from '@/components/Overlay';
 import { Button, Checkbox, Form, Input, Label, TextField, toast } from '@heroui/react';
 import { useRequest } from 'ahooks';
 import { Lock, User } from 'lucide-react';
@@ -165,39 +165,34 @@ function Register() {
         </div>
       </Form>
       <ServiceAgreement isOpen={contractOpen} onOpenChange={setContractOpen} />
-      <Modal isOpen={successModalOpen} onOpenChange={setSuccessModalOpen}>
-        <Modal.Backdrop isDismissable>
-          <Modal.Container size="sm" placement="center">
-            <Modal.Dialog>
-              <Modal.Header>
-                <Modal.Heading>{t('register.registerSuccessTitle')}</Modal.Heading>
-              </Modal.Header>
-              <Modal.Body>
-                <p>{t('register.registerSuccessDescription')}</p>
-              </Modal.Body>
-              <Modal.Footer>
-                <Button
-                  onPress={() => {
-                    setSuccessModalOpen(false);
-                    resetForm();
-                  }}
-                >
-                  {t('register.stayHere')}
-                </Button>
-                <Button
-                  variant="primary"
-                  onPress={() => {
-                    setSuccessModalOpen(false);
-                    navigate('/login');
-                  }}
-                >
-                  {t('register.goToLogin')}
-                </Button>
-              </Modal.Footer>
-            </Modal.Dialog>
-          </Modal.Container>
-        </Modal.Backdrop>
-      </Modal>
+      <AppModal
+        isOpen={successModalOpen}
+        onOpenChange={setSuccessModalOpen}
+        title={t('register.registerSuccessTitle')}
+        actions={
+          <>
+            <Button
+              onPress={() => {
+                setSuccessModalOpen(false);
+                resetForm();
+              }}
+            >
+              {t('register.stayHere')}
+            </Button>
+            <Button
+              variant="primary"
+              onPress={() => {
+                setSuccessModalOpen(false);
+                navigate('/login');
+              }}
+            >
+              {t('register.goToLogin')}
+            </Button>
+          </>
+        }
+      >
+        <p>{t('register.registerSuccessDescription')}</p>
+      </AppModal>
     </div>
   );
 }

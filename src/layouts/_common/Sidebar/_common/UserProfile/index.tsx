@@ -1,8 +1,8 @@
+import AppModal from '@/components/AppModal';
 import { useUserService } from '@/domains';
 import type { User } from '@/domains/User';
 import { IDENTITY } from '@/domains/User';
-import { Modal } from '@/components/Overlay';
-import { Avatar, Button, Dropdown } from '@heroui/react';
+import { Avatar, Dropdown } from '@heroui/react';
 import { useMount } from 'ahooks';
 import clsx from 'clsx';
 import {
@@ -101,11 +101,7 @@ function UserProfile({ collapsed, menuMode = 'app' }: UserProfileProps) {
       >
         {menuMode === 'admin' ? (
           <>
-            <Dropdown.Item
-              id="back-app"
-              textValue="回到用户端"
-              className={styles.profileMenuItem}
-            >
+            <Dropdown.Item id="back-app" textValue="回到用户端" className={styles.profileMenuItem}>
               <Home size={16} />
               <span>回到用户端</span>
             </Dropdown.Item>
@@ -116,11 +112,7 @@ function UserProfile({ collapsed, menuMode = 'app' }: UserProfileProps) {
           </>
         ) : (
           <>
-            <Dropdown.Item
-              id="usage"
-              textValue="余额与使用量"
-              className={styles.profileMenuItem}
-            >
+            <Dropdown.Item id="usage" textValue="余额与使用量" className={styles.profileMenuItem}>
               <ChartPie size={16} />
               <span>余额与使用量</span>
             </Dropdown.Item>
@@ -183,54 +175,42 @@ function UserProfile({ collapsed, menuMode = 'app' }: UserProfileProps) {
         )}
       </div>
 
-      <Modal isOpen={feedbackModalOpen} onOpenChange={setFeedbackModalOpen}>
-        <Modal.Backdrop isDismissable>
-          <Modal.Container size="lg" placement="center" className={styles.feedbackModal}>
-            <Modal.Dialog>
-              <Modal.Header>
-                <Modal.Heading>问题反馈</Modal.Heading>
-              </Modal.Header>
-              <Modal.DeferredContent
-                fallback={
-                  <Modal.Body>
-                    <div className={styles.feedbackIframeWrap} />
-                  </Modal.Body>
-                }
-              >
-                {() => (
-                  <Modal.Body>
-                    <div className={styles.feedbackIframeWrap}>
-                      <iframe
-                        className={styles.feedbackIframe}
-                        title="问卷星问题反馈"
-                        src={FEEDBACK_SURVEY_URL}
-                        allowFullScreen
-                      />
-                    </div>
-                    <p className={styles.feedbackFallback}>
-                      若页面无法显示，请
-                      <a
-                        className={styles.feedbackFallbackLink}
-                        href={FEEDBACK_SURVEY_URL}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        在新窗口打开问卷
-                      </a>
-                      。
-                    </p>
-                  </Modal.Body>
-                )}
-              </Modal.DeferredContent>
-              <Modal.Footer>
-                <Button variant="primary" onPress={handleCloseFeedback}>
-                  关闭
-                </Button>
-              </Modal.Footer>
-            </Modal.Dialog>
-          </Modal.Container>
-        </Modal.Backdrop>
-      </Modal>
+      <AppModal
+        isOpen={feedbackModalOpen}
+        onOpenChange={setFeedbackModalOpen}
+        title="问题反馈"
+        size="lg"
+        containerClassName={styles.feedbackModal}
+        closeText="关闭"
+        onCancel={handleCloseFeedback}
+      >
+        <AppModal.DeferredContent fallback={<div className={styles.feedbackIframeWrap} />}>
+          {() => (
+            <>
+              <div className={styles.feedbackIframeWrap}>
+                <iframe
+                  className={styles.feedbackIframe}
+                  title="问卷星问题反馈"
+                  src={FEEDBACK_SURVEY_URL}
+                  allowFullScreen
+                />
+              </div>
+              <p className={styles.feedbackFallback}>
+                若页面无法显示，请
+                <a
+                  className={styles.feedbackFallbackLink}
+                  href={FEEDBACK_SURVEY_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  在新窗口打开问卷
+                </a>
+                。
+              </p>
+            </>
+          )}
+        </AppModal.DeferredContent>
+      </AppModal>
     </>
   );
 }

@@ -1,5 +1,5 @@
+import AppModal from '@/components/AppModal';
 import { EmptyState, LoadingState } from '@/components/Feedback';
-import { Modal } from '@/components/Overlay';
 import type { DataNode } from '@/components/Tree';
 import Tree from '@/components/Tree';
 import { useChatService } from '@/domains';
@@ -166,7 +166,7 @@ function DocumentPickerContent() {
 
   return (
     <>
-      <Modal.Body>
+      <AppModal.Body>
         <div className={styles.wrapper}>
           <div className={styles.treeSection}>
             <div className={styles.hint}>选择要引用的文档（可多选）</div>
@@ -198,15 +198,15 @@ function DocumentPickerContent() {
             </div>
           </div>
         </div>
-      </Modal.Body>
-      <Modal.Footer>
+      </AppModal.Body>
+      <AppModal.Footer>
         <Button variant="secondary" onPress={handleClose}>
           取消
         </Button>
         <Button variant="primary" onPress={handleConfirm} isDisabled={checkedKeys.length === 0}>
           确定
         </Button>
-      </Modal.Footer>
+      </AppModal.Footer>
     </>
   );
 }
@@ -221,41 +221,38 @@ function DocumentPickerModal() {
   }
 
   return (
-    <Modal isOpen={open} onOpenChange={handleOpenChange}>
-      <Modal.Backdrop isDismissable>
-        <Modal.Container size="md" placement="center">
-          <Modal.Dialog>
-            <Modal.Header>
-              <Modal.Heading>从云盘选取</Modal.Heading>
-            </Modal.Header>
-            <Modal.DeferredContent
-              fallback={
-                <>
-                  <Modal.Body>
-                    <div className={styles.wrapper}>
-                      <div className={styles.treeSection}>
-                        <div className={styles.hint}>选择要引用的文档（可多选）</div>
-                        <div className={styles.navTree} />
-                      </div>
-                    </div>
-                  </Modal.Body>
-                  <Modal.Footer>
-                    <Button variant="secondary" onPress={() => setDocumentPickerOpen(false)}>
-                      取消
-                    </Button>
-                    <Button variant="primary" isDisabled>
-                      确定
-                    </Button>
-                  </Modal.Footer>
-                </>
-              }
-            >
-              {() => <DocumentPickerContent />}
-            </Modal.DeferredContent>
-          </Modal.Dialog>
-        </Modal.Container>
-      </Modal.Backdrop>
-    </Modal>
+    <AppModal
+      isOpen={open}
+      onOpenChange={handleOpenChange}
+      title="从云盘选取"
+      size="md"
+      contentMode="dialog"
+    >
+      <AppModal.DeferredContent
+        fallback={
+          <>
+            <AppModal.Body>
+              <div className={styles.wrapper}>
+                <div className={styles.treeSection}>
+                  <div className={styles.hint}>选择要引用的文档（可多选）</div>
+                  <div className={styles.navTree} />
+                </div>
+              </div>
+            </AppModal.Body>
+            <AppModal.Footer>
+              <Button variant="secondary" onPress={() => setDocumentPickerOpen(false)}>
+                取消
+              </Button>
+              <Button variant="primary" isDisabled>
+                确定
+              </Button>
+            </AppModal.Footer>
+          </>
+        }
+      >
+        {() => <DocumentPickerContent />}
+      </AppModal.DeferredContent>
+    </AppModal>
   );
 }
 

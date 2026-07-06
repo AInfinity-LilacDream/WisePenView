@@ -1,8 +1,8 @@
+import AppModal from '@/components/AppModal';
 import { useGroupService } from '@/domains';
 import type { DeleteGroupRequest } from '@/domains/Group';
 import { parseErrorMessage } from '@/utils/error';
-import { Modal } from '@/components/Overlay';
-import { Alert, Button, Input, TextField, toast } from '@heroui/react';
+import { Input, TextField, toast } from '@heroui/react';
 import { useRequest } from 'ahooks';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -61,45 +61,27 @@ function DissolveGroupModal({
   };
 
   return (
-    <Modal isOpen={isOpen} onOpenChange={handleOpenChange}>
-      <Modal.Backdrop isDismissable={!loading}>
-        <Modal.Container size="sm" placement="center">
-          <Modal.Dialog>
-            <Modal.Header>
-              <Modal.Heading>解散小组</Modal.Heading>
-            </Modal.Header>
-            <Modal.Body>
-              <Alert status="warning">
-                <Alert.Indicator />
-                <Alert.Content>
-                  <Alert.Description>确定要解散小组吗？此操作不可撤销！</Alert.Description>
-                </Alert.Content>
-              </Alert>
-              <div className={styles.modalSection}>
-                <div className={styles.modalSectionLabel}>
-                  小组名称 <span className={styles.modalSectionSubLabel}>（{groupName}）</span>
-                </div>
-                <TextField aria-label="确认小组名称" value={confirmName} onChange={setConfirmName}>
-                  <Input placeholder={`请输入 "${groupName}" 以确认`} />
-                </TextField>
-              </div>
-            </Modal.Body>
-            <Modal.Footer>
-              <Button variant="secondary" isDisabled={loading} onPress={() => onOpenChange(false)}>
-                取消
-              </Button>
-              <Button
-                variant="danger"
-                onPress={handleConfirm}
-                isDisabled={confirmName !== groupName || loading}
-              >
-                解散
-              </Button>
-            </Modal.Footer>
-          </Modal.Dialog>
-        </Modal.Container>
-      </Modal.Backdrop>
-    </Modal>
+    <AppModal
+      type="danger"
+      isOpen={isOpen}
+      onOpenChange={handleOpenChange}
+      title="解散小组"
+      description="确定要解散小组吗？此操作不可撤销！"
+      confirmText="解散"
+      onConfirm={handleConfirm}
+      isConfirmLoading={loading}
+      isConfirmDisabled={confirmName !== groupName || loading}
+      isDismissable={!loading}
+    >
+      <div className={styles.modalSection}>
+        <div className={styles.modalSectionLabel}>
+          小组名称 <span className={styles.modalSectionSubLabel}>（{groupName}）</span>
+        </div>
+        <TextField aria-label="确认小组名称" value={confirmName} onChange={setConfirmName}>
+          <Input placeholder={`请输入 "${groupName}" 以确认`} />
+        </TextField>
+      </div>
+    </AppModal>
   );
 }
 

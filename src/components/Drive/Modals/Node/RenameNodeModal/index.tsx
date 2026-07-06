@@ -1,7 +1,7 @@
+import AppModal from '@/components/AppModal';
 import { useDriveService } from '@/domains';
 import { parseErrorMessage } from '@/utils/error';
-import { Modal } from '@/components/Overlay';
-import { Button, Input, TextField, toast } from '@heroui/react';
+import { Input, TextField, toast } from '@heroui/react';
 import { useRequest } from 'ahooks';
 import { useState } from 'react';
 import type { DriveActionTarget } from '../../../common/driveComponentModel';
@@ -49,44 +49,33 @@ function RenameNodeModal({ isOpen, node, groupId, onOpenChange, onSuccess }: Ren
   const title = node?.type === 'folder' ? '重命名文件夹' : '重命名文件';
 
   return (
-    <Modal isOpen={isOpen && !!node} onOpenChange={onOpenChange}>
-      <Modal.Backdrop isDismissable={!loading}>
-        <Modal.Container size="sm" placement="center">
-          <Modal.Dialog>
-            <Modal.Header>
-              <Modal.Heading>{title}</Modal.Heading>
-            </Modal.Header>
-            <Modal.Body>
-              <TextField
-                aria-label="节点名称"
-                className={styles.input}
-                value={name}
-                autoFocus
-                onChange={setName}
-              >
-                <Input
-                  placeholder="请输入新名称"
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter') {
-                      event.preventDefault();
-                      handleSubmit();
-                    }
-                  }}
-                />
-              </TextField>
-            </Modal.Body>
-            <Modal.Footer>
-              <Button variant="secondary" onPress={() => onOpenChange(false)} isDisabled={loading}>
-                取消
-              </Button>
-              <Button variant="primary" onPress={handleSubmit} isDisabled={loading}>
-                确定
-              </Button>
-            </Modal.Footer>
-          </Modal.Dialog>
-        </Modal.Container>
-      </Modal.Backdrop>
-    </Modal>
+    <AppModal
+      type="confirm"
+      isOpen={isOpen && !!node}
+      onOpenChange={onOpenChange}
+      title={title}
+      onConfirm={handleSubmit}
+      isConfirmLoading={loading}
+      isDismissable={!loading}
+    >
+      <TextField
+        aria-label="节点名称"
+        className={styles.input}
+        value={name}
+        autoFocus
+        onChange={setName}
+      >
+        <Input
+          placeholder="请输入新名称"
+          onKeyDown={(event) => {
+            if (event.key === 'Enter') {
+              event.preventDefault();
+              handleSubmit();
+            }
+          }}
+        />
+      </TextField>
+    </AppModal>
   );
 }
 

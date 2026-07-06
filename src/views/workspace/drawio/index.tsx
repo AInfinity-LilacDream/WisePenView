@@ -1,3 +1,4 @@
+import AppModal from '@/components/AppModal';
 import { ResultState, Spin } from '@/components/Feedback';
 import { useNoteService, useResourceService, useUserService } from '@/domains';
 import type {
@@ -12,7 +13,6 @@ import {
   buildWorkspaceResourcePath,
   RESOURCE_EDITOR_TYPE,
 } from '@/utils/navigation/workspaceRoute';
-import { Modal } from '@/components/Overlay';
 import { Button, Input, TextField, toast } from '@heroui/react';
 import { useEventListener, useRequest, useUnmount, useUpdateEffect } from 'ahooks';
 import { Copy, History, Save } from 'lucide-react';
@@ -203,48 +203,39 @@ function VersionModal({
   onClose: () => void;
 }) {
   return (
-    <Modal isOpen={open} onOpenChange={(visible) => !visible && onClose()}>
-      <Modal.Backdrop isDismissable>
-        <Modal.Container size="md" placement="center">
-          <Modal.Dialog>
-            <Modal.Header>
-              <Modal.Heading>版本记录</Modal.Heading>
-            </Modal.Header>
-            <Modal.Body>
-              {loading ? (
-                <div className={styles.modalState}>
-                  <Spin />
-                  <span>正在加载版本记录...</span>
-                </div>
-              ) : error ? (
-                <ResultState
-                  status="warning"
-                  title="版本记录加载失败"
-                  subTitle={parseErrorMessage(error)}
-                />
-              ) : !versions || versions.list.length === 0 ? (
-                <ResultState status="info" title="暂无版本记录" />
-              ) : (
-                <div className={styles.versionList}>
-                  {versions.list.map((item) => (
-                    <div key={`${item.version}-${item.type}`} className={styles.versionRow}>
-                      <span>v{item.version ?? '-'}</span>
-                      <span>{item.type ?? '-'}</span>
-                      <span>{item.createdBy?.join(', ') || '-'}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </Modal.Body>
-            <Modal.Footer>
-              <Button variant="secondary" onPress={onClose}>
-                关闭
-              </Button>
-            </Modal.Footer>
-          </Modal.Dialog>
-        </Modal.Container>
-      </Modal.Backdrop>
-    </Modal>
+    <AppModal
+      isOpen={open}
+      onOpenChange={(visible) => !visible && onClose()}
+      title="版本记录"
+      size="md"
+      closeText="关闭"
+      onCancel={onClose}
+    >
+      {loading ? (
+        <div className={styles.modalState}>
+          <Spin />
+          <span>正在加载版本记录...</span>
+        </div>
+      ) : error ? (
+        <ResultState
+          status="warning"
+          title="版本记录加载失败"
+          subTitle={parseErrorMessage(error)}
+        />
+      ) : !versions || versions.list.length === 0 ? (
+        <ResultState status="info" title="暂无版本记录" />
+      ) : (
+        <div className={styles.versionList}>
+          {versions.list.map((item) => (
+            <div key={`${item.version}-${item.type}`} className={styles.versionRow}>
+              <span>v{item.version ?? '-'}</span>
+              <span>{item.type ?? '-'}</span>
+              <span>{item.createdBy?.join(', ') || '-'}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </AppModal>
   );
 }
 
@@ -264,39 +255,31 @@ function CopyModal({
   onConfirm: () => void;
 }) {
   return (
-    <Modal isOpen={open} onOpenChange={(visible) => !visible && onClose()}>
-      <Modal.Backdrop isDismissable={!loading}>
-        <Modal.Container size="sm" placement="center">
-          <Modal.Dialog>
-            <Modal.Header>
-              <Modal.Heading>复制 Draw.io 图</Modal.Heading>
-            </Modal.Header>
-            <Modal.Body>
-              <TextField aria-label="复制后的名称" value={name} onChange={onNameChange}>
-                <Input
-                  placeholder="请输入名称"
-                  autoFocus
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter') {
-                      event.preventDefault();
-                      onConfirm();
-                    }
-                  }}
-                />
-              </TextField>
-            </Modal.Body>
-            <Modal.Footer>
-              <Button variant="secondary" onPress={onClose} isDisabled={loading}>
-                取消
-              </Button>
-              <Button variant="primary" onPress={onConfirm} isDisabled={loading || !name.trim()}>
-                复制
-              </Button>
-            </Modal.Footer>
-          </Modal.Dialog>
-        </Modal.Container>
-      </Modal.Backdrop>
-    </Modal>
+    <AppModal
+      type="confirm"
+      isOpen={open}
+      onOpenChange={(visible) => !visible && onClose()}
+      title="复制 Draw.io 图"
+      confirmText="复制"
+      onCancel={onClose}
+      onConfirm={onConfirm}
+      isConfirmLoading={loading}
+      isConfirmDisabled={loading || !name.trim()}
+      isDismissable={!loading}
+    >
+      <TextField aria-label="复制后的名称" value={name} onChange={onNameChange}>
+        <Input
+          placeholder="请输入名称"
+          autoFocus
+          onKeyDown={(event) => {
+            if (event.key === 'Enter') {
+              event.preventDefault();
+              onConfirm();
+            }
+          }}
+        />
+      </TextField>
+    </AppModal>
   );
 }
 

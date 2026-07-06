@@ -1,9 +1,9 @@
+import AppModal from '@/components/AppModal';
 import SelectedMemberList from '@/components/SelectedMemberList';
 import { useQuotaService } from '@/domains';
 import { useEffectForce } from '@/hooks/useEffectForce';
 import { parseErrorMessage } from '@/utils/error';
-import { Modal } from '@/components/Overlay';
-import { Alert, Button, Input, Label, TextField, toast } from '@heroui/react';
+import { Alert, Input, Label, TextField, toast } from '@heroui/react';
 import { useRequest } from 'ahooks';
 import { useState } from 'react';
 import type { AssignQuotaModalProps } from './index.type';
@@ -149,72 +149,58 @@ function AssignQuotaModal({
   };
 
   return (
-    <Modal isOpen={isOpen} onOpenChange={handleOpenChange}>
-      <Modal.Backdrop isDismissable={!loading}>
-        <Modal.Container size="md" placement="center">
-          <Modal.Dialog>
-            <Modal.Header>
-              <Modal.Heading>分配配额</Modal.Heading>
-            </Modal.Header>
-            <Modal.Body>
-              <div className={styles.modalFormPadding}>
-                {!canEdit && (
-                  <Alert status="danger" className={styles.alertBlock}>
-                    <Alert.Indicator />
-                    <Alert.Content>
-                      <Alert.Description>您不能分配组长/管理员的配额。</Alert.Description>
-                    </Alert.Content>
-                  </Alert>
-                )}
-                {quotaOverGlobalMax && (
-                  <Alert status="warning" className={styles.alertBlock}>
-                    <Alert.Indicator />
-                    <Alert.Content>
-                      <Alert.Description>
-                        {`成员当前用量已超过允许设置的上限（${GROUP_MEMBER_TOKEN_LIMIT_MAX.toLocaleString()}），无法在此调整配额。`}
-                      </Alert.Description>
-                    </Alert.Content>
-                  </Alert>
-                )}
-                <div className={styles.quotaInfo}>
-                  小组配额使用：{groupQuota.used.toLocaleString()} /{' '}
-                  {groupQuota.limit.toLocaleString()} 计算点（单成员限额不超过{' '}
-                  {GROUP_MEMBER_TOKEN_LIMIT_MAX.toLocaleString()}）
-                </div>
-                <QuotaInput
-                  className={styles.fullWidth}
-                  value={quotaValue}
-                  onChange={(nextValue) => {
-                    setQuotaValue(nextValue);
-                    if (quotaError) {
-                      setQuotaError(validateQuota(nextValue));
-                    }
-                  }}
-                  placeholder="请输入整数"
-                  min={quotaOverGlobalMax ? 1 : quotaMin}
-                  max={GROUP_MEMBER_TOKEN_LIMIT_MAX}
-                  disabled={quotaOverGlobalMax}
-                  errorMessage={quotaError}
-                />
-                <SelectedMemberList members={members} />
-              </div>
-            </Modal.Body>
-            <Modal.Footer>
-              <Button variant="secondary" onPress={() => onOpenChange(false)} isDisabled={loading}>
-                取消
-              </Button>
-              <Button
-                variant="primary"
-                onPress={handleConfirm}
-                isDisabled={loading || confirmDisabled || quotaOverGlobalMax}
-              >
-                确定
-              </Button>
-            </Modal.Footer>
-          </Modal.Dialog>
-        </Modal.Container>
-      </Modal.Backdrop>
-    </Modal>
+    <AppModal
+      type="confirm"
+      isOpen={isOpen}
+      onOpenChange={handleOpenChange}
+      title="分配配额"
+      size="md"
+      onConfirm={handleConfirm}
+      isConfirmLoading={loading}
+      isConfirmDisabled={loading || confirmDisabled || quotaOverGlobalMax}
+      isDismissable={!loading}
+    >
+      <div className={styles.modalFormPadding}>
+        {!canEdit && (
+          <Alert status="danger" className={styles.alertBlock}>
+            <Alert.Indicator />
+            <Alert.Content>
+              <Alert.Description>您不能分配组长/管理员的配额。</Alert.Description>
+            </Alert.Content>
+          </Alert>
+        )}
+        {quotaOverGlobalMax && (
+          <Alert status="warning" className={styles.alertBlock}>
+            <Alert.Indicator />
+            <Alert.Content>
+              <Alert.Description>
+                {`成员当前用量已超过允许设置的上限（${GROUP_MEMBER_TOKEN_LIMIT_MAX.toLocaleString()}），无法在此调整配额。`}
+              </Alert.Description>
+            </Alert.Content>
+          </Alert>
+        )}
+        <div className={styles.quotaInfo}>
+          小组配额使用：{groupQuota.used.toLocaleString()} / {groupQuota.limit.toLocaleString()}{' '}
+          计算点（单成员限额不超过 {GROUP_MEMBER_TOKEN_LIMIT_MAX.toLocaleString()}）
+        </div>
+        <QuotaInput
+          className={styles.fullWidth}
+          value={quotaValue}
+          onChange={(nextValue) => {
+            setQuotaValue(nextValue);
+            if (quotaError) {
+              setQuotaError(validateQuota(nextValue));
+            }
+          }}
+          placeholder="请输入整数"
+          min={quotaOverGlobalMax ? 1 : quotaMin}
+          max={GROUP_MEMBER_TOKEN_LIMIT_MAX}
+          disabled={quotaOverGlobalMax}
+          errorMessage={quotaError}
+        />
+        <SelectedMemberList members={members} />
+      </div>
+    </AppModal>
   );
 }
 

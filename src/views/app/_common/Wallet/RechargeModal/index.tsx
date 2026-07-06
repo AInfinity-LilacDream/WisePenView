@@ -7,8 +7,8 @@
  * - 提交：剔除横杠与空格，仅传 16 位纯字符。
  * - 防重复提交：进行中按钮文案为「充值中...」并禁用。
  */
-import { Modal } from '@/components/Overlay';
-import { Button, InputOTP, REGEXP_ONLY_DIGITS_AND_CHARS } from '@heroui/react';
+import AppModal from '@/components/AppModal';
+import { InputOTP, REGEXP_ONLY_DIGITS_AND_CHARS } from '@heroui/react';
 import { useRequest, useUpdateEffect } from 'ahooks';
 import React, { useRef, useState } from 'react';
 import type { RechargeModalProps } from './index.type';
@@ -76,60 +76,47 @@ function RechargeModal({ open, onCancel, groupDisplayName, onSubmit }: RechargeM
   }, [open, value.length]);
 
   return (
-    <Modal isOpen={open} onOpenChange={(isOpen) => !isOpen && handleCancel()}>
-      <Modal.Backdrop isDismissable={!submitting}>
-        <Modal.Container size="lg" placement="center">
-          <Modal.Dialog>
-            <Modal.Header>
-              <Modal.Heading>{title}</Modal.Heading>
-            </Modal.Header>
-            <Modal.Body>
-              <InputOTP
-                ref={inputRef}
-                className={styles.codeInput}
-                inputClassName={styles.codeInputHidden}
-                value={value}
-                onChange={(nextValue) => setValue(normalizeVoucherCode(nextValue))}
-                maxLength={16}
-                pattern={REGEXP_ONLY_DIGITS_AND_CHARS}
-                autoComplete="one-time-code"
-                inputMode="text"
-                isDisabled={submitting}
-                pasteTransformer={normalizeVoucherCode}
-                pushPasswordManagerStrategy="none"
-                textAlign="center"
-              >
-                {OTP_GROUPS.map((group, groupIndex) => (
-                  <React.Fragment key={group.join('-')}>
-                    {groupIndex > 0 ? (
-                      <InputOTP.Separator className={styles.codeSeparator} />
-                    ) : null}
-                    <InputOTP.Group className={styles.codeGroup}>
-                      {group.map((slotIndex) => (
-                        <InputOTP.Slot
-                          key={slotIndex}
-                          className={styles.codeSlot}
-                          index={slotIndex}
-                        />
-                      ))}
-                    </InputOTP.Group>
-                  </React.Fragment>
-                ))}
-              </InputOTP>
-              <p className={styles.hint}>请输入 16 位兑换码，将自动转为大写并分段显示。</p>
-            </Modal.Body>
-            <Modal.Footer>
-              <Button variant="ghost" isDisabled={submitting} onPress={handleCancel}>
-                取消
-              </Button>
-              <Button variant="primary" isDisabled={!canSubmit} onPress={() => void handleOk()}>
-                {submitting ? '充值中...' : '确认充值'}
-              </Button>
-            </Modal.Footer>
-          </Modal.Dialog>
-        </Modal.Container>
-      </Modal.Backdrop>
-    </Modal>
+    <AppModal
+      type="confirm"
+      isOpen={open}
+      onOpenChange={(isOpen) => !isOpen && handleCancel()}
+      title={title}
+      size="lg"
+      confirmText={submitting ? '充值中...' : '确认充值'}
+      onCancel={handleCancel}
+      onConfirm={handleOk}
+      isConfirmLoading={submitting}
+      isConfirmDisabled={!canSubmit}
+      isDismissable={!submitting}
+    >
+      <InputOTP
+        ref={inputRef}
+        className={styles.codeInput}
+        inputClassName={styles.codeInputHidden}
+        value={value}
+        onChange={(nextValue) => setValue(normalizeVoucherCode(nextValue))}
+        maxLength={16}
+        pattern={REGEXP_ONLY_DIGITS_AND_CHARS}
+        autoComplete="one-time-code"
+        inputMode="text"
+        isDisabled={submitting}
+        pasteTransformer={normalizeVoucherCode}
+        pushPasswordManagerStrategy="none"
+        textAlign="center"
+      >
+        {OTP_GROUPS.map((group, groupIndex) => (
+          <React.Fragment key={group.join('-')}>
+            {groupIndex > 0 ? <InputOTP.Separator className={styles.codeSeparator} /> : null}
+            <InputOTP.Group className={styles.codeGroup}>
+              {group.map((slotIndex) => (
+                <InputOTP.Slot key={slotIndex} className={styles.codeSlot} index={slotIndex} />
+              ))}
+            </InputOTP.Group>
+          </React.Fragment>
+        ))}
+      </InputOTP>
+      <p className={styles.hint}>请输入 16 位兑换码，将自动转为大写并分段显示。</p>
+    </AppModal>
   );
 }
 

@@ -1,7 +1,7 @@
+import AppModal from '@/components/AppModal';
 import { useAuthService } from '@/domains';
 import type { NewPasswordRequest } from '@/domains/Auth';
 import { parseErrorMessage } from '@/utils/error';
-import { Modal } from '@/components/Overlay';
 import { Button, Form, Input, Label, TextField, toast } from '@heroui/react';
 import { useMount, useRequest } from 'ahooks';
 import { Lock } from 'lucide-react';
@@ -131,39 +131,34 @@ function NewPassword() {
           </div>
         </div>
       </Form>
-      <Modal isOpen={successModalOpen} onOpenChange={setSuccessModalOpen}>
-        <Modal.Backdrop isDismissable>
-          <Modal.Container size="sm" placement="center">
-            <Modal.Dialog>
-              <Modal.Header>
-                <Modal.Heading>{t('newPassword.successTitle')}</Modal.Heading>
-              </Modal.Header>
-              <Modal.Body>
-                <p>{t('newPassword.successDescription')}</p>
-              </Modal.Body>
-              <Modal.Footer>
-                <Button
-                  onPress={() => {
-                    setSuccessModalOpen(false);
-                    resetForm();
-                  }}
-                >
-                  {t('newPassword.stayHere')}
-                </Button>
-                <Button
-                  variant="primary"
-                  onPress={() => {
-                    setSuccessModalOpen(false);
-                    navigate('/login');
-                  }}
-                >
-                  {t('newPassword.goToLogin')}
-                </Button>
-              </Modal.Footer>
-            </Modal.Dialog>
-          </Modal.Container>
-        </Modal.Backdrop>
-      </Modal>
+      <AppModal
+        isOpen={successModalOpen}
+        onOpenChange={setSuccessModalOpen}
+        title={t('newPassword.successTitle')}
+        actions={
+          <>
+            <Button
+              onPress={() => {
+                setSuccessModalOpen(false);
+                resetForm();
+              }}
+            >
+              {t('newPassword.stayHere')}
+            </Button>
+            <Button
+              variant="primary"
+              onPress={() => {
+                setSuccessModalOpen(false);
+                navigate('/login');
+              }}
+            >
+              {t('newPassword.goToLogin')}
+            </Button>
+          </>
+        }
+      >
+        <p>{t('newPassword.successDescription')}</p>
+      </AppModal>
     </div>
   );
 }

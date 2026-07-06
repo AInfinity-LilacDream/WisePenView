@@ -1,4 +1,4 @@
-import { Modal } from '@/components/Overlay';
+import AppModal from '@/components/AppModal';
 import type { TreeDataNode } from '@/components/Tree';
 import Tree from '@/components/Tree';
 import { useChatService } from '@/domains';
@@ -86,63 +86,60 @@ function OtherSkillModalContent() {
   };
 
   return (
-    <Modal isOpen onOpenChange={handleOpenChange}>
-      <Modal.Backdrop isDismissable>
-        <Modal.Container size="md" placement="center">
-          <Modal.Dialog>
-            <Modal.Header>
-              <Modal.Heading>选择其他 Skill</Modal.Heading>
-            </Modal.Header>
-            <Modal.DeferredContent
-              fallback={
-                <Modal.Body>
-                  <div className={styles.wrapper}>
-                    <div className={styles.hint}>选择要添加的 Skill（可多选）</div>
-                    <div className={styles.treeNav} />
-                  </div>
-                </Modal.Body>
-              }
-            >
-              {() => (
-                <Modal.Body>
-                  <div className={styles.wrapper}>
-                    <div className={styles.hint}>选择要添加的 Skill（可多选）</div>
-                    <div className={styles.treeNav}>
-                      {loading ? (
-                        <div className={styles.hint}>正在加载 Skill</div>
-                      ) : (
-                        <Tree
-                          treeData={treeData}
-                          className={styles.tree}
-                          multiple
-                          selectedKeys={selectedKeys}
-                          defaultExpandAll
-                          blockNode
-                          switcherIcon={
-                            <span>
-                              <ChevronDown size={14} />
-                            </span>
-                          }
-                          onSelect={(keys: Key[]) => setSelectedKeys(keys)}
-                        />
-                      )}
-                    </div>
-                  </div>
-                </Modal.Body>
-              )}
-            </Modal.DeferredContent>
-            <Modal.Footer>
-              <Button variant="secondary" onPress={handleClose}>
-                取消
-              </Button>
-              <Button variant="primary" onPress={handleConfirm}>
-                确认
-              </Button>
-            </Modal.Footer>
-          </Modal.Dialog>
-        </Modal.Container>
-      </Modal.Backdrop>
-    </Modal>
+    <AppModal
+      isOpen
+      onOpenChange={handleOpenChange}
+      title="选择其他 Skill"
+      size="md"
+      contentMode="dialog"
+    >
+      <AppModal.DeferredContent
+        fallback={
+          <AppModal.Body>
+            <div className={styles.wrapper}>
+              <div className={styles.hint}>选择要添加的 Skill（可多选）</div>
+              <div className={styles.treeNav} />
+            </div>
+          </AppModal.Body>
+        }
+      >
+        {() => (
+          <AppModal.Body>
+            <div className={styles.wrapper}>
+              <div className={styles.hint}>选择要添加的 Skill（可多选）</div>
+              <div className={styles.treeNav}>
+                {loading ? (
+                  <div className={styles.hint}>正在加载 Skill</div>
+                ) : (
+                  <Tree
+                    treeData={treeData}
+                    className={styles.tree}
+                    multiple
+                    selectedKeys={selectedKeys}
+                    defaultExpandAll
+                    blockNode
+                    switcherIcon={
+                      <span>
+                        <ChevronDown size={14} />
+                      </span>
+                    }
+                    onSelect={(keys: Key[]) => setSelectedKeys(keys)}
+                  />
+                )}
+              </div>
+            </div>
+          </AppModal.Body>
+        )}
+      </AppModal.DeferredContent>
+      <AppModal.Footer>
+        <Button variant="secondary" onPress={handleClose}>
+          取消
+        </Button>
+        <Button variant="primary" onPress={handleConfirm}>
+          确认
+        </Button>
+      </AppModal.Footer>
+    </AppModal>
   );
 }
 

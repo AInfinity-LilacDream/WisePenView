@@ -1,3 +1,4 @@
+import AppModal from '@/components/AppModal';
 import UploadZone from '@/components/UploadZone';
 import { useGroupService, useImageService } from '@/domains';
 import type { EditGroupRequest, GroupResConfig } from '@/domains/Group';
@@ -17,17 +18,7 @@ import {
   assertImageProxyUploadLimit,
   IMAGE_UPLOAD_MAX_SIZE_LABEL,
 } from '@/utils/image/uploadLimit';
-import { Modal } from '@/components/Overlay';
-import {
-  Button,
-  Checkbox,
-  Form,
-  Input,
-  Label,
-  TextArea,
-  TextField,
-  toast,
-} from '@heroui/react';
+import { Checkbox, Input, Label, TextArea, TextField, toast } from '@heroui/react';
 import { useMount, useRequest, useUpdateEffect } from 'ahooks';
 import { useState } from 'react';
 import type { EditGroupInfoModalProps } from './index.type';
@@ -240,7 +231,8 @@ function EditGroupInfoModal({
   };
 
   return (
-    <Modal
+    <AppModal
+      type="confirm"
       isOpen={open}
       onOpenChange={(isOpen) => {
         if (!isOpen) {
@@ -248,107 +240,80 @@ function EditGroupInfoModal({
           onCancel();
         }
       }}
+      title="编辑小组信息"
+      size="md"
+      confirmText="确定"
+      onConfirm={handleConfirm}
+      isConfirmLoading={loading || configLoading}
+      bodyClassName={styles.modalBody}
+      isDismissable={!loading}
     >
-      <Modal.Backdrop isDismissable={!loading}>
-        <Modal.Container size="md" placement="center">
-          <Modal.Dialog>
-            <Modal.Header>
-              <Modal.Heading>编辑小组信息</Modal.Heading>
-            </Modal.Header>
-            <Form
-              onSubmit={(event) => {
-                event.preventDefault();
-                handleConfirm();
-              }}
-              className={styles.modalForm}
-            >
-              <Modal.Body className={styles.modalBody}>
-                <TextField
-                  aria-label="小组名称"
-                  value={formValues.groupName}
-                  onChange={(value) => updateFormValue('groupName', value)}
-                  isRequired
-                >
-                  <Label>小组名称</Label>
-                  <Input placeholder="请输入小组名称" />
-                </TextField>
-                <TextField
-                  aria-label="小组描述"
-                  value={formValues.groupDesc}
-                  onChange={(value) => updateFormValue('groupDesc', value)}
-                >
-                  <Label>小组描述</Label>
-                  <TextArea rows={4} placeholder="请输入小组描述（可选）" />
-                </TextField>
-                <div className={styles.coverField}>
-                  <span className={styles.fieldLabel}>封面图片</span>
-                  <UploadZone
-                    file={formValues.cover ?? null}
-                    disabled={loading}
-                    accept="image/*"
-                    label="点击或拖拽封面图片到此区域"
-                    description={`仅可选择单张图片，大小不超过 ${IMAGE_UPLOAD_MAX_SIZE_LABEL}`}
-                    onFileChange={handleCoverChange}
-                  />
-                </div>
-                <div className={styles.sectionCard}>
-                  <div className={styles.sectionTitle}>小组成员默认权限</div>
-                  <div className={styles.actionGroup}>新成员默认可用的资源权限</div>
-                  <div className={styles.actionList}>
-                    {TAG_RESOURCE_ACTION.options.map((item) => {
-                      const action = item.value as TagResourceAction;
-                      const isHighlighted = actionHighlightSet?.has(action);
-                      return (
-                        <div
-                          key={item.key}
-                          className={
-                            isHighlighted
-                              ? `${styles.actionItem} ${styles.actionItemHighlight}`
-                              : styles.actionItem
-                          }
-                          onMouseEnter={() => setHoveredAction(action)}
-                          onMouseLeave={() => setHoveredAction(null)}
-                        >
-                          <Checkbox
-                            isSelected={selectedActionSet.has(action)}
-                            onChange={(isSelected) => handleActionToggle(action, isSelected)}
-                            variant="secondary"
-                          >
-                            <Checkbox.Control>
-                              <Checkbox.Indicator />
-                            </Checkbox.Control>
-                            <Checkbox.Content>
-                              <span data-slot="label" className={styles.actionLabel}>
-                                {item.label}
-                              </span>
-                            </Checkbox.Content>
-                          </Checkbox>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              </Modal.Body>
-              <Modal.Footer>
-                <Button
+      <TextField
+        aria-label="小组名称"
+        value={formValues.groupName}
+        onChange={(value) => updateFormValue('groupName', value)}
+        isRequired
+      >
+        <Label>小组名称</Label>
+        <Input placeholder="请输入小组名称" />
+      </TextField>
+      <TextField
+        aria-label="小组描述"
+        value={formValues.groupDesc}
+        onChange={(value) => updateFormValue('groupDesc', value)}
+      >
+        <Label>小组描述</Label>
+        <TextArea rows={4} placeholder="请输入小组描述（可选）" />
+      </TextField>
+      <div className={styles.coverField}>
+        <span className={styles.fieldLabel}>封面图片</span>
+        <UploadZone
+          file={formValues.cover ?? null}
+          disabled={loading}
+          accept="image/*"
+          label="点击或拖拽封面图片到此区域"
+          description={`仅可选择单张图片，大小不超过 ${IMAGE_UPLOAD_MAX_SIZE_LABEL}`}
+          onFileChange={handleCoverChange}
+        />
+      </div>
+      <div className={styles.sectionCard}>
+        <div className={styles.sectionTitle}>小组成员默认权限</div>
+        <div className={styles.actionGroup}>新成员默认可用的资源权限</div>
+        <div className={styles.actionList}>
+          {TAG_RESOURCE_ACTION.options.map((item) => {
+            const action = item.value as TagResourceAction;
+            const isHighlighted = actionHighlightSet?.has(action);
+            return (
+              <div
+                key={item.key}
+                className={
+                  isHighlighted
+                    ? `${styles.actionItem} ${styles.actionItemHighlight}`
+                    : styles.actionItem
+                }
+                onMouseEnter={() => setHoveredAction(action)}
+                onMouseLeave={() => setHoveredAction(null)}
+              >
+                <Checkbox
+                  isSelected={selectedActionSet.has(action)}
+                  onChange={(isSelected) => handleActionToggle(action, isSelected)}
                   variant="secondary"
-                  isDisabled={loading || configLoading}
-                  onPress={() => {
-                    resetForm();
-                    onCancel();
-                  }}
                 >
-                  取消
-                </Button>
-                <Button type="submit" variant="primary" isDisabled={loading || configLoading}>
-                  确定
-                </Button>
-              </Modal.Footer>
-            </Form>
-          </Modal.Dialog>
-        </Modal.Container>
-      </Modal.Backdrop>
-    </Modal>
+                  <Checkbox.Control>
+                    <Checkbox.Indicator />
+                  </Checkbox.Control>
+                  <Checkbox.Content>
+                    <span data-slot="label" className={styles.actionLabel}>
+                      {item.label}
+                    </span>
+                  </Checkbox.Content>
+                </Checkbox>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </AppModal>
   );
 }
 

@@ -36,6 +36,7 @@ function SearchModal({ isOpen, onOpenChange }: SearchModalProps) {
     { events: ['keydown'], useCapture: true }
   );
 
+  // 全局搜索是 Spotlight/command-palette 形态，需要顶置轻浮层、零 padding body 和输入区分隔线，保留裸 Overlay Modal 作为定制例外。
   return (
     <Modal isOpen={isOpen} onOpenChange={handleOpenChange}>
       <Modal.Backdrop isDismissable>

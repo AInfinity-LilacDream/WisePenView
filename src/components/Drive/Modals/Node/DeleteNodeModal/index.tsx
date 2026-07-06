@@ -1,7 +1,7 @@
+import AppModal from '@/components/AppModal';
 import { useDriveService } from '@/domains';
 import { parseErrorMessage } from '@/utils/error';
-import { Modal } from '@/components/Overlay';
-import { Button, toast } from '@heroui/react';
+import { toast } from '@heroui/react';
 import { useRequest } from 'ahooks';
 import type { DeleteNodeModalProps } from './index.type';
 
@@ -57,30 +57,17 @@ function DeleteNodeModal({ isOpen, node, groupId, onOpenChange, onSuccess }: Del
   const confirmText = isGroupResource ? '移除' : '移入最近删除';
 
   return (
-    <Modal isOpen={isOpen && !!node} onOpenChange={onOpenChange}>
-      <Modal.Backdrop isDismissable={!loading}>
-        <Modal.Container size="sm" placement="center">
-          <Modal.Dialog>
-            <Modal.Header>
-              <Modal.Heading>{title}</Modal.Heading>
-            </Modal.Header>
-            <Modal.Body>
-              <div className="rounded-medium bg-danger/10 px-4 py-3 text-sm text-danger">
-                {description}
-              </div>
-            </Modal.Body>
-            <Modal.Footer>
-              <Button variant="secondary" isDisabled={loading} onPress={() => onOpenChange(false)}>
-                取消
-              </Button>
-              <Button variant="danger" isDisabled={loading} onPress={() => void handleConfirm()}>
-                {confirmText}
-              </Button>
-            </Modal.Footer>
-          </Modal.Dialog>
-        </Modal.Container>
-      </Modal.Backdrop>
-    </Modal>
+    <AppModal
+      type="danger"
+      isOpen={isOpen && !!node}
+      onOpenChange={onOpenChange}
+      title={title}
+      description={description}
+      confirmText={confirmText}
+      onConfirm={handleConfirm}
+      isConfirmLoading={loading}
+      isDismissable={!loading}
+    />
   );
 }
 

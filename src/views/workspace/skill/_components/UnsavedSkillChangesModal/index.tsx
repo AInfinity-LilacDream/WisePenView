@@ -1,4 +1,4 @@
-import { Button, Modal } from '@heroui/react';
+import AppModal from '@/components/AppModal';
 
 import styles from './style.module.less';
 
@@ -42,33 +42,23 @@ function UnsavedSkillChangesModal({
   const copy = modalCopy[mode];
 
   return (
-    <Modal
+    <AppModal
+      type="confirm"
       isOpen={isOpen}
       onOpenChange={(open: boolean) => {
         if (!open && !isLoading) onCancel();
       }}
+      title={copy.title}
+      confirmText={copy.confirmText}
+      onCancel={onCancel}
+      onConfirm={onConfirm}
+      isConfirmLoading={isLoading}
+      isDismissable={!isLoading}
+      dialogClassName={styles.dialog}
+      bodyClassName={styles.body}
     >
-      <Modal.Backdrop isDismissable={!isLoading}>
-        <Modal.Container size="sm" placement="center">
-          <Modal.Dialog className={styles.dialog}>
-            <Modal.Header>
-              <Modal.Heading>{copy.title}</Modal.Heading>
-            </Modal.Header>
-            <Modal.Body className={styles.body}>
-              <p className={styles.description}>{copy.description}</p>
-            </Modal.Body>
-            <Modal.Footer>
-              <Button variant="secondary" onPress={onCancel} isDisabled={isLoading}>
-                取消
-              </Button>
-              <Button variant="primary" onPress={onConfirm} isDisabled={isLoading}>
-                {copy.confirmText}
-              </Button>
-            </Modal.Footer>
-          </Modal.Dialog>
-        </Modal.Container>
-      </Modal.Backdrop>
-    </Modal>
+      <p className={styles.description}>{copy.description}</p>
+    </AppModal>
   );
 }
 

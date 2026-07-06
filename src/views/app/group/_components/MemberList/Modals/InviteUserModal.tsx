@@ -1,4 +1,4 @@
-import { Modal } from '@/components/Overlay';
+import AppModal from '@/components/AppModal';
 import { Button, toast } from '@heroui/react';
 import { Copy } from 'lucide-react';
 import { useState } from 'react';
@@ -24,36 +24,29 @@ function InviteUserModal({ isOpen, onOpenChange, inviteCode }: InviteUserModalPr
   };
 
   return (
-    <Modal isOpen={isOpen} onOpenChange={onOpenChange}>
-      <Modal.Backdrop isDismissable>
-        <Modal.Container size="sm" placement="center">
-          <Modal.Dialog>
-            <Modal.Header>
-              <Modal.Heading>邀请用户</Modal.Heading>
-            </Modal.Header>
-            <Modal.Body>
-              <div className={styles.inviteContainer}>
-                <div className={styles.inviteCodeWrap}>
-                  <div className={styles.inviteCode}>{inviteCode ?? '暂无邀请码'}</div>
-                </div>
-                <div className={styles.inviteHint}>
-                  分享此邀请码给其他用户，他们可以使用此码加入小组
-                </div>
-              </div>
-            </Modal.Body>
-            <Modal.Footer>
-              <Button variant="secondary" onPress={handleClose}>
-                关闭
-              </Button>
-              <Button variant="primary" onPress={handleCopy} isDisabled={!inviteCode}>
-                <Copy size={16} aria-hidden="true" />
-                {copied ? '已复制' : '复制'}
-              </Button>
-            </Modal.Footer>
-          </Modal.Dialog>
-        </Modal.Container>
-      </Modal.Backdrop>
-    </Modal>
+    <AppModal
+      isOpen={isOpen}
+      onOpenChange={onOpenChange}
+      title="邀请用户"
+      actions={
+        <>
+          <Button variant="secondary" onPress={handleClose}>
+            关闭
+          </Button>
+          <Button variant="primary" onPress={handleCopy} isDisabled={!inviteCode}>
+            <Copy size={16} aria-hidden="true" />
+            {copied ? '已复制' : '复制'}
+          </Button>
+        </>
+      }
+    >
+      <div className={styles.inviteContainer}>
+        <div className={styles.inviteCodeWrap}>
+          <div className={styles.inviteCode}>{inviteCode ?? '暂无邀请码'}</div>
+        </div>
+        <div className={styles.inviteHint}>分享此邀请码给其他用户，他们可以使用此码加入小组</div>
+      </div>
+    </AppModal>
   );
 }
 
