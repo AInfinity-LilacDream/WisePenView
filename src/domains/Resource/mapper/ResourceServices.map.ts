@@ -5,14 +5,17 @@ import type {
   ChangeResourceActionPermissionApiRequest,
   GlobalSearchApiResponse,
   ListResourceItemsApiRequest,
+  ResourceActionApiList,
   ResourceInteractionInfoApiResponse,
   ResourceItemApiResponse,
   ResourceListPageApiResponse,
 } from '../apis/ResourceApi.type';
 import {
+  coerceResourceActions,
   normalizeSearchResourceType,
   resourceActionsToApiKeys,
   TAG_QUERY_LOGIC_MODE,
+  type ResourceAction,
   type ResourceActionKey,
 } from '../enum';
 import type {
@@ -30,10 +33,27 @@ type ResourceItemNumericField = 'size' | 'readCount' | 'likeCount' | 'scoreAvg';
 type ResourceItemApiOwnerInfo = ResourceItemApiResponse['ownerInfo'];
 type ResourceItemRawOwnerInfo = ResourceItem['ownerInfo'] | ResourceItemApiOwnerInfo;
 type ResourceItemRawTagBinds = ResourceItem['tagBinds'] | ResourceItemApiResponse['tagBinds'];
+type ResourceActionsBySubject = Record<string, unknown[] | null | undefined>;
+type ResourceItemRawActionFields = {
+  currentActions?: ResourceAction[] | ResourceActionApiList | null;
+  overrideGrantedActions?: Record<
+    string,
+    ResourceAction[] | ResourceActionApiList | null | undefined
+  > | null;
+  specifiedUsersGrantedActions?: Record<
+    string,
+    ResourceAction[] | ResourceActionApiList | null | undefined
+  > | null;
+};
 
 type NormalizableResourceItem = Omit<
   Partial<ResourceItem>,
-  ResourceItemNumericField | 'ownerInfo' | 'tagBinds'
+  | ResourceItemNumericField
+  | 'ownerInfo'
+  | 'tagBinds'
+  | 'currentActions'
+  | 'overrideGrantedActions'
+  | 'specifiedUsersGrantedActions'
 > &
   Omit<Partial<ResourceItemApiResponse>, ResourceItemNumericField | 'ownerInfo' | 'tagBinds'> & {
     size?: number;
@@ -43,7 +63,7 @@ type NormalizableResourceItem = Omit<
     ownerInfo?: ResourceItemRawOwnerInfo;
     tagBinds?: ResourceItemRawTagBinds;
     resourceInteractionInfo?: ResourceInteractionInfoApiResponse;
-  };
+  } & ResourceItemRawActionFields;
 
 type NormalizedResourceItem<T extends NormalizableResourceItem> = Omit<
   T,
@@ -83,6 +103,14 @@ export function normalizeResourceItem(
     const scoreTotal = interactionInfo.scoreTotal ?? 0;
     next.scoreAvg = scoreCount > 0 ? scoreTotal / scoreCount : null;
   }
+
+  next.currentActions = coerceResourceActions(raw.currentActions as unknown[] | null | undefined);
+  next.overrideGrantedActions = normalizeResourceActionMap(
+    raw.overrideGrantedActions as ResourceActionsBySubject | null | undefined
+  );
+  next.specifiedUsersGrantedActions = normalizeResourceActionMap(
+    raw.specifiedUsersGrantedActions as ResourceActionsBySubject | null | undefined
+  );
 
   return next;
 }
@@ -216,16 +244,48 @@ const mapSpecifiedUsersGrantedActionsToApi = (
   return byUserId;
 };
 
+/** groupId → ResourceAction[] 转为 API 请求的 groupId → 枚举 key[]；null 表示清空整组覆盖配置。 */
+const mapOverrideGrantedActionsToApi = (
+  value: UpdateResourceActionPermissionRequest['overrideGrantedActions']
+): ChangeResourceActionPermissionApiRequest['overrideGrantedActions'] => {
+  if (value === null) {
+    return null;
+  }
+  if (value === undefined) {
+    return undefined;
+  }
+
+  const byGroupId: Record<string, ResourceActionKey[] | null> = {};
+  for (const groupId in value) {
+    const actions = value[groupId];
+    byGroupId[groupId] = actions === null ? null : (resourceActionsToApiKeys(actions) ?? []);
+  }
+  return byGroupId;
+};
+
 const mapChangeResourceActionPermissionRequest = (
   params: UpdateResourceActionPermissionRequest
 ): ChangeResourceActionPermissionApiRequest => {
   return {
     resourceId: params.resourceId,
-    overrideGrantedActions: resourceActionsToApiKeys(params.overrideGrantedActions),
+    overrideGrantedActions: mapOverrideGrantedActionsToApi(params.overrideGrantedActions),
     specifiedUsersGrantedActions: mapSpecifiedUsersGrantedActionsToApi(
       params.specifiedUsersGrantedActions
     ),
   };
+};
+
+const normalizeResourceActionMap = (
+  value?: ResourceActionsBySubject | null
+): Record<string, ResourceAction[]> | null => {
+  if (value == null) {
+    return null;
+  }
+  const entries = Object.entries(value).map(([subjectId, actions]) => [
+    subjectId,
+    coerceResourceActions(actions),
+  ]);
+  return entries.length > 0 ? Object.fromEntries(entries) : null;
 };
 
 /** 互动记录 API 响应 → 点赞状态；null（未操作）归一化为 false */

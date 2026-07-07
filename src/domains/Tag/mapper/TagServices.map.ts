@@ -5,9 +5,8 @@ import type {
   GetTagTreeApiResponse,
 } from '@/domains/Resource/apis/ResourceApi.type';
 import {
-  normalizeResourceActions,
+  coerceResourceActions,
   resourceActionsToApiKeys,
-  TAG_RESOURCE_ACTION,
   TAG_VISIBILITY_MODE,
   type TagResourceAction,
   type TagVisibilityModeString,
@@ -29,10 +28,7 @@ const isTagVisibilityModeString = (value: unknown): value is TagVisibilityModeSt
 
 const mapGrantedActionsFromApi = (actions: unknown): TagResourceAction[] | undefined => {
   if (!Array.isArray(actions)) return undefined;
-  const normalized = actions
-    .map((item) => Number(item))
-    .filter((item): item is TagResourceAction => TAG_RESOURCE_ACTION.getKey(item) != null);
-  return normalizeResourceActions(normalized);
+  return coerceResourceActions(actions);
 };
 
 const mapTagTreeNodeFromApi = (node: GetTagTreeApiResponse[number]): TagTreeNode => {
@@ -45,7 +41,7 @@ const mapTagTreeNodeFromApi = (node: GetTagTreeApiResponse[number]): TagTreeNode
     ...node,
     // fallback：兼容后端返回未约束的 visibilityMode 字符串
     visibilityMode: normalizedVisibilityMode,
-    // fallback：兼容后端返回 number[] 类型的 grantedActions
+    // fallback：兼容后端返回枚举名字符串或历史 number[] 类型的 grantedActions
     grantedActions: mapGrantedActionsFromApi(node.grantedActions),
     children: node.children?.map(mapTagTreeNodeFromApi),
   };

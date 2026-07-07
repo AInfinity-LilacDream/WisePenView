@@ -106,7 +106,7 @@ export interface MountResourcesToGroupTagRequest {
 /** 更新单个资源的动作权限配置 */
 export interface UpdateResourceActionPermissionRequest {
   resourceId: string;
-  overrideGrantedActions?: ResourceAction[] | null;
+  overrideGrantedActions?: Record<string, ResourceAction[] | null> | null;
   specifiedUsersGrantedActions?: Record<string, ResourceAction[]> | null;
 }
 

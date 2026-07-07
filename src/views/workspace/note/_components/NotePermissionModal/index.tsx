@@ -37,6 +37,28 @@ const buildSpecifiedUsersGrantedActions = (
   }, {});
 };
 
+const pickFirstOverridePermission = (
+  overrideGrantedActions?: Record<string, ResourceAction[]> | null
+): { groupId: string; actions: ResourceAction[] } | null => {
+  const firstEntry = Object.entries(overrideGrantedActions ?? {})[0];
+  if (!firstEntry) return null;
+  const [groupId, actions] = firstEntry;
+  return {
+    groupId,
+    actions: maskNoteConfigurableResourceActions(coerceResourceActions(actions as unknown[])),
+  };
+};
+
+const buildOverrideGrantedActions = (
+  groupId: string | undefined,
+  actions: ResourceAction[]
+): Record<string, ResourceAction[]> | undefined => {
+  if (!groupId) return undefined;
+  return {
+    [groupId]: maskNoteConfigurableResourceActions(normalizeResourceActions(actions)),
+  };
+};
+
 const formatActionLabels = (actions: ResourceAction[]) => {
   if (actions.length === 0) return '无权限';
   return actions.map((action) => RESOURCE_ACTION.labels[action] ?? String(action)).join('、');
@@ -70,13 +92,12 @@ function NotePermissionModal({
     },
   });
 
-  const loadedOverrideGrantedActions = useMemo(
-    () =>
-      maskNoteConfigurableResourceActions(
-        coerceResourceActions(permissionConfig?.overrideGrantedActions as unknown[] | undefined)
-      ),
+  const loadedOverridePermission = useMemo(
+    () => pickFirstOverridePermission(permissionConfig?.overrideGrantedActions),
     [permissionConfig]
   );
+  const loadedOverrideGroupId = loadedOverridePermission?.groupId;
+  const loadedOverrideGrantedActions = loadedOverridePermission?.actions ?? [];
 
   const loadedSpecifiedUserRows = useMemo(
     () => buildSpecifiedUserRows(permissionConfig?.specifiedUsersGrantedActions),
@@ -106,8 +127,9 @@ function NotePermissionModal({
     async () =>
       resourceService.updateResourceActionPermission({
         resourceId,
-        overrideGrantedActions: maskNoteConfigurableResourceActions(
-          normalizeResourceActions(displayOverrideGrantedActions)
+        overrideGrantedActions: buildOverrideGrantedActions(
+          loadedOverrideGroupId,
+          displayOverrideGrantedActions
         ),
         specifiedUsersGrantedActions: buildSpecifiedUsersGrantedActions(displaySpecifiedUserRows),
       }),

@@ -1,5 +1,6 @@
 import {
   actionsToPermissionCode,
+  coerceResourceActions,
   getResourceActionImpliedActions,
   getResourceActionImpliedMask,
   hasResourceAction,
@@ -43,6 +44,7 @@ export type TagResourceActionKey = EnumKey<typeof TAG_RESOURCE_ACTION>;
 
 export {
   actionsToPermissionCode,
+  coerceResourceActions,
   getResourceActionImpliedActions,
   getResourceActionImpliedMask,
   hasResourceAction,

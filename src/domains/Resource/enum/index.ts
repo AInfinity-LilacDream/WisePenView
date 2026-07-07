@@ -52,9 +52,13 @@ export const SEARCH_RESOURCE_TYPE = createEnum([
 export const RESOURCE_ACTION = createEnum([
   { value: 1, key: 'DISCOVER', label: '列表可见' },
   { value: 2, key: 'VIEW', label: '在线阅读' },
-  { value: 4, key: 'EDIT', label: '协同编辑' },
-  { value: 8, key: 'DOWNLOAD_WATERMARK', label: '导出/下载带水印' },
-  { value: 16, key: 'DOWNLOAD_ORIGINAL', label: '下载源文件' },
+  { value: 4, key: 'LOAD', label: 'AI 装载' },
+  { value: 8, key: 'EDIT', label: '协同编辑' },
+  { value: 16, key: 'INLINE_COMMENT', label: '行内评论' },
+  { value: 32, key: 'DOWNLOAD_WATERMARK', label: '导出/下载带水印' },
+  { value: 64, key: 'DOWNLOAD_ORIGINAL', label: '下载源文件' },
+  { value: 128, key: 'FORK', label: '复制资源' },
+  { value: 256, key: 'COMMENT', label: '评论' },
 ] as const);
 
 export type TagQueryLogicMode = EnumValue<typeof TAG_QUERY_LOGIC_MODE>;
@@ -88,7 +92,10 @@ export const resourceActionsToApiKeys = (
 const RESOURCE_ACTION_IMPLIED_MASK: Record<ResourceAction, number> = {
   [RESOURCE_ACTION.DISCOVER]: RESOURCE_ACTION.DISCOVER,
   [RESOURCE_ACTION.VIEW]: RESOURCE_ACTION.VIEW | RESOURCE_ACTION.DISCOVER,
+  [RESOURCE_ACTION.LOAD]: RESOURCE_ACTION.LOAD | RESOURCE_ACTION.VIEW | RESOURCE_ACTION.DISCOVER,
   [RESOURCE_ACTION.EDIT]: RESOURCE_ACTION.EDIT | RESOURCE_ACTION.VIEW | RESOURCE_ACTION.DISCOVER,
+  [RESOURCE_ACTION.INLINE_COMMENT]:
+    RESOURCE_ACTION.INLINE_COMMENT | RESOURCE_ACTION.VIEW | RESOURCE_ACTION.DISCOVER,
   [RESOURCE_ACTION.DOWNLOAD_WATERMARK]:
     RESOURCE_ACTION.DOWNLOAD_WATERMARK | RESOURCE_ACTION.VIEW | RESOURCE_ACTION.DISCOVER,
   [RESOURCE_ACTION.DOWNLOAD_ORIGINAL]:
@@ -96,6 +103,13 @@ const RESOURCE_ACTION_IMPLIED_MASK: Record<ResourceAction, number> = {
     RESOURCE_ACTION.DOWNLOAD_WATERMARK |
     RESOURCE_ACTION.VIEW |
     RESOURCE_ACTION.DISCOVER,
+  [RESOURCE_ACTION.FORK]:
+    RESOURCE_ACTION.FORK |
+    RESOURCE_ACTION.DOWNLOAD_WATERMARK |
+    RESOURCE_ACTION.VIEW |
+    RESOURCE_ACTION.DISCOVER,
+  [RESOURCE_ACTION.COMMENT]:
+    RESOURCE_ACTION.COMMENT | RESOURCE_ACTION.VIEW | RESOURCE_ACTION.DISCOVER,
 };
 
 const RESOURCE_ACTION_ORDER = RESOURCE_ACTION.options.map((item) => item.value as ResourceAction);
@@ -137,7 +151,7 @@ const coerceResourceActionItem = (item: unknown): ResourceAction | null => {
 
 /** 解析后端 List<ResourceAction>（JSON 常为枚举名字符串）并归一化隐含权限 */
 export const coerceResourceActions = (raw?: unknown[] | null): ResourceAction[] => {
-  if (!raw?.length) return [];
+  if (!Array.isArray(raw) || raw.length === 0) return [];
   const resolved = raw
     .map(coerceResourceActionItem)
     .filter((action): action is ResourceAction => action != null);
@@ -154,8 +168,9 @@ export const resourceActionsInclude = (
   action: ResourceAction
 ): boolean => coerceResourceActions(actions as unknown[] | null | undefined).includes(action);
 
-/** Note 不参与下载类权限的配置与展示 */
+/** Note 不参与 AI 装载和下载类权限的配置与展示 */
 const NOTE_NON_CONFIGURABLE_RESOURCE_ACTIONS = new Set<ResourceAction>([
+  RESOURCE_ACTION.LOAD,
   RESOURCE_ACTION.DOWNLOAD_WATERMARK,
   RESOURCE_ACTION.DOWNLOAD_ORIGINAL,
 ]);
@@ -163,13 +178,13 @@ const NOTE_NON_CONFIGURABLE_RESOURCE_ACTIONS = new Set<ResourceAction>([
 export const isNoteConfigurableResourceAction = (action: ResourceAction): boolean =>
   !NOTE_NON_CONFIGURABLE_RESOURCE_ACTIONS.has(action);
 
-/** 去掉下载类动作，用于 Note 权限配置读写 */
+/** 去掉 Note 不适用动作，用于 Note 权限配置读写 */
 export const maskNoteConfigurableResourceActions = (
   actions?: ResourceAction[] | null
 ): ResourceAction[] =>
   normalizeResourceActions(actions ?? undefined).filter(isNoteConfigurableResourceAction);
 
-/** Note 权限弹窗可选项（不含导出/下载） */
+/** Note 权限弹窗可选项（不含 AI 装载和导出/下载） */
 export const NOTE_CONFIGURABLE_RESOURCE_ACTION_OPTIONS = RESOURCE_ACTION.options.filter((item) =>
   isNoteConfigurableResourceAction(item.value as ResourceAction)
 );

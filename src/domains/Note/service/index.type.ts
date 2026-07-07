@@ -50,7 +50,7 @@ export interface NoteInfoDisplayData {
 
 export interface NotePermissionConfig {
   resourceId: string;
-  overrideGrantedActions?: ResourceAction[] | null;
+  overrideGrantedActions?: Record<string, ResourceAction[]> | null;
   specifiedUsersGrantedActions?: Record<string, ResourceAction[]> | null;
 }
 
