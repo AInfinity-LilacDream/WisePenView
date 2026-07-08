@@ -1,8 +1,9 @@
+import type { PageR } from '@/apis/api.type';
 import type { ResourceActionKey, ResourceItem } from '@/domains/Resource';
 import type { AccessControlScope, TagResourceActionKey } from '@/domains/Tag';
 import type { UserDisplayBaseApiResponse } from '@/domains/User/apis/UserApi.type';
 
-export type ResourceActionApiValue = ResourceActionKey | number | `${number}`;
+type ResourceActionApiValue = ResourceActionKey | number | `${number}`;
 export type ResourceActionApiList = ResourceActionApiValue[];
 
 export interface ResourceInteractionInfoApiResponse {
@@ -14,7 +15,7 @@ export interface ResourceInteractionInfoApiResponse {
   commentCount?: number;
 }
 
-export interface ResourceTagInfoApiResponse {
+interface ResourceTagInfoApiResponse {
   tagName?: string;
   tagDesc?: string;
   tagIcon?: string;
@@ -23,13 +24,13 @@ export interface ResourceTagInfoApiResponse {
   isPath?: boolean;
 }
 
-export interface ResourceTagBindApiResponse {
+interface ResourceTagBindApiResponse {
   groupId?: string;
   primaryTagId?: string;
   tags?: Record<string, ResourceTagInfoApiResponse | null | undefined>;
 }
 
-export type ResourceGroupTypeApiValue = 1 | 2 | 3 | '1' | '2' | '3';
+type ResourceGroupTypeApiValue = 1 | 2 | 3 | '1' | '2' | '3';
 
 export interface ResourceGroupDisplayBaseApiResponse {
   groupName?: string | null;
@@ -75,13 +76,7 @@ export interface ResourceItemApiResponse extends Omit<
   specifiedUsersGrantedActions?: ResourceSpecifiedUserGrantedActionsApiResponse[] | null;
 }
 
-export interface ResourceListPageApiResponse {
-  list: ResourceItemApiResponse[];
-  total: number;
-  page: number;
-  size: number;
-  totalPage: number;
-}
+export type ResourceListPageApiResponse = PageR<ResourceItemApiResponse>;
 
 export interface ListResourceItemsApiRequest {
   page: number;
@@ -123,19 +118,15 @@ export interface GlobalSearchApiRequest {
   size: number;
 }
 
-export interface GlobalSearchApiResponse {
-  list: Array<{
-    resourceId: string;
-    resourceType: string;
-    resourceName: string;
-    highlightContent: string | null;
-    updateTime: string;
-  }>;
-  total: number;
-  page: number;
-  size: number;
-  totalPage: number;
+export interface GlobalSearchItemApiResponse {
+  resourceId: string;
+  resourceType: string;
+  resourceName: string;
+  highlightContent: string | null;
+  updateTime: string;
 }
+
+export type GlobalSearchApiResponse = PageR<GlobalSearchItemApiResponse>;
 
 export interface AddTagApiRequest {
   groupId?: string;

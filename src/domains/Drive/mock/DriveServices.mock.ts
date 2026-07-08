@@ -5,12 +5,10 @@ import { buildDriveNodeScope, decodeRootNodeScope } from '../mapper/DriveService
 import type {
   CreateDriveServiceOptions,
   CreateFolderParams,
-  GetDriveTreeParams,
   GetNodePathParams,
   GetRootNodeParams,
   IDriveService,
   ListNodeChildrenParams,
-  MoveNodeParams,
   MoveToFolderParams,
   RemoveNodeParams,
   RenameNodeParams,
@@ -314,28 +312,6 @@ function createDriveServiceMock(opts?: CreateDriveServiceOptions): IDriveService
     removeNode,
     renameNode,
     createFolder,
-    async getDriveTree(params: GetDriveTreeParams) {
-      const scope = decodeRootNodeScope(params.rootId, params.groupId);
-      const root = scope.type === 'group' ? ensureGroupRoot(scope.rootId) : nodes.get(ROOT_ID);
-      if (!root || root.type !== 'root') {
-        throw createClientError(FRONTEND_CLIENT_ERROR.DRIVE_NODE_NOT_FOUND, {
-          nodeId: params.rootId,
-        });
-      }
-      return root;
-    },
-    loadNodeChildren: listNodeChildren,
-    getPathById: getNodePath,
-    moveNode(params: MoveNodeParams) {
-      return moveToFolder({
-        nodeId: params.nodeId,
-        targetFolderNodeId: params.newParentId,
-        groupId: params.groupId,
-      });
-    },
-    async createNode(params) {
-      await createFolder(params);
-    },
   };
 }
 

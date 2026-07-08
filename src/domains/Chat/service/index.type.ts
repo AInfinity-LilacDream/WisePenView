@@ -86,9 +86,7 @@ export interface GetChatInputCapabilityOptionsParams {
   agent: ChatAgentOption | null;
 }
 
-export type GetChatInputCapabilityOptionsRequest = GetChatInputCapabilityOptionsParams;
-
-export type ChatDocumentPickerScopeType = 'personal' | 'group';
+type ChatDocumentPickerScopeType = 'personal' | 'group';
 
 export interface ChatDocumentPickerScope {
   scopeKey: string;
@@ -98,7 +96,7 @@ export interface ChatDocumentPickerScope {
   groupId?: string;
 }
 
-export type ChatDocumentPickerNodeType = 'root' | 'folder' | 'resource' | 'link';
+type ChatDocumentPickerNodeType = 'root' | 'folder' | 'resource' | 'link';
 
 export interface ChatDocumentPickerNode {
   nodeId: string;

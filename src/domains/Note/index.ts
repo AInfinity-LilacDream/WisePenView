@@ -4,7 +4,6 @@ export type { AiDiffDisplayMode } from './enum';
 export type {
   CreateNoteRequest,
   CreateNoteResponse,
-  DeleteNoteRequest,
   DrawIoLatestSnapshotData,
   ForkNoteRequest,
   ForkNoteResponse,

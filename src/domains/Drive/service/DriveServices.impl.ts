@@ -11,7 +11,6 @@ import {
   buildDriveRootNode,
   decodeNodeId,
   decodeRootNodeScope,
-  DRIVE_ROOT_ID,
   encodeNodeId,
   encodeRootNodeId,
   isContainerNode,
@@ -25,7 +24,7 @@ const DEFAULT_PAGE_SIZE = 50;
 const TRASH_TAG_NAME = '.Trash';
 const HIDDEN_TAG_PREFIX = '.';
 
-export interface DriveServicesDeps {
+interface DriveServicesDeps {
   tagService: ITagService;
   resourceService: IResourceService;
 }
@@ -527,23 +526,5 @@ export const createDriveServices = (
     removeNode,
     renameNode,
     createFolder,
-    getDriveTree: async ({ rootId, groupId }) => {
-      const decodedRoot = decodeNodeId(rootId);
-      const normalizedGroupId =
-        normalizeTagGroupId(groupId) ??
-        (decodedRoot.kind === 'root' ? normalizeTagGroupId(decodedRoot.groupId) : undefined);
-      const expectedRootId = encodeRootNodeId(normalizedGroupId);
-      if (rootId !== DRIVE_ROOT_ID && rootId !== expectedRootId) {
-        throw createClientError(FRONTEND_CLIENT_ERROR.DRIVE_UNSUPPORTED_ROOT, { rootId });
-      }
-      return getRootNode({ groupId: normalizedGroupId });
-    },
-    loadNodeChildren: listNodeChildren,
-    getPathById: getNodePath,
-    moveNode: ({ nodeId, newParentId, groupId }) =>
-      moveToFolder({ nodeId, targetFolderNodeId: newParentId, groupId }),
-    createNode: async ({ parentId, name, groupId }) => {
-      await createFolder({ parentId, name, groupId });
-    },
   };
 };

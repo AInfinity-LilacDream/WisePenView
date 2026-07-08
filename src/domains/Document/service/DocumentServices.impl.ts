@@ -17,7 +17,7 @@ import type {
 } from './index.type';
 import { DOCUMENT_ALLOWED_EXTENSIONS } from './index.type';
 
-export interface DocumentServicesDeps {
+interface DocumentServicesDeps {
   resourceService: IResourceService;
 }
 

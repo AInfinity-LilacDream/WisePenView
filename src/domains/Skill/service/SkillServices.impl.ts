@@ -6,7 +6,7 @@ import { SkillApi } from '../apis/SkillApi';
 import { SkillServicesMap } from '../mapper/SkillServices.map';
 import type { ISkillService, UploadSkillAssetRequest } from './index.type';
 
-export interface SkillServicesDeps {
+interface SkillServicesDeps {
   resourceService: IResourceService;
   userService: IUserService;
 }

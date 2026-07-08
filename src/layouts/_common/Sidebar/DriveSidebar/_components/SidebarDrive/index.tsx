@@ -1,3 +1,9 @@
+import {
+  buildDriveTreeData,
+  replaceTreeNodeChildren,
+} from '@/components/Drive/DriveNav/buildTreeData';
+import { resolveDriveScope } from '@/components/Drive/common/driveComponentModel';
+import { useDriveTreeChildren } from '@/components/Drive/common/useDriveTreeChildren';
 import { Empty, Spin } from '@/components/Feedback';
 import type { DataNode } from '@/components/Tree';
 import Tree from '@/components/Tree';
@@ -9,9 +15,6 @@ import { useRequest } from 'ahooks';
 import { ChevronDown } from 'lucide-react';
 import { useMemo, useRef, useState } from 'react';
 
-import { resolveDriveScope } from '../common/driveComponentModel';
-import { useDriveTreeChildren } from '../common/useDriveTreeChildren';
-import { buildDriveTreeData, replaceTreeNodeChildren } from '../DriveNav/buildTreeData';
 import styles from './style.module.less';
 
 const RENDERABLE_TYPES = new Set<'root' | 'folder' | 'resource' | 'link'>([

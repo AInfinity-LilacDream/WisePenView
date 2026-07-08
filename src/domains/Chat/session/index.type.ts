@@ -11,14 +11,14 @@ export interface ChatWorkspaceContext {
   editorType?: string;
 }
 
-export interface ChatSelectedResourceContext {
+interface ChatSelectedResourceContext {
   resourceId: string;
   resourceName: string;
   resourceType: string;
   enabled: boolean;
 }
 
-export interface ChatUploadedAttachmentContext {
+interface ChatUploadedAttachmentContext {
   attachmentId: string;
   filename: string;
   enabled: boolean;

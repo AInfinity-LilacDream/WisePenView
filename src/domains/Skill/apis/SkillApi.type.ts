@@ -10,8 +10,8 @@ export const AssetResourceTypeEnum = {
 export type AssetResourceTypeEnum =
   (typeof AssetResourceTypeEnum)[keyof typeof AssetResourceTypeEnum];
 
-export type SkillUploadStatus = 'UPLOADING' | 'AVAILABLE';
-export type SkillVersionApiStatus = 'DRAFT' | 'PUBLISHED';
+type SkillUploadStatus = 'UPLOADING' | 'AVAILABLE';
+type SkillVersionApiStatus = 'DRAFT' | 'PUBLISHED';
 
 export interface SkillAssetApiInfo {
   id?: string;

@@ -12,7 +12,7 @@ export interface UserDisplayBaseApiResponse {
   identityType?: UserIdentityTypeApiValue | null;
 }
 
-export interface GetUserInfoApiResponseUserInfo {
+interface GetUserInfoApiResponseUserInfo {
   nickname: string | null;
   realName: string | null;
   avatar: string | null;
@@ -25,7 +25,7 @@ export interface GetUserInfoApiResponseUserInfo {
   status: UserStatusApiValue;
 }
 
-export interface GetUserInfoApiResponseUserProfile {
+interface GetUserInfoApiResponseUserProfile {
   sex: UserSexApiValue;
   university: string | null;
   college: string | null;

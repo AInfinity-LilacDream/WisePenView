@@ -1,4 +1,3 @@
-import type { EnumValue } from '@/utils/enum';
 import { createEnum } from '@/utils/enum';
 
 /** 文档处理状态（与后端 syncPendingDocStatus 返回的 status 字符串对齐） */
@@ -13,10 +12,8 @@ export const DOCUMENT_PROCESS = createEnum([
   { value: 'FAILED', key: 'FAILED', label: '失败' },
 ] as const);
 
-export type DocumentProcessStatus = EnumValue<typeof DOCUMENT_PROCESS>;
-
 // 终态集合
-export const DOCUMENT_TERMINAL_STATUS = [
+const DOCUMENT_TERMINAL_STATUS = [
   DOCUMENT_PROCESS.READY,
   DOCUMENT_PROCESS.TRANSFER_TIMEOUT,
   DOCUMENT_PROCESS.REGISTERING_RES_TIMEOUT,
@@ -25,7 +22,7 @@ export const DOCUMENT_TERMINAL_STATUS = [
 
 const DOCUMENT_TERMINAL_STATUS_SET = new Set<string>(DOCUMENT_TERMINAL_STATUS);
 
-export const DOCUMENT_RETRYABLE_STATUS = [
+const DOCUMENT_RETRYABLE_STATUS = [
   DOCUMENT_PROCESS.TRANSFER_TIMEOUT,
   DOCUMENT_PROCESS.REGISTERING_RES_TIMEOUT,
   DOCUMENT_PROCESS.FAILED,
@@ -33,7 +30,7 @@ export const DOCUMENT_RETRYABLE_STATUS = [
 
 const DOCUMENT_RETRYABLE_STATUS_SET = new Set<string>(DOCUMENT_RETRYABLE_STATUS);
 
-export const DOCUMENT_CANCELABLE_STATUS = [
+const DOCUMENT_CANCELABLE_STATUS = [
   DOCUMENT_PROCESS.UPLOADING,
   DOCUMENT_PROCESS.UPLOADED,
   DOCUMENT_PROCESS.REGISTERING_RES,

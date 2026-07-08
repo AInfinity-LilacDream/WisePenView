@@ -9,12 +9,9 @@ export interface SkillScopeTreeGroup {
   skills: SkillSummary[];
 }
 
-export interface OtherSkillTreeGroup extends SkillScopeTreeGroup {
+interface OtherSkillTreeGroup extends SkillScopeTreeGroup {
   sourceAgent: ChatAgentOption | null;
 }
-
-export const getSkillScopeLabel = (skill: SkillSummary): string =>
-  skill.scopeType === 'GROUP' ? skill.groupName || '小组' : '个人';
 
 const getSkillTreeGroupKey = (agent: ChatAgentOption | null | undefined): string =>
   !agent || agent.agentType === 'PERSONAL' ? 'personal' : `group-${agent.groupId ?? agent.agentId}`;

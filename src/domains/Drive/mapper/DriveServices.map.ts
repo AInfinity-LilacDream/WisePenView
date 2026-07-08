@@ -15,7 +15,7 @@ const DRIVE_GROUP_ROOT_PREFIX = 'drive-root:group:';
 
 type EncodedNodeKind = 'folder' | 'resource' | 'link' | 'loading';
 
-export type DecodedNodeId =
+type DecodedNodeId =
   | { kind: 'root'; groupId?: string }
   | { kind: 'folder'; tagId: string }
   | { kind: 'resource'; resourceId: string; parentTagId: string }

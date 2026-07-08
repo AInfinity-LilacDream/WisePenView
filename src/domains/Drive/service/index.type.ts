@@ -14,16 +14,6 @@ export interface IDriveService {
   removeNode(params: RemoveNodeParams): Promise<void>;
   renameNode(params: RenameNodeParams): Promise<void>;
   createFolder(params: CreateFolderParams): Promise<string>;
-  /** @deprecated 请使用 getRootNode */
-  getDriveTree(params: GetDriveTreeParams): Promise<DriveNode>;
-  /** @deprecated 请使用 listNodeChildren */
-  loadNodeChildren(params: LoadNodeChildrenParams): Promise<DriveNode[]>;
-  /** @deprecated 请使用 getNodePath */
-  getPathById(params: GetPathByIdParams): Promise<DriveNode[]>;
-  /** @deprecated 请使用 moveToFolder */
-  moveNode(params: MoveNodeParams): Promise<void>;
-  /** @deprecated 请使用 createFolder */
-  createNode(params: CreateNodeParams): Promise<void>;
 }
 
 export interface GetRootNodeParams {
@@ -31,17 +21,7 @@ export interface GetRootNodeParams {
   groupId?: string;
 }
 
-export interface GetDriveTreeParams {
-  groupId?: string;
-  rootId: string;
-}
-
 export interface ListNodeChildrenParams {
-  nodeId: string;
-  groupId?: string;
-}
-
-export interface LoadNodeChildrenParams {
   nodeId: string;
   groupId?: string;
 }
@@ -51,20 +31,9 @@ export interface GetNodePathParams {
   groupId?: string;
 }
 
-export interface GetPathByIdParams {
-  nodeId: string;
-  groupId?: string;
-}
-
 export interface MoveToFolderParams {
   nodeId: string;
   targetFolderNodeId: string;
-  groupId?: string;
-}
-
-export interface MoveNodeParams {
-  nodeId: string;
-  newParentId: string;
   groupId?: string;
 }
 
@@ -83,10 +52,6 @@ export interface CreateFolderParams {
   parentId: string;
   name: string;
   groupId?: string;
-}
-
-export interface CreateNodeParams extends CreateFolderParams {
-  type: 'folder';
 }
 
 /** Service 工厂选项：默认 pageSize = 50 */

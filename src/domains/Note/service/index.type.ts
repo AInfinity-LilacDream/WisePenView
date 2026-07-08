@@ -12,8 +12,6 @@ export interface INoteService {
   syncTitle(params: SyncTitleRequest): Promise<void>;
   /** 新建 / 从源文档派生 Note；成功时返回新资源 ID */
   createNote(params: CreateNoteRequest): Promise<CreateNoteResponse>;
-  /** 删除 Note（后端会做权限校验并移除资源） */
-  deleteNote(params: DeleteNoteRequest): Promise<void>;
   /** 获取可直接渲染的 Note 信息（作者展示 + 编辑时间文案） */
   getNoteInfoDisplay(params: GetNoteInfoRequest): Promise<NoteInfoDisplayData>;
   /** 获取 DRAWIO 最新完整快照 */
@@ -58,10 +56,6 @@ export interface CreateNoteRequest {
 /** 与调用方约定：成功时携带新资源 ID（后端 doc_id 由实现层映射） */
 export interface CreateNoteResponse {
   resourceId?: string;
-}
-
-export interface DeleteNoteRequest {
-  resourceIds: string[];
 }
 
 export interface SyncTitleRequest {

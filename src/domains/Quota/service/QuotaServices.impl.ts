@@ -3,7 +3,7 @@ import type { GroupQuotaInfo, UserGroupQuota } from '@/domains/Wallet';
 import { QuotaServicesMap } from '../mapper/QuotaServices.map';
 import type { IQuotaService, SetGroupQuotaRequest } from './index.type';
 
-/** GET /group/member/getAllMyGroupTokenInfo → PageResult<GroupMemberTokenDetailResponse> */
+/** GET /group/member/getAllMyGroupTokenInfo → PageR<GroupMemberTokenDetailResponse> */
 const fetchUserGroupQuotas = async (
   page: number,
   pageSize: number

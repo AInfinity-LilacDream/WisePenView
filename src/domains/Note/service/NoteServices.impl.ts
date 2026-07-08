@@ -5,7 +5,6 @@ import { NoteServicesMap } from '../mapper/NoteServices.map';
 import type {
   CreateNoteRequest,
   CreateNoteResponse,
-  DeleteNoteRequest,
   DrawIoLatestSnapshotData,
   ForkNoteRequest,
   ForkNoteResponse,
@@ -19,7 +18,7 @@ import type {
   SyncTitleRequest,
 } from './index.type';
 
-export interface NoteServicesDeps {
+interface NoteServicesDeps {
   resourceService: IResourceService;
 }
 
@@ -66,14 +65,9 @@ export const createNoteServices = (deps: NoteServicesDeps): INoteService => {
     await resourceService.renameResource(payload);
   };
 
-  const deleteNote = async (params: DeleteNoteRequest): Promise<void> => {
-    await resourceService.removeResources({ resourceIds: params.resourceIds });
-  };
-
   return {
     syncTitle,
     createNote,
-    deleteNote,
     getNoteInfoDisplay,
     getDrawIoLatestSnapshot,
     saveDrawIoSnapshot,

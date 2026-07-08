@@ -5,6 +5,15 @@ export interface ApiResponse<T = unknown> {
   data: T;
 }
 
+/** 与 Java 后端 PageR<T> 一致的标准分页响应体 */
+export interface PageR<T> {
+  list: T[];
+  total: number;
+  page: number;
+  size: number;
+  totalPage: number;
+}
+
 /** HTTP 4xx/5xx 时响应体可能携带的业务错误字段 */
 export interface ApiErrorBody {
   code?: number;

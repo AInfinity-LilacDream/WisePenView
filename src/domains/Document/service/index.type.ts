@@ -15,11 +15,6 @@ export const DOCUMENT_ALLOWED_EXTENSIONS = [
 
 export type DocumentAllowedExtension = (typeof DOCUMENT_ALLOWED_EXTENSIONS)[number];
 
-/** 文档资源类型（与后端 ResourceType 枚举序列化值对齐） */
-export const DOCUMENT_RESOURCE_TYPES = [...DOCUMENT_ALLOWED_EXTENSIONS, 'unknown'] as const;
-
-export type DocumentResourceType = (typeof DOCUMENT_RESOURCE_TYPES)[number];
-
 /** `POST /document/initDocUpload` 请求体，与后端 DocumentUploadInitRequest 一致 */
 export interface DocumentUploadInitRequestBody {
   filename: string;
@@ -37,14 +32,14 @@ export interface DocumentUploadInitResponse {
   flashUploaded: boolean;
 }
 
-export interface DocumentUploadMeta {
+interface DocumentUploadMeta {
   documentName: string;
   uploaderId: string | null;
   fileType: string;
   size: number;
 }
 
-export interface PendingDocumentStatus {
+interface PendingDocumentStatus {
   status: string;
   errorMessage?: string | null;
 }

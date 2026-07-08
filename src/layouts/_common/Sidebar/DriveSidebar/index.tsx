@@ -1,9 +1,9 @@
-import SidebarDrive from '@/components/Drive/SidebarDrive';
 import clsx from 'clsx';
 import { ChevronLeft, IndentDecrease, IndentIncrease } from 'lucide-react';
 import { memo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import UserProfile from '../_common/UserProfile';
+import SidebarDrive from './_components/SidebarDrive';
 import type { DriveSidebarProps } from './index.type';
 import styles from './style.module.less';
 
@@ -33,10 +33,7 @@ function DriveSidebar({ collapsed, onToggle }: DriveSidebarProps) {
         )}
       </div>
 
-      <div
-        className={clsx(styles.body, collapsed && styles.bodyCollapsed)}
-        aria-hidden={collapsed}
-      >
+      <div className={clsx(styles.body, collapsed && styles.bodyCollapsed)} aria-hidden={collapsed}>
         <SidebarDrive />
       </div>
 

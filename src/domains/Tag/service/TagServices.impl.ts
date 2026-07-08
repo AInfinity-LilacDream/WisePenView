@@ -62,7 +62,7 @@ const syncTrashTagIdToStore = (groupId: string | undefined, roots: TagTreeRespon
   useTrashTagStore.getState().setTrashTagId(groupId, undefined);
 };
 
-export interface TagServicesDeps {
+interface TagServicesDeps {
   resourceService: IResourceService;
 }
 

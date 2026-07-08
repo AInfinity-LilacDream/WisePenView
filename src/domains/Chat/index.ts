@@ -6,17 +6,10 @@ export {
   buildAgentFromSkillTreeGroup,
   buildChatInputAgentOptions,
   buildDefaultPersonalAgent,
-  buildGroupAgent,
   resolveChatInputSelectedAgent,
 } from './mapper/agent.mapper';
-export {
-  buildCapabilityPickerSections,
-  buildCapabilityPickerSections as buildSkillMenuSections,
-} from './mapper/capabilityPicker.mapper';
+export { buildCapabilityPickerSections as buildSkillMenuSections } from './mapper/capabilityPicker.mapper';
 export type {
-  CapabilityPickerItem,
-  CapabilityPickerItemKind,
-  CapabilityPickerSection,
   CapabilitySkillSelection,
   CapabilityToolOption,
 } from './mapper/capabilityPicker.mapper';
@@ -27,8 +20,8 @@ export {
   isDocumentPickerScopeRootKey,
   isExpandableDocumentPickerNode,
   isSelectableDocumentPickerNode,
-  mapDriveNodeToDocumentPickerNode,
   mapDocumentPickerNodesToSelectedResources,
+  mapDriveNodeToDocumentPickerNode,
   parseDocumentPickerTreeKey,
   replaceDocumentPickerTreeNodeChildren,
 } from './mapper/documentPicker.mapper';
@@ -42,12 +35,10 @@ export {
   buildOtherSkillTreeGroups,
   getPrimarySkillsForAgent,
 } from './mapper/skillScope.mapper';
-export type { OtherSkillTreeGroup, SkillScopeTreeGroup } from './mapper/skillScope.mapper';
+export type { SkillScopeTreeGroup } from './mapper/skillScope.mapper';
 export type {
   ChatDocumentPickerNode,
-  ChatDocumentPickerNodeType,
   ChatDocumentPickerScope,
-  ChatDocumentPickerScopeType,
   ChatDocumentPickerSelectedResource,
   ChatInputCapabilityOptions,
   ChatModel,
@@ -59,7 +50,6 @@ export type {
   CreateSessionRequest,
   DeleteSessionRequest,
   GetChatInputCapabilityOptionsParams,
-  GetChatInputCapabilityOptionsRequest,
   IChatService,
   ListDocumentPickerChildrenRequest,
   ListHistoryMessagesRequest,
@@ -74,8 +64,6 @@ export type {
 export type {
   ChatCompletionRequest,
   ChatFrontendState,
-  ChatSelectedResourceContext,
-  ChatUploadedAttachmentContext,
   ChatWorkspaceContext,
   SendSessionMessageOptions,
   UseChatSessionOptions,
