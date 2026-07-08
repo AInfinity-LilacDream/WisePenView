@@ -1,4 +1,3 @@
-import GlobalSearchBox from '@/components/Drive/GlobalSearchBox';
 import TableDrive from '@/components/Drive/TableDrive';
 import type { TableDriveHandle } from '@/components/Drive/TableDrive/index.type';
 import SegmentedTabs from '@/components/SegmentedTabs';
@@ -7,6 +6,7 @@ import { Button } from '@heroui/react';
 import { Trash2 } from 'lucide-react';
 import { useRef, useState } from 'react';
 
+import GlobalSearchBox from '../_components/GlobalSearchBox';
 import type { UploadQueueTabRef } from '../_components/UploadQueueTab';
 import UploadQueueTab from '../_components/UploadQueueTab';
 import styles from './style.module.less';
