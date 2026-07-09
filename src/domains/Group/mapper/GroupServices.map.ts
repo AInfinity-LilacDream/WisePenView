@@ -140,9 +140,7 @@ const mapUpdateGroupResConfigRequest = (
 
 const mapCreateGroupFromApi = (data: string | number): string => normalizeId(data);
 
-const mapCreateGroupRequest = (
-  params: Omit<CreateGroupRequest, 'defaultMemberActions'>
-): AddGroupApiRequest => ({
+const mapCreateGroupRequest = (params: CreateGroupRequest): AddGroupApiRequest => ({
   ...params,
   groupType: mapGroupTypeToApi(params.groupType),
 });

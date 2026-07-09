@@ -7,8 +7,7 @@ import type {
   GroupResConfig,
   IGroupService,
 } from '@/domains/Group';
-import { GROUP_FILE_ORG_LOGIC } from '@/domains/Group';
-import { TAG_RESOURCE_ACTION } from '@/domains/Tag';
+import { DEFAULT_MEMBER_ACTIONS, GROUP_FILE_ORG_LOGIC } from '@/domains/Group';
 import mockdata from './mockdata.json';
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -54,11 +53,7 @@ const fetchGroupResConfig = async (groupId: string): Promise<GroupResConfig> => 
   return {
     groupId,
     fileOrgLogic: GROUP_FILE_ORG_LOGIC.TAG,
-    defaultMemberActions: [
-      TAG_RESOURCE_ACTION.DISCOVER,
-      TAG_RESOURCE_ACTION.VIEW,
-      TAG_RESOURCE_ACTION.DOWNLOAD_WATERMARK,
-    ],
+    defaultMemberActions: DEFAULT_MEMBER_ACTIONS,
   };
 };
 

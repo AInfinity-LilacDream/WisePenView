@@ -1,7 +1,8 @@
+import { Select } from '@/components/Input';
 import { DataTable, type DataTableColumn } from '@/components/Table';
 import type { AdminUser } from '@/domains/Admin';
 import { IDENTITY, USER_STATUS } from '@/domains/User/enum';
-import { Chip, ListBox, Select } from '@heroui/react';
+import { Chip, ListBox } from '@heroui/react';
 import { useCallback, useMemo, type ReactNode } from 'react';
 import type { AdminUserTableProps } from './index.type';
 import styles from './style.module.less';

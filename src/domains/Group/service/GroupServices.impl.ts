@@ -65,8 +65,7 @@ const updateGroupResConfig = async (params: UpdateGroupResConfigRequest) => {
 };
 
 const createGroup = async (params: CreateGroupRequest): Promise<string> => {
-  const { defaultMemberActions, ...groupParams } = params;
-  const payload = await GroupApi.addGroup(GroupServicesMap.mapCreateGroupRequest(groupParams));
+  const payload = await GroupApi.addGroup(GroupServicesMap.mapCreateGroupRequest(params));
   if (payload == null) {
     throw createClientError(FRONTEND_CLIENT_ERROR.GROUP_CREATE_FAILED);
   }
@@ -76,7 +75,7 @@ const createGroup = async (params: CreateGroupRequest): Promise<string> => {
   }
   await updateGroupResConfig({
     groupId,
-    defaultMemberActions: normalizeResourceActions(defaultMemberActions ?? DEFAULT_MEMBER_ACTIONS),
+    defaultMemberActions: normalizeResourceActions(DEFAULT_MEMBER_ACTIONS),
   });
   return groupId;
 };
