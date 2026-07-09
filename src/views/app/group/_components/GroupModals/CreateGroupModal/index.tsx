@@ -1,35 +1,24 @@
-import { Input, TextArea } from '@/components/Input';
+import { Input, Select, TextArea } from '@/components/Input';
 import AppModal from '@/components/Overlay/AppModal';
 import UploadZone from '@/components/UploadZone';
 import { useGroupService, useImageService, useUserService } from '@/domains';
 import type { CreateGroupRequest } from '@/domains/Group';
-import { ALLOWED_GROUP_TYPES_MAP, DEFAULT_MEMBER_ACTIONS, GROUP_TYPE } from '@/domains/Group';
-import {
-  actionsToPermissionCode,
-  getResourceActionImpliedActions,
-  getResourceActionImpliedMask,
-  hasResourceAction,
-  normalizeResourceActions,
-  permissionCodeToActions,
-  TAG_RESOURCE_ACTION,
-  type TagResourceAction,
-} from '@/domains/Tag';
+import { ALLOWED_GROUP_TYPES_MAP, GROUP_TYPE } from '@/domains/Group';
 import { IDENTITY } from '@/domains/User';
 import { parseErrorMessage } from '@/utils/error';
 import {
   assertImageProxyUploadLimit,
   IMAGE_UPLOAD_MAX_SIZE_LABEL,
 } from '@/utils/image/uploadLimit';
-import { Button, Checkbox, Label, ListBox, Select, TextField, toast } from '@heroui/react';
+import { Button, Label, ListBox, TextField, toast } from '@heroui/react';
 import { useRequest } from 'ahooks';
 import { useState } from 'react';
 import type { CreateGroupModalProps } from './index.type';
 
 import styles from './index.module.less';
 
-type CreateGroupFormValues = Omit<CreateGroupRequest, 'groupCoverUrl' | 'defaultMemberActions'> & {
+type CreateGroupFormValues = Omit<CreateGroupRequest, 'groupCoverUrl'> & {
   cover?: File | null;
-  defaultMemberActions?: TagResourceAction[];
 };
 
 const groupTypeOptionsBase = GROUP_TYPE.options;
@@ -39,7 +28,6 @@ const DEFAULT_FORM_VALUES: CreateGroupFormValues = {
   groupDesc: '',
   groupType: GROUP_TYPE.NORMAL,
   cover: null,
-  defaultMemberActions: DEFAULT_MEMBER_ACTIONS,
 };
 
 function CreateGroupModal({ isOpen, onOpenChange, onSuccess }: CreateGroupModalProps) {
@@ -48,7 +36,6 @@ function CreateGroupModal({ isOpen, onOpenChange, onSuccess }: CreateGroupModalP
   const userService = useUserService();
   const [formValues, setFormValues] = useState<CreateGroupFormValues>(DEFAULT_FORM_VALUES);
   const [identityType, setIdentityType] = useState<number | undefined>();
-  const [hoveredAction, setHoveredAction] = useState<TagResourceAction | null>(null);
 
   useRequest(() => userService.getUserInfo(), {
     onSuccess: (u) => {
@@ -107,9 +94,6 @@ function CreateGroupModal({ isOpen, onOpenChange, onSuccess }: CreateGroupModalP
         groupType: isStudent ? GROUP_TYPE.NORMAL : values.groupType,
         groupDesc: values.groupDesc,
         groupCoverUrl,
-        defaultMemberActions: normalizeResourceActions(
-          values.defaultMemberActions ?? DEFAULT_MEMBER_ACTIONS
-        ),
       });
       if (groupId) toast.success('创建成功');
     },
@@ -155,29 +139,6 @@ function CreateGroupModal({ isOpen, onOpenChange, onSuccess }: CreateGroupModalP
       groupDesc: formValues.groupDesc.trim(),
       groupType,
     });
-  };
-
-  const selectedActions = normalizeResourceActions(
-    formValues.defaultMemberActions ?? DEFAULT_MEMBER_ACTIONS
-  );
-  const selectedActionSet = new Set(selectedActions);
-  const actionHighlightSet = hoveredAction
-    ? new Set([hoveredAction, ...getResourceActionImpliedActions(hoveredAction)])
-    : null;
-
-  const handleActionToggle = (action: TagResourceAction, checked: boolean) => {
-    const current = normalizeResourceActions(
-      formValues.defaultMemberActions ?? DEFAULT_MEMBER_ACTIONS
-    );
-    if (checked) {
-      const nextCode = actionsToPermissionCode([...current, action]);
-      updateFormValue('defaultMemberActions', permissionCodeToActions(nextCode));
-      return;
-    }
-    const next = normalizeResourceActions(
-      current.filter((item) => !hasResourceAction(getResourceActionImpliedMask(item), action))
-    );
-    updateFormValue('defaultMemberActions', next);
   };
 
   return (
@@ -253,43 +214,6 @@ function CreateGroupModal({ isOpen, onOpenChange, onSuccess }: CreateGroupModalP
           description={`仅可选择单张图片，大小不超过 ${IMAGE_UPLOAD_MAX_SIZE_LABEL}`}
           onFileChange={handleCoverChange}
         />
-      </div>
-      <div className={styles.sectionCard}>
-        <div className={styles.sectionTitle}>小组成员默认权限</div>
-        <div className={styles.actionGroup}>新成员默认可用的资源权限</div>
-        <div className={styles.actionList}>
-          {TAG_RESOURCE_ACTION.options.map((item) => {
-            const action = item.value as TagResourceAction;
-            const isHighlighted = actionHighlightSet?.has(action);
-            return (
-              <div
-                key={item.key}
-                className={
-                  isHighlighted
-                    ? `${styles.actionItem} ${styles.actionItemHighlight}`
-                    : styles.actionItem
-                }
-                onMouseEnter={() => setHoveredAction(action)}
-                onMouseLeave={() => setHoveredAction(null)}
-              >
-                <Checkbox
-                  isSelected={selectedActionSet.has(action)}
-                  onChange={(isSelected) => handleActionToggle(action, isSelected)}
-                  variant="secondary"
-                >
-                  <Checkbox.Control>
-                    <Checkbox.Indicator />
-                  </Checkbox.Control>
-                  <Checkbox.Content>
-                    <span data-slot="label" className={styles.actionLabel}>
-                      {item.label}
-                    </span>
-                  </Checkbox.Content>
-                </Checkbox>
-              </div>
-            );
-          })}
-        </div>
       </div>
     </AppModal>
   );

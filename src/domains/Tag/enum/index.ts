@@ -41,6 +41,47 @@ export const TAG_RESOURCE_ACTION = RESOURCE_ACTION;
 
 export type TagResourceAction = ResourceAction;
 export type TagResourceActionKey = EnumKey<typeof TAG_RESOURCE_ACTION>;
+export type TagPermissionPresetKey = 'private' | 'readonly' | 'shared' | 'custom';
+type TagPermissionConcretePresetKey = Exclude<TagPermissionPresetKey, 'custom'>;
+
+export interface TagPermissionPresetValues {
+  taggedResourceAclGrantScope: AccessControlScope;
+  tagMountPermissionScope: AccessControlScope;
+  grantedActions: TagResourceAction[];
+}
+
+/** 标签权限预设的领域值；UI 文案由调用方自行组合。 */
+export const TAG_PERMISSION_PRESET_VALUES: Record<
+  TagPermissionConcretePresetKey,
+  TagPermissionPresetValues
+> = {
+  private: {
+    taggedResourceAclGrantScope: ACCESS_CONTROL_SCOPE.ONLY_ADMIN,
+    tagMountPermissionScope: ACCESS_CONTROL_SCOPE.ONLY_ADMIN,
+    grantedActions: [],
+  },
+  readonly: {
+    taggedResourceAclGrantScope: ACCESS_CONTROL_SCOPE.ALL,
+    tagMountPermissionScope: ACCESS_CONTROL_SCOPE.ONLY_ADMIN,
+    grantedActions: normalizeResourceActions([TAG_RESOURCE_ACTION.VIEW]),
+  },
+  shared: {
+    taggedResourceAclGrantScope: ACCESS_CONTROL_SCOPE.ALL,
+    tagMountPermissionScope: ACCESS_CONTROL_SCOPE.ALL,
+    grantedActions: normalizeResourceActions([
+      TAG_RESOURCE_ACTION.EDIT,
+      TAG_RESOURCE_ACTION.INLINE_COMMENT,
+      TAG_RESOURCE_ACTION.DOWNLOAD_WATERMARK,
+      TAG_RESOURCE_ACTION.FORK,
+      TAG_RESOURCE_ACTION.COMMENT,
+    ]),
+  },
+};
+
+export const getTagPermissionPresetValues = (
+  key: TagPermissionPresetKey
+): TagPermissionPresetValues | undefined =>
+  key === 'custom' ? undefined : TAG_PERMISSION_PRESET_VALUES[key];
 
 export {
   actionsToPermissionCode,

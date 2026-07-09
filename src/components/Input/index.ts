@@ -32,5 +32,14 @@ export type { InputOTPProps } from './InputOTP';
 export { default as PasswordInput } from './PasswordInput';
 export type { PasswordInputProps } from './PasswordInput';
 
+export { default as Select } from './Select';
+export type {
+  SelectIndicatorProps,
+  SelectPopoverProps,
+  SelectProps,
+  SelectTriggerProps,
+  SelectValueProps,
+} from './Select';
+
 export { default as TextArea } from './TextArea';
 export type { TextAreaProps } from './TextArea';

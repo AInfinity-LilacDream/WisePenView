@@ -1,11 +1,9 @@
 import DriveNav from '@/components/Drive/DriveNav';
 import {
-  getTagPermissionPresetValues,
   resolveTagPermissionPresetKey,
   TAG_PERMISSION_ACTION_ROWS,
   TAG_PERMISSION_PRESETS,
   TAG_PERMISSION_RESOURCE_STRATEGIES,
-  type TagPermissionPresetKey,
 } from '@/components/Drive/common/tagPermissionPreset';
 import { Empty, Spin } from '@/components/Feedback';
 import AppModal from '@/components/Overlay/AppModal';
@@ -14,8 +12,10 @@ import { mapTagToFolderNode } from '@/domains/Drive/mapper/DriveServices.map';
 import {
   ACCESS_CONTROL_SCOPE,
   getResourceActionImpliedActions,
+  getTagPermissionPresetValues,
   normalizeResourceActions,
   type AccessControlScope,
+  type TagPermissionPresetKey,
   type TagResourceAction,
   type TagTreeNode,
 } from '@/domains/Tag';

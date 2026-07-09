@@ -1,0 +1,126 @@
+.select:global(.select) {
+  --app-select-trigger-bg: color-mix(
+    in oklab,
+    var(--surface-tertiary, #f0f3f6) 35%,
+    var(--surface, #ffffff) 65%
+  );
+  --app-select-trigger-bg-hover: color-mix(
+    in oklab,
+    var(--surface-tertiary, #f0f3f6) 70%,
+    var(--surface, #ffffff) 30%
+  );
+  --app-select-trigger-bg-focus: color-mix(
+    in oklab,
+    var(--surface-tertiary, #f0f3f6) 35%,
+    var(--surface, #ffffff) 65%
+  );
+  --app-select-trigger-border: color-mix(
+    in oklab,
+    var(--border, #e4e7ec) 82%,
+    var(--surface, #ffffff) 18%
+  );
+  --app-select-trigger-border-hover: color-mix(
+    in oklab,
+    var(--border, #e4e7ec) 90%,
+    var(--surface, #ffffff) 10%
+  );
+  --app-select-trigger-border-focus: color-mix(
+    in srgb,
+    var(--accent, #1e6f9f) 100%,
+    transparent
+  );
+  --app-select-trigger-border-width: 1.5px;
+  --app-select-trigger-focus-ring-width: 0.5px;
+  --app-select-trigger-focus-ring-color: color-mix(
+    in srgb,
+    var(--app-select-trigger-border-focus) 100%,
+    transparent
+  );
+  --app-select-trigger-focus-ring: 0 0 0 var(--app-select-trigger-focus-ring-width)
+    var(--app-select-trigger-focus-ring-color);
+  --app-select-trigger-danger-ring: 0 0 0 var(--app-select-trigger-focus-ring-width)
+    color-mix(in srgb, var(--danger-border, var(--danger)) 24%, transparent);
+  --select-trigger-bg: var(--app-select-trigger-bg);
+  --select-trigger-bg-hover: var(--app-select-trigger-bg-hover);
+  --select-trigger-bg-focus: var(--app-select-trigger-bg-focus);
+  --field-background: var(--app-select-trigger-bg);
+  --field-border: var(--app-select-trigger-border);
+  --field-border-hover: var(--app-select-trigger-border-hover);
+  --field-border-focus: var(--app-select-trigger-border-focus);
+  --field-focus: var(--app-select-trigger-bg-focus);
+  --field-shadow: none;
+}
+
+.selectTrigger:global(.select__trigger) {
+  width: 100%;
+  min-height: var(--control-height, 36px);
+  box-sizing: border-box;
+  align-items: center;
+  border-width: var(--app-select-trigger-border-width);
+  border-color: var(--app-select-trigger-border);
+  background-color: var(--app-select-trigger-bg);
+  color: var(--field-foreground, var(--foreground));
+  box-shadow: none;
+  letter-spacing: 0;
+}
+
+.selectTrigger:global(.select__trigger):hover,
+.selectTrigger:global(.select__trigger)[data-hovered='true'] {
+  border-color: var(--app-select-trigger-border-hover);
+  background-color: var(--app-select-trigger-bg-hover);
+}
+
+.selectTrigger:global(.select__trigger):focus,
+.selectTrigger:global(.select__trigger):focus-visible,
+.selectTrigger:global(.select__trigger)[data-focus='true'],
+.selectTrigger:global(.select__trigger)[data-focus-visible='true'] {
+  border-color: var(--app-select-trigger-border-focus);
+  background-color: var(--app-select-trigger-bg-focus);
+  box-shadow: var(--app-select-trigger-focus-ring);
+  outline: none;
+}
+
+.select:global(.select)[data-invalid='true'] .selectTrigger:global(.select__trigger),
+.select:global(.select)[aria-invalid='true'] .selectTrigger:global(.select__trigger) {
+  border-color: var(--danger-border, var(--danger));
+  background-color: color-mix(
+    in srgb,
+    var(--danger-soft, rgba(239, 68, 68, 0.12)) 36%,
+    var(--app-select-trigger-bg-focus) 64%
+  );
+}
+
+.select:global(.select)[data-invalid='true'] .selectTrigger:global(.select__trigger):focus,
+.select:global(.select)[data-invalid='true']
+  .selectTrigger:global(.select__trigger)[data-focus='true'],
+.select:global(.select)[aria-invalid='true'] .selectTrigger:global(.select__trigger):focus,
+.select:global(.select)[aria-invalid='true']
+  .selectTrigger:global(.select__trigger)[data-focus='true'] {
+  box-shadow: var(--app-select-trigger-danger-ring);
+}
+
+.selectTrigger:global(.select__trigger):disabled,
+.selectTrigger:global(.select__trigger)[data-disabled='true'],
+.selectTrigger:global(.select__trigger)[aria-disabled='true'] {
+  border-color: color-mix(in oklab, var(--app-select-trigger-border) 76%, transparent);
+  background-color: color-mix(in oklab, var(--app-select-trigger-bg) 78%, transparent);
+  box-shadow: none;
+}
+
+.select:global(.select) :global(.select__value) {
+  min-width: 0;
+  letter-spacing: 0;
+}
+
+.select:global(.select) :global(.select__value[data-placeholder='true']) {
+  color: var(--field-placeholder, var(--muted));
+}
+
+.select:global(.select) :global(.select__indicator) {
+  color: var(--field-placeholder, var(--muted));
+}
+
+.selectPopover:global(.select__popover) {
+  border: 1px solid color-mix(in oklab, var(--border, #e4e7ec) 88%, transparent);
+  border-radius: var(--app-radius-popover, min(32px, var(--radius-3xl)));
+}

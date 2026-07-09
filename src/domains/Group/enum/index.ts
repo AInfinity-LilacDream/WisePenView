@@ -1,5 +1,5 @@
 import type { TagResourceAction } from '@/domains/Tag';
-import { TAG_RESOURCE_ACTION } from '@/domains/Tag';
+import { TAG_PERMISSION_PRESET_VALUES } from '@/domains/Tag';
 import { createEnum } from '@/utils/enum';
 
 /** 小组类型 */
@@ -29,9 +29,7 @@ export const GROUP_FILE_ORG_LOGIC = createEnum([
 ] as const);
 
 export const DEFAULT_MEMBER_ACTIONS: TagResourceAction[] = [
-  TAG_RESOURCE_ACTION.DISCOVER,
-  TAG_RESOURCE_ACTION.VIEW,
-  TAG_RESOURCE_ACTION.DOWNLOAD_WATERMARK,
+  ...TAG_PERMISSION_PRESET_VALUES.shared.grantedActions,
 ];
 
 /** 身份类型 -> 可创建的小组类型列表 */

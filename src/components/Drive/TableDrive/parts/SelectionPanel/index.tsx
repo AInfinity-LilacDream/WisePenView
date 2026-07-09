@@ -14,10 +14,8 @@ import {
 } from '@/components/Drive/common/resourcePermissionPolicy';
 import {
   getTagPermissionPresetOption,
-  getTagPermissionPresetValues,
   resolveTagPermissionPresetKeyFromTag,
   TAG_PERMISSION_PRESETS,
-  type TagPermissionPresetKey,
 } from '@/components/Drive/common/tagPermissionPreset';
 import EntryIcon from '@/components/Icons/EntryIcon';
 import { useResourceService, useTagService } from '@/domains';
@@ -27,7 +25,11 @@ import type {
   ResourcePermissionOverview,
   ResourcePermissionResourceType,
 } from '@/domains/Resource';
-import type { TagTreeNode } from '@/domains/Tag';
+import {
+  getTagPermissionPresetValues,
+  type TagPermissionPresetKey,
+  type TagTreeNode,
+} from '@/domains/Tag';
 import { parseErrorMessage } from '@/utils/error';
 import { resolveWorkspaceResourceType } from '@/utils/navigation/workspaceRoute';
 import { Button, ListBox, toast, type Selection } from '@heroui/react';
