@@ -4,7 +4,7 @@ import type { UserDisplayBase } from '@/domains/User';
 import type { UserIdentityTypeApiValue } from '@/domains/User/apis/UserApi.type';
 
 type GroupFileOrgLogicApiValue = 'FOLDER' | 'TAG';
-type GroupTypeApiValue = '1' | '2' | '3';
+type GroupTypeApiValue = 1 | 2 | 3 | '1' | '2' | '3';
 type GroupRoleApiValue = '0' | '1' | '2' | '-1';
 type GroupResourceActionApiValue = TagResourceActionKey | number | `${number}`;
 type GroupResourceActionApiList = GroupResourceActionApiValue[];
@@ -149,6 +149,7 @@ export interface GroupTokenInfoApiResponseItem {
   groupDisplayBase?: {
     groupId?: string | number;
     groupName?: string;
+    groupType?: GroupTypeApiValue | null;
   };
   tokenLimit?: number;
   tokenUsed?: number;

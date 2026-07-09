@@ -1,3 +1,4 @@
+import { GROUP_TYPE } from '@/domains/Group';
 import type { IQuotaService } from '@/domains/Quota';
 import type { GroupQuotaInfo, UserGroupQuota } from '@/domains/Wallet';
 import mockdata from './mockdata.json';
@@ -8,11 +9,20 @@ const userGroupQuotas = mockdata.userGroupQuotas as UserGroupQuota[];
 const groupQuotaInfo = mockdata.groupQuotaInfo as GroupQuotaInfo;
 
 const fetchUserGroupQuotas = async (
-  _page: number,
-  _pageSize: number
+  page: number,
+  pageSize: number
 ): Promise<{ quotas: UserGroupQuota[]; total: number }> => {
   await delay(200);
-  return { quotas: userGroupQuotas, total: userGroupQuotas.length };
+  const advancedGroupQuotas = userGroupQuotas.filter(
+    (quota) => quota.groupType === GROUP_TYPE.ADVANCED
+  );
+  const safePageSize = Math.max(1, pageSize);
+  const startIndex = (Math.max(1, page) - 1) * safePageSize;
+
+  return {
+    quotas: advancedGroupQuotas.slice(startIndex, startIndex + safePageSize),
+    total: advancedGroupQuotas.length,
+  };
 };
 
 const fetchGroupQuota = async (_groupId: string | number): Promise<GroupQuotaInfo> => {

@@ -1,108 +1,67 @@
-import ChatPanel from '@/components/ChatPanel';
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/_shadcn';
 import AppSidebar from '@/layouts/_common/Sidebar/AppSidebar';
-import { useChatPanelResize } from '@/layouts/_common/useChatPanelResize';
-import { useChatPanelStore, useCurrentChatSessionStore } from '@/store';
-import { useUpdateEffect } from 'ahooks';
-import clsx from 'clsx';
-import { Bot } from 'lucide-react';
-import { useCallback, useState } from 'react';
-import { Outlet, useLocation } from 'react-router-dom';
+import { useResizablePanelSize } from '@/layouts/_common/useResizablePanelSize';
+import { useCallback, useRef, useState } from 'react';
+import type { PanelImperativeHandle, PanelSize } from 'react-resizable-panels';
+import { Outlet } from 'react-router-dom';
 import styles from './AppLayout.module.less';
 
+const SIDEBAR_WIDTH = 308;
+const SIDEBAR_MIN_WIDTH = 240;
+const SIDEBAR_MAX_WIDTH = 420;
+const SIDEBAR_COLLAPSED_WIDTH = 80;
+const MAIN_MIN_WIDTH = 360;
+
+const clampSidebarWidth = (width: number): number =>
+  Math.min(Math.max(Math.round(width), SIDEBAR_MIN_WIDTH), SIDEBAR_MAX_WIDTH);
+
 function AppLayout() {
-  const location = useLocation();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const isChatPage = location.pathname.startsWith('/app/chat');
-  const chatPanelCollapsed = useChatPanelStore((state) => state.chatPanelCollapsed);
-  const chatPanelDraftOpen = useChatPanelStore((state) => state.chatPanelDraftOpen);
-  const setChatPanelCollapsed = useChatPanelStore((state) => state.setChatPanelCollapsed);
-  const setChatPanelDraftOpen = useChatPanelStore((state) => state.setChatPanelDraftOpen);
-  const currentSessionId = useCurrentChatSessionStore((state) => state.currentSessionId);
-  const hasSessionId = Boolean(currentSessionId);
-  const shouldRenderChatPanel = !isChatPage && (hasSessionId || chatPanelDraftOpen);
-  const safeChatPanelCollapsed = !shouldRenderChatPanel || chatPanelCollapsed;
-  const { rootRef, chatResizeGuideRef, chatPanelWidth, chatResizing, onResizeStart } =
-    useChatPanelResize(!isChatPage);
+  const [sidebarWidth, setSidebarWidth] = useState(SIDEBAR_WIDTH);
+  const sidebarPanelRef = useRef<PanelImperativeHandle | null>(null);
+  const sidebarPanelSize = sidebarCollapsed ? SIDEBAR_COLLAPSED_WIDTH : sidebarWidth;
 
-  useUpdateEffect(() => {
-    if (isChatPage) return;
-    if (shouldRenderChatPanel) {
-      setChatPanelCollapsed(false);
-      return;
-    }
-    setChatPanelCollapsed(true);
-  }, [isChatPage, setChatPanelCollapsed, shouldRenderChatPanel]);
+  useResizablePanelSize({
+    panelRef: sidebarPanelRef,
+    size: sidebarPanelSize,
+  });
 
-  useUpdateEffect(() => {
-    if (!hasSessionId && !chatPanelDraftOpen) return;
-    if (hasSessionId) {
-      setChatPanelDraftOpen(false);
-    }
-  }, [chatPanelDraftOpen, hasSessionId, setChatPanelDraftOpen]);
-
-  const handleChatExpand = () => {
-    if (!shouldRenderChatPanel) return;
-    setChatPanelCollapsed(false);
-  };
   const handleSidebarToggle = useCallback(() => {
     setSidebarCollapsed((collapsed) => !collapsed);
   }, []);
 
-  return (
-    <div
-      ref={rootRef}
-      className={styles.root}
-      style={{ ['--chat-panel-width' as string]: `${chatPanelWidth}px` }}
-    >
-      {chatResizing && <div ref={chatResizeGuideRef} className={styles.chatResizeGuide} />}
-      <aside
-        className={clsx(styles.leftSider, sidebarCollapsed && styles.leftSiderCollapsed)}
-        aria-label="应用侧边栏"
-      >
-        <AppSidebar
-          collapsed={sidebarCollapsed}
-          onToggle={handleSidebarToggle}
-        />
-      </aside>
+  const handleSidebarResize = useCallback(
+    (panelSize: PanelSize) => {
+      if (sidebarCollapsed) return;
+      setSidebarWidth(clampSidebarWidth(panelSize.inPixels));
+    },
+    [sidebarCollapsed]
+  );
 
-      <div className={styles.middleLayout}>
-        {shouldRenderChatPanel && safeChatPanelCollapsed && (
-          <div className={styles.chatHandleZone}>
-            <button
-              type="button"
-              className={styles.chatExpandHandle}
-              onClick={handleChatExpand}
-              aria-label="展开聊天面板"
-            >
-              <Bot />
-            </button>
-          </div>
-        )}
+  return (
+    <ResizablePanelGroup orientation="horizontal" className={styles.root}>
+      <ResizablePanel
+        id="app-sidebar"
+        panelRef={sidebarPanelRef}
+        defaultSize={sidebarPanelSize}
+        minSize={sidebarCollapsed ? SIDEBAR_COLLAPSED_WIDTH : SIDEBAR_MIN_WIDTH}
+        maxSize={sidebarCollapsed ? SIDEBAR_COLLAPSED_WIDTH : SIDEBAR_MAX_WIDTH}
+        disabled={sidebarCollapsed}
+        className={styles.leftSider}
+        aria-label="应用侧边栏"
+        onResize={handleSidebarResize}
+      >
+        <AppSidebar collapsed={sidebarCollapsed} onToggle={handleSidebarToggle} />
+      </ResizablePanel>
+
+      {!sidebarCollapsed ? <ResizableHandle className={styles.resizeHandle} /> : null}
+
+      <ResizablePanel id="app-main" minSize={MAIN_MIN_WIDTH} className={styles.middleLayout}>
         <main className={styles.middleContent}>
           <Outlet />
         </main>
-      </div>
-
-      {!isChatPage && (
-        <aside
-          className={clsx(styles.rightSider, safeChatPanelCollapsed && styles.rightSiderCollapsed)}
-          aria-label="聊天面板"
-          aria-hidden={safeChatPanelCollapsed ? true : undefined}
-        >
-          {!safeChatPanelCollapsed && (
-            <button
-              type="button"
-              className={`${styles.chatResizeHandle} ${chatResizing ? styles.chatResizeHandleActive : ''}`}
-              onMouseDown={onResizeStart}
-              aria-label="调整聊天面板宽度"
-            />
-          )}
-          <div className={styles.rightSiderInner}>
-            {shouldRenderChatPanel ? <ChatPanel collapsed={safeChatPanelCollapsed} /> : null}
-          </div>
-        </aside>
-      )}
-    </div>
+      </ResizablePanel>
+    </ResizablePanelGroup>
   );
 }
 

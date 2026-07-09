@@ -91,14 +91,15 @@ function UserSearchCombobox({
   };
 
   const selectFirstAvailableUser = async () => {
-    if (!keyword) {
+    if (!keyword || keyword.length < minKeywordLength) {
       onEmptySubmit?.();
       return false;
     }
-    const nextUsers =
-      isFreshResult && users.length > 0
-        ? users
-        : (await runAsync(keyword)).users.filter((user) => !excludedUserIds?.has(user.userId));
+    const nextUsers = isFreshResult
+      ? users
+      : ((await runAsync(keyword))?.users ?? []).filter(
+          (user) => !excludedUserIds?.has(user.userId)
+        );
     const nextUser = nextUsers[activeIndex] ?? nextUsers[0];
     if (nextUser) {
       selectUser(nextUser);

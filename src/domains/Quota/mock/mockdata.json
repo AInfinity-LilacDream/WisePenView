@@ -3,6 +3,7 @@
     {
       "groupId": "1",
       "groupName": "示例小组",
+      "groupType": 2,
       "quotaLimit": 1000,
       "quotaUsed": 100
     }
