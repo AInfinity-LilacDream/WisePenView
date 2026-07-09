@@ -101,15 +101,33 @@
 .contentRow {
   flex: 1;
   min-height: 0;
+  display: flex;
   overflow: hidden;
 }
 
-.mainPanel,
-.outlinePanel,
-.outlineCollapsedPanel {
+.mainPanel {
+  flex: 1 1 auto;
   height: 100%;
   min-width: 0;
   min-height: 0;
+}
+
+.outlinePanel {
+  flex: 0 0 260px;
+  width: 260px;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  border-left: 1px solid var(--border-light);
+}
+
+.outlineCollapsedPanel {
+  flex: 0 0 40px;
+  width: 40px;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  border-left: 1px solid var(--border-light);
 }
 
 .mainCol {
@@ -172,13 +190,6 @@
   min-height: 0;
   align-self: stretch;
   padding: var(--space-sm) 0;
-}
-
-.resizeHandle {
-  z-index: 2;
-  flex: 0 0 1px;
-  height: 100%;
-  background: transparent;
 }
 
 .outlineToggleBtn {

@@ -6,7 +6,6 @@ import {
   type FolderTableRowAction,
 } from '@/components/Table';
 import { resolveSelectedCount } from '@/components/Table/shared/TableBase/tableSelection';
-import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/_shadcn';
 import { useDriveService } from '@/domains';
 import type { DriveNode } from '@/domains/Drive';
 import { useTrashTagStore } from '@/store';
@@ -271,10 +270,16 @@ const TableDrive = forwardRef<TableDriveHandle, TableDriveProps>(function TableD
     () => (trashTagId ? buildTrashFolderNodeId(trashTagId) : undefined),
     [trashTagId]
   );
-  const isTrashView = currentNodeId === trashFolderNodeId;
+  const canOpenTrash = !finalGroupId;
+  const isTrashView = Boolean(
+    canOpenTrash &&
+    trashFolderNodeId &&
+    (currentNodeId === trashFolderNodeId ||
+      pathNodes.some((pathNode) => pathNode.id === trashFolderNodeId))
+  );
 
   const openTrash = useCallback(async () => {
-    if (isTrashView) {
+    if (!canOpenTrash || isTrashView) {
       return;
     }
 
@@ -292,7 +297,7 @@ const TableDrive = forwardRef<TableDriveHandle, TableDriveProps>(function TableD
     } catch (error) {
       toast.danger(parseErrorMessage(error));
     }
-  }, [driveService, finalGroupId, finalRootId, handleEnterFolder, isTrashView]);
+  }, [canOpenTrash, driveService, finalGroupId, finalRootId, handleEnterFolder, isTrashView]);
 
   useImperativeHandle(ref, () => ({ openTrash }), [openTrash]);
 
@@ -351,7 +356,7 @@ const TableDrive = forwardRef<TableDriveHandle, TableDriveProps>(function TableD
             上传到小组
           </Button>
         ) : null}
-        {showToolbarTrash ? (
+        {showToolbarTrash && canOpenTrash ? (
           <Button
             variant={isTrashView ? 'ghost' : 'secondary'}
             size="sm"
@@ -383,6 +388,7 @@ const TableDrive = forwardRef<TableDriveHandle, TableDriveProps>(function TableD
       openTagPermission,
       openUploadToGroup,
       openTrash,
+      canOpenTrash,
       showCreateMenu,
       showManagePermission,
       showUploadToGroup,
@@ -450,12 +456,12 @@ const TableDrive = forwardRef<TableDriveHandle, TableDriveProps>(function TableD
       actions.push(
         {
           key: 'move',
-          label: '移动',
+          label: isTrashView ? '移动到云盘' : '移动',
           onPress: () => handleOpenMove(actionTarget),
         },
         {
           key: 'delete',
-          label: '删除',
+          label: finalGroupId ? '移除' : isTrashView ? '彻底删除' : '删除',
           variant: 'danger',
           onPress: () => handleOpenDelete(actionTarget),
         }
@@ -463,7 +469,15 @@ const TableDrive = forwardRef<TableDriveHandle, TableDriveProps>(function TableD
 
       return actions;
     },
-    [handleClickNode, handleEnterFolder, handleOpenDelete, handleOpenMove, handleOpenRename]
+    [
+      finalGroupId,
+      handleClickNode,
+      handleEnterFolder,
+      handleOpenDelete,
+      handleOpenMove,
+      handleOpenRename,
+      isTrashView,
+    ]
   );
 
   const handleRowSelect = useCallback(
@@ -482,8 +496,8 @@ const TableDrive = forwardRef<TableDriveHandle, TableDriveProps>(function TableD
   return (
     <main className={styles.listArea}>
       <div className={styles.driveFrame}>
-        <ResizablePanelGroup orientation="horizontal" className={styles.driveBody}>
-          <ResizablePanel id="drive-table" minSize="45%" className={styles.tablePanel}>
+        <div className={styles.driveBody}>
+          <div className={styles.tablePanel}>
             <FolderTable<DriveTableRow>
               ariaLabel="云盘文件列表"
               items={rows}
@@ -511,22 +525,15 @@ const TableDrive = forwardRef<TableDriveHandle, TableDriveProps>(function TableD
                   : undefined
               }
             />
-          </ResizablePanel>
+          </div>
 
-          <ResizableHandle className={styles.resizeHandle} />
-
-          <ResizablePanel
-            id="drive-detail"
-            defaultSize={280}
-            minSize={240}
-            maxSize={420}
-            className={styles.detailPanel}
-          >
+          <div className={styles.detailPanel}>
             <TableDriveSelectionPanel
               selectedRow={batchEditMode ? undefined : selectedNode}
               batchEditMode={batchEditMode}
               batchSelectedCount={batchSelectedCount}
               groupId={finalGroupId}
+              isTrashView={isTrashView}
               canManageTagPermission={showManagePermission && !isTrashView}
               tagPermissionRefreshToken={tagPermissionRefreshToken}
               resourcePermissionRefreshToken={resourcePermissionRefreshToken}
@@ -539,8 +546,8 @@ const TableDrive = forwardRef<TableDriveHandle, TableDriveProps>(function TableD
               onManageResourcePermission={openResourcePermission}
               onTagPermissionChange={refreshDrive}
             />
-          </ResizablePanel>
-        </ResizablePanelGroup>
+          </div>
+        </div>
       </div>
       {ModalHost}
       <RenameNodeModal
@@ -557,6 +564,7 @@ const TableDrive = forwardRef<TableDriveHandle, TableDriveProps>(function TableD
         node={moveTarget}
         rootId={finalRootId}
         groupId={finalGroupId}
+        isTrashView={isTrashView}
         onOpenChange={(open) => {
           if (!open) setMoveTarget(null);
         }}
@@ -566,6 +574,7 @@ const TableDrive = forwardRef<TableDriveHandle, TableDriveProps>(function TableD
         isOpen={Boolean(deleteTarget)}
         node={deleteTarget}
         groupId={finalGroupId}
+        isTrashView={isTrashView}
         onOpenChange={(open) => {
           if (!open) setDeleteTarget(null);
         }}

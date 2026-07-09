@@ -9,7 +9,6 @@ import type {
   SkillPendingCreate,
 } from '@/components/Skill/SkillFileTree/index.type';
 import SkillVersionDropdown from '@/components/Skill/SkillVersionDropdown';
-import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/_shadcn';
 import { useResourceService, useSkillService } from '@/domains';
 import type { SkillFileNode, UploadSkillAssetResult } from '@/domains/Skill';
 import { SkillServicesMap } from '@/domains/Skill';
@@ -1782,14 +1781,8 @@ function SkillView({ resourceId = '' }: SkillViewProps = {}) {
       <div className={styles.page}>
         <div className={styles.mainArea}>
           {skill ? (
-            <ResizablePanelGroup orientation="horizontal" className={styles.contentRow}>
-              <ResizablePanel
-                id="skill-file-tree"
-                defaultSize={260}
-                minSize={220}
-                maxSize={420}
-                className={styles.middlePanelSlot}
-              >
+            <div className={styles.contentRow}>
+              <div className={styles.middlePanelSlot}>
                 <section className={styles.middlePanel}>
                   <div className={styles.middlePanelHeader}>
                     <span className={styles.middlePanelLabel}>文件</span>
@@ -1856,11 +1849,9 @@ function SkillView({ resourceId = '' }: SkillViewProps = {}) {
                   </div>
                   <SkillSaveQueueDock items={visibleSaveQueueItems} onRetry={handleSave} />
                 </section>
-              </ResizablePanel>
+              </div>
 
-              <ResizableHandle className={styles.resizeHandle} />
-
-              <ResizablePanel id="skill-editor" minSize={360} className={styles.rightPanelSlot}>
+              <div className={styles.rightPanelSlot}>
                 <main className={styles.rightPanel}>
                   {selectedFile ? (
                     <>
@@ -1901,8 +1892,8 @@ function SkillView({ resourceId = '' }: SkillViewProps = {}) {
                     />
                   )}
                 </main>
-              </ResizablePanel>
-            </ResizablePanelGroup>
+              </div>
+            </div>
           ) : (
             <div className={styles.middleOverlay}>
               <ResultState status="warning" title="无法打开 Skill" />

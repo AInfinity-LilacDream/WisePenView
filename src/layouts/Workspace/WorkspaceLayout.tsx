@@ -1,10 +1,19 @@
-import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/_shadcn';
 import ChatPanel from '@/components/ChatPanel';
 import ChatSessionBar from '@/components/ChatPanel/ChatSessionBar';
 import type { ChatSession } from '@/domains/Chat';
 import DriveSidebar from '@/layouts/_common/Sidebar/DriveSidebar';
+import {
+  SystemResizableHandle,
+  SystemResizablePanel,
+  SystemResizablePanelGroup,
+} from '@/layouts/_common/SystemResizable';
 import { useResizablePanelSize } from '@/layouts/_common/useResizablePanelSize';
-import { clearNewChatSessionStore, useChatPanelStore, useCurrentChatSessionStore } from '@/store';
+import {
+  clearNewChatSessionStore,
+  useChatPanelStore,
+  useCurrentChatSessionStore,
+  useSystemLayoutStore,
+} from '@/store';
 import {
   normalizeWorkspaceResourceType,
   resolveLegacyEditorTypeForWorkspace,
@@ -13,33 +22,58 @@ import {
 import { useUpdateEffect } from 'ahooks';
 import clsx from 'clsx';
 import { useCallback, useMemo, useRef, useState } from 'react';
-import type { PanelImperativeHandle, PanelSize } from 'react-resizable-panels';
+import type {
+  Layout,
+  LayoutChangedMeta,
+  PanelImperativeHandle,
+  PanelSize,
+} from 'react-resizable-panels';
 import { Outlet, useLocation, useMatch } from 'react-router-dom';
 import WorkspaceFrame from './_common/WorkspaceFrame';
 import WorkspaceHeader from './_common/WorkspaceHeader';
 import styles from './WorkspaceLayout.module.less';
 import type { WorkspaceLayoutConfig, WorkspaceOutletContextValue } from './WorkspaceOutletContext';
 
-const WORKSPACE_LEFT_SIDEBAR_WIDTH = 308;
 const WORKSPACE_LEFT_SIDEBAR_MIN_WIDTH = 240;
 const WORKSPACE_LEFT_SIDEBAR_MAX_WIDTH = 420;
 const WORKSPACE_MAIN_MIN_WIDTH = 360;
 const CHAT_PANEL_MIN_WIDTH = 320;
 const CHAT_PANEL_MAX_WIDTH = 1020;
-const CHAT_SESSION_PANEL_WIDTH = 320;
 const CHAT_SESSION_PANEL_MIN_WIDTH = 240;
 const CHAT_SESSION_PANEL_MAX_WIDTH = 420;
+const RESIZE_TARGET_MINIMUM_SIZE = { fine: 16, coarse: 32 };
 
 const clampPanelWidth = (width: number, min: number, max: number): number =>
   Math.min(Math.max(Math.round(width), min), max);
 
+const clampWorkspaceLeftSidebarWidth = (width: number): number =>
+  clampPanelWidth(width, WORKSPACE_LEFT_SIDEBAR_MIN_WIDTH, WORKSPACE_LEFT_SIDEBAR_MAX_WIDTH);
+
+const clampChatSessionPanelWidth = (width: number): number =>
+  clampPanelWidth(width, CHAT_SESSION_PANEL_MIN_WIDTH, CHAT_SESSION_PANEL_MAX_WIDTH);
+
 function WorkspaceLayout() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [leftSidebarWidth, setLeftSidebarWidth] = useState(WORKSPACE_LEFT_SIDEBAR_WIDTH);
   const [layoutConfig, setLayoutConfigState] = useState<WorkspaceLayoutConfig>({});
   const [chatSessionBarOpen, setChatSessionBarOpen] = useState(false);
+  const storedLeftSidebarWidth = useSystemLayoutStore((state) => state.workspaceLeftSidebarWidth);
+  const storedChatSessionPanelWidth = useSystemLayoutStore(
+    (state) => state.workspaceChatSessionPanelWidth
+  );
+  const setLeftSidebarWidth = useSystemLayoutStore((state) => state.setWorkspaceLeftSidebarWidth);
+  const setChatSessionPanelWidth = useSystemLayoutStore(
+    (state) => state.setWorkspaceChatSessionPanelWidth
+  );
   const leftSidebarPanelRef = useRef<PanelImperativeHandle | null>(null);
+  const rightDockPanelRef = useRef<PanelImperativeHandle | null>(null);
   const chatPanelRef = useRef<PanelImperativeHandle | null>(null);
+  const chatSessionPanelRef = useRef<PanelImperativeHandle | null>(null);
+  const pendingLeftSidebarWidthRef = useRef<number | null>(null);
+  const pendingRightDockWidthRef = useRef<number | null>(null);
+  const pendingChatPanelWidthRef = useRef<number | null>(null);
+  const pendingChatSessionPanelWidthRef = useRef<number | null>(null);
+  const leftSidebarWidth = clampWorkspaceLeftSidebarWidth(storedLeftSidebarWidth);
+  const chatSessionPanelWidth = clampChatSessionPanelWidth(storedChatSessionPanelWidth);
   const chatPanelCollapsed = useChatPanelStore((state) => state.chatPanelCollapsed);
   const chatPanelDraftOpen = useChatPanelStore((state) => state.chatPanelDraftOpen);
   const chatPanelWidth = useChatPanelStore((state) => state.chatPanelWidth);
@@ -52,19 +86,23 @@ function WorkspaceLayout() {
   const hasSessionId = Boolean(currentSessionId);
   const shouldRenderChatPanel = hasSessionId || chatPanelDraftOpen;
   const safeChatPanelCollapsed = !shouldRenderChatPanel || chatPanelCollapsed;
-  const chatSessionPanelOpen = chatSessionBarOpen && !safeChatPanelCollapsed;
+  const chatPanelOpen = !safeChatPanelCollapsed;
+  const chatSessionPanelOpen = chatSessionBarOpen && chatPanelOpen;
   const normalizedChatPanelWidth = clampPanelWidth(
     chatPanelWidth,
     CHAT_PANEL_MIN_WIDTH,
     CHAT_PANEL_MAX_WIDTH
   );
   const sidebarPanelSize = sidebarCollapsed ? 0 : leftSidebarWidth;
-  const chatPanelSize = safeChatPanelCollapsed ? 0 : normalizedChatPanelWidth;
-  const workspacePanelGroupKey = [
-    'workspace-panels',
-    shouldRenderChatPanel ? 'chat' : 'no-chat',
-    chatSessionPanelOpen ? 'session' : 'no-session',
-  ].join(':');
+  const chatPanelSize = chatPanelOpen ? normalizedChatPanelWidth : 0;
+  const chatSessionPanelSize = chatSessionPanelOpen ? chatSessionPanelWidth : 0;
+  const rightDockPanelSize = chatPanelOpen ? chatPanelSize + chatSessionPanelSize : 0;
+  const rightDockPanelMinWidth = chatPanelOpen
+    ? CHAT_PANEL_MIN_WIDTH + (chatSessionPanelOpen ? CHAT_SESSION_PANEL_MIN_WIDTH : 0)
+    : 0;
+  const rightDockPanelMaxWidth = chatPanelOpen
+    ? CHAT_PANEL_MAX_WIDTH + (chatSessionPanelOpen ? CHAT_SESSION_PANEL_MAX_WIDTH : 0)
+    : 0;
   const location = useLocation();
   const resourceRouteMatch = useMatch('/app/workspace/:resourceType/:resourceId');
   const resourceListRouteMatch = useMatch('/app/workspace/:resourceType');
@@ -107,9 +145,18 @@ function WorkspaceLayout() {
   });
 
   useResizablePanelSize({
+    panelRef: rightDockPanelRef,
+    size: rightDockPanelSize,
+  });
+
+  useResizablePanelSize({
     panelRef: chatPanelRef,
     size: chatPanelSize,
-    enabled: shouldRenderChatPanel,
+  });
+
+  useResizablePanelSize({
+    panelRef: chatSessionPanelRef,
+    size: chatSessionPanelSize,
   });
 
   useUpdateEffect(() => {
@@ -133,8 +180,22 @@ function WorkspaceLayout() {
   }, [safeChatPanelCollapsed]);
 
   const handleSidebarToggle = useCallback(() => {
-    setSidebarCollapsed((collapsed) => !collapsed);
-  }, []);
+    setSidebarCollapsed((collapsed) => {
+      if (!collapsed) {
+        const currentWidth = leftSidebarPanelRef.current?.getSize().inPixels;
+        if (currentWidth != null) {
+          const nextSidebarWidth = clampWorkspaceLeftSidebarWidth(currentWidth);
+          if (
+            nextSidebarWidth > WORKSPACE_LEFT_SIDEBAR_MIN_WIDTH ||
+            leftSidebarWidth === WORKSPACE_LEFT_SIDEBAR_MIN_WIDTH
+          ) {
+            setLeftSidebarWidth(nextSidebarWidth);
+          }
+        }
+      }
+      return !collapsed;
+    });
+  }, [leftSidebarWidth, setLeftSidebarWidth]);
 
   const handleChatPanelToggle = useCallback(() => {
     if (safeChatPanelCollapsed) {
@@ -172,25 +233,83 @@ function WorkspaceLayout() {
   const handleLeftSidebarResize = useCallback(
     (panelSize: PanelSize) => {
       if (sidebarCollapsed) return;
-      setLeftSidebarWidth(
-        clampPanelWidth(
-          panelSize.inPixels,
-          WORKSPACE_LEFT_SIDEBAR_MIN_WIDTH,
-          WORKSPACE_LEFT_SIDEBAR_MAX_WIDTH
-        )
-      );
+      pendingLeftSidebarWidthRef.current = clampWorkspaceLeftSidebarWidth(panelSize.inPixels);
     },
     [sidebarCollapsed]
   );
 
   const handleChatPanelResize = useCallback(
     (panelSize: PanelSize) => {
-      if (safeChatPanelCollapsed) return;
-      setChatPanelWidth(
-        clampPanelWidth(panelSize.inPixels, CHAT_PANEL_MIN_WIDTH, CHAT_PANEL_MAX_WIDTH)
+      if (!chatPanelOpen) return;
+      pendingChatPanelWidthRef.current = clampPanelWidth(
+        panelSize.inPixels,
+        CHAT_PANEL_MIN_WIDTH,
+        CHAT_PANEL_MAX_WIDTH
       );
     },
-    [safeChatPanelCollapsed, setChatPanelWidth]
+    [chatPanelOpen]
+  );
+
+  const handleRightDockResize = useCallback(
+    (panelSize: PanelSize) => {
+      if (!chatPanelOpen) return;
+      pendingRightDockWidthRef.current = panelSize.inPixels;
+    },
+    [chatPanelOpen]
+  );
+
+  const handleChatSessionPanelResize = useCallback(
+    (panelSize: PanelSize) => {
+      if (!chatSessionPanelOpen) return;
+      pendingChatSessionPanelWidthRef.current = clampChatSessionPanelWidth(panelSize.inPixels);
+    },
+    [chatSessionPanelOpen]
+  );
+
+  const handleWorkspaceShellLayoutChanged = useCallback(
+    (_layout: Layout, meta: LayoutChangedMeta) => {
+      const pendingLeftSidebarWidth = pendingLeftSidebarWidthRef.current;
+      pendingLeftSidebarWidthRef.current = null;
+      if (!meta.isUserInteraction) return;
+      if (!sidebarCollapsed && pendingLeftSidebarWidth != null) {
+        setLeftSidebarWidth(pendingLeftSidebarWidth);
+      }
+    },
+    [setLeftSidebarWidth, sidebarCollapsed]
+  );
+
+  const handleWorkspaceContentLayoutChanged = useCallback(
+    (_layout: Layout, meta: LayoutChangedMeta) => {
+      const pendingRightDockWidth = pendingRightDockWidthRef.current;
+      pendingRightDockWidthRef.current = null;
+      pendingChatPanelWidthRef.current = null;
+      pendingChatSessionPanelWidthRef.current = null;
+      if (!meta.isUserInteraction) return;
+      if (chatPanelOpen && pendingRightDockWidth != null) {
+        const nextChatPanelWidth = pendingRightDockWidth - chatSessionPanelSize;
+        setChatPanelWidth(
+          clampPanelWidth(nextChatPanelWidth, CHAT_PANEL_MIN_WIDTH, CHAT_PANEL_MAX_WIDTH)
+        );
+      }
+    },
+    [chatPanelOpen, chatSessionPanelSize, setChatPanelWidth]
+  );
+
+  const handleWorkspaceRightDockLayoutChanged = useCallback(
+    (_layout: Layout, meta: LayoutChangedMeta) => {
+      const pendingChatPanelWidth = pendingChatPanelWidthRef.current;
+      const pendingChatSessionPanelWidth = pendingChatSessionPanelWidthRef.current;
+      pendingChatPanelWidthRef.current = null;
+      pendingChatSessionPanelWidthRef.current = null;
+      if (!meta.isUserInteraction) return;
+      if (chatPanelOpen && pendingChatPanelWidth != null) {
+        setChatPanelWidth(pendingChatPanelWidth);
+      }
+      if (chatSessionPanelOpen && pendingChatSessionPanelWidth != null) {
+        setChatSessionPanelWidth(pendingChatSessionPanelWidth);
+      }
+    },
+    [chatPanelOpen, chatSessionPanelOpen, setChatPanelWidth, setChatSessionPanelWidth]
   );
 
   const handleSelectChatSession = useCallback(
@@ -236,95 +355,137 @@ function WorkspaceLayout() {
   };
 
   return (
-    <ResizablePanelGroup
-      key={workspacePanelGroupKey}
+    <SystemResizablePanelGroup
       orientation="horizontal"
       className={styles.root}
+      resizeTargetMinimumSize={RESIZE_TARGET_MINIMUM_SIZE}
+      onLayoutChanged={handleWorkspaceShellLayoutChanged}
     >
-      <ResizablePanel
+      <SystemResizablePanel
         id="workspace-left-sidebar"
         panelRef={leftSidebarPanelRef}
         defaultSize={sidebarPanelSize}
         minSize={sidebarCollapsed ? 0 : WORKSPACE_LEFT_SIDEBAR_MIN_WIDTH}
         maxSize={sidebarCollapsed ? 0 : WORKSPACE_LEFT_SIDEBAR_MAX_WIDTH}
-        disabled={sidebarCollapsed}
+        groupResizeBehavior="preserve-pixel-size"
         className={clsx(styles.leftSider, sidebarCollapsed && styles.leftSiderCollapsed)}
         aria-label="资源侧边栏"
         aria-hidden={sidebarCollapsed ? true : undefined}
         onResize={handleLeftSidebarResize}
       >
         <DriveSidebar collapsed={sidebarCollapsed} />
-      </ResizablePanel>
+      </SystemResizablePanel>
 
-      {!sidebarCollapsed ? <ResizableHandle className={styles.resizeHandle} /> : null}
+      <SystemResizableHandle
+        className={clsx(styles.resizeHandle, sidebarCollapsed && styles.resizeHandleCollapsed)}
+        disabled={sidebarCollapsed}
+      />
 
-      <ResizablePanel
-        id="workspace-main"
+      <SystemResizablePanel
+        id="workspace-area"
         minSize={WORKSPACE_MAIN_MIN_WIDTH}
-        className={styles.middleLayout}
+        className={styles.workspaceArea}
       >
-        <main className={`${styles.middleContent} ${styles.workspaceContent}`}>
-          <WorkspaceFrame
-            className={layoutConfig.className}
-            bodyClassName={layoutConfig.bodyClassName}
-            header={renderHeader()}
+        <SystemResizablePanelGroup
+          orientation="horizontal"
+          className={styles.workspaceInnerGroup}
+          resizeTargetMinimumSize={RESIZE_TARGET_MINIMUM_SIZE}
+          onLayoutChanged={handleWorkspaceContentLayoutChanged}
+        >
+          <SystemResizablePanel
+            id="workspace-main"
+            minSize={WORKSPACE_MAIN_MIN_WIDTH}
+            className={styles.middleLayout}
           >
-            <Outlet context={outletContext} />
-          </WorkspaceFrame>
-        </main>
-      </ResizablePanel>
+            <main className={`${styles.middleContent} ${styles.workspaceContent}`}>
+              <WorkspaceFrame
+                className={layoutConfig.className}
+                bodyClassName={layoutConfig.bodyClassName}
+                header={renderHeader()}
+              >
+                <Outlet context={outletContext} />
+              </WorkspaceFrame>
+            </main>
+          </SystemResizablePanel>
 
-      {shouldRenderChatPanel ? (
-        <>
-          {!safeChatPanelCollapsed ? <ResizableHandle className={styles.resizeHandle} /> : null}
-          <ResizablePanel
-            id="workspace-chat"
-            panelRef={chatPanelRef}
-            defaultSize={chatPanelSize}
-            minSize={safeChatPanelCollapsed ? 0 : CHAT_PANEL_MIN_WIDTH}
-            maxSize={safeChatPanelCollapsed ? 0 : CHAT_PANEL_MAX_WIDTH}
-            disabled={safeChatPanelCollapsed}
-            className={clsx(
-              styles.rightSider,
-              safeChatPanelCollapsed && styles.rightSiderCollapsed
-            )}
-            aria-label="聊天面板"
-            aria-hidden={safeChatPanelCollapsed ? true : undefined}
-            onResize={handleChatPanelResize}
-          >
-            <div className={styles.rightSiderInner}>
-              <ChatPanel
-                collapsed={safeChatPanelCollapsed}
-                onNewChat={handleNewChat}
-                sessionBarOpen={chatSessionBarOpen}
-                onToggleSessionBar={handleToggleChatSessionBar}
-                workspaceContext={chatWorkspaceContext}
-                showCollapseButton={false}
-              />
-            </div>
-          </ResizablePanel>
-        </>
-      ) : null}
+          <SystemResizableHandle
+            className={clsx(styles.resizeHandle, !chatPanelOpen && styles.resizeHandleCollapsed)}
+            disabled={!chatPanelOpen}
+          />
 
-      {chatSessionPanelOpen ? (
-        <>
-          <ResizableHandle className={styles.resizeHandle} />
-          <ResizablePanel
-            id="workspace-chat-session"
-            defaultSize={CHAT_SESSION_PANEL_WIDTH}
-            minSize={CHAT_SESSION_PANEL_MIN_WIDTH}
-            maxSize={CHAT_SESSION_PANEL_MAX_WIDTH}
-            className={styles.sessionPanel}
+          <SystemResizablePanel
+            id="workspace-right-dock"
+            panelRef={rightDockPanelRef}
+            defaultSize={rightDockPanelSize}
+            minSize={rightDockPanelMinWidth}
+            maxSize={rightDockPanelMaxWidth}
+            groupResizeBehavior="preserve-pixel-size"
+            className={styles.rightDock}
+            aria-label="右侧工作区"
+            aria-hidden={!chatPanelOpen ? true : undefined}
+            onResize={handleRightDockResize}
           >
-            <ChatSessionBar
-              activeSessionId={currentSessionId}
-              onClose={handleCloseChatSessionBar}
-              onSelectSession={handleSelectChatSession}
-            />
-          </ResizablePanel>
-        </>
-      ) : null}
-    </ResizablePanelGroup>
+            {chatPanelOpen ? (
+              <SystemResizablePanelGroup
+                orientation="horizontal"
+                className={styles.rightDockGroup}
+                resizeTargetMinimumSize={RESIZE_TARGET_MINIMUM_SIZE}
+                onLayoutChanged={handleWorkspaceRightDockLayoutChanged}
+              >
+                <SystemResizablePanel
+                  id="workspace-chat"
+                  panelRef={chatPanelRef}
+                  defaultSize={chatPanelSize}
+                  minSize={CHAT_PANEL_MIN_WIDTH}
+                  maxSize={CHAT_PANEL_MAX_WIDTH}
+                  className={styles.rightSider}
+                  aria-label="聊天面板"
+                  onResize={handleChatPanelResize}
+                >
+                  <ChatPanel
+                    collapsed={false}
+                    onNewChat={handleNewChat}
+                    sessionBarOpen={chatSessionBarOpen}
+                    onToggleSessionBar={handleToggleChatSessionBar}
+                    workspaceContext={chatWorkspaceContext}
+                    showCollapseButton={false}
+                  />
+                </SystemResizablePanel>
+
+                <SystemResizableHandle
+                  className={clsx(
+                    styles.resizeHandle,
+                    !chatSessionPanelOpen && styles.resizeHandleCollapsed
+                  )}
+                  disabled={!chatSessionPanelOpen}
+                />
+
+                <SystemResizablePanel
+                  id="workspace-chat-session"
+                  panelRef={chatSessionPanelRef}
+                  defaultSize={chatSessionPanelSize}
+                  minSize={chatSessionPanelOpen ? CHAT_SESSION_PANEL_MIN_WIDTH : 0}
+                  maxSize={chatSessionPanelOpen ? CHAT_SESSION_PANEL_MAX_WIDTH : 0}
+                  groupResizeBehavior="preserve-pixel-size"
+                  className={styles.sessionPanel}
+                  aria-label="聊天会话列表"
+                  aria-hidden={!chatSessionPanelOpen ? true : undefined}
+                  onResize={handleChatSessionPanelResize}
+                >
+                  {chatSessionPanelOpen ? (
+                    <ChatSessionBar
+                      activeSessionId={currentSessionId}
+                      onClose={handleCloseChatSessionBar}
+                      onSelectSession={handleSelectChatSession}
+                    />
+                  ) : null}
+                </SystemResizablePanel>
+              </SystemResizablePanelGroup>
+            ) : null}
+          </SystemResizablePanel>
+        </SystemResizablePanelGroup>
+      </SystemResizablePanel>
+    </SystemResizablePanelGroup>
   );
 }
 

@@ -57,6 +57,7 @@ function TableDriveSelectionPanel({
   batchEditMode = false,
   batchSelectedCount = 0,
   groupId,
+  isTrashView = false,
   canManageTagPermission = false,
   tagPermissionRefreshToken,
   resourcePermissionRefreshToken,
@@ -89,6 +90,8 @@ function TableDriveSelectionPanel({
   const isFolder = node?.type === 'folder';
   const isFile = node?.type === 'resource' || node?.type === 'link';
   const canRename = actionTarget != null && actionTarget.type !== 'link';
+  const deleteActionLabel = groupId ? '移除' : isTrashView ? '彻底删除' : '删除';
+  const moveActionLabel = isTrashView ? '移动到云盘' : '移动';
   const folderTagId = node?.type === 'folder' ? node.tagId : undefined;
   const resourceId = node?.type === 'resource' ? node.resourceId : undefined;
   const resourceFallbackTagId = node?.type === 'resource' ? node.folderTagId : undefined;
@@ -495,7 +498,7 @@ function TableDriveSelectionPanel({
                 className={styles.actionBtn}
                 onPress={() => onDelete(actionTarget)}
               >
-                删除
+                {deleteActionLabel}
               </Button>
               <Button
                 variant="secondary"
@@ -504,7 +507,7 @@ function TableDriveSelectionPanel({
                 onPress={() => onMove(actionTarget)}
               >
                 <FolderInput size={16} aria-hidden="true" />
-                移动
+                {moveActionLabel}
               </Button>
               {isFolder ? (
                 <Button

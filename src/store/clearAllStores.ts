@@ -12,6 +12,7 @@ import { clearNewChatSessionStore } from './useNewChatSessionStore';
 import { clearNewNoteStore } from './useNewNoteStore';
 import { clearPdfPreviewProgressStore } from './usePdfPreviewProgressStore';
 import { clearResourceDisplayNameStore } from './useResourceDisplayNameStore';
+import { clearSystemLayoutStore } from './useSystemLayoutStore';
 import { clearTrashTagStore } from './useTrashTagStore';
 
 export function clearAllZustandStores(): void {
@@ -30,4 +31,5 @@ export function clearAllZustandStores(): void {
   clearChatAgentStore();
   clearAdvancedModeStore();
   clearChatCapabilityStore();
+  clearSystemLayoutStore();
 }

@@ -16,7 +16,6 @@ import {
   NOTE_OUTLINE_TITLE_ID,
   type NoteOutlineItem,
 } from '@/components/Note/NoteOutline/index.type';
-import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/_shadcn';
 import { useNoteService, useResourceService, useUserService } from '@/domains';
 import type { AiDiffDisplayMode, NoteInfoDisplayData } from '@/domains/Note';
 import { AI_DIFF_DISPLAY_MODE, AI_DIFF_DISPLAY_MODE_LABELS, useNoteSession } from '@/domains/Note';
@@ -331,8 +330,8 @@ function NoteViewConnected({
   return (
     <>
       <div className={styles.mainScroll}>
-        <ResizablePanelGroup orientation="horizontal" className={styles.contentRow}>
-          <ResizablePanel id="note-main" minSize="45%" className={styles.mainPanel}>
+        <div className={styles.contentRow}>
+          <div className={styles.mainPanel}>
             <div className={styles.mainCol} ref={mainScrollRef}>
               <div className={styles.root}>
                 {isDisconnected ? (
@@ -387,68 +386,52 @@ function NoteViewConnected({
                 </div>
               </div>
             </div>
-          </ResizablePanel>
+          </div>
 
           {isOutlineOpen ? (
-            <>
-              <ResizableHandle className={styles.resizeHandle} />
-              <ResizablePanel
-                id="note-outline"
-                defaultSize={260}
-                minSize={220}
-                maxSize={360}
-                className={styles.outlinePanel}
-              >
-                <aside className={styles.outlineAside} aria-label="文档目录侧栏">
-                  <div className={styles.outlineTopRow}>
-                    <span className={styles.outlineTopTitle}>目录</span>
-                    <button
-                      type="button"
-                      className={styles.outlineToggleBtn}
-                      aria-label="收起目录"
-                      onClick={() => setIsOutlineOpen(false)}
-                    >
-                      <ChevronsRight size={20} />
-                    </button>
-                  </div>
-                  <div className={styles.outlineScrollArea}>
-                    <NoteOutline
-                      items={outlineItems}
-                      activeId={activeHeadingId}
-                      titleResourceId={resourceId}
-                      titleFallback={noteInfoDisplay?.noteTitle}
-                      onNavigate={(id) => {
-                        if (id === NOTE_OUTLINE_TITLE_ID) {
-                          const anchor = titleAnchorRef.current;
-                          if (anchor) {
-                            anchor.scrollIntoView({ block: 'start', behavior: 'smooth' });
-                            window.requestAnimationFrame(() => {
-                              const editable = anchor.querySelector(
-                                '[contenteditable="true"]'
-                              ) as HTMLElement | null;
-                              editable?.focus();
-                            });
-                          } else {
-                            mainScrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
-                          }
-                          return;
+            <div className={styles.outlinePanel}>
+              <aside className={styles.outlineAside} aria-label="文档目录侧栏">
+                <div className={styles.outlineTopRow}>
+                  <span className={styles.outlineTopTitle}>目录</span>
+                  <button
+                    type="button"
+                    className={styles.outlineToggleBtn}
+                    aria-label="收起目录"
+                    onClick={() => setIsOutlineOpen(false)}
+                  >
+                    <ChevronsRight size={20} />
+                  </button>
+                </div>
+                <div className={styles.outlineScrollArea}>
+                  <NoteOutline
+                    items={outlineItems}
+                    activeId={activeHeadingId}
+                    titleResourceId={resourceId}
+                    titleFallback={noteInfoDisplay?.noteTitle}
+                    onNavigate={(id) => {
+                      if (id === NOTE_OUTLINE_TITLE_ID) {
+                        const anchor = titleAnchorRef.current;
+                        if (anchor) {
+                          anchor.scrollIntoView({ block: 'start', behavior: 'smooth' });
+                          window.requestAnimationFrame(() => {
+                            const editable = anchor.querySelector(
+                              '[contenteditable="true"]'
+                            ) as HTMLElement | null;
+                            editable?.focus();
+                          });
+                        } else {
+                          mainScrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
                         }
-                        bodyEditorRef.current?.navigateToBlock(id);
-                      }}
-                    />
-                  </div>
-                </aside>
-              </ResizablePanel>
-            </>
+                        return;
+                      }
+                      bodyEditorRef.current?.navigateToBlock(id);
+                    }}
+                  />
+                </div>
+              </aside>
+            </div>
           ) : (
-            <ResizablePanel
-              id="note-outline-collapsed"
-              defaultSize={40}
-              minSize={40}
-              maxSize={40}
-              disabled
-              className={styles.outlineCollapsedPanel}
-            >
+            <div className={styles.outlineCollapsedPanel}>
               <div className={styles.outlineCollapsedCol} aria-label="展开目录">
                 <Tooltip>
                   <Tooltip.Trigger>
@@ -464,9 +447,9 @@ function NoteViewConnected({
                   <Tooltip.Content>展开目录</Tooltip.Content>
                 </Tooltip>
               </div>
-            </ResizablePanel>
+            </div>
           )}
-        </ResizablePanelGroup>
+        </div>
       </div>
 
       {showFullPageSpin ? (

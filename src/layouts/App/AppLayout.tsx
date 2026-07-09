@@ -1,12 +1,22 @@
-import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/_shadcn';
 import AppSidebar from '@/layouts/_common/Sidebar/AppSidebar';
+import {
+  SystemResizableHandle,
+  SystemResizablePanel,
+  SystemResizablePanelGroup,
+} from '@/layouts/_common/SystemResizable';
 import { useResizablePanelSize } from '@/layouts/_common/useResizablePanelSize';
+import { useSystemLayoutStore } from '@/store';
+import clsx from 'clsx';
 import { useCallback, useRef, useState } from 'react';
-import type { PanelImperativeHandle, PanelSize } from 'react-resizable-panels';
+import type {
+  Layout,
+  LayoutChangedMeta,
+  PanelImperativeHandle,
+  PanelSize,
+} from 'react-resizable-panels';
 import { Outlet } from 'react-router-dom';
 import styles from './AppLayout.module.less';
 
-const SIDEBAR_WIDTH = 308;
 const SIDEBAR_MIN_WIDTH = 240;
 const SIDEBAR_MAX_WIDTH = 420;
 const SIDEBAR_COLLAPSED_WIDTH = 80;
@@ -17,8 +27,11 @@ const clampSidebarWidth = (width: number): number =>
 
 function AppLayout() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [sidebarWidth, setSidebarWidth] = useState(SIDEBAR_WIDTH);
+  const storedSidebarWidth = useSystemLayoutStore((state) => state.appSidebarWidth);
+  const setSidebarWidth = useSystemLayoutStore((state) => state.setAppSidebarWidth);
   const sidebarPanelRef = useRef<PanelImperativeHandle | null>(null);
+  const pendingSidebarWidthRef = useRef<number | null>(null);
+  const sidebarWidth = clampSidebarWidth(storedSidebarWidth);
   const sidebarPanelSize = sidebarCollapsed ? SIDEBAR_COLLAPSED_WIDTH : sidebarWidth;
 
   useResizablePanelSize({
@@ -27,41 +40,69 @@ function AppLayout() {
   });
 
   const handleSidebarToggle = useCallback(() => {
-    setSidebarCollapsed((collapsed) => !collapsed);
-  }, []);
+    setSidebarCollapsed((collapsed) => {
+      if (!collapsed) {
+        const currentWidth = sidebarPanelRef.current?.getSize().inPixels;
+        if (currentWidth != null) {
+          const nextSidebarWidth = clampSidebarWidth(currentWidth);
+          if (nextSidebarWidth > SIDEBAR_MIN_WIDTH || sidebarWidth === SIDEBAR_MIN_WIDTH) {
+            setSidebarWidth(nextSidebarWidth);
+          }
+        }
+      }
+      return !collapsed;
+    });
+  }, [setSidebarWidth, sidebarWidth]);
 
   const handleSidebarResize = useCallback(
     (panelSize: PanelSize) => {
       if (sidebarCollapsed) return;
-      setSidebarWidth(clampSidebarWidth(panelSize.inPixels));
+      pendingSidebarWidthRef.current = clampSidebarWidth(panelSize.inPixels);
     },
     [sidebarCollapsed]
   );
 
+  const handleLayoutChanged = useCallback(
+    (_layout: Layout, meta: LayoutChangedMeta) => {
+      const pendingSidebarWidth = pendingSidebarWidthRef.current;
+      pendingSidebarWidthRef.current = null;
+      if (sidebarCollapsed || !meta.isUserInteraction || pendingSidebarWidth == null) return;
+      setSidebarWidth(pendingSidebarWidth);
+    },
+    [setSidebarWidth, sidebarCollapsed]
+  );
+
   return (
-    <ResizablePanelGroup orientation="horizontal" className={styles.root}>
-      <ResizablePanel
+    <SystemResizablePanelGroup
+      orientation="horizontal"
+      className={styles.root}
+      onLayoutChanged={handleLayoutChanged}
+    >
+      <SystemResizablePanel
         id="app-sidebar"
         panelRef={sidebarPanelRef}
         defaultSize={sidebarPanelSize}
         minSize={sidebarCollapsed ? SIDEBAR_COLLAPSED_WIDTH : SIDEBAR_MIN_WIDTH}
         maxSize={sidebarCollapsed ? SIDEBAR_COLLAPSED_WIDTH : SIDEBAR_MAX_WIDTH}
-        disabled={sidebarCollapsed}
+        groupResizeBehavior="preserve-pixel-size"
         className={styles.leftSider}
         aria-label="应用侧边栏"
         onResize={handleSidebarResize}
       >
         <AppSidebar collapsed={sidebarCollapsed} onToggle={handleSidebarToggle} />
-      </ResizablePanel>
+      </SystemResizablePanel>
 
-      {!sidebarCollapsed ? <ResizableHandle className={styles.resizeHandle} /> : null}
+      <SystemResizableHandle
+        className={clsx(styles.resizeHandle, sidebarCollapsed && styles.resizeHandleCollapsed)}
+        disabled={sidebarCollapsed}
+      />
 
-      <ResizablePanel id="app-main" minSize={MAIN_MIN_WIDTH} className={styles.middleLayout}>
+      <SystemResizablePanel id="app-main" minSize={MAIN_MIN_WIDTH} className={styles.middleLayout}>
         <main className={styles.middleContent}>
           <Outlet />
         </main>
-      </ResizablePanel>
-    </ResizablePanelGroup>
+      </SystemResizablePanel>
+    </SystemResizablePanelGroup>
   );
 }
 

@@ -8,6 +8,7 @@ export interface TableDriveSelectionPanelProps {
   batchEditMode?: boolean;
   batchSelectedCount?: number;
   groupId?: string;
+  isTrashView?: boolean;
   canManageTagPermission?: boolean;
   tagPermissionRefreshToken?: number;
   resourcePermissionRefreshToken?: number;

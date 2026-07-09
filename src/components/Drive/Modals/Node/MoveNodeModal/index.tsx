@@ -39,6 +39,7 @@ function MoveNodeModal({
   node,
   rootId,
   groupId,
+  isTrashView = false,
   onOpenChange,
   onSuccess,
 }: MoveNodeModalProps) {
@@ -88,7 +89,7 @@ function MoveNodeModal({
     {
       manual: true,
       onSuccess: () => {
-        toast.success('移动成功');
+        toast.success(isTrashView ? '已移动到云盘' : '移动成功');
         onSuccess?.();
         onOpenChange(false);
       },
@@ -112,7 +113,7 @@ function MoveNodeModal({
     <AppModal
       isOpen={isOpen && !!node}
       onOpenChange={handleOpenChange}
-      title="移动到文件夹"
+      title={isTrashView ? '移动到云盘' : '移动到文件夹'}
       size="md"
       isDismissable={!moving}
       actions={

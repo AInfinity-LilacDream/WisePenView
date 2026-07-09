@@ -32,6 +32,7 @@ export {
   clearResourceDisplayNameStore,
   useResourceDisplayNameStore,
 } from './useResourceDisplayNameStore';
+export { clearSystemLayoutStore, useSystemLayoutStore } from './useSystemLayoutStore';
 export { clearTrashTagStore, useTrashTagStore } from './useTrashTagStore';
 
 export { clearAdvancedModeStore, useAdvancedModeStore } from './useAdvancedModeStore';
