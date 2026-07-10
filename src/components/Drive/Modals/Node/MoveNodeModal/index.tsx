@@ -1,4 +1,4 @@
-import DriveNav from '@/components/Drive/DriveNav';
+import DriveNavigator from '@/components/Drive/DriveNavigator';
 import AppModal from '@/components/Overlay/AppModal';
 import { useDriveService } from '@/domains';
 import type { FolderNode, IDriveService } from '@/domains/Drive';
@@ -135,7 +135,7 @@ function MoveNodeModal({
       <div className={styles.wrapper}>
         {node ? <div className={styles.hint}>即将移动：{getNodeName(node)}</div> : null}
         <div className={styles.treeWrap}>
-          <DriveNav
+          <DriveNavigator
             rootId={effectiveRootId}
             groupId={effectiveGroupId}
             renderableTypes={['root', 'folder']}

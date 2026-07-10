@@ -4,11 +4,17 @@ import type { DriveNode } from '@/domains/Drive';
 import { useResourceDisplayName } from '@/hooks/useResourceDisplayName';
 import styles from './style.module.less';
 
-interface DriveTreeNodeTitleProps {
+interface DriveNavigatorNodeTitleProps {
   node: DriveNode;
+  displayName?: string;
 }
 
-function getNodeDisplayName(node: DriveTreeNodeTitleProps['node'], resourceName: string): string {
+function getNodeDisplayName(
+  node: DriveNavigatorNodeTitleProps['node'],
+  resourceName: string,
+  displayName?: string
+): string {
+  if (displayName) return displayName;
   if (node.type === 'root') return node.name || ROOT_DISPLAY;
   if (node.type === 'folder') {
     if (!node.parentId) return ROOT_DISPLAY;
@@ -18,7 +24,7 @@ function getNodeDisplayName(node: DriveTreeNodeTitleProps['node'], resourceName:
   return node.label || '正在加载...';
 }
 
-function DriveTreeNodeTitle({ node }: DriveTreeNodeTitleProps) {
+function DriveNavigatorNodeTitle({ node, displayName }: DriveNavigatorNodeTitleProps) {
   const resourceId = node.type === 'resource' || node.type === 'link' ? node.resourceId : undefined;
   const fallbackName = node.type === 'resource' || node.type === 'link' ? node.title : undefined;
   const resourceName = useResourceDisplayName(resourceId, fallbackName, '未命名文件');
@@ -37,9 +43,11 @@ function DriveTreeNodeTitle({ node }: DriveTreeNodeTitleProps) {
           size={14}
         />
       </span>
-      <span className={styles.nodeLabel}>{getNodeDisplayName(node, resourceName)}</span>
+      <span className={styles.nodeLabel}>
+        {getNodeDisplayName(node, resourceName, displayName)}
+      </span>
     </span>
   );
 }
 
-export default DriveTreeNodeTitle;
+export default DriveNavigatorNodeTitle;

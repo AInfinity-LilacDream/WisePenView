@@ -14,32 +14,12 @@ export type {
   CapabilityToolOption,
 } from './mapper/capabilityPicker.mapper';
 export {
-  buildDocumentPickerScopedKey,
-  buildDocumentPickerScopes,
-  buildDocumentPickerTreeNodes,
-  isDocumentPickerScopeRootKey,
-  isExpandableDocumentPickerNode,
-  isSelectableDocumentPickerNode,
-  mapDocumentPickerNodesToSelectedResources,
-  mapDriveNodeToDocumentPickerNode,
-  parseDocumentPickerTreeKey,
-  replaceDocumentPickerTreeNodeChildren,
-} from './mapper/documentPicker.mapper';
-export type {
-  BuildDocumentPickerTreeNodesResult,
-  DocumentPickerTreeKey,
-  DocumentPickerTreeNode,
-} from './mapper/documentPicker.mapper';
-export {
   buildAdvancedSkillTreeGroups,
   buildOtherSkillTreeGroups,
   getPrimarySkillsForAgent,
 } from './mapper/skillScope.mapper';
 export type { SkillScopeTreeGroup } from './mapper/skillScope.mapper';
 export type {
-  ChatDocumentPickerNode,
-  ChatDocumentPickerScope,
-  ChatDocumentPickerSelectedResource,
   ChatInputCapabilityOptions,
   ChatModel,
   ChatModelProviderOption,
@@ -51,7 +31,6 @@ export type {
   DeleteSessionRequest,
   GetChatInputCapabilityOptionsParams,
   IChatService,
-  ListDocumentPickerChildrenRequest,
   ListHistoryMessagesRequest,
   ListSessionsRequest,
   MessageResponse,

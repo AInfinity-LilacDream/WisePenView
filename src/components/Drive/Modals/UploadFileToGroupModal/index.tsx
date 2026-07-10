@@ -1,4 +1,4 @@
-import DriveNav from '@/components/Drive/DriveNav';
+import DriveNavigator from '@/components/Drive/DriveNavigator';
 import AppModal from '@/components/Overlay/AppModal';
 import StepDots from '@/components/StepDots';
 import { useResourceService } from '@/domains';
@@ -72,7 +72,11 @@ function UploadFileToGroupModal({
   const canNext = selectedFileIds.length > 0;
   const canSubmit = canNext && Boolean(selectedTargetTagId);
 
-  // TODO: refactor
+  /**
+   * 弹窗每次打开都需要清空上次选择并刷新两棵选择树；
+   * 这里依赖打开态变化触发，不能放到提交或关闭事件中，否则重新打开会短暂显示旧选择。
+   * 本 effect 不注册外部订阅，因此不需要 cleanup。
+   */
   useEffectForce(() => {
     if (!isOpen) return;
     resetState();
@@ -130,7 +134,7 @@ function UploadFileToGroupModal({
               <div className={styles.treeSection}>
                 <div className={styles.hint}>选择要上传的文件（可多选）</div>
                 <div className={styles.navTree}>
-                  <DriveNav
+                  <DriveNavigator
                     key={`personal-${navRefreshKey}`}
                     renderableTypes={['root', 'folder', 'resource', 'link']}
                     selectableTypes={['resource', 'link']}
@@ -145,7 +149,7 @@ function UploadFileToGroupModal({
               <div className={styles.treeSection}>
                 <div className={styles.hint}>选择文件要上传到的小组文件夹（只能选择一个）</div>
                 <div className={styles.navTree}>
-                  <DriveNav
+                  <DriveNavigator
                     key={`group-tree-tag-${groupId}-${navRefreshKey}`}
                     scope={{ type: 'group', groupId }}
                     renderableTypes={['root', 'folder']}

@@ -31,11 +31,13 @@
 }
 
 .tablePanel {
+  position: relative;
+  z-index: 2;
   flex: 1 1 auto;
   height: 100%;
   min-width: 0;
   min-height: 0;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .table {
@@ -43,7 +45,7 @@
   min-height: 0;
   height: 100%;
   max-height: 100%;
-  overflow: hidden;
+  overflow: visible;
   align-self: stretch;
   border: none;
   border-radius: 0;
@@ -52,6 +54,8 @@
 
 /* 详情列：全高贴右，无上方 header，仅左侧分隔线 */
 .detailPanel {
+  position: relative;
+  z-index: 1;
   flex: 0 0 var(--table-drive-detail-panel-width, 300px);
   width: var(--table-drive-detail-panel-width, 300px);
   max-width: min(42vw, 420px);

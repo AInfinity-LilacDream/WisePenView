@@ -45,7 +45,6 @@ export interface TreeProps {
   className?: string;
   blockNode?: boolean;
   checkable?: boolean;
-  checkStrictly?: boolean;
   selectable?: boolean;
   multiple?: boolean;
   selectedKeys?: Key[];
@@ -54,7 +53,6 @@ export interface TreeProps {
   defaultExpandedKeys?: Key[];
   defaultExpandAll?: boolean;
   expandAction?: 'click' | 'doubleClick' | false;
-  switcherIcon?: ReactNode;
   draggable?: boolean | ((node: DataNode) => boolean);
   allowDrop?: (info: TreeAllowDropInfo) => boolean;
   loadData?: (node: DataNode) => Promise<void> | void;
@@ -147,7 +145,6 @@ function Tree({
   defaultExpandedKeys,
   defaultExpandAll = false,
   expandAction,
-  switcherIcon,
   draggable,
   allowDrop,
   loadData,
@@ -267,9 +264,8 @@ function Tree({
     [checkedKeySet, checkedKeys, finalCheckedKeys, onCheck]
   );
 
-  const renderSwitcherIcon = (expanded: boolean, loading: boolean): ReactNode => {
+  const renderSwitcherIcon = (loading: boolean): ReactNode => {
     if (loading) return <LoaderCircle size={14} className={styles.loadingIcon} />;
-    if (switcherIcon) return switcherIcon;
     return <ChevronRight size={14} />;
   };
 
@@ -394,7 +390,7 @@ function Tree({
                   toggleExpand(node, !expanded);
                 }}
               >
-                <span className={styles.switcherIcon}>{renderSwitcherIcon(expanded, loading)}</span>
+                <span className={styles.switcherIcon}>{renderSwitcherIcon(loading)}</span>
               </button>
             ) : (
               <span

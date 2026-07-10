@@ -29,6 +29,7 @@ export interface DriveSelectionItem {
   rootId: string;
   groupId?: string;
   resourceId?: string;
+  resourceType?: string;
   tagId?: string;
 }
 
@@ -202,5 +203,6 @@ export const toDriveSelectionItem = (node: DriveNode): DriveSelectionItem | null
     rootId: node.scope.rootId,
     groupId: getDriveScopeGroupId(node.scope),
     resourceId: node.resourceId,
+    resourceType: node.resourceType,
   };
 };

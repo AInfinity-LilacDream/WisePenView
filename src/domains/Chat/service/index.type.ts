@@ -1,4 +1,3 @@
-import type { IDriveService } from '@/domains/Drive';
 import type { Group, IGroupService } from '@/domains/Group';
 import type { IResourceService, SkillSummary } from '@/domains/Resource';
 import type { ChatAgentOption } from '@/store';
@@ -66,7 +65,6 @@ export interface UploadAttachmentResult {
 export interface ChatServiceDeps {
   groupService: IGroupService;
   resourceService: IResourceService;
-  driveService: IDriveService;
 }
 
 export interface ChatWorkspace {
@@ -86,43 +84,6 @@ export interface GetChatInputCapabilityOptionsParams {
   agent: ChatAgentOption | null;
 }
 
-type ChatDocumentPickerScopeType = 'personal' | 'group';
-
-export interface ChatDocumentPickerScope {
-  scopeKey: string;
-  label: string;
-  rootId: string;
-  type: ChatDocumentPickerScopeType;
-  groupId?: string;
-}
-
-type ChatDocumentPickerNodeType = 'root' | 'folder' | 'resource' | 'link';
-
-export interface ChatDocumentPickerNode {
-  nodeId: string;
-  title: string;
-  type: ChatDocumentPickerNodeType;
-  groupId: string | null;
-  resourceId: string | null;
-  resourceName: string | null;
-  resourceType: string | null;
-  isLeaf: boolean;
-  selectable: boolean;
-}
-
-export interface ChatDocumentPickerSelectedResource {
-  resourceId: string;
-  resourceName: string;
-  resourceType: string;
-  enabled: boolean;
-}
-
-export interface ListDocumentPickerChildrenRequest {
-  rootId: string;
-  groupId?: string;
-  parentNodeId?: string;
-}
-
 /** ChatService 接口 */
 export interface IChatService {
   getModels(): Promise<ChatModel[]>;
@@ -131,10 +92,6 @@ export interface IChatService {
   getChatInputCapabilityOptions(
     params: GetChatInputCapabilityOptionsParams
   ): Promise<ChatInputCapabilityOptions>;
-  getDocumentPickerScopes(): Promise<ChatDocumentPickerScope[]>;
-  listDocumentPickerChildren(
-    params: ListDocumentPickerChildrenRequest
-  ): Promise<ChatDocumentPickerNode[]>;
   createSession(params?: CreateSessionRequest): Promise<ChatSession>;
   renameSession(params: RenameSessionRequest): Promise<ChatSession>;
   deleteSession(params: DeleteSessionRequest): Promise<void>;

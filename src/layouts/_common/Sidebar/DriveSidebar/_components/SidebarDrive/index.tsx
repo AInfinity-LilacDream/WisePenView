@@ -1,14 +1,14 @@
 import {
   buildDriveTreeData,
-  replaceTreeNodeChildren,
-} from '@/components/Drive/DriveNav/buildTreeData';
-import { DeleteNodeModal, NewFolderNodeModal, RenameNodeModal } from '@/components/Drive/Modals';
+  replaceDriveTreeNodeChildren,
+} from '@/components/Drive/common/buildDriveTreeData';
 import {
   getDriveNodeLabel,
   resolveDriveScope,
   type DriveActionTarget,
 } from '@/components/Drive/common/driveComponentModel';
 import { useDriveTreeChildren } from '@/components/Drive/common/useDriveTreeChildren';
+import { DeleteNodeModal, NewFolderNodeModal, RenameNodeModal } from '@/components/Drive/Modals';
 import { Empty, Spin } from '@/components/Feedback';
 import type { DataNode } from '@/components/Tree';
 import Tree from '@/components/Tree';
@@ -72,6 +72,7 @@ function SidebarDrive() {
         renderableTypes: RENDERABLE_TYPES,
         selectableTypes: SELECTABLE_TYPES,
         disabledNodeIds: EMPTY_DISABLED_IDS,
+        getTreeKey: (node) => node.id,
         renderTitle: (node) => (
           <SidebarDriveNodeTitle
             node={node}
@@ -123,7 +124,7 @@ function SidebarDrive() {
     if (!node || (node.type !== 'root' && node.type !== 'folder')) return;
     const children = await loadChildren(node.id);
     const childData = buildChildrenData(children);
-    setTreeData((prev) => replaceTreeNodeChildren(prev, node.id, childData));
+    setTreeData((prev) => replaceDriveTreeNodeChildren(prev, node.id, childData));
   };
 
   const handleSelect = (_keys: React.Key[], info: { node: DataNode }): void => {

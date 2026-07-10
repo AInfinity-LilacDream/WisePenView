@@ -12,11 +12,21 @@ const BASE_LANGUAGE_OPTIONS: CodeBlockLanguageOption[] = Object.entries(
   codeBlockOptions.supportedLanguages ?? {}
 ).map(([id, { name }]) => ({ id, label: name }));
 
+const collapsedCodeBlockIds = new Set<string>();
+
 function getLanguageOptions(language: string) {
   if (BASE_LANGUAGE_OPTIONS.some((option) => option.id === language)) {
     return BASE_LANGUAGE_OPTIONS;
   }
   return [{ id: language, label: language }, ...BASE_LANGUAGE_OPTIONS];
+}
+
+function syncPreCollapsed(preElement: HTMLPreElement, collapsed: boolean) {
+  if (collapsed) {
+    preElement.dataset.collapsed = 'true';
+    return;
+  }
+  delete preElement.dataset.collapsed;
 }
 
 async function createLightCodeBlockHighlighter() {
@@ -65,9 +75,11 @@ export const codeBlockPlugin = {
           }
 
           const language = block.props.language || 'text';
+          const collapsed = collapsedCodeBlockIds.has(block.id);
           const toolbarHost = document.createElement('div');
           const reactRoot = createRoot(toolbarHost);
 
+          syncPreCollapsed(preElement, collapsed);
           toolbarWrapper.className = 'wise-code-block-toolbarWrapper';
           toolbarWrapper.dataset.wiseCodeBlockToolbar = '';
           toolbarWrapper.replaceChildren(toolbarHost);
@@ -76,11 +88,17 @@ export const codeBlockPlugin = {
             reactRoot.render(
               <CodeBlockToolbar
                 codeElement={codeElement}
+                collapsed={collapsed}
                 isEditable={editor.isEditable}
                 language={language}
                 languageOptions={getLanguageOptions(language)}
                 onCollapsedChange={(collapsed) => {
-                  preElement.dataset.collapsed = String(collapsed);
+                  if (collapsed) {
+                    collapsedCodeBlockIds.add(block.id);
+                  } else {
+                    collapsedCodeBlockIds.delete(block.id);
+                  }
+                  syncPreCollapsed(preElement, collapsed);
                 }}
                 onLanguageChange={(nextLanguage) => {
                   editor.updateBlock(block.id, { props: { language: nextLanguage } });

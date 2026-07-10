@@ -18,6 +18,7 @@ export interface CodeBlockLanguageOption {
 
 interface CodeBlockToolbarProps {
   codeElement: HTMLElement;
+  collapsed: boolean;
   isEditable: boolean;
   language: string;
   languageOptions: CodeBlockLanguageOption[];
@@ -61,6 +62,7 @@ async function copyText(text: string) {
 
 export function CodeBlockToolbar({
   codeElement,
+  collapsed: initialCollapsed,
   isEditable,
   language,
   languageOptions,
@@ -71,7 +73,7 @@ export function CodeBlockToolbar({
   const [copied, setCopied] = useState(false);
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(initialCollapsed);
   const [selectedLanguage, setSelectedLanguage] = useState(language);
   const [activeLanguageId, setActiveLanguageId] = useState(language);
 
@@ -85,13 +87,17 @@ export function CodeBlockToolbar({
   const activeLanguageOptionId =
     activeLanguageIndex >= 0 ? `${languageListId}-option-${activeLanguageIndex}` : undefined;
 
-  const handleCopy = async () => {
+  const handleCopy = async (event: MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
     await copyText(codeElement.textContent ?? '');
     setCopied(true);
     window.setTimeout(() => setCopied(false), COPY_FEEDBACK_DURATION);
   };
 
-  const handleToggleCollapsed = () => {
+  const handleToggleCollapsed = (event: MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
     setCollapsed((prev) => {
       const nextCollapsed = !prev;
       onCollapsedChange(nextCollapsed);
@@ -116,6 +122,7 @@ export function CodeBlockToolbar({
   };
 
   const handleButtonMouseDown = (event: MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
     event.stopPropagation();
   };
 

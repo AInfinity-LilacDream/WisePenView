@@ -1,4 +1,4 @@
-import DriveNav from '@/components/Drive/DriveNav';
+import DriveNavigator from '@/components/Drive/DriveNavigator';
 import ResourcePermissionActionIcon from '@/components/Drive/common/resourcePermissionActionIcon';
 import {
   resolveTagPermissionActionPresetKey,
@@ -357,7 +357,7 @@ const TagPermissionModal = ({
           {showTagTree ? (
             <div className={styles.leftPane}>
               <div className={styles.leftTitle}>选择标签</div>
-              <DriveNav
+              <DriveNavigator
                 scope={groupId ? { type: 'group', groupId } : undefined}
                 renderableTypes={['root', 'folder']}
                 selectableTypes={['folder']}
