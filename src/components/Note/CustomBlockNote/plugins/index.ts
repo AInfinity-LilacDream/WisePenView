@@ -1,4 +1,5 @@
 import { aiDiffPlugin } from './AIDiffPlugin';
+import { codeBlockPlugin } from './CodeBlockPlugin';
 import { commonPlugin } from './CommonPlugin';
 import { latexPlugin } from './LatexPlugin';
 import type { NoteEditorPlugin } from './types';
@@ -9,6 +10,7 @@ import type { NoteEditorPlugin } from './types';
  */
 export const NOTE_EDITOR_PLUGINS: readonly NoteEditorPlugin[] = [
   commonPlugin,
+  codeBlockPlugin,
   latexPlugin,
   aiDiffPlugin,
 ];
