@@ -111,6 +111,7 @@ export const mapResourceItemToChildNode = (
     resourceId: item.resourceId,
     title: item.resourceName,
     resourceType: item.resourceType,
+    size: item.size,
     description: item.preview,
     resourceIconType:
       item.resourceIconType ??

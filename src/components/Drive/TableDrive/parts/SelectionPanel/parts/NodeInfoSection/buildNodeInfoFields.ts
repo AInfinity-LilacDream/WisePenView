@@ -93,8 +93,8 @@ function buildResourceFieldsFromNoteInfo(noteInfo: NoteInfoDisplayData): NodeInf
   });
 }
 
-function buildStaticResourceFields(): NodeInfoField[] {
-  return buildStandardFields({});
+function buildStaticResourceFields(size?: number | null): NodeInfoField[] {
+  return buildStandardFields({ size });
 }
 
 export function buildNodeInfoFields(params: {
@@ -121,5 +121,5 @@ export function buildNodeInfoFields(params: {
     return buildResourceFieldsFromDocInfo(docInfo);
   }
 
-  return buildStaticResourceFields();
+  return buildStaticResourceFields(node.size);
 }

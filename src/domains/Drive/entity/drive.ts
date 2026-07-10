@@ -50,6 +50,7 @@ interface DriveResourceNodeBase extends DriveNodeBase {
   title: string;
   resourceType?: string;
   resourceIconType: ResourceIconType;
+  size?: number;
   description?: string;
   /** 当前节点所在目录 tag，用来描述资源是主挂载还是辅助挂载 */
   folderTagId: string;

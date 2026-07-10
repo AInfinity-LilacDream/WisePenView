@@ -46,6 +46,7 @@ const isPersonalGroupId = (groupId?: string): boolean =>
   groupId?.startsWith(PERSONAL_GROUP_PREFIX) ?? false;
 
 type ResourceItemNumericField = 'size' | 'readCount' | 'likeCount' | 'scoreAvg';
+type ResourceItemApiSize = ResourceItemApiResponse['size'];
 type ResourceItemApiOwnerInfo = ResourceItemApiResponse['ownerInfo'];
 type ResourceItemRawOwnerInfo = ResourceItem['ownerInfo'] | ResourceItemApiOwnerInfo;
 type ResourceItemRawTagBinds = ResourceItem['tagBinds'] | ResourceItemApiResponse['tagBinds'];
@@ -91,7 +92,7 @@ type NormalizableResourceItem = Omit<
     | 'overrideGrantedActions'
     | 'specifiedUsersGrantedActions'
   > & {
-    size?: number;
+    size?: ResourceItemApiSize;
     readCount?: number | null;
     likeCount?: number | null;
     scoreAvg?: number | null;
@@ -130,7 +131,8 @@ export function normalizeResourceItem(
   } = raw;
   const next: NormalizedResourceItem<NormalizableResourceItem> = {
     ...rawRest,
-    size: raw.size,
+    // 后端 resourceInfo.size 当前以字符串返回，前端统一归一化为 number。
+    size: normalizeResourceSize(raw.size),
     readCount: raw.readCount,
     likeCount: raw.likeCount,
     scoreAvg: raw.scoreAvg,
@@ -152,6 +154,12 @@ export function normalizeResourceItem(
 
   return next;
 }
+
+const normalizeResourceSize = (value: ResourceItemApiSize): number | undefined => {
+  if (value == null) return undefined;
+  const size = typeof value === 'number' ? value : Number(value);
+  return Number.isFinite(size) && size >= 0 ? size : undefined;
+};
 
 /** Service 入参 → GET /resource/item/listResources query */
 const mapListResourceItemsRequest = (

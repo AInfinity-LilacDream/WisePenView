@@ -5,6 +5,7 @@ import type { UserDisplayBaseApiResponse } from '@/domains/User/apis/UserApi.typ
 
 type ResourceActionApiValue = ResourceActionKey | number | `${number}`;
 export type ResourceActionApiList = ResourceActionApiValue[];
+type ResourceSizeApiValue = number | `${number}`;
 
 export interface ResourceInteractionInfoApiResponse {
   readCount?: number;
@@ -67,7 +68,7 @@ export interface ResourceItemApiResponse extends Omit<
   | 'overrideGrantedActions'
   | 'specifiedUsersGrantedActions'
 > {
-  size?: number;
+  size?: ResourceSizeApiValue | null;
   ownerInfo: UserDisplayBaseApiResponse;
   resourceInteractionInfo?: ResourceInteractionInfoApiResponse;
   tagBinds?: ResourceTagBindApiResponse[];
