@@ -256,16 +256,19 @@ function DriveDroppableBreadcrumb({
   );
 }
 
-function DriveDragOverlay({ row }: { row: DriveTableRow }) {
+function DriveDragOverlay({ row, count }: { row: DriveTableRow; count: number }) {
   return (
     <div className={styles.dragOverlay}>
-      <EntryIcon
-        entryType={row.entryType}
-        folderIconType={row.folderIconType}
-        resourceType={row.resourceType}
-        resourceIconType={row.resourceIconType}
-      />
-      <span>{row.name}</span>
+      <span className={styles.dragOverlayIcon}>
+        <EntryIcon
+          entryType={row.entryType}
+          folderIconType={row.folderIconType}
+          resourceType={row.resourceType}
+          resourceIconType={row.resourceIconType}
+        />
+      </span>
+      <span className={styles.dragOverlayName}>{row.name}</span>
+      <span className={styles.dragOverlayCount}>共选中 {count} 项</span>
     </div>
   );
 }
@@ -412,7 +415,12 @@ const TableDrive = forwardRef<TableDriveHandle, TableDriveProps>(function TableD
         return 0;
       }
 
-      const movableRows = sourceRows.filter((row) => row.id !== targetFolderNodeId);
+      const movableRows = sourceRows.filter(
+        (row) => row.id !== targetFolderNodeId && row.node.parentId !== targetFolderNodeId
+      );
+      if (movableRows.length === 0) {
+        return 0;
+      }
       await driveService.moveNodesToFolder({
         nodeIds: movableRows.map((row) => row.node.id),
         targetFolderNodeId,
@@ -701,9 +709,6 @@ const TableDrive = forwardRef<TableDriveHandle, TableDriveProps>(function TableD
       if (sourceRows.length !== sourceRowIds.length) {
         return false;
       }
-      if (sourceRows.every((row) => row.node.parentId === targetNode.id)) {
-        return false;
-      }
       return sourceRows.every((sourceRow) => {
         return sourceRow.node.scope.rootId === targetNode.scope.rootId;
       });
@@ -750,13 +755,22 @@ const TableDrive = forwardRef<TableDriveHandle, TableDriveProps>(function TableD
         typeof targetNodeId === 'string' ? driveNodeMap.get(targetNodeId) : undefined;
 
       if (targetNode && canDropRowsToTargetNode(sourceRowIds, targetNode)) {
-        runMoveRowsByDrag({ sourceRowIds, targetFolderNodeId: targetNode.id });
+        const changedSourceRowIds = sourceRowIds.filter((rowId) => {
+          const sourceRow = rowMap.get(rowId);
+          return sourceRow ? sourceRow.node.parentId !== targetNode.id : false;
+        });
+        if (changedSourceRowIds.length > 0) {
+          runMoveRowsByDrag({
+            sourceRowIds: changedSourceRowIds,
+            targetFolderNodeId: targetNode.id,
+          });
+        }
       }
 
       updateDraggingRowKeys(new Set());
       setActiveDragRowId(null);
     },
-    [canDropRowsToTargetNode, driveNodeMap, runMoveRowsByDrag, updateDraggingRowKeys]
+    [canDropRowsToTargetNode, driveNodeMap, rowMap, runMoveRowsByDrag, updateDraggingRowKeys]
   );
 
   const handleDragCancel = useCallback(() => {
@@ -897,7 +911,7 @@ const TableDrive = forwardRef<TableDriveHandle, TableDriveProps>(function TableD
       </main>
       <DragOverlay>
         {activeDragRow && draggingRowKeys.size > 0 ? (
-          <DriveDragOverlay row={activeDragRow} />
+          <DriveDragOverlay row={activeDragRow} count={draggingRowKeys.size} />
         ) : null}
       </DragOverlay>
     </DndContext>

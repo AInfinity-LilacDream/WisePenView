@@ -108,7 +108,8 @@
   display: inline-flex;
   align-items: center;
   gap: var(--space-xs);
-  max-width: 320px;
+  max-width: 380px;
+  min-height: 36px;
   padding: var(--space-xs) var(--space-sm);
   border: 1px solid var(--border-light);
   border-radius: var(--radius-md);
@@ -116,12 +117,35 @@
   box-shadow: var(--shadow-md);
   color: var(--foreground);
   cursor: grabbing;
+}
 
-  > span {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+.dragOverlayIcon {
+  display: inline-flex;
+  flex: 0 0 auto;
+  line-height: 0;
+
+  :global(svg) {
+    width: 18px;
+    height: 18px;
   }
+}
+
+.dragOverlayName {
+  min-width: 0;
+  overflow: hidden;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dragOverlayCount {
+  flex: 0 0 auto;
+  padding-left: var(--space-sm);
+  border-left: 1px solid var(--border-light);
+  color: var(--muted);
+  font-size: var(--font-size-xs);
+  white-space: nowrap;
 }
 
 @media (max-width: 960px) {
