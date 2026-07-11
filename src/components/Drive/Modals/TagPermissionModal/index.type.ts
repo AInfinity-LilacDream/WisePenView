@@ -5,3 +5,5 @@ export interface TagPermissionModalProps {
   onOpenChange: (open: boolean) => void;
   onSuccess?: () => void;
 }
+
+export type TagMountPermissionModalProps = TagPermissionModalProps;

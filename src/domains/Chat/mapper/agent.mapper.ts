@@ -1,4 +1,3 @@
-import type { Group } from '@/domains/Group';
 import type { ResourceItem } from '@/domains/Resource';
 import type { ChatAgentOption } from '@/store';
 
@@ -25,14 +24,6 @@ export const buildAgentFromResourceItem = (
     defaultSkillIds: raw.defaultSkillIds,
   };
 };
-
-export const buildGroupAgent = (group: Group): ChatAgentOption => ({
-  agentId: `agent-group-${group.groupId}`,
-  agentType: 'GROUP',
-  label: group.groupName,
-  groupId: group.groupId,
-  groupName: group.groupName,
-});
 
 export const buildAgentFromSkillTreeGroup = (
   group: { key: string; label: string },

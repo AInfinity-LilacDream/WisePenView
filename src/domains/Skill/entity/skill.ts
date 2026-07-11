@@ -9,6 +9,7 @@ export interface SkillFileNode {
   kind: 'folder' | 'file';
   language?: string;
   content?: string;
+  contentBlob?: Blob;
   objectKey?: string;
   uploadStatus?: string;
   size?: number;
@@ -34,4 +35,5 @@ export interface SkillDetail extends SkillSummary {
   fileCount: number;
   files: SkillFileNode[];
   isOwner: boolean;
+  ownerId?: string;
 }

@@ -1,10 +1,9 @@
-import type { Group, GroupMemberList, GroupResConfig } from '@/domains/Group';
+import type { Group, GroupBaseInfo, GroupMemberList, GroupResConfig } from '@/domains/Group';
 import { GROUP_FILE_ORG_LOGIC, ROLE } from '@/domains/Group';
 import {
+  coerceResourceActions,
   resourceActionsToApiKeys,
-  TAG_RESOURCE_ACTION,
   type TagResourceAction,
-  type TagResourceActionKey,
 } from '@/domains/Tag';
 import { normalizeUserDisplayBaseFromApi } from '@/domains/User/mapper/userEnum.mapper';
 import type { EnumKey } from '@/utils/enum';
@@ -16,6 +15,8 @@ import type {
   ChangeGroupConfigApiRequest,
   ChangeRoleApiRequest,
   FetchGroupMembersApiResponse,
+  GetGroupBaseInfoApiRequest,
+  GetGroupBaseInfoApiResponse,
   GetGroupConfigApiRequest,
   GetGroupConfigApiResponse,
   GetGroupInfoApiRequest,
@@ -76,13 +77,8 @@ const mapGroupFromApi = (raw: GroupApiResponse): Group => {
   };
 };
 
-const mapTagResourceActionFromApi = (value: TagResourceActionKey): TagResourceAction | undefined =>
-  TAG_RESOURCE_ACTION.options.find((item) => item.key === value)?.value;
-
-const mapDefaultMemberActionsFromApi = (actions?: TagResourceActionKey[]): TagResourceAction[] =>
-  (actions ?? [])
-    .map(mapTagResourceActionFromApi)
-    .filter((value): value is TagResourceAction => value != null);
+const mapDefaultMemberActionsFromApi = (actions?: unknown[]): TagResourceAction[] =>
+  coerceResourceActions(actions);
 
 const mapFetchGroupListRequest = (params: FetchGroupListRequest): ListGroupApiRequest => ({
   groupRoleFilter: params.groupRoleFilter,
@@ -101,6 +97,22 @@ const mapFetchGroupInfoFromApi = (data: GroupApiResponse): Group => mapGroupFrom
 
 const mapFetchGroupInfoRequest = (groupId: string): GetGroupInfoApiRequest => ({
   groupId,
+});
+
+const mapFetchGroupBaseInfoRequest = (groupId: string): GetGroupBaseInfoApiRequest => ({
+  groupId,
+});
+
+const mapFetchGroupBaseInfoFromApi = (
+  data: GetGroupBaseInfoApiResponse,
+  fallbackGroupId: string
+): GroupBaseInfo => ({
+  // 基础信息接口若省略 groupId，使用请求入参保持调用方按 ID 回填。
+  groupId: normalizeId(data.groupId) || fallbackGroupId,
+  groupName: data.groupName ?? '',
+  groupDesc: data.groupDesc ?? '',
+  groupCoverUrl: data.groupCoverUrl ?? '',
+  groupType: mapGroupTypeFromApi(data.groupType),
 });
 
 const mapGroupWalletInfoFromApi = (data: GroupApiResponse): number =>
@@ -128,9 +140,7 @@ const mapUpdateGroupResConfigRequest = (
 
 const mapCreateGroupFromApi = (data: string | number): string => normalizeId(data);
 
-const mapCreateGroupRequest = (
-  params: Omit<CreateGroupRequest, 'defaultMemberActions'>
-): AddGroupApiRequest => ({
+const mapCreateGroupRequest = (params: CreateGroupRequest): AddGroupApiRequest => ({
   ...params,
   groupType: mapGroupTypeToApi(params.groupType),
 });
@@ -173,6 +183,8 @@ export const GroupServicesMap = {
   mapFetchGroupListFromApi,
   mapFetchGroupInfoFromApi,
   mapFetchGroupInfoRequest,
+  mapFetchGroupBaseInfoRequest,
+  mapFetchGroupBaseInfoFromApi,
   mapGroupWalletInfoFromApi,
   mapFetchGroupResConfigFromApi,
   mapFetchGroupResConfigRequest,

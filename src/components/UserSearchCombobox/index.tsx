@@ -1,0 +1,235 @@
+import { Input } from '@/components/Input';
+import type { UserSearchUser } from '@/domains/User';
+import { Avatar, Button, TextField } from '@heroui/react';
+import { useRequest, useUnmount } from 'ahooks';
+import clsx from 'clsx';
+import type { KeyboardEvent } from 'react';
+import { useId, useMemo, useRef, useState } from 'react';
+import type { UserSearchComboboxProps } from './index.type';
+import styles from './style.module.less';
+
+const DEFAULT_MIN_KEYWORD_LENGTH = 2;
+
+const getDisplayInitial = (name: string): string => name.trim().charAt(0).toUpperCase() || '?';
+
+const getUserDisplayName = (user: UserSearchUser): string =>
+  user.realName?.trim() || user.nickname?.trim() || user.username.trim() || `用户 ${user.userId}`;
+
+const getUserDescription = (user: UserSearchUser): string =>
+  user.username ? `@${user.username}` : user.userId;
+
+interface ActiveOptionState {
+  keyword: string;
+  index: number;
+}
+
+function UserSearchCombobox({
+  value,
+  onValueChange,
+  onSelect,
+  queryUsers,
+  onEmptySubmit,
+  onError,
+  excludedUserIds,
+  placeholder = '完整用户名或邮箱',
+  ariaLabel = '搜索用户',
+  submitLabel,
+  submitIcon,
+  minKeywordLength = DEFAULT_MIN_KEYWORD_LENGTH,
+  disabled = false,
+}: UserSearchComboboxProps) {
+  const inputId = useId();
+  const listboxId = `${inputId}-listbox`;
+  const keyword = value.trim();
+  const [isFocused, setIsFocused] = useState(false);
+  const [activeOption, setActiveOption] = useState<ActiveOptionState>({ keyword: '', index: 0 });
+  const blurTimerRef = useRef<number | null>(null);
+  const {
+    data: queryResult,
+    loading,
+    runAsync,
+  } = useRequest(
+    async (nextKeyword = keyword) => {
+      const queryKeyword = nextKeyword.trim();
+      const users = await queryUsers(queryKeyword);
+      return { keyword: queryKeyword, users };
+    },
+    {
+      ready: keyword.length >= minKeywordLength && !disabled,
+      refreshDeps: [keyword, queryUsers, minKeywordLength, disabled],
+      debounceWait: 250,
+    }
+  );
+
+  const isFreshResult = queryResult?.keyword === keyword;
+  const users = useMemo(
+    () =>
+      keyword.length >= minKeywordLength && isFreshResult
+        ? queryResult.users.filter((user) => !excludedUserIds?.has(user.userId))
+        : [],
+    [excludedUserIds, isFreshResult, keyword.length, minKeywordLength, queryResult]
+  );
+  const shouldShowList = isFocused && keyword.length >= minKeywordLength;
+  const shouldShowLoading = loading || (shouldShowList && !isFreshResult);
+  const activeIndex =
+    activeOption.keyword === keyword
+      ? Math.min(activeOption.index, Math.max(0, users.length - 1))
+      : 0;
+  const activeUser = users[activeIndex];
+  const activeOptionId = activeUser ? `${listboxId}-option-${activeUser.userId}` : undefined;
+
+  useUnmount(() => {
+    if (blurTimerRef.current) {
+      window.clearTimeout(blurTimerRef.current);
+    }
+  });
+
+  const selectUser = (user: UserSearchUser) => {
+    onSelect(user);
+    setActiveOption({ keyword: '', index: 0 });
+    setIsFocused(false);
+  };
+
+  const selectFirstAvailableUser = async () => {
+    if (!keyword || keyword.length < minKeywordLength) {
+      onEmptySubmit?.();
+      return false;
+    }
+    const nextUsers = isFreshResult
+      ? users
+      : ((await runAsync(keyword))?.users ?? []).filter(
+          (user) => !excludedUserIds?.has(user.userId)
+        );
+    const nextUser = nextUsers[activeIndex] ?? nextUsers[0];
+    if (nextUser) {
+      selectUser(nextUser);
+      return true;
+    }
+    onEmptySubmit?.();
+    return false;
+  };
+
+  const handleSubmit = () => {
+    void selectFirstAvailableUser().catch((err) => {
+      onError?.(err);
+    });
+  };
+
+  const handleValueChange = (nextValue: string) => {
+    onValueChange(nextValue);
+    if (!disabled && nextValue.trim().length >= minKeywordLength) {
+      setIsFocused(true);
+    }
+  };
+
+  const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      setIsFocused(true);
+      if (users.length === 0) return;
+      setActiveOption({ keyword, index: (activeIndex + 1) % users.length });
+      return;
+    }
+    if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      setIsFocused(true);
+      if (users.length === 0) return;
+      setActiveOption({ keyword, index: (activeIndex - 1 + users.length) % users.length });
+      return;
+    }
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      handleSubmit();
+      return;
+    }
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      setIsFocused(false);
+    }
+  };
+
+  const handleBlur = () => {
+    // 延迟关闭，给鼠标点击候选项留出触发 onClick 的时间。
+    blurTimerRef.current = window.setTimeout(() => {
+      setIsFocused(false);
+    }, 120);
+  };
+
+  const handleFocus = () => {
+    if (blurTimerRef.current) {
+      window.clearTimeout(blurTimerRef.current);
+      blurTimerRef.current = null;
+    }
+    setIsFocused(true);
+  };
+
+  const renderUser = (user: UserSearchUser, index: number) => {
+    const displayName = getUserDisplayName(user);
+    const selected = index === activeIndex;
+    return (
+      <button
+        key={user.userId}
+        ref={(node) => {
+          if (selected) {
+            node?.scrollIntoView({ block: 'nearest' });
+          }
+        }}
+        id={`${listboxId}-option-${user.userId}`}
+        type="button"
+        role="option"
+        aria-selected={selected}
+        className={clsx(styles.option, selected && styles.optionActive)}
+        onMouseEnter={() => setActiveOption({ keyword, index })}
+        onMouseDown={(event) => event.preventDefault()}
+        onClick={() => selectUser(user)}
+      >
+        <Avatar aria-label={displayName} className={styles.avatar}>
+          {user.avatar ? <Avatar.Image alt={displayName} src={user.avatar} /> : null}
+          <Avatar.Fallback>{getDisplayInitial(displayName)}</Avatar.Fallback>
+        </Avatar>
+        <span className={styles.optionMeta}>
+          <span className={styles.optionName}>{displayName}</span>
+          <span className={styles.optionDescription}>{getUserDescription(user)}</span>
+        </span>
+      </button>
+    );
+  };
+
+  return (
+    <div className={styles.root} onFocusCapture={handleFocus} onBlurCapture={handleBlur}>
+      <div className={styles.controlRow}>
+        <TextField aria-label={ariaLabel} value={value} onChange={handleValueChange}>
+          <Input
+            placeholder={placeholder}
+            disabled={disabled}
+            role="combobox"
+            aria-autocomplete="list"
+            aria-expanded={shouldShowList}
+            aria-controls={shouldShowList ? listboxId : undefined}
+            aria-activedescendant={shouldShowList ? activeOptionId : undefined}
+            onKeyDown={handleKeyDown}
+          />
+        </TextField>
+        {submitLabel ? (
+          <Button variant="secondary" isDisabled={disabled || loading} onPress={handleSubmit}>
+            {submitIcon}
+            {submitLabel}
+          </Button>
+        ) : null}
+      </div>
+      {shouldShowList ? (
+        <div id={listboxId} className={styles.listbox} role="listbox" aria-label="用户搜索建议">
+          {shouldShowLoading ? (
+            <div className={styles.state}>搜索中...</div>
+          ) : users.length > 0 ? (
+            users.map(renderUser)
+          ) : (
+            <div className={styles.state}>无匹配用户</div>
+          )}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+export default UserSearchCombobox;

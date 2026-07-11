@@ -1,8 +1,13 @@
-export type { ResourceIconType, ResourceItem, ResourceTagBind } from './entity/resource';
+export type {
+  ResourceAccessRole,
+  ResourceIconType,
+  ResourceItem,
+  ResourceTagBind,
+} from './entity/resource';
 export type { SkillScopeType, SkillSummary } from './entity/skill';
 export {
-  NOTE_CONFIGURABLE_RESOURCE_ACTION_OPTIONS,
   RESOURCE_ACTION,
+  RESOURCE_PERMISSION_ACTION_ORDER,
   RESOURCE_SORT_BY,
   RESOURCE_SORT_DIR,
   RESOURCE_TYPE,
@@ -10,17 +15,19 @@ export {
   SEARCH_SCOPE,
   TAG_QUERY_LOGIC_MODE,
   actionsToPermissionCode,
+  areResourcePermissionActionsEqual,
   coerceResourceActions,
+  filterSupportedResourcePermissionActions,
   getResourceActionImpliedActions,
   getResourceActionImpliedMask,
+  getSupportedResourcePermissionActions,
   hasResourceAction,
-  isNoteConfigurableResourceAction,
-  maskNoteConfigurableResourceActions,
   normalizeResourceActions,
   normalizeSearchResourceType,
   permissionCodeToActions,
   resourceActionsInclude,
   resourceActionsToApiKeys,
+  updateResourceActionSelection,
 } from './enum';
 export type {
   ResourceAction,
@@ -34,19 +41,40 @@ export type {
 export { groupSearchHits } from './service/groupSearchHits';
 export type { SearchHitGroup } from './service/groupSearchHits';
 export type {
+  AddInlineCommentItemRequest,
+  ChangeInlineCommentResolveStatusRequest,
+  CreateInlineCommentRequest,
+  DeleteInlineCommentItemRequest,
   GetGroupResourceRequest,
+  GetResourcePermissionOverviewRequest,
   GetUserResourcesRequest,
   IResourceService,
   InteractRateRequest,
   InteractToggleLikeRequest,
+  ListInlineCommentsRequest,
   MountResourcesToGroupTagRequest,
   RemoveResourcesRequest,
   RenameResourceRequest,
+  ResourceInlineCommentAnchor,
+  ResourceInlineCommentAnchorKind,
+  ResourceInlineCommentAuthorInfo,
+  ResourceInlineCommentItem,
+  ResourceInlineCommentThread,
   ResourceListPage,
+  ResourcePermissionActionOption,
+  ResourcePermissionOverview,
+  ResourcePermissionResourceType,
+  ResourcePermissionSource,
+  ResourcePermissionSubject,
+  ResourcePermissionSubjectKind,
   SearchHitItem,
   SearchQueryRequest,
   SearchResultPage,
+  UpdateInlineCommentItemRequest,
+  UpdateInlineCommentItemResult,
   UpdateResourceActionPermissionRequest,
+  UpdateResourcePermissionSubjectsRequest,
   UpdateResourceTagsRequest,
 } from './service/index.type';
+export { isCommentVisibilityPrivileged } from './utils/isCommentVisibilityPrivileged';
 export { resolveResourceIconType } from './utils/resolveResourceIconType';

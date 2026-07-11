@@ -1,0 +1,26 @@
+.appSubtleScrollbar() {
+  scrollbar-width: var(--scrollbar-width, thin);
+  scrollbar-color: var(--scrollbar-color);
+
+  &::-webkit-scrollbar {
+    width: var(--scrollbar-size, 8px);
+    height: var(--scrollbar-size, 8px);
+  }
+
+  &::-webkit-scrollbar-track {
+    background: var(--scrollbar-track, transparent);
+  }
+
+  &::-webkit-scrollbar-thumb {
+    border: 2px solid transparent;
+    border-radius: var(--scrollbar-radius, 999px);
+    background: var(--scrollbar-thumb);
+    background-clip: content-box;
+  }
+
+  &::-webkit-scrollbar-thumb:hover,
+  &:hover::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb-hover);
+    background-clip: content-box;
+  }
+}

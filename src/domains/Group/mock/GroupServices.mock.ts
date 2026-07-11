@@ -1,13 +1,13 @@
 import type {
   GetGroupWalletInfoRequest,
   Group,
+  GroupBaseInfo,
   GroupMember,
   GroupMemberList,
   GroupResConfig,
   IGroupService,
 } from '@/domains/Group';
-import { GROUP_FILE_ORG_LOGIC } from '@/domains/Group';
-import { TAG_RESOURCE_ACTION } from '@/domains/Tag';
+import { DEFAULT_MEMBER_ACTIONS, GROUP_FILE_ORG_LOGIC } from '@/domains/Group';
 import mockdata from './mockdata.json';
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -17,9 +17,25 @@ const groupDetail = mockdata.groupDetail as Group;
 const members = mockdata.members as GroupMember[];
 const myRole = mockdata.myRole as 'OWNER' | 'ADMIN' | 'MEMBER';
 
+const pickGroupBaseInfo = (group: Group): GroupBaseInfo => ({
+  groupId: group.groupId,
+  groupName: group.groupName,
+  groupDesc: group.groupDesc,
+  groupCoverUrl: group.groupCoverUrl,
+  groupType: group.groupType,
+});
+
 const fetchGroupList = async (): Promise<{ groups: Group[]; total: number }> => {
   await delay(200);
   return { groups, total: groups.length };
+};
+
+const fetchGroupBaseInfo = async (groupId: string): Promise<GroupBaseInfo> => {
+  await delay(100);
+  const group = groups.find((item) => item.groupId === groupId) ?? groupDetail;
+  return pickGroupBaseInfo(
+    group.groupId === groupId ? group : { ...group, groupId, groupName: '' }
+  );
 };
 
 const fetchGroupInfo = async (_groupId: string): Promise<Group> => {
@@ -37,11 +53,7 @@ const fetchGroupResConfig = async (groupId: string): Promise<GroupResConfig> => 
   return {
     groupId,
     fileOrgLogic: GROUP_FILE_ORG_LOGIC.TAG,
-    defaultMemberActions: [
-      TAG_RESOURCE_ACTION.DISCOVER,
-      TAG_RESOURCE_ACTION.VIEW,
-      TAG_RESOURCE_ACTION.DOWNLOAD_WATERMARK,
-    ],
+    defaultMemberActions: DEFAULT_MEMBER_ACTIONS,
   };
 };
 
@@ -96,6 +108,7 @@ const kickMembers = async (): Promise<void> => {
 
 export const GroupServicesMock: IGroupService = {
   fetchGroupList,
+  fetchGroupBaseInfo,
   fetchGroupInfo,
   getGroupWalletInfo,
   fetchGroupResConfig,

@@ -1,12 +1,17 @@
-import { mountResourceToFolderTag } from '@/components/Drive/common/driveComponentModel';
+import type { ApiErrorBody } from '@/apis/api.type';
+import {
+  buildUploadedResourceMountTagIds,
+  resolveResourcePrimaryTagId,
+} from '@/components/Drive/common/driveComponentModel';
 import AppModal from '@/components/Overlay/AppModal';
 import UploadZone from '@/components/UploadZone';
-import { useDocumentService, useResourceService } from '@/domains';
+import { useDocumentService, useDriveService, useResourceService } from '@/domains';
 import { useDriveUploadQueueStore } from '@/store';
 import { parseErrorMessage } from '@/utils/error';
 import { parseExtension } from '@/utils/parser/extensionParser';
 import { Button, toast } from '@heroui/react';
 import { useRequest } from 'ahooks';
+import type { AxiosError } from 'axios';
 import { CloudUpload, X } from 'lucide-react';
 import { useState } from 'react';
 import styles from './index.module.less';
@@ -25,9 +30,14 @@ const ACCEPT_DOCUMENT_TYPES = [
 ].join(',');
 
 const UPLOAD_STATUS_SYNC_DELAY_MS = 3000;
-const QUEUE_HASH_PROGRESS_WEIGHT = 0.15;
-const QUEUE_UPLOAD_PROGRESS_START = 15;
-const QUEUE_UPLOAD_PROGRESS_WEIGHT = 0.85;
+const QUEUE_DONE_VISIBLE_DELAY_MS = 900;
+const FOLDER_MOUNT_RETRY_DELAY_MS = 2000;
+const FOLDER_MOUNT_MAX_ATTEMPTS = 15;
+const QUEUE_HASH_PROGRESS_WEIGHT = 0.08;
+const QUEUE_UPLOAD_PROGRESS_START = 8;
+const QUEUE_UPLOAD_PROGRESS_WEIGHT = 0.32;
+const QUEUE_PROCESSING_PROGRESS_START = 40;
+const RESOURCE_NOT_READY_CODES = new Set([5411, 6111, 8111]);
 
 interface SubmitUploadPayload {
   files: File[];
@@ -43,6 +53,7 @@ function UploadDocumentModal({
   groupId,
 }: UploadDocumentModalProps) {
   const documentService = useDocumentService();
+  const driveService = useDriveService();
   const resourceService = useResourceService();
   const startUploads = useDriveUploadQueueStore((s) => s.startUploads);
   const updateQueuedUpload = useDriveUploadQueueStore((s) => s.updateUpload);
@@ -54,14 +65,18 @@ function UploadDocumentModal({
     setSelectedFiles([]);
   };
 
-  const dismissQueuedUpload = (
+  const completeQueuedUpload = (
     uploadId: string,
     patch: { documentId?: string; objectKey?: string } = {}
   ) => {
-    if (Object.keys(patch).length > 0) {
-      updateQueuedUpload(uploadId, patch);
-    }
-    removeQueuedUpload(uploadId);
+    updateQueuedUpload(uploadId, {
+      ...patch,
+      phase: 'done',
+      progress: 100,
+    });
+    window.setTimeout(() => {
+      removeQueuedUpload(uploadId);
+    }, QUEUE_DONE_VISIBLE_DELAY_MS);
   };
 
   const scheduleUploadStatusSync = (documentId: string, uploadId: string) => {
@@ -70,7 +85,7 @@ function UploadDocumentModal({
         .syncPendingDocStatus(documentId)
         .catch(() => undefined)
         .finally(() => {
-          dismissQueuedUpload(uploadId);
+          completeQueuedUpload(uploadId);
         });
     }, UPLOAD_STATUS_SYNC_DELAY_MS);
   };
@@ -82,20 +97,88 @@ function UploadDocumentModal({
     window.setTimeout(() => {
       void (async () => {
         await documentService.syncPendingDocStatus(documentId).catch(() => undefined);
-        try {
-          await mountResourceToFolderTag({
-            resourceId: documentId,
-            targetTagId: tagId,
-            documentService,
-            resourceService,
-            groupId,
-          });
+        const mounted = groupId
+          ? await mountUploadedGroupDocument(documentId, tagId)
+          : await mountToPersonalFolderWhenReady(documentId, tagId);
+        if (mounted) {
           onSuccess?.();
-        } catch (err) {
-          toast.warning(`文件已上传，但未能放入当前文件夹：${parseErrorMessage(err)}`);
         }
       })();
     }, UPLOAD_STATUS_SYNC_DELAY_MS);
+  };
+
+  const mountToPersonalFolderWhenReady = async (
+    resourceId: string,
+    tagId: string,
+    failureTargetName = '当前文件夹'
+  ): Promise<boolean> => {
+    for (let attempt = 1; attempt <= FOLDER_MOUNT_MAX_ATTEMPTS; attempt += 1) {
+      try {
+        const { resourceInfo } = await documentService.getDocInfo(resourceId);
+        const primaryTagId = resolveResourcePrimaryTagId(resourceInfo);
+        if (primaryTagId === tagId) {
+          return true;
+        }
+        const tagIds = buildUploadedResourceMountTagIds(resourceInfo, tagId);
+        await resourceService.updateResourceTags({
+          resourceId,
+          tagIds,
+          primaryTagId: tagId,
+        });
+        return true;
+      } catch (err) {
+        const shouldRetry = isResourceNotReadyError(err) && attempt < FOLDER_MOUNT_MAX_ATTEMPTS;
+        if (!shouldRetry) {
+          toast.warning(`文件已上传，但未能放入${failureTargetName}：${parseErrorMessage(err)}`);
+          return false;
+        }
+        await delay(FOLDER_MOUNT_RETRY_DELAY_MS);
+      }
+    }
+    return false;
+  };
+
+  const mountToGroupFolderWhenReady = async (
+    resourceId: string,
+    tagId: string
+  ): Promise<boolean> => {
+    if (!groupId) return false;
+
+    for (let attempt = 1; attempt <= FOLDER_MOUNT_MAX_ATTEMPTS; attempt += 1) {
+      try {
+        await resourceService.mountResourcesToGroupTag({
+          resourceIds: [resourceId],
+          groupId,
+          tagId,
+        });
+        return true;
+      } catch (err) {
+        const shouldRetry = isResourceNotReadyError(err) && attempt < FOLDER_MOUNT_MAX_ATTEMPTS;
+        if (!shouldRetry) {
+          toast.warning(`文件已上传，但未能放入当前文件夹：${parseErrorMessage(err)}`);
+          return false;
+        }
+        await delay(FOLDER_MOUNT_RETRY_DELAY_MS);
+      }
+    }
+    return false;
+  };
+
+  const mountUploadedGroupDocument = async (resourceId: string, groupTargetTagId: string) => {
+    let sharedTagId: string;
+    try {
+      sharedTagId = await driveService.ensureSharedFolder();
+    } catch (err) {
+      toast.warning(`文件已上传，但未能准备共享文件夹：${parseErrorMessage(err)}`);
+      return false;
+    }
+    const mountedToShared = await mountToPersonalFolderWhenReady(
+      resourceId,
+      sharedTagId,
+      '共享文件夹'
+    );
+    if (!mountedToShared) return false;
+    return mountToGroupFolderWhenReady(resourceId, groupTargetTagId);
   };
 
   const { run: submitUpload } = useRequest(
@@ -125,8 +208,10 @@ function UploadDocumentModal({
                 updateQueuedUpload(uploadId, {
                   documentId: payload.documentId,
                   objectKey: payload.objectKey,
-                  phase: payload.flashUploaded ? 'done' : 'uploading',
-                  progress: payload.flashUploaded ? 100 : QUEUE_UPLOAD_PROGRESS_START,
+                  phase: payload.flashUploaded ? 'confirming' : 'uploading',
+                  progress: payload.flashUploaded
+                    ? QUEUE_PROCESSING_PROGRESS_START
+                    : QUEUE_UPLOAD_PROGRESS_START,
                 });
               },
               onHashProgress: (p) => {
@@ -143,10 +228,13 @@ function UploadDocumentModal({
               },
             });
             if (result.flashUploaded) {
-              dismissQueuedUpload(uploadId, {
+              updateQueuedUpload(uploadId, {
                 documentId: result.documentId,
                 objectKey: result.objectKey,
+                phase: 'confirming',
+                progress: QUEUE_PROCESSING_PROGRESS_START,
               });
+              scheduleUploadStatusSync(result.documentId, uploadId);
               if (shouldMountToFolder && mountTagId) {
                 scheduleFolderMount(result.documentId, mountTagId);
               }
@@ -155,7 +243,7 @@ function UploadDocumentModal({
                 documentId: result.documentId,
                 objectKey: result.objectKey,
                 phase: 'confirming',
-                progress: 100,
+                progress: QUEUE_PROCESSING_PROGRESS_START,
               });
               scheduleUploadStatusSync(result.documentId, uploadId);
               if (shouldMountToFolder && mountTagId) {
@@ -271,7 +359,10 @@ function UploadDocumentModal({
 }
 
 function getQueueUploadProgress(value: number): number {
-  return Math.min(100, QUEUE_UPLOAD_PROGRESS_START + value * QUEUE_UPLOAD_PROGRESS_WEIGHT);
+  return Math.min(
+    QUEUE_PROCESSING_PROGRESS_START,
+    QUEUE_UPLOAD_PROGRESS_START + value * QUEUE_UPLOAD_PROGRESS_WEIGHT
+  );
 }
 
 function getDisplayFileType(file: File): string {
@@ -287,6 +378,22 @@ function createUploadId(): string {
     return crypto.randomUUID();
   }
   return `upload-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
+function isResourceNotReadyError(err: unknown): boolean {
+  const axiosErr = err as AxiosError<ApiErrorBody>;
+  const code = axiosErr.response?.data?.code;
+  if (typeof code === 'number' && RESOURCE_NOT_READY_CODES.has(code)) {
+    return true;
+  }
+  const message = parseErrorMessage(err);
+  return message.includes('资源不存在') || message.includes('文档不存在');
+}
+
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => {
+    window.setTimeout(resolve, ms);
+  });
 }
 
 export default UploadDocumentModal;

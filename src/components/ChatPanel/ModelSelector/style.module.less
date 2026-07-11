@@ -1,4 +1,6 @@
 // 全局样式变量
+@import '@/styles/scrollbar.module.less';
+
 .popoverBody {
   --app-popover-item-inset: var(--app-popover-content-padding, var(--space-xs));
   padding: 0 !important;
@@ -125,14 +127,7 @@
     max-height: 320px;
     overflow-y: auto;
     padding: var(--app-popover-content-padding, var(--space-xs));
-
-    &::-webkit-scrollbar {
-      width: 4px;
-    }
-    &::-webkit-scrollbar-thumb {
-      background-color: var(--surface-tertiary);
-      border-radius: var(--app-radius-scrollbar, var(--radius-xs));
-    }
+    .appSubtleScrollbar();
 
     // --- 列表项 (核心嵌套) ---
     .modelItem {

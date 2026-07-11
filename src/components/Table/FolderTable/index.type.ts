@@ -1,3 +1,4 @@
+import type { FolderIconType } from '@/components/Icons/EntryIcon/index.type';
 import type { ResourceIconType } from '@/domains/Resource';
 import type { Selection, SortDescriptor } from '@heroui/react';
 import type { ReactNode } from 'react';
@@ -11,6 +12,8 @@ export interface FolderTableRow {
   id: string;
   name: string;
   entryType: FolderTableEntryType;
+  /** folder 类型时使用 EntryIcon 的细分图标 */
+  folderIconType?: FolderIconType;
   /** resource 类型时使用 EntryIcon */
   resourceType?: string;
   /** resource 类型时使用 EntryIcon 的细分图标 */
@@ -32,6 +35,13 @@ export interface FolderTableRowContext<T extends FolderTableRow> {
   row: T;
   rowId: string;
   depth: number;
+}
+
+export interface FolderTableRowPressContext {
+  metaKey: boolean;
+  ctrlKey: boolean;
+  shiftKey: boolean;
+  modifierKey: boolean;
 }
 
 export interface FolderTableColumn<T extends FolderTableRow> extends Omit<
@@ -74,10 +84,14 @@ export interface FolderTableProps<T extends FolderTableRow> {
   onExpandedChange?: (keys: string[]) => void;
   /** 当前选中的行 id */
   selectedRowKey?: string;
+  /** 当前选中的多行 id */
+  selectedRowKeys?: Iterable<string>;
   /** 单击行选中；未传时单击沿用激活行为 */
-  onRowSelect?: (row: T) => void;
+  onRowSelect?: (row: T, ctx: FolderTableRowPressContext) => void;
   /** 行激活（例如进入文件夹 / 打开资源） */
   onRowActivate?: (row: T) => void;
+  /** 包装名称列的图标与名称内容，用于在业务层扩展交互能力 */
+  renderNameContent?: (content: ReactNode, row: T, ctx: FolderTableRowContext<T>) => ReactNode;
   rowActions?: FolderTableRowAction<T>[] | ((row: T) => FolderTableRowAction<T>[]);
   /** 滚动加载更多；Folder 型不做分页 */
   loadMore?: FolderTableLoadMore;
@@ -95,6 +109,8 @@ export interface FolderTableProps<T extends FolderTableRow> {
   className?: string;
   sortDescriptor?: SortDescriptor;
   onSortChange?: (descriptor: SortDescriptor) => void;
+  /** 始终固定在同级排序最前方的行 */
+  isPinnedFirst?: (row: T) => boolean;
   /** 全局编辑：多选勾选 */
   batchSelection?: FolderTableBatchSelection;
   /** 批量操作区（通常配合 batchSelection） */

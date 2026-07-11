@@ -1,13 +1,10 @@
-import { useChatService, useImageService } from '@/domains';
+import { useChatService, useImageService, useResourceService } from '@/domains';
 import { assertImageProxyUploadLimit } from '@/domains/Image';
 import type { AiDiffDisplayMode } from '@/domains/Note';
 import { AI_DIFF_DISPLAY_MODE } from '@/domains/Note';
-import {
-  useChatPanelStore,
-  useCurrentChatSessionStore,
-  useNewNoteStore,
-  useNoteSelectionStore,
-} from '@/store';
+import type { User } from '@/domains/User';
+import { useChatPanelStore, useCurrentChatSessionStore, useNewNoteStore } from '@/store';
+import { useNoteSelectionStore } from '@/store/useNoteSelectionStore';
 import {
   createClientError,
   FRONTEND_CLIENT_ERROR,
@@ -19,14 +16,48 @@ import { BlockNoteView } from '@blocknote/mantine';
 import '@blocknote/mantine/style.css';
 import { useCreateBlockNote } from '@blocknote/react';
 import { toast } from '@heroui/react';
-import { useMemoizedFn, useMount, useUnmount, useUpdateEffect } from 'ahooks';
-import { useCallback, useImperativeHandle, useMemo, useRef, useState, type Ref } from 'react';
+import { useLatest, useMemoizedFn, useMount, useUnmount, useUpdateEffect } from 'ahooks';
+import clsx from 'clsx';
+import {
+  useCallback,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+  type Ref,
+} from 'react';
 import NoteSlashMenu from '../NoteSlashMenu';
 import NoteToolbar from '../NoteToolbar';
 import { hasAiDiffContentFromEditor } from './AiDiffPresence';
-import { blockNoteSchema } from './blockNoteSchema';
+import { blockNoteSchema, type CustomBlockNoteEditor } from './blockNoteSchema';
+import {
+  buildCommentsExtension,
+  capturePendingCommentSelection,
+  commentStyles,
+  getBlockNoteCommentUsersYMap,
+  getBlockNoteThreadsYMap,
+  isCommentableSelection,
+  LatexCommentProvider,
+  NoteCommentsUi,
+  resolveActiveCommentUserProfile,
+  resolveBlockNoteCommentUsers,
+  syncDomSelectionToProseMirror,
+  useActiveCommentUser,
+  useFormulaComments,
+  useInlineCommentsSync,
+  useSyncCommentDocumentMarks,
+  type PendingCommentReference,
+  type PendingCommentSelection,
+} from './comments';
+import { syncCommentUserProfileToYMap } from './comments/core/commentUserProfile';
 import { mergeReadOnlyEditorProps, NoteEditorReadOnlyProvider } from './editorReadOnly';
-import { useAttachNoteYjsUndoStack, useNoteCaptureKeyEvent, useNoteYjsUndoManager } from './hooks';
+import {
+  useAttachNoteYjsUndoStack,
+  useNoteCaptureKeyEvent,
+  useNoteYjsFragment,
+  useNoteYjsUndoManager,
+} from './hooks';
 import type { CustomBlockNoteProps, NoteBodyEditorHandle } from './index.type';
 import {
   buildFlatBlocksFromEditor,
@@ -57,6 +88,13 @@ import styles from './style.module.less';
 
 type CreateBlockNoteOptions = NonNullable<Parameters<typeof useCreateBlockNote>[0]>;
 type BlockNoteCollaborationConfig = NonNullable<CreateBlockNoteOptions['collaboration']>;
+type CollaborationUser = {
+  name: string;
+  color: string;
+};
+type YCursorExtensionHandle = {
+  updateUser?: (user: CollaborationUser) => void;
+};
 
 function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === 'object' && v !== null;
@@ -72,29 +110,45 @@ function blockHasNestedChildren(block: { children?: readonly unknown[] }): boole
   return Array.isArray(block.children) && block.children.length > 0;
 }
 
-function CustomBlockNote({
+function CustomBlockNoteEditor({
   resourceId,
   doc,
   provider,
+  collaborationUser,
   aiDiffDisplayMode,
   readOnly = false,
   blockLocalDocWrites = false,
   onOutlineChange,
   onActiveHeadingChange,
   onAiDiffPresenceChange,
+  commentsEnabled = false,
+  commentsUiEnabled,
+  commentsAuthorizable = false,
+  commentsWritable = false,
+  commentUserId,
+  commentUsersById,
+  commentDocumentRole = 'editor',
+  isCommentVisibilityPrivileged = false,
+  collaboratorVisibility = 'all',
+  commentsSidebarCollapsed = false,
+  commentsSidebarWidth = 300,
+  onCommentsSidebarWidthChange,
+  commentsSidebarPortalContainer,
+  commentHistoryOpen = false,
+  onCommentHistoryOpenChange,
+  commentUser,
   ref,
-}: CustomBlockNoteProps & { ref?: Ref<NoteBodyEditorHandle> }) {
+}: CustomBlockNoteProps & { commentUser: User | null; ref?: Ref<NoteBodyEditorHandle> }) {
   const imageService = useImageService();
   const chatService = useChatService();
+  const resourceService = useResourceService();
   const currentSessionId = useCurrentChatSessionStore((state) => state.currentSessionId);
   const setCurrentSession = useCurrentChatSessionStore((state) => state.setCurrentSession);
   const setChatPanelCollapsed = useChatPanelStore((state) => state.setChatPanelCollapsed);
   const setSelectedText = useNoteSelectionStore((state) => state.setSelectedText);
-  const setEnableSelectedText = useNoteSelectionStore((state) => state.setEnableSelectedText);
   const selectedText = useNoteSelectionStore(
     (state) => state.selectedTextByResourceId[resourceId] ?? ''
   );
-  const clearSelectedText = useNoteSelectionStore((state) => state.clearSelectedText);
   const newNoteBodyOnChangeCleanupRef = useRef<(() => void) | null>(null);
   const flatBlocksRef = useRef<{ id: string; type: string }[]>([]);
   const [pmWriteGuardReady, setPmWriteGuardReady] = useState(false);
@@ -132,16 +186,108 @@ function CustomBlockNote({
   const effectiveAiDiffDisplayMode = exportDisplayModeOverride ?? aiDiffDisplayMode;
   const lastAiDiffPresenceRef = useRef<boolean | null>(null);
   const [hasAiDiffContent, setHasAiDiffContent] = useState(false);
-  const { noteFragment, undoManager } = useNoteYjsUndoManager(doc);
+  const pendingCommentReferenceRef = useRef<PendingCommentReference | null>(null);
+  /** 与 reference 分离：applyPendingCommentReference 会在 createThread 时清空 reference，但 mark 仍需选区 */
+  const pendingCommentSelectionRef = useRef<PendingCommentSelection | null>(null);
+  const editorRef = useRef<CustomBlockNoteEditor | null>(null);
+  const commitPendingReferenceForThreadRef = useRef<(threadId: string) => void>(() => undefined);
+  const rememberPendingCommentReferenceRef = useRef<() => void>(() => undefined);
+  const noteFragment = useNoteYjsFragment(doc);
+  const showCommentsUi = (commentsUiEnabled ?? commentsEnabled) && commentsEnabled;
+  const threadsYMap = getBlockNoteThreadsYMap(doc);
+  const commentUsersYMap = getBlockNoteCommentUsersYMap(doc);
+  const { activeCommentUserId, activeCommentUsername, activeCommentAvatarUrl } =
+    resolveActiveCommentUserProfile(commentUser, commentUserId);
+  const activeCommentUserIdLatest = useLatest(activeCommentUserId);
+  const commentResolverContextLatest = useLatest({
+    activeCommentUserId,
+    activeCommentUsername,
+    activeCommentAvatarUrl,
+    commentUsersById,
+    commentUsersYMap,
+  });
+
+  useUpdateEffect(() => {
+    if (commentsEnabled) {
+      syncCommentUserProfileToYMap(commentUsersYMap, activeCommentUserId, {
+        username: activeCommentUsername,
+        avatarUrl: activeCommentAvatarUrl,
+      });
+    }
+  }, [
+    activeCommentAvatarUrl,
+    activeCommentUserId,
+    activeCommentUsername,
+    commentUsersYMap,
+    commentsEnabled,
+  ]);
+
+  useInlineCommentsSync({
+    enabled: commentsEnabled,
+    resourceId,
+    threadsYMap,
+    listInlineComments: resourceService.listInlineComments,
+  });
 
   const plugins = useMemo(() => getNoteEditorPlugins(), []);
-  const editorExtensions = useMemo(
-    () => [
+  const editorExtensions = useMemo(() => {
+    const extensions = [
       ...collectNoteEditorExtensions(plugins),
       createNoteReadOnlyFilterExtension(shouldBlockLocalDocWrites),
-    ],
-    [plugins, shouldBlockLocalDocWrites]
-  );
+    ];
+    if (commentsEnabled) {
+      extensions.push(
+        // eslint-disable-next-line react-hooks/refs -- 扩展初始化早于 editor 创建，以下 ref 只在扩展运行期回调读取。
+        buildCommentsExtension({
+          resourceId,
+          activeCommentUserId,
+          getActiveCommentUserId: () => activeCommentUserIdLatest.current,
+          commentsAuthorizable,
+          isCommentVisibilityPrivileged,
+          commentDocumentRole,
+          threadsYMap,
+          doc,
+          resolveUsers: (userIds) =>
+            Promise.resolve(
+              resolveBlockNoteCommentUsers(userIds, commentResolverContextLatest.current)
+            ),
+          getEditor: () => editorRef.current,
+          getPendingCommentSelection: () => pendingCommentSelectionRef.current,
+          getPendingCommentReferenceText: () => pendingCommentReferenceRef.current?.referenceText,
+          clearPendingCommentSelection: () => {
+            pendingCommentSelectionRef.current = null;
+          },
+          onThreadDocumentMarked: (threadId) => {
+            commitPendingReferenceForThreadRef.current(threadId);
+          },
+          canAddThreadToDocument: isCommentableSelection,
+          inlineCommentDataSource: {
+            listInlineComments: resourceService.listInlineComments,
+            createInlineComment: resourceService.createInlineComment,
+            addInlineCommentItem: resourceService.addInlineCommentItem,
+            updateInlineCommentItem: resourceService.updateInlineCommentItem,
+            deleteInlineCommentItem: resourceService.deleteInlineCommentItem,
+            changeInlineCommentResolveStatus: resourceService.changeInlineCommentResolveStatus,
+          },
+        })
+      );
+    }
+    return extensions;
+  }, [
+    activeCommentUserId,
+    commentDocumentRole,
+    commentsEnabled,
+    commentsAuthorizable,
+    isCommentVisibilityPrivileged,
+    plugins,
+    resourceId,
+    resourceService,
+    threadsYMap,
+    doc,
+    shouldBlockLocalDocWrites,
+    activeCommentUserIdLatest,
+    commentResolverContextLatest,
+  ]);
   const editorProps = useMemo(
     () => mergeReadOnlyEditorProps(collectNoteEditorProps(plugins), effectiveBlockLocalDocWrites),
     [plugins, effectiveBlockLocalDocWrites]
@@ -160,12 +306,31 @@ function CustomBlockNote({
     collaboration: {
       provider: provider as BlockNoteCollaborationConfig['provider'],
       fragment: noteFragment,
-      user: {
-        name: '',
-        color: '#4096ff',
-      },
+      user: collaborationUser,
     },
   });
+  const undoManager = useNoteYjsUndoManager(noteFragment, editor);
+
+  useMount(() => {
+    editorRef.current = editor;
+  });
+
+  useUpdateEffect(() => {
+    editorRef.current = editor;
+  }, [editor]);
+
+  const syncCollaborationUser = () => {
+    const yCursor = editor.getExtension('yCursor') as YCursorExtensionHandle | undefined;
+    yCursor?.updateUser?.(collaborationUser);
+  };
+
+  useMount(() => {
+    syncCollaborationUser();
+  });
+
+  useUpdateEffect(() => {
+    syncCollaborationUser();
+  }, [collaborationUser, editor]);
 
   useMount(() => {
     try {
@@ -193,10 +358,6 @@ function CustomBlockNote({
     }
   }, [editorProps, editor]);
 
-  useMount(() => {
-    setSelectedText(resourceId, editor.getSelectedText());
-  });
-
   const syncAiDiffPresence = useCallback(() => {
     const nextHasAiDiffContent = hasAiDiffContentFromEditor(editor);
     if (lastAiDiffPresenceRef.current === nextHasAiDiffContent) {
@@ -206,7 +367,7 @@ function CustomBlockNote({
     lastAiDiffPresenceRef.current = nextHasAiDiffContent;
     setHasAiDiffContent(nextHasAiDiffContent);
     onAiDiffPresenceChange?.(nextHasAiDiffContent);
-  }, [editor, onAiDiffPresenceChange, setHasAiDiffContent]);
+  }, [editor, onAiDiffPresenceChange]);
 
   useMount(() => {
     syncAiDiffPresence();
@@ -259,8 +420,68 @@ function CustomBlockNote({
       newNoteBodyOnChangeCleanupRef.current();
       newNoteBodyOnChangeCleanupRef.current = null;
     }
-    clearSelectedText(resourceId);
   });
+
+  const {
+    latexCommentProviderProps,
+    rememberPendingCommentReference,
+    commitPendingReferenceForThread,
+    bumpFormulaState,
+    visibleThreadReferenceTexts,
+    formulaThreadPositions,
+  } = useFormulaComments({
+    editor,
+    doc,
+    resourceId,
+    commentsEnabled,
+    commentsWritable,
+    readOnly,
+    commentUserId: activeCommentUserId,
+    isCommentVisibilityPrivileged,
+    collaboratorVisibility,
+    pendingCommentReferenceRef,
+    pendingCommentSelectionRef,
+  });
+
+  useMount(() => {
+    commitPendingReferenceForThreadRef.current = commitPendingReferenceForThread;
+    rememberPendingCommentReferenceRef.current = rememberPendingCommentReference;
+  });
+
+  useUpdateEffect(() => {
+    commitPendingReferenceForThreadRef.current = commitPendingReferenceForThread;
+    rememberPendingCommentReferenceRef.current = rememberPendingCommentReference;
+  }, [commitPendingReferenceForThread, rememberPendingCommentReference]);
+
+  useSyncCommentDocumentMarks({
+    editor,
+    doc,
+    provider,
+    commentsEnabled,
+    commentUserId: activeCommentUserId,
+    isCommentVisibilityPrivileged,
+    collaboratorVisibility,
+    onAfterDocumentMarksSync: bumpFormulaState,
+  });
+
+  useUpdateEffect(() => {
+    if (!commentsEnabled || !commentsWritable) {
+      return;
+    }
+    const extension = editor.getExtension('comments') as
+      { startPendingComment?: () => void } | undefined;
+    if (!extension?.startPendingComment) {
+      return;
+    }
+    const originalStartPendingComment = extension.startPendingComment.bind(extension);
+    extension.startPendingComment = () => {
+      rememberPendingCommentReferenceRef.current();
+      originalStartPendingComment();
+    };
+    return () => {
+      extension.startPendingComment = originalStartPendingComment;
+    };
+  }, [commentsEnabled, commentsWritable, editor]);
 
   useImperativeHandle(
     ref,
@@ -347,6 +568,12 @@ function CustomBlockNote({
 
   const handleSelectionChange = () => {
     setSelectedText(resourceId, editor.getSelectedText());
+    if (commentsEnabled && commentsWritable && isCommentableSelection(editor)) {
+      const selection = capturePendingCommentSelection(editor);
+      if (selection) {
+        pendingCommentSelectionRef.current = selection;
+      }
+    }
     if (!onActiveHeadingChange) {
       return;
     }
@@ -385,8 +612,7 @@ function CustomBlockNote({
       }
     }
 
-    setSelectedText(targetSessionId, selectedSnapshot);
-    setEnableSelectedText(targetSessionId, true);
+    useNoteSelectionStore.getState().setSelectedText(targetSessionId, selectedSnapshot);
     setChatPanelCollapsed(false);
   };
 
@@ -464,8 +690,22 @@ function CustomBlockNote({
   const showAiBulkActions =
     hasAiDiffContent && !readOnly && aiDiffDisplayMode === AI_DIFF_DISPLAY_MODE.COMPARE;
 
+  const hasInlineCommentsSidebar =
+    showCommentsUi && !commentsSidebarCollapsed && commentsSidebarPortalContainer === undefined;
+  const editorShellStyle = hasInlineCommentsSidebar
+    ? ({ ['--comments-sidebar-width' as string]: `${commentsSidebarWidth}px` } as CSSProperties)
+    : undefined;
+
   return (
-    <div className={styles.editorShell} onKeyDownCapture={onKeyDownCapture}>
+    <div
+      className={clsx(
+        styles.editorShell,
+        showCommentsUi && commentStyles.editorShellWithComments,
+        hasInlineCommentsSidebar && commentStyles.withCommentsSidebar
+      )}
+      style={editorShellStyle}
+      onKeyDownCapture={onKeyDownCapture}
+    >
       {showAiBulkActions ? (
         <div className={styles.aiBulkActions} contentEditable={false}>
           <button
@@ -504,20 +744,69 @@ function CustomBlockNote({
       ) : null}
       <NoteEditorReadOnlyProvider value={readOnly}>
         <AiDiffDisplayModeProvider value={effectiveAiDiffDisplayMode}>
-          <BlockNoteView
-            editor={editor}
-            theme="light"
-            formattingToolbar={false}
-            slashMenu={false}
-            editable={!readOnly}
-            onSelectionChange={handleSelectionChange}
-          >
-            <NoteToolbar onAskAi={handleAskAi} />
-            <NoteSlashMenu editor={editor} plugins={plugins} />
-          </BlockNoteView>
+          <LatexCommentProvider {...latexCommentProviderProps}>
+            <BlockNoteView
+              className={commentStyles.bodyBlockNoteView}
+              editor={editor}
+              theme="light"
+              formattingToolbar={false}
+              slashMenu={false}
+              comments={false}
+              editable={!readOnly}
+              onSelectionChange={handleSelectionChange}
+            >
+              <NoteToolbar
+                onAskAi={handleAskAi}
+                showAddComment={commentsWritable}
+                onRememberPendingCommentReference={() => {
+                  syncDomSelectionToProseMirror(editor);
+                  rememberPendingCommentReference();
+                }}
+              />
+              <NoteSlashMenu editor={editor} plugins={plugins} />
+              {showCommentsUi ? (
+                <NoteCommentsUi
+                  editor={editor}
+                  doc={doc}
+                  commentsEnabled={commentsEnabled}
+                  commentsWritable={commentsWritable}
+                  commentUserId={activeCommentUserId}
+                  commentUsername={activeCommentUsername}
+                  commentAvatarUrl={activeCommentAvatarUrl}
+                  commentUsersById={commentUsersById}
+                  isCommentVisibilityPrivileged={isCommentVisibilityPrivileged}
+                  collaboratorVisibility={collaboratorVisibility}
+                  sidebarCollapsed={commentsSidebarCollapsed}
+                  sidebarWidth={commentsSidebarWidth}
+                  onSidebarWidthChange={onCommentsSidebarWidthChange ?? (() => undefined)}
+                  sidebarPortalContainer={commentsSidebarPortalContainer}
+                  commentHistoryOpen={commentHistoryOpen}
+                  onCommentHistoryOpenChange={onCommentHistoryOpenChange ?? (() => undefined)}
+                  localThreadReferenceTexts={visibleThreadReferenceTexts}
+                  formulaThreadPositions={formulaThreadPositions}
+                  onBumpThreadsSidebar={bumpFormulaState}
+                />
+              ) : null}
+            </BlockNoteView>
+          </LatexCommentProvider>
         </AiDiffDisplayModeProvider>
       </NoteEditorReadOnlyProvider>
     </div>
+  );
+}
+
+function CustomBlockNote(props: CustomBlockNoteProps & { ref?: Ref<NoteBodyEditorHandle> }) {
+  const { ref, commentsEnabled = false, ...rest } = props;
+  const commentUser = useActiveCommentUser(commentsEnabled);
+
+  return (
+    <CustomBlockNoteEditor
+      key={rest.resourceId}
+      {...rest}
+      commentsEnabled={commentsEnabled}
+      ref={ref}
+      commentUser={commentUser}
+    />
   );
 }
 

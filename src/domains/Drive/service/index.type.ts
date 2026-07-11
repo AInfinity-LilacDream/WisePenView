@@ -11,19 +11,13 @@ export interface IDriveService {
   listNodeChildren(params: ListNodeChildrenParams): Promise<DriveNode[]>;
   getNodePath(params: GetNodePathParams): Promise<Array<RootNode | FolderNode>>;
   moveToFolder(params: MoveToFolderParams): Promise<void>;
+  /** 批量移动并返回实际改变父目录的节点数。 */
+  moveNodesToFolder(params: MoveNodesToFolderParams): Promise<number>;
   removeNode(params: RemoveNodeParams): Promise<void>;
   renameNode(params: RenameNodeParams): Promise<void>;
   createFolder(params: CreateFolderParams): Promise<string>;
-  /** @deprecated 请使用 getRootNode */
-  getDriveTree(params: GetDriveTreeParams): Promise<DriveNode>;
-  /** @deprecated 请使用 listNodeChildren */
-  loadNodeChildren(params: LoadNodeChildrenParams): Promise<DriveNode[]>;
-  /** @deprecated 请使用 getNodePath */
-  getPathById(params: GetPathByIdParams): Promise<DriveNode[]>;
-  /** @deprecated 请使用 moveToFolder */
-  moveNode(params: MoveNodeParams): Promise<void>;
-  /** @deprecated 请使用 createFolder */
-  createNode(params: CreateNodeParams): Promise<void>;
+  /** 确保个人云盘系统共享目录存在；用于组空间中新建资源前恢复被绕过删除的目录。 */
+  ensureSharedFolder(): Promise<string>;
 }
 
 export interface GetRootNodeParams {
@@ -31,27 +25,12 @@ export interface GetRootNodeParams {
   groupId?: string;
 }
 
-export interface GetDriveTreeParams {
-  groupId?: string;
-  rootId: string;
-}
-
 export interface ListNodeChildrenParams {
   nodeId: string;
   groupId?: string;
 }
 
-export interface LoadNodeChildrenParams {
-  nodeId: string;
-  groupId?: string;
-}
-
 export interface GetNodePathParams {
-  nodeId: string;
-  groupId?: string;
-}
-
-export interface GetPathByIdParams {
   nodeId: string;
   groupId?: string;
 }
@@ -62,9 +41,9 @@ export interface MoveToFolderParams {
   groupId?: string;
 }
 
-export interface MoveNodeParams {
-  nodeId: string;
-  newParentId: string;
+export interface MoveNodesToFolderParams {
+  nodeIds: string[];
+  targetFolderNodeId: string;
   groupId?: string;
 }
 
@@ -83,10 +62,6 @@ export interface CreateFolderParams {
   parentId: string;
   name: string;
   groupId?: string;
-}
-
-export interface CreateNodeParams extends CreateFolderParams {
-  type: 'folder';
 }
 
 /** Service 工厂选项：默认 pageSize = 50 */

@@ -2,6 +2,7 @@
  * 链路：wisepen.css (--table-*) → 本文件 @table-* → 各 variant / cell less
  * 圆角：--table-shell/control/overlay-radius 统一外框与行内控件；--table-inner-radius 用于 Chip / 小按钮 / 骨架屏
  */
+@import '@/styles/scrollbar.module.less';
 
 /* 行高 / 帧宽 */
 @table-row-height: var(--table-row-height, 60px);
@@ -177,22 +178,7 @@
 }
 
 .tableSubtleScrollbar() {
-  scrollbar-width: thin;
-  scrollbar-color: color-mix(in srgb, var(--scrollbar) 72%, transparent) transparent;
-
-  &::-webkit-scrollbar {
-    width: var(--scrollbar-width, 8px);
-    height: var(--scrollbar-width, 8px);
-  }
-
-  &::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: color-mix(in srgb, var(--scrollbar) 72%, transparent);
-    border-radius: 999px;
-  }
+  .appSubtleScrollbar();
 }
 
 /* 表头固定、垂直滚动仅在 tbody，滚动条不覆盖 column 行 */

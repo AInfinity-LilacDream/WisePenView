@@ -9,6 +9,7 @@ import type {
   FetchGroupMembersApiResponse,
   GetAllMyGroupTokenInfoApiRequest,
   GetAllMyGroupTokenInfoApiResponse,
+  GetGroupBaseInfoApiRequest,
   GetGroupBaseInfoApiResponse,
   GetGroupConfigApiRequest,
   GetGroupConfigApiResponse,
@@ -35,7 +36,7 @@ function getGroupDetailInfo(req: GetGroupInfoApiRequest): Promise<GetGroupInfoAp
   return apiGet('/group/getGroupDetailInfo', { params: req });
 }
 
-function getGroupBaseInfo(req: GetGroupInfoApiRequest): Promise<GetGroupBaseInfoApiResponse> {
+function getGroupBaseInfo(req: GetGroupBaseInfoApiRequest): Promise<GetGroupBaseInfoApiResponse> {
   return apiGet('/group/getGroupBaseInfo', { params: req });
 }
 

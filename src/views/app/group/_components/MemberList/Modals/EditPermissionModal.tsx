@@ -1,10 +1,11 @@
+import { Select } from '@/components/Input';
 import AppModal from '@/components/Overlay/AppModal';
 import SelectedMemberList from '@/components/SelectedMemberList';
 import { useGroupService } from '@/domains';
 import { ROLE } from '@/domains/Group';
 import type { EnumKey } from '@/utils/enum';
 import { parseErrorMessage } from '@/utils/error';
-import { Alert, Button, ListBox, Select, toast } from '@heroui/react';
+import { Alert, Button, ListBox, toast } from '@heroui/react';
 import { useRequest } from 'ahooks';
 import { useState } from 'react';
 import type { EditPermissionModalProps } from './index.type';

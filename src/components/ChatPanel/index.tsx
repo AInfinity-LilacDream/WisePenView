@@ -4,9 +4,9 @@ import { useChatSession } from '@/domains/Chat/session/useChatSession';
 import {
   clearNewChatSessionStore,
   useChatPanelStore,
+  useChatSessionHistoryRefreshStore,
   useCurrentChatSessionStore,
   useNewChatSessionStore,
-  useNoteSelectionStore,
 } from '@/store';
 import { parseErrorMessage } from '@/utils/error';
 import { toast } from '@heroui/react';
@@ -23,25 +23,32 @@ import {
   mapHistoryMessage,
   type ModelMeta,
 } from './ChatPanel';
+import ChatPanelHeader from './ChatPanelHeader';
 import MessageList from './MessageList';
-import NewChatButton from './NewChatButton';
 import styles from './style.module.less';
 
-function ChatPanel({ collapsed, fullWidth = false, onNewChat, workspaceContext }: ChatPanelProps) {
+function ChatPanel({
+  collapsed,
+  fullWidth = false,
+  showHeader = true,
+  onNewChat,
+  sessionBarOpen = false,
+  onToggleSessionBar,
+  workspaceContext,
+  showCollapseButton = true,
+}: ChatPanelProps) {
   const navigate = useNavigate();
   const chatService = useChatService();
+  const setChatPanelCollapsed = useChatPanelStore((state) => state.setChatPanelCollapsed);
   const chatPanelDraftOpen = useChatPanelStore((state) => state.chatPanelDraftOpen);
   const setChatPanelDraftOpen = useChatPanelStore((state) => state.setChatPanelDraftOpen);
+  const requestChatSessionHistoryRefresh = useChatSessionHistoryRefreshStore(
+    (state) => state.requestRefresh
+  );
   const currentSessionId = useCurrentChatSessionStore((state) => state.currentSessionId);
+  const currentSessionTitle = useCurrentChatSessionStore((state) => state.currentSessionTitle);
   const setCurrentSession = useCurrentChatSessionStore((state) => state.setCurrentSession);
   const clearCurrentSession = useCurrentChatSessionStore((state) => state.clearCurrentSession);
-  const enableSelectedText = useNoteSelectionStore((state) =>
-    currentSessionId ? Boolean(state.enableSelectedTextByResourceId[currentSessionId]) : false
-  );
-  const selectedContextText = useNoteSelectionStore((state) =>
-    currentSessionId ? (state.selectedTextByResourceId[currentSessionId] ?? '') : ''
-  );
-  const clearSelectedText = useNoteSelectionStore((state) => state.clearSelectedText);
 
   const [currentModel, setCurrentModel] = useState<Model | null>(null);
   const [historyMessages, setHistoryMessages] = useState<Message[]>([]);
@@ -113,11 +120,12 @@ function ChatPanel({ collapsed, fullWidth = false, onNewChat, workspaceContext }
     const pendingId = useNewChatSessionStore.getState().newChatSessionId;
     if (pendingId !== currentSessionId) return;
     if (!hasRenderableChatContent) return;
+    requestChatSessionHistoryRefresh();
     clearNewChatSessionStore();
-  }, [currentSessionId, hasRenderableChatContent]);
+  }, [currentSessionId, hasRenderableChatContent, requestChatSessionHistoryRefresh]);
 
   const sending = status === 'submitted' || status === 'streaming';
-  const hasSelectedContext = enableSelectedText && Boolean(selectedContextText.trim());
+  const panelTitle = currentSessionTitle || '新对话';
 
   const ensureChatSession = async (): Promise<string> => {
     const existingSessionId =
@@ -130,6 +138,7 @@ function ChatPanel({ collapsed, fullWidth = false, onNewChat, workspaceContext }
       title: createdSession.title,
     });
     setCurrentSession({ id: createdSession.id, title: createdSession.title });
+    requestChatSessionHistoryRefresh();
     setChatPanelDraftOpen(false);
     if (fullWidth) {
       navigate(`/app/chat/${createdSession.id}`, { replace: true });
@@ -201,8 +210,6 @@ function ChatPanel({ collapsed, fullWidth = false, onNewChat, workspaceContext }
     const sendPromise = sendSessionMessage(text, {
       model: targetModel.modelId,
       providerId: targetModel.providerId,
-      enableSelected: hasSelectedContext,
-      selectedText: selectedContextText,
       sessionId: targetSessionId,
       workspaceContext,
       selectedResources: opts?.activeDocRefs,
@@ -211,15 +218,24 @@ function ChatPanel({ collapsed, fullWidth = false, onNewChat, workspaceContext }
       allowToolNames: opts?.selectedTools?.map((tool) => tool.toolId),
     });
 
-    if (hasSelectedContext) {
-      clearSelectedText(targetSessionId);
-    }
     await sendPromise;
   };
 
-  const handleClearSelectedContext = () => {
-    if (!currentSessionId) return;
-    clearSelectedText(currentSessionId);
+  const handleCollapsePanel = () => {
+    setChatPanelCollapsed(true);
+    if (!currentSessionId) {
+      setChatPanelDraftOpen(false);
+    }
+  };
+
+  const handleNewChat = () => {
+    if (onNewChat) {
+      onNewChat();
+      return;
+    }
+    clearCurrentSession();
+    clearNewChatSessionStore();
+    setChatPanelDraftOpen(true);
   };
 
   useMount(() => {
@@ -258,34 +274,42 @@ function ChatPanel({ collapsed, fullWidth = false, onNewChat, workspaceContext }
 
   return (
     <div className={`${styles.panel} ${fullWidth ? styles.fullWidth : ''}`}>
+      {showHeader ? (
+        <ChatPanelHeader
+          collapsed={collapsed}
+          fullWidth={fullWidth}
+          panelTitle={panelTitle}
+          sessionBarOpen={sessionBarOpen}
+          showCollapseButton={showCollapseButton}
+          onCollapsePanel={handleCollapsePanel}
+          onNewChat={handleNewChat}
+          onToggleSessionBar={onToggleSessionBar}
+        />
+      ) : null}
+
       {!collapsed && (
-        <>
-          <div className={styles.content}>
-            <div className={styles.contentTopBar}>
-              <NewChatButton onClick={onNewChat} compact={!fullWidth} />
+        <div className={styles.panelBody}>
+          <div className={styles.conversationPanel}>
+            <div className={styles.content}>
+              <div className={styles.messageViewport}>
+                <MessageList
+                  messages={messages}
+                  canLoadMoreHistory={Boolean(currentSessionId) && historyPage < historyTotalPage}
+                  loadingMoreHistory={loadingMoreHistory}
+                  onLoadMoreHistory={loadMoreHistoryMessages}
+                />
+              </div>
             </div>
 
-            <div className={styles.messageViewport}>
-              <MessageList
-                messages={messages}
-                canLoadMoreHistory={Boolean(currentSessionId) && historyPage < historyTotalPage}
-                loadingMoreHistory={loadingMoreHistory}
-                onLoadMoreHistory={loadMoreHistoryMessages}
+            <div className={styles.footer}>
+              <ChatInput
+                onSend={handleSend}
+                getUploadSessionId={ensureChatSession}
+                sending={sending}
               />
             </div>
           </div>
-
-          <div className={styles.footer}>
-            <ChatInput
-              onSend={handleSend}
-              getUploadSessionId={ensureChatSession}
-              sending={sending}
-              hasSelectedContext={hasSelectedContext}
-              selectedContextText={selectedContextText}
-              onClearSelectedContext={handleClearSelectedContext}
-            />
-          </div>
-        </>
+        </div>
       )}
     </div>
   );

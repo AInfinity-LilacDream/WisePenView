@@ -4,7 +4,7 @@
  */
 
 import type { Block } from '@/domains/Note';
-import type { ResourceAction, ResourceItem } from '@/domains/Resource';
+import type { ResourceItem } from '@/domains/Resource';
 
 /** NoteService 接口：供依赖注入使用 */
 /** web-socket服务放在了yjs目录下 */
@@ -12,12 +12,8 @@ export interface INoteService {
   syncTitle(params: SyncTitleRequest): Promise<void>;
   /** 新建 / 从源文档派生 Note；成功时返回新资源 ID */
   createNote(params: CreateNoteRequest): Promise<CreateNoteResponse>;
-  /** 删除 Note（后端会做权限校验并移除资源） */
-  deleteNote(params: DeleteNoteRequest): Promise<void>;
   /** 获取可直接渲染的 Note 信息（作者展示 + 编辑时间文案） */
   getNoteInfoDisplay(params: GetNoteInfoRequest): Promise<NoteInfoDisplayData>;
-  /** 获取 Note 权限配置所需的最小数据 */
-  getNotePermissionConfig(params: GetNotePermissionConfigRequest): Promise<NotePermissionConfig>;
   /** 获取 DRAWIO 最新完整快照 */
   getDrawIoLatestSnapshot(
     params: GetDrawIoLatestSnapshotRequest
@@ -31,9 +27,12 @@ export interface INoteService {
 }
 
 export interface NoteInfoDisplayAuthor {
+  id: string;
   name: string;
   avatar?: string;
 }
+
+export type NoteCommentUserDisplayRecord = Record<string, NoteInfoDisplayAuthor>;
 
 export interface NoteInfoDisplayData {
   noteTitle: string;
@@ -46,12 +45,12 @@ export interface NoteInfoDisplayData {
   version?: number;
   /** 当前用户是否具备协同编辑（EDIT）权限 */
   canCollaborativeEdit: boolean;
-}
-
-export interface NotePermissionConfig {
-  resourceId: string;
-  overrideGrantedActions?: ResourceAction[] | null;
-  specifiedUsersGrantedActions?: Record<string, ResourceAction[]> | null;
+  /** 当前用户是否可阅读批注（VIEW） */
+  commentsEnabled: boolean;
+  /** 当前用户是否可编辑批注（COMMENT_EDIT） */
+  canEditComments: boolean;
+  /** 批注用户展示信息，key 为 authorId */
+  authorsById?: NoteCommentUserDisplayRecord;
 }
 
 /** 与 docs/apis/note-api.md「新建文档接口」请求体一致 */
@@ -68,20 +67,12 @@ export interface CreateNoteResponse {
   resourceId?: string;
 }
 
-export interface DeleteNoteRequest {
-  resourceIds: string[];
-}
-
 export interface SyncTitleRequest {
   resourceId: string;
   newName: string;
 }
 
 export interface GetNoteInfoRequest {
-  resourceId: string;
-}
-
-export interface GetNotePermissionConfigRequest {
   resourceId: string;
 }
 

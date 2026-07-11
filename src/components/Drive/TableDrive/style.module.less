@@ -27,34 +27,42 @@
 }
 
 .driveBody {
-  display: flex;
   flex: 1;
-  align-items: stretch;
   min-width: 0;
   min-height: 0;
+  display: flex;
   overflow: hidden;
+}
 
-  /* FolderTable 根节点（shell + table class）：去掉独立外框 */
-  > .table {
-    flex: 1 1 0;
-    min-width: 0;
-    min-height: 0;
-    height: 100%;
-    max-height: 100%;
-    overflow: hidden;
-    align-self: stretch;
-    border: none;
-    border-radius: 0;
-    background: transparent;
-  }
+.tablePanel {
+  position: relative;
+  z-index: 2;
+  flex: 1 1 auto;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  overflow: visible;
+}
+
+.table {
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  max-height: 100%;
+  overflow: visible;
+  align-self: stretch;
+  border: none;
+  border-radius: 0;
+  background: transparent;
 }
 
 /* 详情列：全高贴右，无上方 header，仅左侧分隔线 */
 .detailPanel {
-  flex: 0 0 var(--table-drive-detail-panel-width, 280px);
-  width: var(--table-drive-detail-panel-width, 280px);
-  min-width: var(--table-drive-detail-panel-width, 280px);
-  max-width: var(--table-drive-detail-panel-width, 280px);
+  position: relative;
+  z-index: 1;
+  flex: 0 0 var(--table-drive-detail-panel-width, 300px);
+  width: var(--table-drive-detail-panel-width, 300px);
+  max-width: min(42vw, 420px);
   height: 100%;
   min-height: 0;
   align-self: stretch;
@@ -71,6 +79,79 @@
   gap: var(--space-xs);
 }
 
+.dndNameContent {
+  display: inline-flex;
+  min-width: 0;
+  cursor: grab;
+
+  &[data-dragging='true'] {
+    cursor: grabbing;
+  }
+}
+
+:global(.table__row):has(.dndNameContent[data-drop-target='true']) {
+  :global(.table__cell) {
+    background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+  }
+
+  :global(.table__cell:first-child) {
+    box-shadow: inset 3px 0 0 var(--accent);
+  }
+}
+
+.breadcrumbDropTarget {
+  display: inline-flex;
+
+  &[data-drop-target='true'] > * {
+    background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+    color: var(--foreground);
+  }
+}
+
+.dragOverlay {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  max-width: 380px;
+  min-height: 36px;
+  padding: var(--space-xs) var(--space-sm);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  box-shadow: var(--shadow-md);
+  color: var(--foreground);
+  cursor: grabbing;
+}
+
+.dragOverlayIcon {
+  display: inline-flex;
+  flex: 0 0 auto;
+  line-height: 0;
+
+  :global(svg) {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+.dragOverlayName {
+  min-width: 0;
+  overflow: hidden;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dragOverlayCount {
+  flex: 0 0 auto;
+  padding-left: var(--space-sm);
+  border-left: 1px solid var(--border-light);
+  color: var(--muted);
+  font-size: var(--font-size-xs);
+  white-space: nowrap;
+}
+
 @media (max-width: 960px) {
   .driveFrame {
     min-height: auto;
@@ -83,8 +164,12 @@
     flex-direction: column;
   }
 
+  .tablePanel {
+    height: auto;
+  }
+
   .detailPanel {
-    flex: 0 0 auto;
+    flex-basis: auto;
     width: 100%;
     min-width: 0;
     max-width: none;

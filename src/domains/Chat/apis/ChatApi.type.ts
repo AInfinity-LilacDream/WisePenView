@@ -50,7 +50,7 @@ export interface ModelProviderMappingResponse {
   priority: number;
 }
 
-export interface ModelResponse {
+interface ModelResponse {
   id: string;
   scope: string;
   display_name: string;

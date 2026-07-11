@@ -1,6 +1,8 @@
 import type { ResourceIconType } from '@/domains/Resource';
+import type { AccessControlScope, TagResourceAction } from '@/domains/Tag';
 
 export type DriveNodeType = 'root' | 'folder' | 'resource' | 'link' | 'loading';
+export type DriveSystemFolderType = 'trash' | 'shared';
 
 export type DriveNodeScope =
   | {
@@ -37,7 +39,12 @@ interface FolderNode extends DriveNodeBase {
   type: 'folder';
   tagId: string;
   name: string;
+  /** 系统目录由 Drive 渲染特殊名称，并禁止前端重命名、移动或删除。 */
+  systemType?: DriveSystemFolderType;
   description?: string;
+  taggedResourceAclGrantScope?: AccessControlScope;
+  tagMountPermissionScope?: AccessControlScope;
+  grantedActions?: TagResourceAction[];
   childrenIds: string[];
 }
 
@@ -46,6 +53,7 @@ interface DriveResourceNodeBase extends DriveNodeBase {
   title: string;
   resourceType?: string;
   resourceIconType: ResourceIconType;
+  size?: number;
   description?: string;
   /** 当前节点所在目录 tag，用来描述资源是主挂载还是辅助挂载 */
   folderTagId: string;

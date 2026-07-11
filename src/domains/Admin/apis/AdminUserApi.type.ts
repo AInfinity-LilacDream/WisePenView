@@ -1,3 +1,4 @@
+import type { PageR } from '@/apis/api.type';
 import type {
   UserDegreeLevelApiValue,
   UserIdentityTypeApiValue,
@@ -28,14 +29,6 @@ export interface FetchAdminUserListApiRequest {
   keyword: string;
   status?: string;
   identityType?: string;
-}
-
-export interface PageR<T> {
-  list: T[];
-  total: number;
-  page: number;
-  size: number;
-  totalPage: number;
 }
 
 export type FetchAdminUserListApiResponse = PageR<AdminUserApiModel>;

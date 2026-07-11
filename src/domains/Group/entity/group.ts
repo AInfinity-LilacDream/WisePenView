@@ -39,6 +39,15 @@ export interface GroupResConfig {
   defaultMemberActions?: TagResourceAction[];
 }
 
+/** 小组基础展示信息（由 GET /group/getGroupBaseInfo 映射） */
+export interface GroupBaseInfo {
+  groupId: string;
+  groupName: string;
+  groupDesc: string;
+  groupCoverUrl: string;
+  groupType: number;
+}
+
 /** 小组结构（与 OpenAPI GroupDetailInfoResponse/GroupItemInfoResponse 对齐） */
 export interface Group {
   groupId: string;

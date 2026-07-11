@@ -1,6 +1,6 @@
 import type { Group } from '@/domains/Group';
 import type { ResourceItem } from '@/domains/Resource';
-import { useCurrentChatSessionStore, useNewChatSessionStore, useNoteSelectionStore } from '@/store';
+import { useCurrentChatSessionStore, useNewChatSessionStore } from '@/store';
 import { createClientError, FRONTEND_CLIENT_ERROR } from '@/utils/error';
 import { computeFileMd5 } from '@/utils/oss/computeFileMd5';
 import { putOssPresignedUrl } from '@/utils/oss/ossPresignedPut';
@@ -9,17 +9,11 @@ import { ChatApi, ChatSessionApi } from '../apis/ChatApi';
 import { buildAgentFromResourceItem, buildDefaultPersonalAgent } from '../mapper/agent.mapper';
 import { ChatServicesMap } from '../mapper/ChatServices.map';
 import {
-  buildDocumentPickerScopes,
-  mapDriveNodeToDocumentPickerNode,
-} from '../mapper/documentPicker.mapper';
-import {
   buildAdvancedSkillTreeGroups,
   getPrimarySkillsForAgent,
 } from '../mapper/skillScope.mapper';
 import { mapResourceItemToSkillSummary } from '../mapper/workspace.mapper';
 import type {
-  ChatDocumentPickerNode,
-  ChatDocumentPickerScope,
   ChatInputCapabilityOptions,
   ChatModel,
   ChatServiceDeps,
@@ -29,7 +23,6 @@ import type {
   DeleteSessionRequest,
   GetChatInputCapabilityOptionsParams,
   IChatService,
-  ListDocumentPickerChildrenRequest,
   ListHistoryMessagesRequest,
   ListSessionsRequest,
   MessageResponse,
@@ -190,36 +183,6 @@ const getChatInputCapabilityOptions = async (
   };
 };
 
-const getDocumentPickerScopes = async (
-  deps: ChatServiceDeps
-): Promise<ChatDocumentPickerScope[]> => {
-  const groups = await fetchAllGroups(deps);
-  return buildDocumentPickerScopes(groups);
-};
-
-const listDocumentPickerChildren = async (
-  deps: ChatServiceDeps,
-  params: ListDocumentPickerChildrenRequest
-): Promise<ChatDocumentPickerNode[]> => {
-  const rootNode = params.parentNodeId
-    ? null
-    : await deps.driveService.getRootNode({
-        rootId: params.rootId,
-        groupId: params.groupId,
-      });
-  const parentNodeId = params.parentNodeId ?? rootNode?.id;
-  if (!parentNodeId) return [];
-
-  const children = await deps.driveService.listNodeChildren({
-    nodeId: parentNodeId,
-    groupId: params.groupId,
-  });
-
-  return children
-    .map((node) => mapDriveNodeToDocumentPickerNode(node))
-    .filter((node): node is ChatDocumentPickerNode => Boolean(node));
-};
-
 const createSession = async (params?: CreateSessionRequest): Promise<ChatSession> => {
   const payload = ChatServicesMap.mapCreateSessionRequest(params);
   const data = await ChatSessionApi.createSession(payload);
@@ -242,7 +205,6 @@ const deleteSession = async (params: DeleteSessionRequest): Promise<void> => {
   await ChatSessionApi.deleteSession({ session_id: params.sessionId });
   useCurrentChatSessionStore.getState().clearCurrentSessionById(params.sessionId);
   useNewChatSessionStore.getState().clearNewChatSessionById(params.sessionId);
-  useNoteSelectionStore.getState().clearSelectedText(params.sessionId);
 };
 
 const listSessions = async (params?: ListSessionsRequest): Promise<PageResult<ChatSession>> => {
@@ -304,14 +266,6 @@ export const createChatServices = (deps?: ChatServiceDeps): IChatService => ({
   getChatInputCapabilityOptions: (params) =>
     deps
       ? getChatInputCapabilityOptions(deps, params)
-      : Promise.reject(createClientError(FRONTEND_CLIENT_ERROR.VALIDATION)),
-  getDocumentPickerScopes: () =>
-    deps
-      ? getDocumentPickerScopes(deps)
-      : Promise.reject(createClientError(FRONTEND_CLIENT_ERROR.VALIDATION)),
-  listDocumentPickerChildren: (params) =>
-    deps
-      ? listDocumentPickerChildren(deps, params)
       : Promise.reject(createClientError(FRONTEND_CLIENT_ERROR.VALIDATION)),
   createSession,
   renameSession,

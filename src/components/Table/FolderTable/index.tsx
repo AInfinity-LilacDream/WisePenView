@@ -28,6 +28,7 @@ import type {
   FolderTableRow,
   FolderTableRowAction,
   FolderTableRowContext,
+  FolderTableRowPressContext,
   FolderTableVisibleRow,
 } from './index.type';
 import FolderTableNameCell from './parts/FolderNameCell';
@@ -151,6 +152,25 @@ interface DelegatedRowTarget {
   rowId: string;
 }
 
+const EMPTY_ROW_PRESS_CONTEXT: FolderTableRowPressContext = {
+  metaKey: false,
+  ctrlKey: false,
+  shiftKey: false,
+  modifierKey: false,
+};
+
+function toRowPressContext(
+  event: KeyboardEvent<HTMLElement> | MouseEvent<HTMLElement> | PointerEvent<HTMLElement>
+): FolderTableRowPressContext {
+  const modifierKey = event.metaKey || event.ctrlKey;
+  return {
+    metaKey: event.metaKey,
+    ctrlKey: event.ctrlKey,
+    shiftKey: event.shiftKey,
+    modifierKey,
+  };
+}
+
 function getDelegatedRowTarget(
   event: KeyboardEvent<HTMLElement> | MouseEvent<HTMLElement> | PointerEvent<HTMLElement>
 ): DelegatedRowTarget | null {
@@ -261,18 +281,20 @@ function FolderTableBodyRowBase<T extends FolderTableRow>({
         const cellContent = renderCellContent(column, row, ctx);
         return (
           <Table.Cell key={column.id} className={resolveBodyCellClass(column)}>
-            <TableCellAlign
-              align={column.isActionColumn ? 'center' : resolveColumnAlign(column.align)}
-              stretch={shouldStretchTableCellContent(column)}
-            >
-              {column.isNameColumn || column.isActionColumn ? (
-                cellContent
-              ) : isPlainTextContent(cellContent) ? (
-                <TableTextCell muted>{cellContent}</TableTextCell>
-              ) : (
-                cellContent
-              )}
-            </TableCellAlign>
+            <div className={styles.cellSurface}>
+              <TableCellAlign
+                align={column.isActionColumn ? 'center' : resolveColumnAlign(column.align)}
+                stretch={shouldStretchTableCellContent(column)}
+              >
+                {column.isNameColumn || column.isActionColumn ? (
+                  cellContent
+                ) : isPlainTextContent(cellContent) ? (
+                  <TableTextCell muted>{cellContent}</TableTextCell>
+                ) : (
+                  cellContent
+                )}
+              </TableCellAlign>
+            </div>
           </Table.Cell>
         );
       })}
@@ -295,8 +317,10 @@ function FolderTable<T extends FolderTableRow>({
   expandedRowKeys = [],
   onExpandedChange,
   selectedRowKey,
+  selectedRowKeys,
   onRowSelect,
   onRowActivate,
+  renderNameContent,
   rowActions,
   loadMore,
   totalCount,
@@ -309,6 +333,7 @@ function FolderTable<T extends FolderTableRow>({
   className,
   sortDescriptor,
   onSortChange,
+  isPinnedFirst,
   batchSelection,
   batchFooter,
 }: FolderTableProps<T>) {
@@ -326,6 +351,18 @@ function FolderTable<T extends FolderTableRow>({
   const eqColumnCount = countFolderEqColumns(columns);
 
   const expandedKeySet = useMemo(() => new Set(expandedRowKeys), [expandedRowKeys]);
+  const selectedRowKeySet = useMemo(() => {
+    const keys = new Set<string>();
+    if (selectedRowKey) {
+      keys.add(selectedRowKey);
+    }
+    if (selectedRowKeys) {
+      for (const key of selectedRowKeys) {
+        keys.add(String(key));
+      }
+    }
+    return keys;
+  }, [selectedRowKey, selectedRowKeys]);
 
   const sortedItems = useMemo(
     () =>
@@ -334,9 +371,12 @@ function FolderTable<T extends FolderTableRow>({
         columns,
         sortDescriptor,
         (row) => ({ row, rowId: row.id, depth: 0 }),
-        { isPinnedLast: (row) => row.entryType === 'loading' }
+        {
+          isPinnedFirst,
+          isPinnedLast: (row) => row.entryType === 'loading',
+        }
       ),
-    [columns, items, sortDescriptor]
+    [columns, isPinnedFirst, items, sortDescriptor]
   );
 
   const visibleRows = useMemo(
@@ -460,12 +500,12 @@ function FolderTable<T extends FolderTableRow>({
   );
 
   const handleRowPress = useCallback(
-    (row: T) => {
+    (row: T, ctx: FolderTableRowPressContext = EMPTY_ROW_PRESS_CONTEXT) => {
       if (batchSelection) {
         return;
       }
       if (onRowSelect) {
-        onRowSelect(row);
+        onRowSelect(row, ctx);
         return;
       }
       onRowActivate?.(row);
@@ -474,12 +514,12 @@ function FolderTable<T extends FolderTableRow>({
   );
 
   const handleDelegatedRowPress = useCallback(
-    (rowId: string) => {
+    (rowId: string, ctx: FolderTableRowPressContext) => {
       const row = visibleRowMap.get(rowId);
       if (!row) {
         return;
       }
-      handleRowPress(row as T);
+      handleRowPress(row as T, ctx);
     },
     [handleRowPress, visibleRowMap]
   );
@@ -496,26 +536,30 @@ function FolderTable<T extends FolderTableRow>({
       if (!target) {
         return;
       }
-      if (onRowSelect) {
+      const pressContext = toRowPressContext(event);
+      if (onRowSelect && !pressContext.modifierKey) {
         markImmediateSelectedRow(event.currentTarget, target.row);
       }
-      handleDelegatedRowPress(target.rowId);
+      handleDelegatedRowPress(target.rowId, pressContext);
     },
     [batchSelection, handleDelegatedRowPress, onRowSelect]
   );
 
   const handleBodyPointerDown = useCallback(
     (event: PointerEvent<HTMLElement>) => {
-      if (!onRowSelect || batchSelection) {
+      if (batchSelection) {
         return;
       }
       const target = getDelegatedRowTarget(event);
       if (!target) {
         return;
       }
-      markImmediateSelectedRow(event.currentTarget, target.row);
+      if (!onRowSelect) return;
+      if (!toRowPressContext(event).modifierKey && !selectedRowKeySet.has(target.rowId)) {
+        markImmediateSelectedRow(event.currentTarget, target.row);
+      }
     },
-    [batchSelection, onRowSelect]
+    [batchSelection, onRowSelect, selectedRowKeySet]
   );
 
   const handleBodyKeyDown = useCallback(
@@ -531,16 +575,21 @@ function FolderTable<T extends FolderTableRow>({
         return;
       }
       event.preventDefault();
-      if (onRowSelect) {
+      const pressContext = toRowPressContext(event);
+      if (onRowSelect && !pressContext.modifierKey) {
         markImmediateSelectedRow(event.currentTarget, target.row);
       }
-      handleDelegatedRowPress(target.rowId);
+      handleDelegatedRowPress(target.rowId, pressContext);
     },
     [batchSelection, handleDelegatedRowPress, onRowSelect]
   );
 
   const renderCellContent = useCallback(
-    (column: FolderTableColumn<T>, row: FolderTableVisibleRow, ctx: FolderTableRowContext<T>) => {
+    (
+      column: FolderTableColumn<T>,
+      row: FolderTableVisibleRow & T,
+      ctx: FolderTableRowContext<T>
+    ) => {
       if (column.isNameColumn) {
         if (row.entryType === 'loading') {
           return <span className={styles.inlineLoadMoreButton}>{row.name || '正在加载...'}</span>;
@@ -549,11 +598,12 @@ function FolderTable<T extends FolderTableRow>({
         const expandable = folderRowHasChildren(row);
         const expanded = expandedKeySet.has(row.id);
         return (
-          <FolderTableNameCell
+          <FolderTableNameCell<T>
             row={row}
             depth={row.depth}
             expanded={expanded}
             expandable={expandable}
+            renderNameContent={renderNameContent}
             onToggleExpand={
               expandable && onExpandedChange ? () => handleToggleExpand(row.id) : undefined
             }
@@ -580,7 +630,14 @@ function FolderTable<T extends FolderTableRow>({
 
       return null;
     },
-    [expandedKeySet, handleRowAction, handleToggleExpand, onExpandedChange, rowActions]
+    [
+      expandedKeySet,
+      handleRowAction,
+      handleToggleExpand,
+      onExpandedChange,
+      renderNameContent,
+      rowActions,
+    ]
   );
 
   const resolveColumnHeaderClass = useCallback(
@@ -702,7 +759,7 @@ function FolderTable<T extends FolderTableRow>({
                   {visibleRows.map((row) => {
                     const rowId = row.id;
                     const isLoadMoreRow = row.entryType === 'loading';
-                    const isSelected = selectedRowKey === rowId;
+                    const isSelected = selectedRowKeySet.has(rowId);
 
                     return (
                       <FolderTableBodyRow

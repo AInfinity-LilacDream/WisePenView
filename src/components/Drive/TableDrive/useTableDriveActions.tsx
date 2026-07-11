@@ -1,21 +1,23 @@
 import {
   NewFolderNodeModal,
+  ResourcePermissionModal,
+  TagMountPermissionModal,
   TagPermissionModal,
   UploadDocumentModal,
   UploadFileToGroupModal,
+  type ResourcePermissionModalTarget,
 } from '@/components/Drive/Modals';
+import { FormField, Input } from '@/components/Input';
 import AppFormDialog from '@/components/Overlay/AppFormDialog';
-import { useDocumentService, useNoteService, useResourceService } from '@/domains';
+import CreateSkillModal from '@/components/Skill/CreateSkillModal';
+import { useDocumentService, useDriveService, useNoteService, useResourceService } from '@/domains';
+import { useOpenInWorkspace } from '@/hooks/useOpenInWorkspace';
 import { useNewNoteStore } from '@/store';
 import { createClientError, FRONTEND_CLIENT_ERROR, parseErrorMessage } from '@/utils/error';
-import {
-  buildWorkspaceResourcePath,
-  RESOURCE_EDITOR_TYPE,
-} from '@/utils/navigation/workspaceRoute';
-import { Input, TextField, toast } from '@heroui/react';
+import { WORKSPACE_RESOURCE_TYPE } from '@/utils/navigation/workspaceRoute';
+import { toast } from '@heroui/react';
 import { useRequest } from 'ahooks';
 import { useCallback, useMemo, useState, type ReactElement } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { mountResourceToFolderTag, resolveCurrentFolderTagId } from '../common/driveComponentModel';
 import type { DriveTableRow, TableDriveActionConfig } from './index.type';
 import type { CreateMenuItem } from './parts/CreateMenu/index.type';
@@ -38,7 +40,11 @@ export interface UseTableDriveActionsReturn {
   createMenuItems: CreateMenuItem[];
   handleCreateMenuSelect: (id: CreateMenuItem['id']) => void;
   openUploadToGroup: () => void;
-  openTagPermission: () => void;
+  openTagAccessPermission: (tagId: string) => void;
+  openTagMountPermission: (tagId: string) => void;
+  openResourcePermission: (target: ResourcePermissionModalTarget) => void;
+  tagPermissionRefreshToken: number;
+  resourcePermissionRefreshToken: number;
   ModalHost: ReactElement;
 }
 
@@ -46,6 +52,7 @@ const DEFAULT_TOOLBAR_CONFIG: Required<NonNullable<TableDriveActionConfig['toolb
   canCreateFolder: true,
   canCreateNote: true,
   canCreateDrawio: true,
+  canCreateSkill: true,
   canUploadDocument: true,
   canUploadToGroup: false,
   canManageTagPermission: false,
@@ -61,8 +68,9 @@ export function useTableDriveActions({
   targetTagId,
   isTrashView = false,
 }: UseTableDriveActionsParams): UseTableDriveActionsReturn {
-  const navigate = useNavigate();
+  const openInWorkspace = useOpenInWorkspace(groupId);
   const noteService = useNoteService();
+  const driveService = useDriveService();
   const documentService = useDocumentService();
   const resourceService = useResourceService();
   const toolbarConfig = { ...DEFAULT_TOOLBAR_CONFIG, ...actions?.toolbar };
@@ -71,10 +79,16 @@ export function useTableDriveActions({
   const [uploadDocumentOpen, setUploadDocumentOpen] = useState(false);
   const [uploadMountTagId, setUploadMountTagId] = useState<string>();
   const [uploadOpen, setUploadOpen] = useState(false);
-  const [tagPermissionOpen, setTagPermissionOpen] = useState(false);
-  const [tagPermissionTagId, setTagPermissionTagId] = useState<string>();
+  const [tagAccessPermissionTagId, setTagAccessPermissionTagId] = useState<string>();
+  const [tagMountPermissionTagId, setTagMountPermissionTagId] = useState<string>();
+  const [tagPermissionRefreshToken, setTagPermissionRefreshToken] = useState(0);
+  const [resourcePermissionTarget, setResourcePermissionTarget] =
+    useState<ResourcePermissionModalTarget | null>(null);
+  const [resourcePermissionRefreshToken, setResourcePermissionRefreshToken] = useState(0);
   const [drawioModalOpen, setDrawioModalOpen] = useState(false);
   const [drawioName, setDrawioName] = useState('未命名图表');
+  const [drawioNameError, setDrawioNameError] = useState('');
+  const [skillModalOpen, setSkillModalOpen] = useState(false);
 
   const existingFolderNames = useMemo(
     () => currentRows.filter((row) => row.node.type === 'folder').map((row) => row.name.trim()),
@@ -89,15 +103,29 @@ export function useTableDriveActions({
   const mountCreatedResource = useCallback(
     async (resourceId: string) => {
       if (!mountTagId) return;
+      if (groupId) {
+        const sharedTagId = await driveService.ensureSharedFolder();
+        await mountResourceToFolderTag({
+          resourceId,
+          targetTagId: sharedTagId,
+          documentService,
+          resourceService,
+        });
+        await resourceService.mountResourcesToGroupTag({
+          resourceIds: [resourceId],
+          groupId,
+          tagId: mountTagId,
+        });
+        return;
+      }
       await mountResourceToFolderTag({
         resourceId,
         targetTagId: mountTagId,
         documentService,
         resourceService,
-        groupId,
       });
     },
-    [documentService, groupId, mountTagId, resourceService]
+    [documentService, driveService, groupId, mountTagId, resourceService]
   );
 
   const handleUploadSuccess = useCallback(() => {
@@ -119,7 +147,10 @@ export function useTableDriveActions({
       onSuccess: (resourceId) => {
         useNewNoteStore.getState().setNewNoteResourceId(resourceId);
         refresh();
-        navigate(buildWorkspaceResourcePath(RESOURCE_EDITOR_TYPE.NOTE, resourceId));
+        openInWorkspace({
+          resourceId,
+          resourceType: WORKSPACE_RESOURCE_TYPE.NOTE,
+        });
       },
       onError: (err) => {
         toast.danger(parseErrorMessage(err));
@@ -144,13 +175,36 @@ export function useTableDriveActions({
       manual: true,
       onSuccess: (resourceId) => {
         setDrawioModalOpen(false);
+        setDrawioNameError('');
         refresh();
-        navigate(buildWorkspaceResourcePath(RESOURCE_EDITOR_TYPE.DRAWIO, resourceId));
+        openInWorkspace({
+          resourceId,
+          resourceType: WORKSPACE_RESOURCE_TYPE.DRAWIO,
+        });
       },
       onError: (err) => {
         toast.danger(parseErrorMessage(err));
       },
     }
+  );
+
+  const handleCreateSkillSuccess = useCallback(
+    (resourceId: string) => {
+      void (async () => {
+        try {
+          await mountCreatedResource(resourceId);
+          setSkillModalOpen(false);
+          refresh();
+          openInWorkspace({
+            resourceId,
+            resourceType: WORKSPACE_RESOURCE_TYPE.SKILL,
+          });
+        } catch (err) {
+          toast.danger(parseErrorMessage(err));
+        }
+      })();
+    },
+    [mountCreatedResource, openInWorkspace, refresh]
   );
 
   const ModalHost = useMemo(
@@ -186,34 +240,86 @@ export function useTableDriveActions({
             onSuccess={refresh}
           />
         ) : null}
-        {groupId && tagPermissionOpen ? (
+        {groupId && tagAccessPermissionTagId ? (
           <TagPermissionModal
-            isOpen={tagPermissionOpen}
+            isOpen={Boolean(tagAccessPermissionTagId)}
             groupId={groupId}
-            initialTagId={tagPermissionTagId}
+            initialTagId={tagAccessPermissionTagId}
             onOpenChange={(open) => {
               if (!open) {
-                setTagPermissionOpen(false);
-                setTagPermissionTagId(undefined);
+                setTagAccessPermissionTagId(undefined);
               }
             }}
-            onSuccess={refresh}
+            onSuccess={() => setTagPermissionRefreshToken((prev) => prev + 1)}
+          />
+        ) : null}
+        {groupId && tagMountPermissionTagId ? (
+          <TagMountPermissionModal
+            isOpen={Boolean(tagMountPermissionTagId)}
+            groupId={groupId}
+            initialTagId={tagMountPermissionTagId}
+            onOpenChange={(open) => {
+              if (!open) {
+                setTagMountPermissionTagId(undefined);
+              }
+            }}
+            onSuccess={() => setTagPermissionRefreshToken((prev) => prev + 1)}
+          />
+        ) : null}
+        {groupId && resourcePermissionTarget ? (
+          <ResourcePermissionModal
+            isOpen={Boolean(resourcePermissionTarget)}
+            groupId={groupId}
+            target={resourcePermissionTarget}
+            onOpenChange={(open) => {
+              if (!open) {
+                setResourcePermissionTarget(null);
+              }
+            }}
+            onSuccess={() => setResourcePermissionRefreshToken((prev) => prev + 1)}
           />
         ) : null}
         <AppFormDialog
           isOpen={drawioModalOpen}
-          onOpenChange={setDrawioModalOpen}
+          onOpenChange={(nextOpen) => {
+            if (!nextOpen) {
+              setDrawioNameError('');
+            }
+            setDrawioModalOpen(nextOpen);
+          }}
           title="新建图表"
           confirmText="创建"
-          onSubmit={() => runCreateDrawio()}
+          onSubmit={() => {
+            if (!drawioName.trim()) {
+              setDrawioNameError('请输入图表名称');
+              return;
+            }
+            runCreateDrawio();
+          }}
           isSubmitting={creatingDrawio}
-          isSubmitDisabled={creatingDrawio || !drawioName.trim()}
+          isSubmitDisabled={creatingDrawio}
           isDismissable={!creatingDrawio}
         >
-          <TextField aria-label="图表名称" value={drawioName} onChange={setDrawioName}>
+          <FormField
+            aria-label="图表名称"
+            label="图表名称"
+            name="drawioName"
+            value={drawioName}
+            onChange={(value) => {
+              setDrawioName(value);
+              setDrawioNameError('');
+            }}
+            errorMessage={drawioNameError}
+            isRequired
+          >
             <Input placeholder="请输入名称" autoFocus />
-          </TextField>
+          </FormField>
         </AppFormDialog>
+        <CreateSkillModal
+          isOpen={skillModalOpen}
+          onOpenChange={setSkillModalOpen}
+          onSuccess={handleCreateSkillSuccess}
+        />
       </>
     ),
     [
@@ -221,15 +327,19 @@ export function useTableDriveActions({
       currentNodeId,
       drawioModalOpen,
       drawioName,
+      drawioNameError,
       existingFolderNames,
       groupId,
+      handleCreateSkillSuccess,
       handleUploadSuccess,
       newFolderOpen,
       refresh,
+      resourcePermissionTarget,
       runCreateDrawio,
       targetTagId,
-      tagPermissionOpen,
-      tagPermissionTagId,
+      tagAccessPermissionTagId,
+      tagMountPermissionTagId,
+      skillModalOpen,
       uploadDocumentOpen,
       uploadMountTagId,
       uploadOpen,
@@ -252,26 +362,41 @@ export function useTableDriveActions({
     setUploadOpen(true);
   }, []);
 
-  const openTagPermission = useCallback(() => {
-    setTagPermissionTagId(undefined);
-    setTagPermissionOpen(true);
+  const openTagAccessPermission = useCallback((tagId: string) => {
+    setTagAccessPermissionTagId(tagId);
+  }, []);
+
+  const openTagMountPermission = useCallback((tagId: string) => {
+    setTagMountPermissionTagId(tagId);
+  }, []);
+
+  const openResourcePermission = useCallback((target: ResourcePermissionModalTarget) => {
+    setResourcePermissionTarget(target);
   }, []);
 
   const handleCreateNote = useCallback(() => {
     if (creatingNote) return;
     const pendingNewNoteId = useNewNoteStore.getState().newNoteResourceId;
-    if (pendingNewNoteId) {
-      navigate(buildWorkspaceResourcePath(RESOURCE_EDITOR_TYPE.NOTE, pendingNewNoteId));
+    if (!groupId && pendingNewNoteId) {
+      openInWorkspace({
+        resourceId: pendingNewNoteId,
+        resourceType: WORKSPACE_RESOURCE_TYPE.NOTE,
+      });
       return;
     }
     runCreateNote();
-  }, [creatingNote, navigate, runCreateNote]);
+  }, [creatingNote, groupId, openInWorkspace, runCreateNote]);
 
   const handleOpenDrawioModal = useCallback(() => {
     if (creatingDrawio) return;
     setDrawioName('未命名图表');
+    setDrawioNameError('');
     setDrawioModalOpen(true);
   }, [creatingDrawio]);
+
+  const handleOpenSkillModal = useCallback(() => {
+    setSkillModalOpen(true);
+  }, []);
 
   const handleCreateMenuSelect = useCallback(
     (id: CreateMenuItem['id']) => {
@@ -285,12 +410,21 @@ export function useTableDriveActions({
         case 'drawio':
           handleOpenDrawioModal();
           break;
+        case 'skill':
+          handleOpenSkillModal();
+          break;
         case 'upload':
           openUploadDocument();
           break;
       }
     },
-    [handleCreateNote, handleOpenDrawioModal, openNewFolder, openUploadDocument]
+    [
+      handleCreateNote,
+      handleOpenDrawioModal,
+      handleOpenSkillModal,
+      openNewFolder,
+      openUploadDocument,
+    ]
   );
 
   const showUploadDocument = Boolean(
@@ -303,7 +437,10 @@ export function useTableDriveActions({
     !isTrashView &&
     (toolbarConfig.canCreateFolder ||
       (canCreateInCurrentFolder &&
-        (toolbarConfig.canCreateNote || toolbarConfig.canCreateDrawio || showUploadDocument)))
+        (toolbarConfig.canCreateNote ||
+          toolbarConfig.canCreateDrawio ||
+          toolbarConfig.canCreateSkill ||
+          showUploadDocument)))
   );
 
   const createMenuItems = useMemo<CreateMenuItem[]>(() => {
@@ -318,6 +455,9 @@ export function useTableDriveActions({
     if (canCreateInCurrentFolder && toolbarConfig.canCreateNote) {
       items.push({ id: 'note', label: '新建笔记', disabled: creatingNote });
     }
+    if (canCreateInCurrentFolder && toolbarConfig.canCreateSkill) {
+      items.push({ id: 'skill', label: '新建 Skill' });
+    }
     if (showUploadDocument) {
       items.push({ id: 'upload', label: '上传文件' });
     }
@@ -331,6 +471,7 @@ export function useTableDriveActions({
     toolbarConfig.canCreateDrawio,
     toolbarConfig.canCreateFolder,
     toolbarConfig.canCreateNote,
+    toolbarConfig.canCreateSkill,
   ]);
 
   return {
@@ -340,7 +481,11 @@ export function useTableDriveActions({
     createMenuItems,
     handleCreateMenuSelect,
     openUploadToGroup,
-    openTagPermission,
+    openTagAccessPermission,
+    openTagMountPermission,
+    openResourcePermission,
+    tagPermissionRefreshToken,
+    resourcePermissionRefreshToken,
     ModalHost,
   };
 }

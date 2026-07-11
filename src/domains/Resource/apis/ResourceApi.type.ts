@@ -1,7 +1,11 @@
+import type { PageR } from '@/apis/api.type';
 import type { ResourceActionKey, ResourceItem } from '@/domains/Resource';
 import type { AccessControlScope, TagResourceActionKey } from '@/domains/Tag';
-import type { UserDisplayBase } from '@/domains/User';
-import type { UserIdentityTypeApiValue } from '@/domains/User/apis/UserApi.type';
+import type { UserDisplayBaseApiResponse } from '@/domains/User/apis/UserApi.type';
+
+type ResourceActionApiValue = ResourceActionKey | number | `${number}`;
+export type ResourceActionApiList = ResourceActionApiValue[];
+type ResourceSizeApiValue = number | `${number}`;
 
 export interface ResourceInteractionInfoApiResponse {
   readCount?: number;
@@ -12,7 +16,7 @@ export interface ResourceInteractionInfoApiResponse {
   commentCount?: number;
 }
 
-export interface ResourceTagInfoApiResponse {
+interface ResourceTagInfoApiResponse {
   tagName?: string;
   tagDesc?: string;
   tagIcon?: string;
@@ -21,10 +25,31 @@ export interface ResourceTagInfoApiResponse {
   isPath?: boolean;
 }
 
-export interface ResourceTagBindApiResponse {
+interface ResourceTagBindApiResponse {
   groupId?: string;
   primaryTagId?: string;
   tags?: Record<string, ResourceTagInfoApiResponse | null | undefined>;
+}
+
+type ResourceGroupTypeApiValue = 1 | 2 | 3 | '1' | '2' | '3';
+
+export interface ResourceGroupDisplayBaseApiResponse {
+  groupName?: string | null;
+  groupDesc?: string | null;
+  groupCoverUrl?: string | null;
+  groupType?: ResourceGroupTypeApiValue | null;
+}
+
+export interface ResourceGroupGrantedActionsApiResponse {
+  groupId: string;
+  groupInfo?: ResourceGroupDisplayBaseApiResponse | null;
+  grantedActions?: ResourceActionApiList | null;
+}
+
+export interface ResourceSpecifiedUserGrantedActionsApiResponse {
+  userId: string;
+  userInfo?: UserDisplayBaseApiResponse | null;
+  grantedActions?: ResourceActionApiList | null;
 }
 
 export interface ResourceItemApiResponse extends Omit<
@@ -39,20 +64,20 @@ export interface ResourceItemApiResponse extends Omit<
   | 'resourceIconType'
   | 'mainTagId'
   | 'linkTagIds'
+  | 'currentActions'
+  | 'overrideGrantedActions'
+  | 'specifiedUsersGrantedActions'
 > {
-  size?: number;
-  ownerInfo: Omit<UserDisplayBase, 'identityType'> & { identityType?: UserIdentityTypeApiValue };
+  size?: ResourceSizeApiValue | null;
+  ownerInfo: UserDisplayBaseApiResponse;
   resourceInteractionInfo?: ResourceInteractionInfoApiResponse;
   tagBinds?: ResourceTagBindApiResponse[];
+  currentActions?: ResourceActionApiList | null;
+  overrideGrantedActions?: ResourceGroupGrantedActionsApiResponse[] | null;
+  specifiedUsersGrantedActions?: ResourceSpecifiedUserGrantedActionsApiResponse[] | null;
 }
 
-export interface ResourceListPageApiResponse {
-  list: ResourceItemApiResponse[];
-  total: number;
-  page: number;
-  size: number;
-  totalPage: number;
-}
+export type ResourceListPageApiResponse = PageR<ResourceItemApiResponse>;
 
 export interface ListResourceItemsApiRequest {
   page: number;
@@ -79,7 +104,7 @@ export interface ChangeResourceTagsApiRequest {
 
 export interface ChangeResourceActionPermissionApiRequest {
   resourceId: string;
-  overrideGrantedActions?: ResourceActionKey[] | null;
+  overrideGrantedActions?: Record<string, ResourceActionKey[] | null> | null;
   specifiedUsersGrantedActions?: Record<string, ResourceActionKey[]> | null;
 }
 
@@ -94,19 +119,15 @@ export interface GlobalSearchApiRequest {
   size: number;
 }
 
-export interface GlobalSearchApiResponse {
-  list: Array<{
-    resourceId: string;
-    resourceType: string;
-    resourceName: string;
-    highlightContent: string | null;
-    updateTime: string;
-  }>;
-  total: number;
-  page: number;
-  size: number;
-  totalPage: number;
+export interface GlobalSearchItemApiResponse {
+  resourceId: string;
+  resourceType: string;
+  resourceName: string;
+  highlightContent: string | null;
+  updateTime: string;
 }
+
+export type GlobalSearchApiResponse = PageR<GlobalSearchItemApiResponse>;
 
 export interface AddTagApiRequest {
   groupId?: string;
@@ -172,9 +193,127 @@ export interface TagTreeResponse {
   taggedResourceGrantedActionsMask?: number;
   tagMountPermissionScope?: AccessControlScope;
   tagMountSpecifiedUsers?: string[];
-  grantedActions?: number[];
+  grantedActions?: ResourceActionApiList;
   parentId?: string;
   children?: TagTreeResponse[];
 }
 
 export type GetTagTreeApiResponse = TagTreeResponse[];
+
+export interface ResourceInlineCommentAnchorRefApiResponse {
+  externalAnchorId?: string | null;
+  quoteText?: string | null;
+  anchorPayload?: Record<string, unknown> | null;
+}
+
+export interface ResourceInlineCommentItemApiResponse {
+  itemId?: string | null;
+  inlineCommentItemId?: string | null;
+  replacesItemId?: string | null;
+  authorId?: string | null;
+  authorInfo?: {
+    id?: string | number | null;
+    name?: string | null;
+    nickname?: string | null;
+    realName?: string | null;
+    avatar?: string | null;
+    avatarUrl?: string | null;
+  } | null;
+  content?: string | null;
+  imageUrls?: string[] | null;
+  mentionUserIds?: string[] | null;
+  deleted?: boolean | null;
+  deletedAt?: string | null;
+  createTime?: string | null;
+  updateTime?: string | null;
+}
+
+export interface ResourceInlineCommentApiResponse {
+  inlineCommentId?: string | null;
+  resourceId?: string | null;
+  creatorId?: string | null;
+  creatorInfo?: {
+    id?: string | number | null;
+    name?: string | null;
+    nickname?: string | null;
+    realName?: string | null;
+    avatar?: string | null;
+    avatarUrl?: string | null;
+  } | null;
+  anchorRef?: ResourceInlineCommentAnchorRefApiResponse | null;
+  resolved?: boolean | null;
+  resolvedBy?: string | null;
+  resolvedByInfo?: {
+    id?: string | number | null;
+    name?: string | null;
+    nickname?: string | null;
+    realName?: string | null;
+    avatar?: string | null;
+    avatarUrl?: string | null;
+  } | null;
+  resolvedAt?: string | null;
+  applicableFromVersion?: number | null;
+  applicableToVersion?: number | null;
+  createTime?: string | null;
+  updateTime?: string | null;
+  items?: ResourceInlineCommentItemApiResponse[] | null;
+}
+
+export interface ListInlineCommentsApiRequest {
+  resourceId: string;
+  contentVersion?: number;
+  resolved?: boolean;
+}
+
+export type ListInlineCommentsApiResponse = ResourceInlineCommentApiResponse[];
+
+export interface CreateInlineCommentApiRequest {
+  resourceId: string;
+  externalAnchorId: string;
+  quoteText?: string;
+  anchorPayload?: Record<string, unknown>;
+  contentVersion?: number;
+  applicableFromVersion?: number;
+  applicableToVersion?: number;
+  content: string;
+  imageUrls?: string[];
+  mentionUserIds?: string[];
+}
+
+export interface AddInlineCommentItemApiRequest {
+  resourceId: string;
+  inlineCommentId: string;
+  contentVersion?: number;
+  content: string;
+  imageUrls?: string[];
+  mentionUserIds?: string[];
+}
+
+export interface UpdateInlineCommentItemApiRequest {
+  resourceId: string;
+  inlineCommentId: string;
+  itemId: string;
+  itemIndex?: number;
+  contentVersion?: number;
+  content: string;
+  imageUrls?: string[];
+  mentionUserIds?: string[];
+}
+
+export interface UpdateInlineCommentItemApiResponse {
+  oldItemId?: string | null;
+  newItemId?: string | null;
+}
+
+export interface DeleteInlineCommentItemApiRequest {
+  resourceId: string;
+  inlineCommentId: string;
+  itemId: string;
+}
+
+export interface ChangeInlineCommentResolveStatusApiRequest {
+  resourceId: string;
+  inlineCommentId: string;
+  resolved: boolean;
+  contentVersion?: number;
+}

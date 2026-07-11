@@ -6,17 +6,19 @@ export interface ChatFrontendState {
 
 export interface ChatWorkspaceContext {
   resourceId: string;
-  editorType: string;
+  resourceType: string;
+  viewer?: string;
+  editorType?: string;
 }
 
-export interface ChatSelectedResourceContext {
+interface ChatSelectedResourceContext {
   resourceId: string;
   resourceName: string;
   resourceType: string;
   enabled: boolean;
 }
 
-export interface ChatUploadedAttachmentContext {
+interface ChatUploadedAttachmentContext {
   attachmentId: string;
   filename: string;
   enabled: boolean;
@@ -41,8 +43,6 @@ export interface SendSessionMessageOptions {
   model?: string;
   providerId?: string;
   runtimeOptions?: Record<string, unknown>;
-  selectedText?: string;
-  enableSelected?: boolean;
   workspaceContext?: ChatWorkspaceContext;
   selectedResources?: ChatSelectedResourceContext[];
   uploadedAttachments?: ChatUploadedAttachmentContext[];

@@ -7,16 +7,56 @@ import type {
   FudanUISVerifyStatusData,
   InitiateUISVerifyRequest,
   IUserService,
+  ListAdminMessagesRequest,
+  ListAdminMessagesResponse,
+  ListUserSearchSuggestionsRequest,
+  PublishMessageRequest,
+  QueryUserSearchCandidatesRequest,
+  SearchUsersRequest,
   SendEmailVerifyRequest,
   UpdateUserInfoRequest,
 } from './index.type';
 
-type CachedUserSafe = Pick<User, 'id' | 'username' | 'nickname' | 'avatar' | 'identityType'>;
+type CachedUserSafe = Pick<
+  User,
+  'id' | 'username' | 'nickname' | 'avatar' | 'identityType' | 'realName'
+>;
 
 /** 全量拉取，为 Account 等页服务，不缓存 */
 const getFullUserInfo = async (): Promise<UserAccountProfile> => {
   const data = await UserApi.getUserInfo();
   return UserServicesMap.mapAccountProfileFromApi(data);
+};
+
+const searchUsers = async (params: SearchUsersRequest) => {
+  const query = UserServicesMap.mapSearchUsersRequest(params);
+  if (!query.keyword) return [];
+  const data = await UserApi.searchUser(query);
+  return UserServicesMap.mapSearchUsersFromApi(data);
+};
+
+const listUserSearchSuggestions = async (params: ListUserSearchSuggestionsRequest) => {
+  const query = UserServicesMap.mapListUserSearchSuggestionsRequest(params);
+  if (query.keyword.length < 2) return [];
+  const data = await UserApi.listUserSearchSuggestions(query);
+  return UserServicesMap.mapSearchUsersFromApi(data);
+};
+
+const queryUserSearchCandidates = async (params: QueryUserSearchCandidatesRequest) => {
+  const keyword = params.keyword.trim();
+  if (!keyword) return [];
+  const size = params.size ?? 10;
+  const [exactUsers, suggestionUsers] = await Promise.all([
+    searchUsers({ keyword }),
+    listUserSearchSuggestions({ keyword, size }),
+  ]);
+  const userMap = new Map<string, (typeof exactUsers)[number]>();
+  [...exactUsers, ...suggestionUsers].forEach((user) => {
+    if (!userMap.has(user.userId)) {
+      userMap.set(user.userId, user);
+    }
+  });
+  return Array.from(userMap.values()).slice(0, size);
 };
 
 const sendEmailVerify = async (params: SendEmailVerifyRequest): Promise<void> => {
@@ -37,6 +77,19 @@ const checkFudanUISVerify = async (): Promise<FudanUISVerifyStatusData> => {
 const confirmEmailVerify = async (params: ConfirmEmailVerifyRequest): Promise<void> => {
   const query = UserServicesMap.mapConfirmEmailVerifyRequest(params);
   await UserApi.checkEmailVerify(query);
+};
+
+const listAdminMessages = async (
+  params: ListAdminMessagesRequest
+): Promise<ListAdminMessagesResponse> => {
+  const query = UserServicesMap.mapListAdminMessagesRequest(params);
+  const data = await UserApi.listAdminMessages(query);
+  return UserServicesMap.mapListAdminMessagesFromApi(data);
+};
+
+const publishMessage = async (params: PublishMessageRequest): Promise<void> => {
+  const payload = UserServicesMap.mapPublishMessageRequest(params);
+  await UserApi.publishMessage(payload);
 };
 
 export const createUserServices = (): IUserService => {
@@ -82,11 +135,16 @@ export const createUserServices = (): IUserService => {
   return {
     getFullUserInfo,
     getUserInfo,
+    searchUsers,
+    listUserSearchSuggestions,
+    queryUserSearchCandidates,
     updateUserInfo,
     sendEmailVerify,
     initiateUISVerify,
     checkFudanUISVerify,
     confirmEmailVerify,
+    listAdminMessages,
+    publishMessage,
     clearUserCache,
   };
 };

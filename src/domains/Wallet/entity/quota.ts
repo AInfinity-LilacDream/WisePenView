@@ -7,6 +7,7 @@ export interface GroupQuotaInfo {
 export interface UserGroupQuota {
   groupId: string;
   groupName: string;
+  groupType: number;
   quotaLimit: number;
   quotaUsed: number;
 }

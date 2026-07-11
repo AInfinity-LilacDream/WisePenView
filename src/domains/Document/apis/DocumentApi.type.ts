@@ -54,7 +54,7 @@ export interface OnlyOfficeEditorConfigApiResponse {
   documentServerPublicUrl?: string | null;
 }
 
-export interface DocumentUploadMetaApiResponse {
+interface DocumentUploadMetaApiResponse {
   documentName: string;
   uploaderId?: string | number;
   fileType: string;
@@ -72,7 +72,7 @@ export interface DocMetaInfoApiResponse {
   maxPreviewPages: number | null;
 }
 
-export interface DocumentVersionInfoApiResponse extends DocMetaInfoApiResponse {
+interface DocumentVersionInfoApiResponse extends DocMetaInfoApiResponse {
   version: number;
 }
 

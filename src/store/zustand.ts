@@ -7,6 +7,10 @@ export { clearActiveDriveScopeStore, useActiveDriveScopeStore } from './useActiv
 export { clearAiDiffDisplayStore, useAiDiffDisplayStore } from './useAiDiffDisplayStore';
 export { clearChatPanelStore, useChatPanelStore } from './useChatPanelStore';
 export {
+  clearChatSessionHistoryRefreshStore,
+  useChatSessionHistoryRefreshStore,
+} from './useChatSessionHistoryRefreshStore';
+export {
   clearCurrentChatSessionStore,
   useCurrentChatSessionStore,
 } from './useCurrentChatSessionStore';
@@ -23,7 +27,6 @@ export {
 } from './useDriveUploadQueueStore';
 export { clearNewChatSessionStore, useNewChatSessionStore } from './useNewChatSessionStore';
 export { clearNewNoteStore, useNewNoteStore } from './useNewNoteStore';
-export { clearNoteSelectionStore, useNoteSelectionStore } from './useNoteSelectionStore';
 export {
   clearPdfPreviewProgressStore,
   usePdfPreviewProgressStore,
@@ -33,6 +36,7 @@ export {
   clearResourceDisplayNameStore,
   useResourceDisplayNameStore,
 } from './useResourceDisplayNameStore';
+export { clearSystemLayoutStore, useSystemLayoutStore } from './useSystemLayoutStore';
 export { clearTrashTagStore, useTrashTagStore } from './useTrashTagStore';
 
 export { clearAdvancedModeStore, useAdvancedModeStore } from './useAdvancedModeStore';

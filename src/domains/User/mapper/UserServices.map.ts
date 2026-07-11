@@ -1,17 +1,29 @@
-import type { User, UserAccountProfile } from '@/domains/User';
+import type { AdminMessage, User, UserAccountProfile, UserSearchUser } from '@/domains/User';
 import { normalizeId } from '@/utils/normalize/normalizeId';
 import type {
+  AdminMessageApiModel,
   ChangeUserInfoApiRequest,
   ChangeUserProfileApiRequest,
   CheckEmailVerifyApiRequest,
   GetUserInfoApiResponse,
   InitiateEmailVerifyApiRequest,
   InitiateFudanUISVerifyApiRequest,
+  ListAdminMessagesApiRequest,
+  ListAdminMessagesApiResponse,
+  ListUserSearchSuggestionsApiRequest,
+  PublishMessageApiRequest,
+  SearchUserApiRequest,
+  UserSearchUserApiResponse,
 } from '../apis/UserApi.type';
 import type {
   ConfirmEmailVerifyRequest,
   FudanUISVerifyStatusData,
   InitiateUISVerifyRequest,
+  ListAdminMessagesRequest,
+  ListAdminMessagesResponse,
+  ListUserSearchSuggestionsRequest,
+  PublishMessageRequest,
+  SearchUsersRequest,
   SendEmailVerifyRequest,
   UpdateUserInfoRequest,
 } from '../service/index.type';
@@ -21,10 +33,14 @@ import {
   normalizeDegreeLevelFromApi,
   normalizeIdentityTypeFromApi,
   normalizeSexFromApi,
+  normalizeUserDisplayBaseFromApi,
   normalizeUserStatusFromApi,
 } from './userEnum.mapper';
 
-type CachedUserSafe = Pick<User, 'id' | 'username' | 'nickname' | 'avatar' | 'identityType'>;
+type CachedUserSafe = Pick<
+  User,
+  'id' | 'username' | 'nickname' | 'avatar' | 'identityType' | 'realName'
+>;
 
 const mapAccountProfileFromApi = (data: GetUserInfoApiResponse): UserAccountProfile => {
   const { userInfo, userProfile } = data;
@@ -61,9 +77,36 @@ const mapUserSafeFromAccountProfile = (data: UserAccountProfile): CachedUserSafe
   id: data.id,
   username: data.userInfo.username,
   nickname: data.userInfo.nickname,
+  realName: data.userInfo.realName,
   avatar: data.userInfo.avatar,
   identityType: data.userInfo.identityType,
 });
+
+const mapSearchUsersRequest = (params: SearchUsersRequest): SearchUserApiRequest => ({
+  keyword: params.keyword.trim(),
+});
+
+const mapListUserSearchSuggestionsRequest = (
+  params: ListUserSearchSuggestionsRequest
+): ListUserSearchSuggestionsApiRequest => ({
+  keyword: params.keyword.trim(),
+  ...(params.size == null ? {} : { size: params.size }),
+});
+
+const mapSearchUserFromApi = (data: UserSearchUserApiResponse): UserSearchUser => {
+  const displayInfo = normalizeUserDisplayBaseFromApi(data);
+  return {
+    userId: normalizeId(data.userId),
+    username: data.username,
+    nickname: displayInfo?.nickname,
+    realName: displayInfo?.realName,
+    avatar: displayInfo?.avatar,
+    identityType: displayInfo?.identityType,
+  };
+};
+
+const mapSearchUsersFromApi = (data: UserSearchUserApiResponse[]): UserSearchUser[] =>
+  data.map(mapSearchUserFromApi);
 
 const mapSendEmailVerifyRequest = (
   params: SendEmailVerifyRequest
@@ -102,6 +145,45 @@ const mapConfirmEmailVerifyRequest = (
   token: params.token,
 });
 
+const mapAdminMessageApiModelToEntity = (raw: AdminMessageApiModel): AdminMessage => ({
+  messageId: normalizeId(raw.messageId),
+  deliveryScope: raw.deliveryScope ?? undefined,
+  messageType: raw.messageType ?? undefined,
+  title: raw.title ?? undefined,
+  content: raw.content ?? undefined,
+  jumpUrl: raw.jumpUrl ?? undefined,
+  extra: raw.extra ?? undefined,
+  readCount: raw.readCount ?? 0,
+  createTime: raw.createTime ?? undefined,
+});
+
+const mapListAdminMessagesRequest = (
+  params: ListAdminMessagesRequest
+): ListAdminMessagesApiRequest => ({
+  page: params.page,
+  size: params.size,
+});
+
+const mapListAdminMessagesFromApi = (
+  data: ListAdminMessagesApiResponse
+): ListAdminMessagesResponse => ({
+  messages: data.list.map(mapAdminMessageApiModelToEntity),
+  total: data.total,
+  page: data.page,
+  size: data.size,
+  totalPage: data.totalPage,
+});
+
+const mapPublishMessageRequest = (params: PublishMessageRequest): PublishMessageApiRequest => ({
+  receiverUserIds: params.receiverUserIds,
+  deliveryScope: params.deliveryScope,
+  messageType: params.deliveryScope === 'ALL_USERS' ? 'SYSTEM' : params.messageType,
+  title: params.title,
+  content: params.content,
+  jumpUrl: params.jumpUrl,
+  extra: params.extra,
+});
+
 const mapUpdateUserInfoRequests = (
   params: UpdateUserInfoRequest
 ): {
@@ -136,9 +218,15 @@ const mapUpdateUserInfoRequests = (
 export const UserServicesMap = {
   mapAccountProfileFromApi,
   mapUserSafeFromAccountProfile,
+  mapSearchUsersRequest,
+  mapListUserSearchSuggestionsRequest,
+  mapSearchUsersFromApi,
   mapSendEmailVerifyRequest,
   mapInitiateUISVerifyRequest,
   mapFudanUISVerifyStatusFromApi,
   mapConfirmEmailVerifyRequest,
+  mapListAdminMessagesRequest,
+  mapListAdminMessagesFromApi,
+  mapPublishMessageRequest,
   mapUpdateUserInfoRequests,
 };

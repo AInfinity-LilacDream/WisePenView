@@ -2,8 +2,10 @@ import type { IDocumentService } from '@/domains/Document';
 import {
   decodeRootNodeScope,
   DRIVE_ROOT_ID,
+  DRIVE_SHARED_FOLDER_DISPLAY_NAME,
   type DriveNode,
   type DriveNodeScope,
+  type FolderNode,
   type LoadingNode,
 } from '@/domains/Drive';
 import { decodeNodeId, encodeNodeId } from '@/domains/Drive/mapper/DriveServices.map';
@@ -29,6 +31,7 @@ export interface DriveSelectionItem {
   rootId: string;
   groupId?: string;
   resourceId?: string;
+  resourceType?: string;
   tagId?: string;
 }
 
@@ -58,6 +61,9 @@ export const getDriveNodeLabel = (node: DriveNode): string => {
       if (node.name === '.Trash') {
         return TRASH_FOLDER_DISPLAY_NAME;
       }
+      if (node.systemType === 'shared') {
+        return DRIVE_SHARED_FOLDER_DISPLAY_NAME;
+      }
       return node.name || '未命名文件夹';
     case 'resource':
     case 'link':
@@ -69,6 +75,12 @@ export const getDriveNodeLabel = (node: DriveNode): string => {
 
 export const isDriveActionTarget = (node: DriveNode): node is DriveActionTarget =>
   node.type === 'folder' || node.type === 'resource' || node.type === 'link';
+
+export const isDriveSystemFolderNode = (node: DriveNode | null | undefined): node is FolderNode =>
+  node?.type === 'folder' && Boolean(node.systemType);
+
+export const isDriveSharedFolderNode = (node: DriveNode | null | undefined): node is FolderNode =>
+  node?.type === 'folder' && node.systemType === 'shared';
 
 export const getNodeDescription = (node: DriveNode): string | undefined => {
   if (node.type === 'folder' || node.type === 'resource' || node.type === 'link') {
@@ -202,5 +214,6 @@ export const toDriveSelectionItem = (node: DriveNode): DriveSelectionItem | null
     rootId: node.scope.rootId,
     groupId: getDriveScopeGroupId(node.scope),
     resourceId: node.resourceId,
+    resourceType: node.resourceType,
   };
 };

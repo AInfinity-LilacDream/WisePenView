@@ -11,21 +11,22 @@ import {
   buildDriveRootNode,
   decodeNodeId,
   decodeRootNodeScope,
-  DRIVE_ROOT_ID,
+  DRIVE_SHARED_TAG_NAME,
   encodeNodeId,
   encodeRootNodeId,
   isContainerNode,
   mapResourceItemToChildNode,
   mapTagToFolderNode,
+  orderDriveFolderNodes,
 } from '../mapper/DriveServices.map';
-import type { CreateDriveServiceOptions, IDriveService } from './index.type';
+import type { CreateDriveServiceOptions, IDriveService, MoveToFolderParams } from './index.type';
 
 const CACHE_KEY_DEFAULT = '__default__';
 const DEFAULT_PAGE_SIZE = 50;
 const TRASH_TAG_NAME = '.Trash';
 const HIDDEN_TAG_PREFIX = '.';
 
-export interface DriveServicesDeps {
+interface DriveServicesDeps {
   tagService: ITagService;
   resourceService: IResourceService;
 }
@@ -40,6 +41,19 @@ const findTrashTag = (roots: TagTreeNode[]): TagTreeNode | undefined => {
   return roots.find((node) => node.tagName === TRASH_TAG_NAME);
 };
 
+const findSharedFolderTag = (roots: TagTreeNode[]): TagTreeNode | undefined => {
+  const queue: TagTreeNode[] = [...roots];
+  while (queue.length > 0) {
+    const node = queue.shift();
+    if (!node) continue;
+    if (node.tagName === DRIVE_SHARED_TAG_NAME) return node;
+    if (Array.isArray(node.children) && node.children.length > 0) {
+      queue.push(...node.children);
+    }
+  }
+  return undefined;
+};
+
 const resolveGroupKey = (groupId?: string): string => {
   return normalizeTagGroupId(groupId) ?? CACHE_KEY_DEFAULT;
 };
@@ -50,6 +64,51 @@ const resolveGroupIdFromKey = (groupKey: string): string | undefined => {
 
 const isResourceNode = (node: DriveNode): node is ResourceNode | LinkNode => {
   return node.type === 'resource' || node.type === 'link';
+};
+
+interface CascadeDeletePlan {
+  tagIdsByDepth: Map<number, Set<string>>;
+  resourceIdsToDelete: Set<string>;
+  groupResourceIdsToUnmount: Set<string>;
+  linkTagIdsToUnmount: Map<
+    string,
+    {
+      source: LinkNode;
+      tagIds: Set<string>;
+    }
+  >;
+}
+
+interface MoveNodeToFolderPlan {
+  source: DriveNode;
+  targetTagId?: string;
+  groupId?: string;
+}
+
+const createCascadeDeletePlan = (): CascadeDeletePlan => ({
+  tagIdsByDepth: new Map<number, Set<string>>(),
+  resourceIdsToDelete: new Set<string>(),
+  groupResourceIdsToUnmount: new Set<string>(),
+  linkTagIdsToUnmount: new Map(),
+});
+
+const addTagIdToDeletePlan = (plan: CascadeDeletePlan, tagId: string, depth: number): void => {
+  const ids = plan.tagIdsByDepth.get(depth) ?? new Set<string>();
+  ids.add(tagId);
+  plan.tagIdsByDepth.set(depth, ids);
+};
+
+const addLinkTagToUnmountPlan = (
+  plan: CascadeDeletePlan,
+  source: LinkNode,
+  tagId: string
+): void => {
+  const entry = plan.linkTagIdsToUnmount.get(source.resourceId) ?? {
+    source,
+    tagIds: new Set<string>(),
+  };
+  entry.tagIds.add(tagId);
+  plan.linkTagIdsToUnmount.set(source.resourceId, entry);
 };
 
 export const createDriveServices = (
@@ -82,9 +141,12 @@ export const createDriveServices = (
     nodes.forEach((node) => trackNode(node, groupKey));
   };
 
-  const readRawRoots = async (groupId?: string): Promise<TagTreeNode[]> => {
+  const readRawRoots = async (
+    groupId?: string,
+    options?: { refresh?: boolean }
+  ): Promise<TagTreeNode[]> => {
     const normalized = normalizeTagGroupId(groupId);
-    const roots = await tagService.getRawTagTree(normalized);
+    const roots = await tagService.getRawTagTree(normalized, options);
     const trashTag = findTrashTag(roots);
     useTrashTagStore.getState().setTrashTagId(normalized, trashTag?.tagId);
     return roots;
@@ -105,6 +167,22 @@ export const createDriveServices = (
     }
     personalRootTagIdByGroup.set(groupKey, rootTag.tagId);
     return rootTag;
+  };
+
+  const ensureSharedFolder: IDriveService['ensureSharedFolder'] = async () => {
+    const roots = await readRawRoots(undefined, { refresh: true });
+    const existingSharedTag = findSharedFolderTag(roots);
+    if (existingSharedTag) {
+      return existingSharedTag.tagId;
+    }
+
+    const personalRoot = await getPersonalRootTag();
+    const tagId = await tagService.addTag({
+      parentId: personalRoot.tagId,
+      tagName: DRIVE_SHARED_TAG_NAME,
+    });
+    clearCache();
+    return tagId;
   };
 
   const getRootNode: IDriveService['getRootNode'] = async (params) => {
@@ -180,15 +258,15 @@ export const createDriveServices = (
       const scope = buildDriveNodeScope(normalizedGroupId);
       if (normalizedGroupId) {
         const roots = await readRawRoots(normalizedGroupId);
-        return roots
-          .filter(isVisibleFolderTag)
-          .map((tag) => mapTagToFolderNode(tag, rootNodeId, scope));
+        return orderDriveFolderNodes(
+          roots.filter(isVisibleFolderTag).map((tag) => mapTagToFolderNode(tag, rootNodeId, scope))
+        );
       }
       const personalRoot = await getPersonalRootTag();
       const children = personalRoot.children ?? [];
-      return children
-        .filter(isVisibleFolderTag)
-        .map((tag) => mapTagToFolderNode(tag, rootNodeId, scope));
+      return orderDriveFolderNodes(
+        children.filter(isVisibleFolderTag).map((tag) => mapTagToFolderNode(tag, rootNodeId, scope))
+      );
     }
 
     if (decoded.kind !== 'folder') return [];
@@ -197,9 +275,11 @@ export const createDriveServices = (
     await readRawRoots(normalizedGroupId);
     const tag = tagService.getRawTagById(decoded.tagId, normalizedGroupId);
     const children = tag?.children ?? [];
-    return children
-      .filter(isVisibleFolderTag)
-      .map((child) => mapTagToFolderNode(child, encodeNodeId('folder', decoded.tagId), scope));
+    return orderDriveFolderNodes(
+      children
+        .filter(isVisibleFolderTag)
+        .map((child) => mapTagToFolderNode(child, encodeNodeId('folder', decoded.tagId), scope))
+    );
   };
 
   const fetchAllResourceNodes = async (
@@ -381,6 +461,28 @@ export const createDriveServices = (
     return [primaryTagId, ...linkTagIds];
   };
 
+  const resolveLinkTagIdsAfterUnmount = (
+    source: LinkNode,
+    removedTagIds: Set<string>
+  ): string[] => {
+    const sourceItem = resourceItemByNodeId.get(source.id);
+    if (!sourceItem) {
+      throw createClientError(FRONTEND_CLIENT_ERROR.DRIVE_RESOURCE_TAG_INFO_MISSING);
+    }
+
+    const primaryTagId = source.primaryTagId;
+    if (!primaryTagId) {
+      throw createClientError(FRONTEND_CLIENT_ERROR.DRIVE_RESOURCE_TAG_INFO_MISSING);
+    }
+
+    const currentTags = sourceItem.currentTags ?? {};
+    const linkTagIds = Object.keys(currentTags).filter(
+      (tagId) => tagId !== primaryTagId && !removedTagIds.has(tagId)
+    );
+
+    return [primaryTagId, ...linkTagIds];
+  };
+
   const unmountGroupResourceNode = async (
     source: Extract<DriveNode, { type: 'resource' | 'link' }>,
     groupId: string
@@ -390,6 +492,121 @@ export const createDriveServices = (
       tagIds: resolveGroupResourceUnmountTagIds(source),
       groupId,
     });
+  };
+
+  const removePersonalResourceNodePermanently = async (
+    source: Extract<DriveNode, { type: 'resource' | 'link' }>
+  ): Promise<void> => {
+    if (source.type === 'resource') {
+      await resourceService.removeResources({ resourceIds: [source.resourceId] });
+      return;
+    }
+
+    await resourceService.updateResourceTags({
+      resourceId: source.resourceId,
+      tagIds: resolveLinkTagIdsAfterUnmount(source, new Set([source.folderTagId])),
+    });
+  };
+
+  const collectFolderCascadeDeletePlan = async (
+    folder: FolderNode,
+    groupId: string | undefined,
+    plan: CascadeDeletePlan,
+    depth = 0
+  ): Promise<void> => {
+    const [folderChildren, resourceChildren] = await Promise.all([
+      loadFolderNodes(folder.id, groupId),
+      fetchAllResourceNodes(folder.id, groupId),
+    ]);
+
+    addTagIdToDeletePlan(plan, folder.tagId, depth);
+
+    for (const resource of resourceChildren) {
+      if (groupId) {
+        if (resource.type === 'resource') {
+          plan.groupResourceIdsToUnmount.add(resource.resourceId);
+        } else {
+          addLinkTagToUnmountPlan(plan, resource, resource.folderTagId);
+        }
+      } else if (resource.type === 'resource') {
+        plan.resourceIdsToDelete.add(resource.resourceId);
+      } else {
+        addLinkTagToUnmountPlan(plan, resource, resource.folderTagId);
+      }
+    }
+
+    await Promise.all(
+      folderChildren.map((child) => collectFolderCascadeDeletePlan(child, groupId, plan, depth + 1))
+    );
+  };
+
+  const executeCascadeDeletePlan = async (
+    plan: CascadeDeletePlan,
+    groupId?: string
+  ): Promise<void> => {
+    const resourceIdsToDelete = [...plan.resourceIdsToDelete];
+    const groupResourceIdsToUnmount = [...plan.groupResourceIdsToUnmount];
+    const linkUnmountEntries = [...plan.linkTagIdsToUnmount.entries()].filter(
+      ([resourceId]) =>
+        !plan.resourceIdsToDelete.has(resourceId) && !plan.groupResourceIdsToUnmount.has(resourceId)
+    );
+
+    await Promise.all([
+      resourceIdsToDelete.length > 0
+        ? resourceService.removeResources({ resourceIds: resourceIdsToDelete })
+        : Promise.resolve(),
+      Promise.all(
+        groupResourceIdsToUnmount.map((resourceId) =>
+          resourceService.updateResourceTags({ resourceId, tagIds: [], groupId })
+        )
+      ),
+      Promise.all(
+        linkUnmountEntries.map(([resourceId, entry]) =>
+          resourceService.updateResourceTags({
+            resourceId,
+            tagIds: resolveLinkTagIdsAfterUnmount(entry.source, entry.tagIds),
+            groupId,
+          })
+        )
+      ),
+    ]);
+
+    const depths = [...plan.tagIdsByDepth.keys()].sort((a, b) => b - a);
+    for (const depth of depths) {
+      const tagIds = [...(plan.tagIdsByDepth.get(depth) ?? [])];
+      await Promise.all(
+        tagIds.map((targetTagId) =>
+          tagService.deleteTag({
+            targetTagId,
+            groupId,
+          })
+        )
+      );
+    }
+  };
+
+  const removeFolderNodeCascade = async (source: FolderNode, groupId?: string): Promise<void> => {
+    const plan = createCascadeDeletePlan();
+    await collectFolderCascadeDeletePlan(source, groupId, plan);
+    await executeCascadeDeletePlan(plan, groupId);
+  };
+
+  const isTagInTrash = async (tagId: string): Promise<boolean> => {
+    await readRawRoots();
+    const trashTagId = await ensureTrashTagId();
+    return tagId === trashTagId || isDescendantTag(tagId, trashTagId);
+  };
+
+  const isNodeInPersonalTrash = async (
+    source: Extract<DriveNode, { type: 'folder' | 'resource' | 'link' }>
+  ): Promise<boolean> => {
+    if (source.type === 'folder') {
+      await readRawRoots();
+      const trashTagId = await ensureTrashTagId();
+      return source.tagId !== trashTagId && isDescendantTag(source.tagId, trashTagId);
+    }
+
+    return isTagInTrash(source.folderTagId);
   };
 
   const getNodePath: IDriveService['getNodePath'] = async ({ nodeId, groupId }) => {
@@ -407,7 +624,7 @@ export const createDriveServices = (
     return [await getRootNode({ groupId: effectiveGroupId })];
   };
 
-  const moveToFolder: IDriveService['moveToFolder'] = async (params) => {
+  const createMoveNodeToFolderPlan = (params: MoveToFolderParams): MoveNodeToFolderPlan => {
     const { nodeId, targetFolderNodeId } = params;
     const source = getNodeOrThrow(nodeId);
     const target = getNodeOrThrow(targetFolderNodeId);
@@ -427,35 +644,152 @@ export const createDriveServices = (
       target.type === 'root' ? (target.canMountResources ? target.tagId : undefined) : target.tagId;
 
     if (source.type === 'folder') {
+      if (source.systemType) {
+        throw createClientError(FRONTEND_CLIENT_ERROR.DRIVE_NODE_UNSUPPORTED_MOVE);
+      }
       if (targetTagId && isDescendantTag(targetTagId, source.tagId, groupId)) {
         throw createClientError(FRONTEND_CLIENT_ERROR.DRIVE_NODE_UNSUPPORTED_MOVE);
       }
+      return { source, targetTagId, groupId };
+    }
+
+    if (isResourceNode(source) && targetTagId) {
+      return { source, targetTagId, groupId };
+    }
+
+    throw createClientError(FRONTEND_CLIENT_ERROR.DRIVE_NODE_UNSUPPORTED_MOVE);
+  };
+
+  const ensureMoveRootTargetTracked = async (
+    params: Pick<MoveToFolderParams, 'targetFolderNodeId' | 'groupId'>
+  ): Promise<void> => {
+    // 移动会清空节点缓存，路径状态可能仍保留尚未重新登记的抽象根节点。
+    if (nodeMap.has(params.targetFolderNodeId)) {
+      return;
+    }
+    const decodedTarget = decodeNodeId(params.targetFolderNodeId);
+    if (decodedTarget.kind !== 'root') {
+      return;
+    }
+    await getRootNode({ rootId: params.targetFolderNodeId, groupId: params.groupId });
+  };
+
+  const executeMoveNodeToFolderPlan = async (plan: MoveNodeToFolderPlan): Promise<void> => {
+    if (plan.source.type === 'folder') {
       await tagService.moveTag({
-        targetTagId: source.tagId,
-        newParentId: targetTagId,
-        groupId,
+        targetTagId: plan.source.tagId,
+        newParentId: plan.targetTagId,
+        groupId: plan.groupId,
       });
-    } else if (isResourceNode(source) && targetTagId) {
-      await moveResourceNode(source, targetTagId, groupId);
-    } else {
+      return;
+    }
+
+    if (isResourceNode(plan.source) && plan.targetTagId) {
+      await moveResourceNode(plan.source, plan.targetTagId, plan.groupId);
+      return;
+    }
+
+    throw createClientError(FRONTEND_CLIENT_ERROR.DRIVE_NODE_UNSUPPORTED_MOVE);
+  };
+
+  const moveNodeToFolder = async (
+    params: MoveToFolderParams,
+    options?: { clearCacheAfterMove?: boolean }
+  ): Promise<void> => {
+    await ensureMoveRootTargetTracked(params);
+    const plan = createMoveNodeToFolderPlan(params);
+    await executeMoveNodeToFolderPlan(plan);
+    if (options?.clearCacheAfterMove !== false) {
+      clearCache();
+    }
+  };
+
+  const moveToFolder: IDriveService['moveToFolder'] = async (params) => {
+    await moveNodeToFolder(params);
+  };
+
+  const resolveBatchMoveSourceIds = (params: {
+    nodeIds: string[];
+    targetFolderNodeId: string;
+  }): string[] => {
+    const sources = [...new Set(params.nodeIds)].map((nodeId) => getNodeOrThrow(nodeId));
+    if (sources.some((source) => source.type === 'folder' && source.systemType)) {
+      throw createClientError(FRONTEND_CLIENT_ERROR.DRIVE_SELECTION_CONTAINS_SYSTEM_FOLDER);
+    }
+    if (sources.some((source) => source.id === params.targetFolderNodeId)) {
       throw createClientError(FRONTEND_CLIENT_ERROR.DRIVE_NODE_UNSUPPORTED_MOVE);
     }
+
+    const sourceIdSet = new Set(sources.map((source) => source.id));
+    return sources
+      .filter((source) => {
+        let parentId = source.parentId;
+        while (parentId) {
+          if (sourceIdSet.has(parentId)) {
+            return false;
+          }
+          parentId = nodeMap.get(parentId)?.parentId ?? null;
+        }
+        return true;
+      })
+      .filter((source) => source.parentId !== params.targetFolderNodeId)
+      .map((source) => source.id);
+  };
+
+  const moveNodesToFolder: IDriveService['moveNodesToFolder'] = async (params) => {
+    await ensureMoveRootTargetTracked(params);
+    const sourceNodeIds = resolveBatchMoveSourceIds(params);
+    if (sourceNodeIds.length === 0) {
+      return 0;
+    }
+    const plans = sourceNodeIds.map((nodeId) =>
+      createMoveNodeToFolderPlan({
+        nodeId,
+        targetFolderNodeId: params.targetFolderNodeId,
+        groupId: params.groupId,
+      })
+    );
+
+    for (const plan of plans) {
+      await executeMoveNodeToFolderPlan(plan);
+    }
     clearCache();
+    return plans.length;
   };
 
   const removeNode: IDriveService['removeNode'] = async (params) => {
     const { nodeId } = params;
     const source = getNodeOrThrow(nodeId);
     const groupId = normalizeTagGroupId(params.groupId) ?? getNodeGroupId(nodeId);
-    if (source.type === 'folder') {
+
+    if (groupId) {
+      if (source.type === 'folder') {
+        if (source.systemType) {
+          throw createClientError(FRONTEND_CLIENT_ERROR.DRIVE_NODE_UNSUPPORTED_DELETE);
+        }
+        await removeFolderNodeCascade(source, groupId);
+      } else if (isResourceNode(source)) {
+        await unmountGroupResourceNode(source, groupId);
+      } else {
+        throw createClientError(FRONTEND_CLIENT_ERROR.DRIVE_NODE_UNSUPPORTED_DELETE);
+      }
+      clearCache();
+      return;
+    }
+
+    if (source.type === 'folder' && source.systemType) {
+      throw createClientError(FRONTEND_CLIENT_ERROR.DRIVE_NODE_UNSUPPORTED_DELETE);
+    } else if (source.type === 'folder' && (await isNodeInPersonalTrash(source))) {
+      await removeFolderNodeCascade(source);
+    } else if (isResourceNode(source) && (await isNodeInPersonalTrash(source))) {
+      await removePersonalResourceNodePermanently(source);
+    } else if (source.type === 'folder') {
       const trashTagId = await ensureTrashTagId(groupId);
       await tagService.moveTag({
         targetTagId: source.tagId,
         newParentId: trashTagId,
         groupId,
       });
-    } else if (isResourceNode(source) && groupId) {
-      await unmountGroupResourceNode(source, groupId);
     } else if (isResourceNode(source)) {
       const trashTagId = await ensureTrashTagId();
       await moveResourceNode(source, trashTagId, groupId);
@@ -470,6 +804,9 @@ export const createDriveServices = (
     const source = getNodeOrThrow(nodeId);
     const groupId = normalizeTagGroupId(params.groupId) ?? getNodeGroupId(nodeId);
     if (source.type === 'folder') {
+      if (source.systemType) {
+        throw createClientError(FRONTEND_CLIENT_ERROR.DRIVE_NODE_UNSUPPORTED_RENAME);
+      }
       await tagService.updateTag({
         targetTagId: source.tagId,
         tagName: `/${newName}`,
@@ -524,26 +861,10 @@ export const createDriveServices = (
     listNodeChildren,
     getNodePath,
     moveToFolder,
+    moveNodesToFolder,
     removeNode,
     renameNode,
     createFolder,
-    getDriveTree: async ({ rootId, groupId }) => {
-      const decodedRoot = decodeNodeId(rootId);
-      const normalizedGroupId =
-        normalizeTagGroupId(groupId) ??
-        (decodedRoot.kind === 'root' ? normalizeTagGroupId(decodedRoot.groupId) : undefined);
-      const expectedRootId = encodeRootNodeId(normalizedGroupId);
-      if (rootId !== DRIVE_ROOT_ID && rootId !== expectedRootId) {
-        throw createClientError(FRONTEND_CLIENT_ERROR.DRIVE_UNSUPPORTED_ROOT, { rootId });
-      }
-      return getRootNode({ groupId: normalizedGroupId });
-    },
-    loadNodeChildren: listNodeChildren,
-    getPathById: getNodePath,
-    moveNode: ({ nodeId, newParentId, groupId }) =>
-      moveToFolder({ nodeId, targetFolderNodeId: newParentId, groupId }),
-    createNode: async ({ parentId, name, groupId }) => {
-      await createFolder({ parentId, name, groupId });
-    },
+    ensureSharedFolder,
   };
 };

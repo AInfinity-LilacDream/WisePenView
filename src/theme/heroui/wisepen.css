@@ -35,10 +35,13 @@
     --overlay: #ffffff;
     --overlay-foreground: #111827;
     --scrollbar: var(--scrollbar-thumb);
-    --scrollbar-thumb: color-mix(in oklch, var(--foreground) 15%, transparent);
+    --scrollbar-thumb: color-mix(in oklch, var(--foreground) 18%, transparent);
+    --scrollbar-thumb-hover: color-mix(in oklch, var(--foreground) 30%, transparent);
     --scrollbar-track: transparent;
     --scrollbar-gutter: auto;
     --scrollbar-width: thin;
+    --scrollbar-size: 8px;
+    --scrollbar-radius: 999px;
     --scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
     --segment: #ffffff;
     --segment-foreground: #111827;
@@ -113,10 +116,13 @@
     --overlay: #111827;
     --overlay-foreground: #f9fafb;
     --scrollbar: var(--scrollbar-thumb);
-    --scrollbar-thumb: color-mix(in oklch, var(--foreground) 15%, transparent);
+    --scrollbar-thumb: color-mix(in oklch, var(--foreground) 20%, transparent);
+    --scrollbar-thumb-hover: color-mix(in oklch, var(--foreground) 36%, transparent);
     --scrollbar-track: transparent;
     --scrollbar-gutter: auto;
     --scrollbar-width: thin;
+    --scrollbar-size: 8px;
+    --scrollbar-radius: 999px;
     --scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
     --segment: #1f2937;
     --segment-foreground: #f9fafb;
@@ -831,7 +837,7 @@
       max(0px, calc(var(--app-radius-popover) - var(--app-popover-content-padding)))
     );
     --app-radius-interactive: var(--app-radius-sidebar-item);
-    --app-radius-scrollbar: var(--radius-xs);
+    --app-radius-scrollbar: var(--scrollbar-radius);
     --table-row-height: 52px;
     --row-height-comfortable: var(--table-row-height);
     --row-height-compact: var(--table-row-height);
@@ -878,12 +884,11 @@
     --table-control-radius: var(--table-shell-radius);
     --table-overlay-radius: var(--table-shell-radius);
     --table-inner-radius: var(--radius-lg);
-    --table-drive-detail-panel-width: 280px;
     --table-drive-detail-layout-max-height: calc(100dvh - 240px);
     --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
     --shadow-md: var(--card-shadow);
     --shadow-lg: 0 8px 24px rgba(15, 23, 42, 0.12);
-    --scrollbar-width: 8px;
+    --scrollbar-size: 8px;
     --control-height-sm: 28px;
     --control-height: 36px;
     --control-height-lg: 40px;

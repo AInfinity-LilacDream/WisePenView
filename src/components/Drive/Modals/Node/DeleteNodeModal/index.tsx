@@ -11,9 +11,18 @@ function getNodeName(node: DeleteNodeModalProps['node']): string {
   return node.title;
 }
 
-function DeleteNodeModal({ isOpen, node, groupId, onOpenChange, onSuccess }: DeleteNodeModalProps) {
+function DeleteNodeModal({
+  isOpen,
+  node,
+  groupId,
+  isTrashView = false,
+  onOpenChange,
+  onSuccess,
+}: DeleteNodeModalProps) {
   const driveService = useDriveService();
+  const isGroupNode = Boolean(groupId && node);
   const isGroupResource = Boolean(groupId && node && node.type !== 'folder');
+  const isPermanentDelete = Boolean(!groupId && isTrashView);
 
   const { loading, run: runDeleteNode } = useRequest(
     async () => {
@@ -23,7 +32,9 @@ function DeleteNodeModal({ isOpen, node, groupId, onOpenChange, onSuccess }: Del
     {
       manual: true,
       onSuccess: () => {
-        toast.success(isGroupResource ? '已从小组移除' : '已移入最近删除');
+        toast.success(
+          isGroupNode ? '已从小组移除' : isPermanentDelete ? '已彻底删除' : '已移入最近删除'
+        );
         onSuccess?.();
         onOpenChange(false);
       },
@@ -41,8 +52,17 @@ function DeleteNodeModal({ isOpen, node, groupId, onOpenChange, onSuccess }: Del
   const isFolder = node?.type === 'folder';
   const isPrimaryGroupMount = Boolean(groupId && node?.type === 'resource');
   const nodeName = getNodeName(node);
-  const title = isGroupResource ? '从小组移除' : '移入最近删除';
+  const title = isGroupNode ? '从小组移除' : isPermanentDelete ? '彻底删除' : '移入最近删除';
   const description = (() => {
+    if (isPermanentDelete && isFolder) {
+      return `确定彻底删除「${nodeName}」及其下属内容吗？此操作不可撤销。`;
+    }
+    if (isPermanentDelete) {
+      return `确定彻底删除「${nodeName}」吗？此操作不可撤销。`;
+    }
+    if (groupId && isFolder) {
+      return `确定从当前小组移除「${nodeName}」及其下属内容的挂载吗？`;
+    }
     if (isPrimaryGroupMount) {
       return `「${nodeName}」是当前小组的主挂载文件，移除后会同时解除它在当前小组下的全部挂载关系。确定继续吗？`;
     }
@@ -54,7 +74,7 @@ function DeleteNodeModal({ isOpen, node, groupId, onOpenChange, onSuccess }: Del
     }
     return `确定将「${nodeName}」移入最近删除吗？`;
   })();
-  const confirmText = isGroupResource ? '移除' : '移入最近删除';
+  const confirmText = isGroupNode ? '移除' : isPermanentDelete ? '彻底删除' : '移入最近删除';
 
   return (
     <AppAlertDialog

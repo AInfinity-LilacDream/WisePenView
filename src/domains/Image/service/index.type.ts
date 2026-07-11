@@ -49,10 +49,8 @@ export interface IImageService {
 }
 
 /** 后端 StorageSceneEnum */
-export type ImageStorageScene =
-  | 'PUBLIC_IMAGE_FOR_USER'
-  | 'PUBLIC_IMAGE_FOR_GROUP'
-  | 'PRIVATE_IMAGE_FOR_NOTE';
+type ImageStorageScene =
+  'PUBLIC_IMAGE_FOR_USER' | 'PUBLIC_IMAGE_FOR_GROUP' | 'PRIVATE_IMAGE_FOR_NOTE';
 
 /** 由存储域名与 objectKey 拼公开访问地址（去重斜杠） */
 export function buildImagePublicUrl(

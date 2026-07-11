@@ -1,31 +1,36 @@
 import { DocumentApi } from '@/domains/Document/apis/DocumentApi';
 import { NoteApi } from '@/domains/Note/apis/NoteApi';
-import {
-  useNewNoteStore,
-  useNoteSelectionStore,
-  usePdfPreviewProgressStore,
-  useResourceDisplayNameStore,
-} from '@/store';
+import { SkillApi } from '@/domains/Skill/apis/SkillApi';
+import { useNewNoteStore, usePdfPreviewProgressStore, useResourceDisplayNameStore } from '@/store';
 import { ResourceInteractApi } from '../apis/InteractApi';
-import { ResourceItemApi } from '../apis/ResourceApi';
+import { ResourceInlineCommentApi, ResourceItemApi } from '../apis/ResourceApi';
 import type { ListResourceItemsApiRequest } from '../apis/ResourceApi.type';
 import type { ResourceItem } from '../entity/resource';
 import { RESOURCE_SORT_BY, RESOURCE_SORT_DIR } from '../enum';
 import type { ResourceInteractStats } from '../mapper/ResourceServices.map';
 import { ResourceServicesMap } from '../mapper/ResourceServices.map';
 import type {
+  AddInlineCommentItemRequest,
+  ChangeInlineCommentResolveStatusRequest,
+  CreateInlineCommentRequest,
+  DeleteInlineCommentItemRequest,
   GetGroupResourceRequest,
+  GetResourcePermissionOverviewRequest,
   GetUserResourcesRequest,
   InteractRateRequest,
   InteractToggleLikeRequest,
   IResourceService,
+  ListInlineCommentsRequest,
   MountResourcesToGroupTagRequest,
   RemoveResourcesRequest,
   RenameResourceRequest,
   ResourceListPage,
   SearchQueryRequest,
   SearchResultPage,
+  UpdateInlineCommentItemRequest,
+  UpdateInlineCommentItemResult,
   UpdateResourceActionPermissionRequest,
+  UpdateResourcePermissionSubjectsRequest,
   UpdateResourceTagsRequest,
 } from './index.type';
 
@@ -59,7 +64,6 @@ const removeResources = async (params: RemoveResourcesRequest): Promise<void> =>
     // 资源已删除，同步清理与之绑定的临时状态
     usePdfPreviewProgressStore.getState().removeProgress(resourceId);
     useNewNoteStore.getState().clearNewNoteResourceId(resourceId);
-    useNoteSelectionStore.getState().clearSelectedText(resourceId);
   }
 };
 
@@ -150,6 +154,43 @@ const updateResourceActionPermission = async (
   await ResourceItemApi.changeResourceActionPermission(request);
 };
 
+const updateResourcePermissionSubjects = async (
+  params: UpdateResourcePermissionSubjectsRequest
+): Promise<void> => {
+  const request = ResourceServicesMap.mapChangeResourceActionPermissionRequestFromSubjects(params);
+  await ResourceItemApi.changeResourceActionPermission(request);
+};
+
+const getPermissionResourceInfo = async (params: GetResourcePermissionOverviewRequest) => {
+  switch (params.resourceType) {
+    case 'note':
+    case 'drawio': {
+      const data = await NoteApi.getNoteInfo({ resourceId: params.resourceId });
+      return data.resourceInfo;
+    }
+    case 'file': {
+      const data = await DocumentApi.getDocInfo({ resourceId: params.resourceId });
+      return data.resourceInfo;
+    }
+    case 'skill': {
+      const data = await SkillApi.getSkillInfo({ resourceId: params.resourceId });
+      return (
+        data?.resourceInfo ?? { resourceId: params.resourceId, resourceName: '', ownerInfo: {} }
+      );
+    }
+    case 'agent':
+      throw new Error('暂不支持配置 Agent 资源权限');
+  }
+};
+
+const getResourcePermissionOverview = async (params: GetResourcePermissionOverviewRequest) => {
+  const resourceInfo = await getPermissionResourceInfo(params);
+  return ResourceServicesMap.mapResourcePermissionOverviewFromResourceItem(
+    resourceInfo,
+    params.resourceId
+  );
+};
+
 /** 获取当前用户点赞状态，供点赞组件薄层调用 */
 const getLikeStatus = async (resourceId: string): Promise<{ liked: boolean }> => {
   const res = await ResourceInteractApi.getUserInteractionRecord({ resourceId });
@@ -193,6 +234,46 @@ const globalSearch = async (params: SearchQueryRequest): Promise<SearchResultPag
   return ResourceServicesMap.mapSearchResultPageFromApi(data);
 };
 
+const listInlineComments = async (params: ListInlineCommentsRequest) => {
+  const data = await ResourceInlineCommentApi.listInlineComments(
+    ResourceServicesMap.mapListInlineCommentsRequest(params)
+  );
+  return ResourceServicesMap.mapListInlineCommentsFromApi(data);
+};
+
+const createInlineComment = async (params: CreateInlineCommentRequest): Promise<string> => {
+  const data = await ResourceInlineCommentApi.createInlineComment(
+    ResourceServicesMap.mapCreateInlineCommentRequest(params)
+  );
+  return ResourceServicesMap.mapInlineCommentThreadIdFromApi(data) ?? '';
+};
+
+const addInlineCommentItem = async (params: AddInlineCommentItemRequest): Promise<string> => {
+  const data = await ResourceInlineCommentApi.addInlineCommentItem(
+    ResourceServicesMap.mapAddInlineCommentItemRequest(params)
+  );
+  return ResourceServicesMap.mapInlineCommentItemIdFromApi(data) ?? '';
+};
+
+const updateInlineCommentItem = async (
+  params: UpdateInlineCommentItemRequest
+): Promise<UpdateInlineCommentItemResult> => {
+  const data = await ResourceInlineCommentApi.updateInlineCommentItem(
+    ResourceServicesMap.mapUpdateInlineCommentItemRequest(params)
+  );
+  return ResourceServicesMap.mapUpdateInlineCommentItemResultFromApi(data);
+};
+
+const deleteInlineCommentItem = async (params: DeleteInlineCommentItemRequest): Promise<void> => {
+  await ResourceInlineCommentApi.deleteInlineCommentItem(params);
+};
+
+const changeInlineCommentResolveStatus = async (
+  params: ChangeInlineCommentResolveStatusRequest
+): Promise<void> => {
+  await ResourceInlineCommentApi.changeInlineCommentResolveStatus(params);
+};
+
 export const createResourceServices = (): IResourceService => ({
   getUserResources,
   getGroupResources,
@@ -201,6 +282,8 @@ export const createResourceServices = (): IResourceService => ({
   updateResourceTags,
   mountResourcesToGroupTag,
   updateResourceActionPermission,
+  updateResourcePermissionSubjects,
+  getResourcePermissionOverview,
   getLikeStatus,
   getRate,
   interactToggleLike,
@@ -208,4 +291,10 @@ export const createResourceServices = (): IResourceService => ({
   interactRead,
   getInteractStats,
   globalSearch,
+  listInlineComments,
+  createInlineComment,
+  addInlineCommentItem,
+  updateInlineCommentItem,
+  deleteInlineCommentItem,
+  changeInlineCommentResolveStatus,
 });

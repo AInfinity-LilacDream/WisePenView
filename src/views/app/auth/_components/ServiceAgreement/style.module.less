@@ -1,20 +1,10 @@
+@import '@/styles/scrollbar.module.less';
+
 .modalContent {
   max-height: 70vh;
   overflow-y: scroll;
   padding-right: 8px;
-
-  &::-webkit-scrollbar {
-    width: var(--scrollbar-width);
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background-color: var(--surface-secondary);
-    border-radius: var(--radius-sm);
-  }
-
-  &::-webkit-scrollbar-track {
-    background-color: transparent;
-  }
+  .appSubtleScrollbar();
 
   b {
     font-size: 20px;

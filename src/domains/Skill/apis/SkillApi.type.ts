@@ -1,3 +1,5 @@
+import type { ResourceItem } from '@/domains/Resource';
+
 export const AssetResourceTypeEnum = {
   MD: 'MD',
   PYTHON_SCRIPT: 'PYTHON_SCRIPT',
@@ -10,8 +12,8 @@ export const AssetResourceTypeEnum = {
 export type AssetResourceTypeEnum =
   (typeof AssetResourceTypeEnum)[keyof typeof AssetResourceTypeEnum];
 
-export type SkillUploadStatus = 'UPLOADING' | 'AVAILABLE';
-export type SkillVersionApiStatus = 'DRAFT' | 'PUBLISHED';
+type SkillUploadStatus = 'UPLOADING' | 'AVAILABLE';
+type SkillVersionApiStatus = 'DRAFT' | 'PUBLISHED';
 
 export interface SkillAssetApiInfo {
   id?: string;
@@ -60,6 +62,13 @@ export interface GetSkillVersionBundleInfoData {
   query: {
     resourceId: string;
     version: number;
+  };
+}
+
+export interface GetSkillAssetStsTokenData {
+  query: {
+    resourceId: string;
+    targetVersion?: number;
   };
 }
 
@@ -130,4 +139,15 @@ export interface RSkillResourceInfoResponse {
 export interface RSkillVersionBundleInfoResponse {
   data?: SkillVersionBundleApiResponse;
 }
-import type { ResourceItem } from '@/domains/Resource';
+
+export interface RSkillAssetStsTokenResponse {
+  data?: {
+    accessKeyId?: string;
+    accessKeySecret?: string;
+    securityToken?: string;
+    bucket?: string;
+    region?: string;
+    endpoint?: string;
+    expiration?: string;
+  };
+}

@@ -1,9 +1,11 @@
+export type { AdminMessage, MessageDeliveryScope, MessageType } from './entity/message';
 export type {
   User,
   UserAccountInfo,
   UserAccountProfile,
   UserDisplayBase,
   UserProfileInfo,
+  UserSearchUser,
 } from './entity/user';
 export {
   DEGREE,
@@ -20,6 +22,14 @@ export type {
   FudanUISVerifyStatusData,
   IUserService,
   InitiateUISVerifyRequest,
+  ListAdminMessagesRequest,
+  ListAdminMessagesResponse,
+  ListUserSearchSuggestionsRequest,
+  PublishMessageDeliveryScope,
+  PublishMessageRequest,
+  PublishMessageType,
+  QueryUserSearchCandidatesRequest,
+  SearchUsersRequest,
   SendEmailVerifyRequest,
   UpdateUserInfoRequest,
 } from './service/index.type';

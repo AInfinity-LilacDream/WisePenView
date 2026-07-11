@@ -2,6 +2,7 @@ export type {
   DriveNode,
   DriveNodeScope,
   DriveNodeType,
+  DriveSystemFolderType,
   FolderNode,
   LinkNode,
   LoadingNode,
@@ -10,6 +11,8 @@ export type {
 } from './entity/drive';
 export {
   DRIVE_ROOT_ID,
+  DRIVE_SHARED_FOLDER_DISPLAY_NAME,
+  DRIVE_SHARED_TAG_NAME,
   buildDriveNodeScope,
   decodeRootNodeScope,
   encodeRootNodeId,
@@ -17,15 +20,11 @@ export {
 export type {
   CreateDriveServiceOptions,
   CreateFolderParams,
-  CreateNodeParams,
-  GetDriveTreeParams,
   GetNodePathParams,
-  GetPathByIdParams,
   GetRootNodeParams,
   IDriveService,
   ListNodeChildrenParams,
-  LoadNodeChildrenParams,
-  MoveNodeParams,
+  MoveNodesToFolderParams,
   MoveToFolderParams,
   RemoveNodeParams,
   RenameNodeParams,

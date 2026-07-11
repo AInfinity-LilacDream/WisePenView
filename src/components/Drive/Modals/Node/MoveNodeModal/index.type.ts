@@ -5,6 +5,7 @@ export interface MoveNodeModalProps {
   node: DriveActionTarget | null;
   rootId: string;
   groupId?: string;
+  isTrashView?: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess?: () => void;
 }

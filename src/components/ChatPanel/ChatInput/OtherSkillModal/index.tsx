@@ -8,7 +8,7 @@ import type { ChatAgentOption } from '@/store';
 import { parseErrorMessage } from '@/utils/error';
 import { Button, toast } from '@heroui/react';
 import { useRequest } from 'ahooks';
-import { ChevronDown, Folder } from 'lucide-react';
+import { Folder } from 'lucide-react';
 import type { Key } from 'react';
 import { useMemo, useState } from 'react';
 import { useShallow } from 'zustand/react/shallow';
@@ -118,11 +118,6 @@ function OtherSkillModalContent() {
                     selectedKeys={selectedKeys}
                     defaultExpandAll
                     blockNode
-                    switcherIcon={
-                      <span>
-                        <ChevronDown size={14} />
-                      </span>
-                    }
                     onSelect={(keys: Key[]) => setSelectedKeys(keys)}
                   />
                 )}

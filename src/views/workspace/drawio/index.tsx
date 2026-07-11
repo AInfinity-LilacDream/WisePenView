@@ -1,4 +1,5 @@
 import { ResultState, Spin } from '@/components/Feedback';
+import { FormField, Input } from '@/components/Input';
 import AppDisplayDialog from '@/components/Overlay/AppDisplayDialog';
 import AppFormDialog from '@/components/Overlay/AppFormDialog';
 import { useNoteService, useResourceService, useUserService } from '@/domains';
@@ -7,18 +8,17 @@ import type {
   NoteInfoDisplayData,
   NoteVersionListPage,
 } from '@/domains/Note';
+import { useOpenInWorkspace } from '@/hooks/useOpenInWorkspace';
 import { useResourceDisplayName } from '@/hooks/useResourceDisplayName';
 import { useWorkspaceLayoutConfig } from '@/layouts/Workspace/WorkspaceOutletContext';
 import { parseErrorMessage } from '@/utils/error';
-import {
-  buildWorkspaceResourcePath,
-  RESOURCE_EDITOR_TYPE,
-} from '@/utils/navigation/workspaceRoute';
-import { Button, Input, TextField, toast } from '@heroui/react';
+import { WORKSPACE_RESOURCE_TYPE } from '@/utils/navigation/workspaceRoute';
+import { Button, toast } from '@heroui/react';
 import { useEventListener, useRequest, useUnmount, useUpdateEffect } from 'ahooks';
 import { Copy, History, Save } from 'lucide-react';
 import { useCallback, useMemo, useRef, useState, type ReactNode } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
+import ResourcePermissionControl from '../_components/ResourcePermissionControl';
 import styles from './style.module.less';
 
 const DRAWIO_EMBED_URL =
@@ -50,6 +50,7 @@ interface DrawioViewData {
 interface DrawioViewConnectedProps {
   resourceId: string;
   data: DrawioViewData;
+  onRefreshDrawioInfo: () => void;
 }
 
 interface DrawioMessage {
@@ -254,29 +255,57 @@ function CopyModal({
   onClose: () => void;
   onConfirm: () => void;
 }) {
+  const [nameError, setNameError] = useState('');
+
+  const handleNameChange = (value: string) => {
+    onNameChange(value);
+    setNameError('');
+  };
+
+  const handleConfirm = () => {
+    if (!name.trim()) {
+      setNameError('请输入复制后的名称');
+      return;
+    }
+    onConfirm();
+  };
+
+  const handleClose = () => {
+    setNameError('');
+    onClose();
+  };
+
   return (
     <AppFormDialog
       isOpen={open}
-      onOpenChange={(visible) => !visible && onClose()}
+      onOpenChange={(visible) => !visible && handleClose()}
       title="复制 Draw.io 图"
       confirmText="复制"
-      onCancel={onClose}
-      onSubmit={onConfirm}
+      onCancel={handleClose}
+      onSubmit={handleConfirm}
       isSubmitting={loading}
-      isSubmitDisabled={loading || !name.trim()}
+      isSubmitDisabled={loading}
       isDismissable={!loading}
     >
-      <TextField aria-label="复制后的名称" value={name} onChange={onNameChange}>
+      <FormField
+        aria-label="复制后的名称"
+        label="复制后的名称"
+        name="copyName"
+        value={name}
+        onChange={handleNameChange}
+        errorMessage={nameError}
+        isRequired
+      >
         <Input placeholder="请输入名称" autoFocus />
-      </TextField>
+      </FormField>
     </AppFormDialog>
   );
 }
 
-function DrawioViewConnected({ resourceId, data }: DrawioViewConnectedProps) {
+function DrawioViewConnected({ resourceId, data, onRefreshDrawioInfo }: DrawioViewConnectedProps) {
   const { noteInfoDisplay, snapshot, initialXml } = data;
   const noteService = useNoteService();
-  const navigate = useNavigate();
+  const openInWorkspace = useOpenInWorkspace();
   const userService = useUserService();
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const initialVersion = Math.max(noteInfoDisplay.version ?? 0, snapshot.version ?? 0);
@@ -472,7 +501,10 @@ function DrawioViewConnected({ resourceId, data }: DrawioViewConnectedProps) {
       onSuccess: (newResourceId) => {
         setCopyOpen(false);
         toast.success('复制成功');
-        navigate(buildWorkspaceResourcePath(RESOURCE_EDITOR_TYPE.DRAWIO, newResourceId));
+        openInWorkspace({
+          resourceId: newResourceId,
+          resourceType: WORKSPACE_RESOURCE_TYPE.DRAWIO,
+        });
       },
       onError: (err) => {
         toast.danger(parseErrorMessage(err));
@@ -494,6 +526,12 @@ function DrawioViewConnected({ resourceId, data }: DrawioViewConnectedProps) {
     <div className={styles.headerExtra}>
       <span className={styles.versionBadge}>v{currentVersion}</span>
       <SaveStatusText state={saveState} />
+      <ResourcePermissionControl
+        resourceId={resourceId}
+        resourceType={WORKSPACE_RESOURCE_TYPE.DRAWIO}
+        ownerId={noteInfoDisplay.ownerId}
+        onSuccess={onRefreshDrawioInfo}
+      />
       {currentUser?.id === noteInfoDisplay.ownerId && canViewVersions ? (
         <Button size="sm" variant="secondary" onPress={handleOpenVersions} aria-label="版本记录">
           <History size={16} />
@@ -569,6 +607,7 @@ function DrawioView({ resourceId }: DrawioViewProps) {
     data,
     error,
     loading: loadingDrawio,
+    refresh: refreshDrawioInfo,
   } = useRequest(
     async () => {
       const [noteInfoDisplay, snapshot] = await Promise.all([
@@ -654,7 +693,7 @@ function DrawioView({ resourceId }: DrawioViewProps) {
   }
 
   const resourceType = data.noteInfoDisplay.resourceInfo?.resourceType?.trim().toLowerCase();
-  if (resourceType !== RESOURCE_EDITOR_TYPE.DRAWIO) {
+  if (resourceType !== WORKSPACE_RESOURCE_TYPE.DRAWIO) {
     return (
       <DrawioLayoutConfig resourceId={resourceId}>
         <div className={styles.middleOverlay}>
@@ -664,7 +703,13 @@ function DrawioView({ resourceId }: DrawioViewProps) {
     );
   }
 
-  return <DrawioViewConnected resourceId={resourceId} data={data} />;
+  return (
+    <DrawioViewConnected
+      resourceId={resourceId}
+      data={data}
+      onRefreshDrawioInfo={refreshDrawioInfo}
+    />
+  );
 }
 
 export default DrawioView;

@@ -13,28 +13,19 @@ import type {
 const getCompletionsApi = (): string => `${getApiBaseURL()}chat/completions`;
 
 const buildFrontendStates = ({
-  selectedText,
-  enableSelected,
   workspaceContext,
   selectedResources,
 }: SendSessionMessageOptions): ChatFrontendState[] => {
   const frontendStates: ChatFrontendState[] = [];
-  const selectedValue = selectedText?.trim();
-
-  if (selectedValue) {
-    frontendStates.push({
-      key: 'selected_text',
-      value: selectedValue,
-      disabled: !enableSelected,
-    });
-  }
 
   if (workspaceContext?.resourceId) {
     frontendStates.push({
       key: 'workspace_open_resource',
       value: {
         resource_id: workspaceContext.resourceId,
-        editor_type: workspaceContext.editorType,
+        resource_type: workspaceContext.resourceType,
+        viewer: workspaceContext.viewer,
+        editor_type: workspaceContext.editorType ?? workspaceContext.viewer,
       },
     });
   }

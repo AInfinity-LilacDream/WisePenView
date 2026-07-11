@@ -1,5 +1,6 @@
 export type {
   Group,
+  GroupBaseInfo,
   GroupFileOrgLogic,
   GroupMember,
   GroupMemberList,

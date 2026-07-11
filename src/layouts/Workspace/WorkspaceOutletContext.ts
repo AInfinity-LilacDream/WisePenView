@@ -1,12 +1,9 @@
 import type { ChatWorkspaceContext } from '@/domains/Chat';
+import type { WorkspaceResourceType, WorkspaceViewer } from '@/utils/navigation/workspaceRoute';
 import { useLayoutEffect, type ReactNode } from 'react';
 import { useOutletContext } from 'react-router-dom';
 
 export interface WorkspaceHeaderConfig {
-  fallbackTo?: string;
-  backLabel?: string;
-  /** 隐藏返回按钮，此时 inlineTitle 自动左移 */
-  hideBack?: boolean;
   inlineTitle?: ReactNode;
   extra?: ReactNode;
   titleBlock?: ReactNode;
@@ -20,7 +17,14 @@ export interface WorkspaceLayoutConfig {
   chatContext?: ChatWorkspaceContext;
 }
 
+export interface WorkspaceRouteContext {
+  resourceId?: string;
+  resourceType?: WorkspaceResourceType;
+  viewer?: WorkspaceViewer;
+}
+
 export interface WorkspaceOutletContextValue {
+  routeContext: WorkspaceRouteContext;
   setLayoutConfig: (config: WorkspaceLayoutConfig) => void;
   resetLayoutConfig: () => void;
 }
@@ -33,11 +37,22 @@ function useWorkspaceOutletContext() {
   return context;
 }
 
+export function useWorkspaceRouteContext() {
+  return useWorkspaceOutletContext().routeContext;
+}
+
+export function useOptionalWorkspaceRouteContext() {
+  return useOutletContext<WorkspaceOutletContextValue | null>()?.routeContext;
+}
+
 export function useWorkspaceLayoutConfig(config: WorkspaceLayoutConfig) {
   const { setLayoutConfig, resetLayoutConfig } = useWorkspaceOutletContext();
 
   useLayoutEffect(() => {
     setLayoutConfig(config);
+  }, [config, setLayoutConfig]);
+
+  useLayoutEffect(() => {
     return resetLayoutConfig;
-  }, [config, resetLayoutConfig, setLayoutConfig]);
+  }, [resetLayoutConfig]);
 }

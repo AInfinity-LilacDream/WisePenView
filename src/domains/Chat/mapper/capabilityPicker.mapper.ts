@@ -6,9 +6,9 @@ export interface CapabilityToolOption {
   label: string;
 }
 
-export type CapabilityPickerItemKind = 'primary-skill' | 'external-skill' | 'tool' | 'select-other';
+type CapabilityPickerItemKind = 'primary-skill' | 'external-skill' | 'tool' | 'select-other';
 
-export interface CapabilityPickerItem {
+interface CapabilityPickerItem {
   key: string;
   kind: CapabilityPickerItemKind;
   label: string;
@@ -18,7 +18,7 @@ export interface CapabilityPickerItem {
   tool?: CapabilityToolOption;
 }
 
-export interface CapabilityPickerSection {
+interface CapabilityPickerSection {
   key: string;
   items: CapabilityPickerItem[];
 }

@@ -1,8 +1,11 @@
 import type {
   FudanUISVerifyStatusData,
   IUserService,
+  ListAdminMessagesResponse,
+  PublishMessageRequest,
   User,
   UserAccountProfile,
+  UserSearchUser,
 } from '@/domains/User';
 import type { GetUserInfoApiResponse } from '../apis/UserApi.type';
 import { UserServicesMap } from '../mapper/UserServices.map';
@@ -12,6 +15,32 @@ import mockdata from './mockdata.json';
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const fullUserInfo = mockdata as GetUserInfoApiResponse;
+const mockSearchUsers: UserSearchUser[] = [
+  {
+    userId: '10086',
+    username: 'xiaoming',
+    nickname: '小明',
+    realName: '王明',
+    avatar: '',
+    identityType: 1,
+  },
+  {
+    userId: '10087',
+    username: 'ruojin',
+    nickname: '若瑾',
+    realName: '李若瑾',
+    avatar: '',
+    identityType: 2,
+  },
+  {
+    userId: '10088',
+    username: 'agentic.sig',
+    nickname: 'SIG 助手',
+    realName: '陈思齐',
+    avatar: '',
+    identityType: 3,
+  },
+];
 
 const getUserInfo = async (_options?: { forceRefresh?: boolean }): Promise<User> => {
   await delay(200);
@@ -20,6 +49,7 @@ const getUserInfo = async (_options?: { forceRefresh?: boolean }): Promise<User>
     id: fullUserInfo.userId?.toString() ?? '',
     username: userInfo.username,
     nickname: userInfo.nickname ?? undefined,
+    realName: userInfo.realName ?? undefined,
     avatar: userInfo.avatar ?? undefined,
     identityType: normalizeIdentityTypeFromApi(userInfo.identityType),
   };
@@ -28,6 +58,44 @@ const getUserInfo = async (_options?: { forceRefresh?: boolean }): Promise<User>
 const getFullUserInfo = async (): Promise<UserAccountProfile> => {
   await delay(200);
   return UserServicesMap.mapAccountProfileFromApi(fullUserInfo);
+};
+
+const searchUsers = async (params: Parameters<IUserService['searchUsers']>[0]) => {
+  await delay(160);
+  const keyword = params.keyword.trim().toLowerCase();
+  if (!keyword) return [];
+  return mockSearchUsers.filter((user) => user.username.toLowerCase() === keyword);
+};
+
+const listUserSearchSuggestions = async (
+  params: Parameters<IUserService['listUserSearchSuggestions']>[0]
+) => {
+  await delay(160);
+  const keyword = params.keyword.trim().toLowerCase();
+  if (keyword.length < 2) return [];
+  const size = params.size ?? 10;
+  return mockSearchUsers
+    .filter((user) => user.username.toLowerCase().startsWith(keyword))
+    .slice(0, size);
+};
+
+const queryUserSearchCandidates = async (
+  params: Parameters<IUserService['queryUserSearchCandidates']>[0]
+) => {
+  const keyword = params.keyword.trim();
+  if (!keyword) return [];
+  const size = params.size ?? 10;
+  const [exactUsers, suggestionUsers] = await Promise.all([
+    searchUsers({ keyword }),
+    listUserSearchSuggestions({ keyword, size }),
+  ]);
+  const userMap = new Map<string, UserSearchUser>();
+  [...exactUsers, ...suggestionUsers].forEach((user) => {
+    if (!userMap.has(user.userId)) {
+      userMap.set(user.userId, user);
+    }
+  });
+  return Array.from(userMap.values()).slice(0, size);
 };
 
 const sendEmailVerify = async (): Promise<void> => {
@@ -80,6 +148,32 @@ const confirmEmailVerify = async (): Promise<void> => {
   await delay(200);
 };
 
+const listAdminMessages = async (): Promise<ListAdminMessagesResponse> => {
+  await delay(200);
+  return {
+    messages: [
+      {
+        messageId: 'mock-message-1',
+        deliveryScope: 'ALL_USERS',
+        messageType: 'SYSTEM',
+        title: 'Mock 系统公告',
+        content: '这是一条用于 mock 环境展示的站内信。',
+        jumpUrl: '',
+        readCount: 3,
+        createTime: new Date().toISOString(),
+      },
+    ],
+    total: 1,
+    page: 1,
+    size: 20,
+    totalPage: 1,
+  };
+};
+
+const publishMessage = async (_params: PublishMessageRequest): Promise<void> => {
+  await delay(200);
+};
+
 const updateUserInfo = async (
   params: Parameters<IUserService['updateUserInfo']>[0]
 ): Promise<void> => {
@@ -119,10 +213,15 @@ const clearUserCache = (): void => {};
 export const UserServicesMock: IUserService = {
   getFullUserInfo,
   getUserInfo,
+  searchUsers,
+  listUserSearchSuggestions,
+  queryUserSearchCandidates,
   updateUserInfo,
   sendEmailVerify,
   initiateUISVerify,
   checkFudanUISVerify,
   confirmEmailVerify,
+  listAdminMessages,
+  publishMessage,
   clearUserCache,
 };

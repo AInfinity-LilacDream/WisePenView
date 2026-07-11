@@ -1,17 +1,11 @@
+@import '@/styles/scrollbar.module.less';
+
 .menuContainer {
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
   padding-top: 8px;
-
-  &::-webkit-scrollbar {
-    width: 4px;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: var(--surface-tertiary);
-    border-radius: var(--app-radius-scrollbar, var(--radius-xs));
-  }
+  .appSubtleScrollbar();
 }
 
 .menuContainerCollapsed {

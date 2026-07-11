@@ -1,16 +1,20 @@
 import { resolveResourceIconType } from '@/domains/Resource';
 import { createClientError, FRONTEND_CLIENT_ERROR } from '@/utils/error';
 import type { DriveNode, FolderNode, RootNode } from '../entity/drive';
-import { buildDriveNodeScope, decodeRootNodeScope } from '../mapper/DriveServices.map';
+import {
+  buildDriveNodeScope,
+  decodeRootNodeScope,
+  DRIVE_SHARED_FOLDER_DISPLAY_NAME,
+  orderDriveFolderNodes,
+} from '../mapper/DriveServices.map';
 import type {
   CreateDriveServiceOptions,
   CreateFolderParams,
-  GetDriveTreeParams,
   GetNodePathParams,
   GetRootNodeParams,
   IDriveService,
   ListNodeChildrenParams,
-  MoveNodeParams,
+  MoveNodesToFolderParams,
   MoveToFolderParams,
   RemoveNodeParams,
   RenameNodeParams,
@@ -21,6 +25,8 @@ const DEFAULT_PAGE_SIZE = 50;
 const NETWORK_DELAY_MS = 150;
 const ROOT_ID = 'drive-root';
 const GROUP_ROOT_PREFIX = 'drive-root:group:';
+const SHARED_FOLDER_NODE_ID = 'folder-shared';
+const SHARED_FOLDER_TAG_ID = 'tag-shared';
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -42,6 +48,12 @@ type MockJson = {
   rootId: string;
   nodes: Record<string, LegacyNode>;
 };
+
+interface MockMovePlan {
+  node: DriveNode;
+  newParent: RootNode | FolderNode;
+  targetTagId?: string;
+}
 
 const md = mockdata as unknown as MockJson;
 
@@ -73,6 +85,7 @@ const normalizeNode = (node: LegacyNode): DriveNode | null => {
       scope: buildDriveNodeScope(),
       tagId: node.tagId,
       name: node.name ?? '未命名文件夹',
+      systemType: node.id === SHARED_FOLDER_NODE_ID ? 'shared' : undefined,
       childrenIds: node.childrenIds ?? [],
     };
   }
@@ -216,9 +229,12 @@ function createDriveServiceMock(opts?: CreateDriveServiceOptions): IDriveService
     await delay(NETWORK_DELAY_MS);
     const parent = getContainer(params.nodeId);
     if (!parent) return [];
-    return parent.childrenIds
+    const children = parent.childrenIds
       .map((id) => nodes.get(id))
       .filter((node): node is DriveNode => node != null && node.type !== 'loading');
+    const folderNodes = children.filter((node): node is FolderNode => node.type === 'folder');
+    const otherNodes = children.filter((node) => node.type !== 'folder');
+    return [...orderDriveFolderNodes(folderNodes), ...otherNodes];
   };
 
   const getNodePath: IDriveService['getNodePath'] = async (params: GetNodePathParams) => {
@@ -226,8 +242,7 @@ function createDriveServiceMock(opts?: CreateDriveServiceOptions): IDriveService
     return buildPath(params.nodeId);
   };
 
-  const moveToFolder = async (params: MoveToFolderParams): Promise<void> => {
-    await delay(NETWORK_DELAY_MS);
+  function createMovePlan(params: MoveToFolderParams): MockMovePlan {
     const node = nodes.get(params.nodeId);
     const newParent = getContainer(params.targetFolderNodeId);
     if (!node || !newParent) {
@@ -236,6 +251,9 @@ function createDriveServiceMock(opts?: CreateDriveServiceOptions): IDriveService
       });
     }
     if (node.type !== 'folder' && node.type !== 'resource' && node.type !== 'link') {
+      throw createClientError(FRONTEND_CLIENT_ERROR.DRIVE_NODE_UNSUPPORTED_MOVE);
+    }
+    if (node.id === newParent.id) {
       throw createClientError(FRONTEND_CLIENT_ERROR.DRIVE_NODE_UNSUPPORTED_MOVE);
     }
     if (node.scope.rootId !== newParent.scope.rootId) {
@@ -248,18 +266,71 @@ function createDriveServiceMock(opts?: CreateDriveServiceOptions): IDriveService
     if ((node.type === 'resource' || node.type === 'link') && !targetTagId) {
       throw createClientError(FRONTEND_CLIENT_ERROR.DRIVE_NODE_UNSUPPORTED_MOVE);
     }
-    if (node.type === 'link' && targetTagId) {
-      if (node.primaryTagId === targetTagId) {
-        throw createClientError(FRONTEND_CLIENT_ERROR.DRIVE_LINK_MOVE_TO_PRIMARY_TAG);
+    if (node.type === 'link' && targetTagId && node.primaryTagId === targetTagId) {
+      throw createClientError(FRONTEND_CLIENT_ERROR.DRIVE_LINK_MOVE_TO_PRIMARY_TAG);
+    }
+
+    return { node, newParent, targetTagId };
+  }
+
+  function executeMovePlan(plan: MockMovePlan): void {
+    if (plan.node.type === 'link' && plan.targetTagId) {
+      plan.node.folderTagId = plan.targetTagId;
+    }
+    if (plan.node.type === 'resource' && plan.targetTagId) {
+      plan.node.folderTagId = plan.targetTagId;
+    }
+    detachFromParent(plan.node.id);
+    plan.node.parentId = plan.newParent.id;
+    plan.newParent.childrenIds.push(plan.node.id);
+  }
+
+  const moveToFolder = async (params: MoveToFolderParams): Promise<void> => {
+    await delay(NETWORK_DELAY_MS);
+    executeMovePlan(createMovePlan(params));
+  };
+
+  const moveNodesToFolder = async (params: MoveNodesToFolderParams): Promise<number> => {
+    await delay(NETWORK_DELAY_MS);
+    const sources = [...new Set(params.nodeIds)].map((nodeId) => {
+      const node = nodes.get(nodeId);
+      if (!node) {
+        throw createClientError(FRONTEND_CLIENT_ERROR.DRIVE_NODE_NOT_FOUND, { nodeId });
       }
-      node.folderTagId = targetTagId;
+      return node;
+    });
+    if (sources.some((source) => source.type === 'folder' && source.systemType)) {
+      throw createClientError(FRONTEND_CLIENT_ERROR.DRIVE_SELECTION_CONTAINS_SYSTEM_FOLDER);
     }
-    if (node.type === 'resource' && targetTagId) {
-      node.folderTagId = targetTagId;
+    if (sources.some((source) => source.id === params.targetFolderNodeId)) {
+      throw createClientError(FRONTEND_CLIENT_ERROR.DRIVE_NODE_UNSUPPORTED_MOVE);
     }
-    detachFromParent(params.nodeId);
-    node.parentId = params.targetFolderNodeId;
-    newParent.childrenIds.push(params.nodeId);
+
+    const sourceIdSet = new Set(sources.map((source) => source.id));
+    const sourceNodeIds = sources
+      .filter((source) => {
+        let parentId = source.parentId;
+        while (parentId) {
+          if (sourceIdSet.has(parentId)) {
+            return false;
+          }
+          parentId = nodes.get(parentId)?.parentId ?? null;
+        }
+        return true;
+      })
+      .filter((source) => source.parentId !== params.targetFolderNodeId)
+      .map((source) => source.id);
+    const plans = sourceNodeIds.map((nodeId) =>
+      createMovePlan({
+        nodeId,
+        targetFolderNodeId: params.targetFolderNodeId,
+        groupId: params.groupId,
+      })
+    );
+    for (const plan of plans) {
+      executeMovePlan(plan);
+    }
+    return plans.length;
   };
 
   const removeNode = async (params: RemoveNodeParams): Promise<void> => {
@@ -306,36 +377,43 @@ function createDriveServiceMock(opts?: CreateDriveServiceOptions): IDriveService
     return node.tagId;
   };
 
+  const ensureSharedFolder = async (): Promise<string> => {
+    await delay(NETWORK_DELAY_MS);
+    const existing = nodes.get(SHARED_FOLDER_NODE_ID);
+    if (existing?.type === 'folder') {
+      return existing.tagId;
+    }
+    const root = getContainer(ROOT_ID);
+    if (!root) {
+      throw createClientError(FRONTEND_CLIENT_ERROR.DRIVE_NODE_NOT_FOUND, { nodeId: ROOT_ID });
+    }
+    const node: FolderNode = {
+      id: SHARED_FOLDER_NODE_ID,
+      type: 'folder',
+      parentId: ROOT_ID,
+      scope: buildDriveNodeScope(),
+      tagId: SHARED_FOLDER_TAG_ID,
+      name: DRIVE_SHARED_FOLDER_DISPLAY_NAME,
+      systemType: 'shared',
+      childrenIds: [],
+    };
+    nodes.set(SHARED_FOLDER_NODE_ID, node);
+    if (!root.childrenIds.includes(SHARED_FOLDER_NODE_ID)) {
+      root.childrenIds.push(SHARED_FOLDER_NODE_ID);
+    }
+    return node.tagId;
+  };
+
   return {
     getRootNode,
     listNodeChildren,
     getNodePath,
     moveToFolder,
+    moveNodesToFolder,
     removeNode,
     renameNode,
     createFolder,
-    async getDriveTree(params: GetDriveTreeParams) {
-      const scope = decodeRootNodeScope(params.rootId, params.groupId);
-      const root = scope.type === 'group' ? ensureGroupRoot(scope.rootId) : nodes.get(ROOT_ID);
-      if (!root || root.type !== 'root') {
-        throw createClientError(FRONTEND_CLIENT_ERROR.DRIVE_NODE_NOT_FOUND, {
-          nodeId: params.rootId,
-        });
-      }
-      return root;
-    },
-    loadNodeChildren: listNodeChildren,
-    getPathById: getNodePath,
-    moveNode(params: MoveNodeParams) {
-      return moveToFolder({
-        nodeId: params.nodeId,
-        targetFolderNodeId: params.newParentId,
-        groupId: params.groupId,
-      });
-    },
-    async createNode(params) {
-      await createFolder(params);
-    },
+    ensureSharedFolder,
   };
 }
 

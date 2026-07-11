@@ -1,13 +1,18 @@
 import { ResultState, Spin } from '@/components/Feedback';
 import SegmentedTabs from '@/components/SegmentedTabs';
-import { useRequest, useUnmount } from 'ahooks';
-import { ChevronsLeft, Menu } from 'lucide-react';
-import { useCallback, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useMemoizedFn, useRequest, useUnmount } from 'ahooks';
+import { ChevronsRight, Menu, PanelRightClose, PanelRightOpen } from 'lucide-react';
+import { useCallback, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 
 import EntryIcon from '@/components/Icons/EntryIcon';
+import ResourceActionFooter from '@/components/interact/ResourceActionFooter';
 import CustomBlockNote from '@/components/Note/CustomBlockNote';
-import type { NoteBodyEditorHandle } from '@/components/Note/CustomBlockNote/index.type';
+import { useCommentSettingsSync } from '@/components/Note/CustomBlockNote/comments';
+import type {
+  NoteBodyEditorHandle,
+  NoteCollaborationUser,
+} from '@/components/Note/CustomBlockNote/index.type';
 import NoteOutline from '@/components/Note/NoteOutline';
 import {
   NOTE_OUTLINE_TITLE_ID,
@@ -16,18 +21,18 @@ import {
 import { useNoteService, useResourceService, useUserService } from '@/domains';
 import type { AiDiffDisplayMode, NoteInfoDisplayData } from '@/domains/Note';
 import { AI_DIFF_DISPLAY_MODE, AI_DIFF_DISPLAY_MODE_LABELS, useNoteSession } from '@/domains/Note';
-import { RESOURCE_TYPE } from '@/domains/Resource';
+import { RESOURCE_TYPE, isCommentVisibilityPrivileged } from '@/domains/Resource';
+import type { User } from '@/domains/User';
 import { useResourceDisplayName } from '@/hooks/useResourceDisplayName';
 import { useSmoothFlag } from '@/hooks/useSmoothFlag';
-import {
-  useWorkspaceLayoutConfig,
-  type WorkspaceLayoutConfig,
-} from '@/layouts/Workspace/WorkspaceOutletContext';
+import { useWorkspaceLayoutConfig } from '@/layouts/Workspace/WorkspaceOutletContext';
 import { useAiDiffDisplayStore } from '@/store';
+import { useNoteCommentsSidebarStore } from '@/store/useNoteCommentsSidebarStore';
 import { parseErrorMessage } from '@/utils/error';
-import { Alert, Button, Dropdown, toast } from '@heroui/react';
+import { WORKSPACE_RESOURCE_TYPE } from '@/utils/navigation/workspaceRoute';
+import { Alert, Button, Dropdown, Switch, Tooltip, toast } from '@heroui/react';
+import ResourcePermissionControl from '../_components/ResourcePermissionControl';
 import NoteInfoBar from './_components/NoteInfoBar';
-import NotePermissionModal from './_components/NotePermissionModal';
 import NoteTitle from './_components/NoteTitle';
 import type { NoteTitleHandle } from './_components/NoteTitle/index.type';
 import styles from './style.module.less';
@@ -57,6 +62,40 @@ const AI_DIFF_DISPLAY_OPTIONS: Array<{ value: AiDiffDisplayMode; label: string }
     label: AI_DIFF_DISPLAY_MODE_LABELS[AI_DIFF_DISPLAY_MODE.COMPARE],
   },
 ];
+
+const NOTE_COLLABORATION_COLORS = [
+  '#2563eb',
+  '#16a34a',
+  '#dc2626',
+  '#d97706',
+  '#7c3aed',
+  '#0891b2',
+  '#db2777',
+  '#4f46e5',
+  '#059669',
+  '#ea580c',
+] as const;
+
+function getNoteCollaborationUserName(user?: User): string {
+  return user?.nickname?.trim() || user?.realName?.trim() || user?.username?.trim() || '当前用户';
+}
+
+function pickNoteCollaborationColor(seed: string): string {
+  let hash = 0;
+  for (let i = 0; i < seed.length; i += 1) {
+    hash = (hash * 31 + seed.charCodeAt(i)) >>> 0;
+  }
+  return NOTE_COLLABORATION_COLORS[hash % NOTE_COLLABORATION_COLORS.length];
+}
+
+function buildNoteCollaborationUser(user?: User): NoteCollaborationUser {
+  const name = getNoteCollaborationUserName(user);
+  const colorSeed = user?.id?.trim() || user?.username?.trim() || name;
+  return {
+    name,
+    color: pickNoteCollaborationColor(colorSeed),
+  };
+}
 
 function NoteLayoutConfig({ children }: { children: ReactNode }) {
   const frameConfig = useMemo(() => ({ className: styles.pageWrap }), []);
@@ -91,10 +130,13 @@ function NoteViewConnected({
   const titleAnchorRef = useRef<HTMLDivElement>(null);
   const reconnectTimerRef = useRef<number | null>(null);
   const [isReconnectLoading, setIsReconnectLoading] = useState(false);
-  const [isOutlineOpen, setIsOutlineOpen] = useState(true);
-  const [isPermissionModalOpen, setIsPermissionModalOpen] = useState(false);
+  const [isOutlineOpen, setIsOutlineOpen] = useState(false);
+  const [isCommentHistoryOpen, setIsCommentHistoryOpen] = useState(false);
   const [outlineItems, setOutlineItems] = useState<NoteOutlineItem[]>([]);
   const [activeHeadingId, setActiveHeadingId] = useState<string | undefined>(undefined);
+  const [commentsSidebarHostElement, setCommentsSidebarHostElement] = useState<HTMLElement | null>(
+    null
+  );
   const [pdfExportLoading, setPdfExportLoading] = useState(false);
   const [isDownloadingMarkdown, setIsDownloadingMarkdown] = useState(false);
   const [aiDiffPresence, setAiDiffPresence] = useState<{
@@ -104,24 +146,48 @@ function NoteViewConnected({
     resourceId,
     hasAiDiffContent: false,
   });
-  const { status, doc, provider, reconnect } = useNoteSession(resourceId);
+  const { status, doc, provider, reconnect, idbSynced } = useNoteSession(resourceId);
+  const resourceService = useResourceService();
+  const userService = useUserService();
+  const { data: currentUser, error: currentUserError } = useRequest(
+    () => userService.getUserInfo(),
+    {
+      ready: Boolean(resourceId),
+    }
+  );
+  const threadsSidebarCollapsed = useNoteCommentsSidebarStore(
+    (state) => state.collapsedByResourceId[resourceId] ?? false
+  );
+  const toggleNoteCommentsSidebar = useNoteCommentsSidebarStore(
+    (state) => state.toggleNoteCommentsSidebarCollapsed
+  );
+  const commentsSidebarWidth = useNoteCommentsSidebarStore((state) =>
+    state.getNoteCommentsSidebarWidth(resourceId)
+  );
+  const setNoteCommentsSidebarWidth = useNoteCommentsSidebarStore(
+    (state) => state.setNoteCommentsSidebarWidth
+  );
+  const { settings: commentSettings, setCollaboratorVisibility } = useCommentSettingsSync(
+    status === 'connected' ? doc : null
+  );
 
   const isConnected = status === 'connected';
   const isDisconnected = useSmoothFlag(status === 'disconnected', 2000, 2000);
   const isEditorReadOnly = status === 'connecting' || !noteInfoDisplay.canCollaborativeEdit;
   const isTitleReadOnly = !noteInfoDisplay.canCollaborativeEdit;
   const blockLocalDocWrites = isConnected && !noteInfoDisplay.canCollaborativeEdit;
-  const showFullPageSpin = status === 'connecting';
+  const shouldWaitCurrentUser = !currentUser && !currentUserError;
+  const showFullPageSpin = (status === 'connecting' && !idbSynced) || shouldWaitCurrentUser;
+  const middleOverlayText =
+    status === 'connecting' && !idbSynced ? '正在连接笔记服务...' : '正在加载用户信息...';
   const fallbackNoteTitle = noteInfoDisplay.noteTitle;
+  const collaborationUser = useMemo(() => buildNoteCollaborationUser(currentUser), [currentUser]);
+  const canRenderBodyEditor = !shouldWaitCurrentUser;
+  const canManageCommentVisibility =
+    isCommentVisibilityPrivileged(noteInfoDisplay.resourceInfo?.resourceAccessRole) ||
+    (Boolean(noteInfoDisplay.ownerId) && currentUser?.id === noteInfoDisplay.ownerId);
+  const commentsSidebarToggleLabel = threadsSidebarCollapsed ? '展开批注栏' : '收起批注栏';
 
-  const userService = useUserService();
-  const resourceService = useResourceService();
-  const { data: currentUser } = useRequest(() => userService.getUserInfo(), {
-    ready: Boolean(noteInfoDisplay.ownerId),
-    refreshDeps: [noteInfoDisplay.ownerId],
-  });
-
-  // 进入页面时上报阅读
   useRequest(() => resourceService.interactRead(resourceId), {
     ready: Boolean(resourceId),
     refreshDeps: [resourceId],
@@ -200,190 +266,307 @@ function NoteViewConnected({
   }, [fallbackNoteTitle]);
 
   const headerMorePending = pdfExportLoading || isDownloadingMarkdown;
-  const canManageNotePermission =
-    Boolean(noteInfoDisplay.ownerId) && currentUser?.id === noteInfoDisplay.ownerId;
 
-  const handleMoreAction = useCallback(
-    (key: React.Key) => {
-      if (key === 'permission') {
-        setIsPermissionModalOpen(true);
-        return;
-      }
-      if (key === 'print-pdf') {
-        void handlePrintPdf();
-        return;
-      }
-      if (key === 'download-md') {
-        void handleDownloadMarkdown();
-      }
-    },
-    [handleDownloadMarkdown, handlePrintPdf]
-  );
+  const handleMoreAction = useMemoizedFn((key: React.Key) => {
+    if (key === 'comment-history') {
+      setIsCommentHistoryOpen(true);
+      return;
+    }
+    if (key === 'print-pdf') {
+      void handlePrintPdf();
+      return;
+    }
+    if (key === 'download-md') {
+      void handleDownloadMarkdown();
+    }
+  });
 
-  const workspaceFrameConfig = useMemo<WorkspaceLayoutConfig>(
+  const workspaceFrameConfig = useMemo(
     () => ({
       className: styles.pageWrap,
-      header: false,
+      header: {
+        inlineTitle: (
+          <NoteToolbarTitle resourceId={resourceId} fallbackTitle={noteInfoDisplay?.noteTitle} />
+        ),
+        extra: (
+          <div className={styles.headerToolbarExtra}>
+            {showAiDiffDisplayModeSwitch ? (
+              <SegmentedTabs<AiDiffDisplayMode>
+                ariaLabel="AI 差异展示模式"
+                selectedKey={aiDiffDisplayMode}
+                className={styles.aiDiffDisplayModeSwitch}
+                items={AI_DIFF_DISPLAY_OPTIONS.map((option) => ({
+                  key: option.value,
+                  label: option.label,
+                  disabled: showFullPageSpin,
+                }))}
+                onSelectionChange={setAiDiffDisplayMode}
+              />
+            ) : null}
+            <ResourcePermissionControl
+              resourceId={resourceId}
+              resourceType={WORKSPACE_RESOURCE_TYPE.NOTE}
+              ownerId={noteInfoDisplay.ownerId}
+              isDisabled={showFullPageSpin}
+              onSuccess={onRefreshNoteInfo}
+            />
+            <div className={styles.headerActionsEnd}>
+              <div className={styles.headerMoreWrap}>
+                <Dropdown>
+                  <Dropdown.Trigger>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      isPending={headerMorePending}
+                      isDisabled={showFullPageSpin}
+                      aria-label="更多"
+                    >
+                      更多
+                    </Button>
+                  </Dropdown.Trigger>
+                  <Dropdown.Popover placement="bottom end" className={styles.noteMorePopover}>
+                    {canManageCommentVisibility ? (
+                      <div
+                        className={styles.ownerCommentPolicyRow}
+                        onPointerDown={(event) => event.stopPropagation()}
+                        onClick={(event) => event.stopPropagation()}
+                      >
+                        <span className={styles.ownerCommentPolicyLabel}>
+                          协作者仅可见自己的批注
+                        </span>
+                        <Switch
+                          aria-label="协作者仅可见自己的批注"
+                          isSelected={commentSettings.collaboratorVisibility === 'own_only'}
+                          isDisabled={!isConnected}
+                          onChange={(selected) =>
+                            setCollaboratorVisibility(selected ? 'own_only' : 'all')
+                          }
+                          size="sm"
+                        >
+                          <Switch.Content aria-label="协作者仅可见自己的批注">
+                            <Switch.Control>
+                              <Switch.Thumb />
+                            </Switch.Control>
+                          </Switch.Content>
+                        </Switch>
+                      </div>
+                    ) : null}
+                    <Dropdown.Menu aria-label="笔记更多操作" onAction={handleMoreAction}>
+                      {noteInfoDisplay.commentsEnabled ? (
+                        <Dropdown.Item id="comment-history" textValue="历史批注">
+                          历史批注
+                        </Dropdown.Item>
+                      ) : null}
+                      <Dropdown.Item id="print-pdf" textValue="打印为pdf">
+                        打印为pdf
+                      </Dropdown.Item>
+                      <Dropdown.Item id="download-md" textValue="下载为md">
+                        下载为md
+                      </Dropdown.Item>
+                    </Dropdown.Menu>
+                  </Dropdown.Popover>
+                </Dropdown>
+              </div>
+              {noteInfoDisplay.commentsEnabled ? (
+                <Tooltip>
+                  <Tooltip.Trigger>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      isDisabled={showFullPageSpin}
+                      aria-label={commentsSidebarToggleLabel}
+                      aria-expanded={!threadsSidebarCollapsed}
+                      onPress={() => toggleNoteCommentsSidebar(resourceId)}
+                    >
+                      {threadsSidebarCollapsed ? (
+                        <PanelRightOpen size={16} />
+                      ) : (
+                        <PanelRightClose size={16} />
+                      )}
+                    </Button>
+                  </Tooltip.Trigger>
+                  <Tooltip.Content>{commentsSidebarToggleLabel}</Tooltip.Content>
+                </Tooltip>
+              ) : null}
+            </div>
+          </div>
+        ),
+      },
     }),
-    []
+    [
+      aiDiffDisplayMode,
+      canManageCommentVisibility,
+      commentSettings.collaboratorVisibility,
+      commentsSidebarToggleLabel,
+      handleMoreAction,
+      headerMorePending,
+      isConnected,
+      noteInfoDisplay?.noteTitle,
+      noteInfoDisplay.commentsEnabled,
+      noteInfoDisplay.ownerId,
+      onRefreshNoteInfo,
+      resourceId,
+      setAiDiffDisplayMode,
+      setCollaboratorVisibility,
+      showAiDiffDisplayModeSwitch,
+      showFullPageSpin,
+      threadsSidebarCollapsed,
+      toggleNoteCommentsSidebar,
+    ]
   );
   useWorkspaceLayoutConfig(workspaceFrameConfig);
 
   return (
     <>
-      <div className={styles.mainScroll} ref={mainScrollRef}>
+      <div className={styles.mainScroll}>
         <div className={styles.contentRow}>
-          {isOutlineOpen ? (
-            <aside className={styles.outlineAside} aria-label="文档目录侧栏">
-              <div className={styles.outlineTopRow}>
-                <span className={styles.outlineTopTitle}>目录</span>
-                <button
-                  type="button"
-                  className={styles.outlineToggleBtn}
-                  aria-label="收起目录"
-                  onClick={() => setIsOutlineOpen(false)}
-                >
-                  <ChevronsLeft size={20} />
-                </button>
-              </div>
-              <div className={styles.outlineScrollArea}>
-                <NoteOutline
-                  items={outlineItems}
-                  activeId={activeHeadingId}
-                  titleResourceId={resourceId}
-                  titleFallback={noteInfoDisplay?.noteTitle}
-                  onNavigate={(id) => {
-                    if (id === NOTE_OUTLINE_TITLE_ID) {
-                      const anchor = titleAnchorRef.current;
-                      if (anchor) {
-                        anchor.scrollIntoView({ block: 'start', behavior: 'smooth' });
-                        window.requestAnimationFrame(() => {
-                          const editable = anchor.querySelector(
-                            '[contenteditable="true"]'
-                          ) as HTMLElement | null;
-                          editable?.focus();
-                        });
-                      } else {
-                        mainScrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
-                      }
-                      return;
-                    }
-                    bodyEditorRef.current?.navigateToBlock(id);
-                  }}
-                />
-              </div>
-            </aside>
-          ) : (
-            <div className={styles.outlineCollapsedCol} aria-label="展开目录">
-              <button
-                type="button"
-                className={styles.outlineToggleBtn}
-                aria-label="展开目录"
-                onClick={() => setIsOutlineOpen(true)}
-              >
-                <Menu size={20} />
-              </button>
-            </div>
-          )}
-
-          <div className={styles.mainCol}>
-            <div className={styles.root}>
-              {isDisconnected ? (
-                <Alert className={styles.wsAlert} status="warning">
-                  <Alert.Indicator />
-                  <Alert.Content>
-                    <Alert.Description>
-                      网络连接已断开，当前可继续本地编辑；网络恢复后会自动同步到云端。
-                    </Alert.Description>
-                  </Alert.Content>
-                  <div className={styles.wsAlertAction}>
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      isDisabled={isReconnectLoading}
-                      onPress={handleReconnect}
-                    >
-                      重试
-                    </Button>
-                  </div>
-                </Alert>
-              ) : null}
-              <div ref={titleAnchorRef}>
-                <NoteTitle
-                  key={`${resourceId}-${noteInfoDisplay?.noteTitle ?? ''}-${noteInfoDisplay.canCollaborativeEdit}`}
-                  ref={titleEditorRef}
-                  id={resourceId}
-                  initialContent={noteInfoDisplay?.noteTitle}
-                  readOnly={isTitleReadOnly}
-                  focusOnMount={isConnected && !isTitleReadOnly}
-                  onEnterKey={focusBody}
-                />
-              </div>
-              <div className={styles.infoRow}>
-                <NoteInfoBar noteInfoDisplay={noteInfoDisplay} />
-                <div className={styles.infoRowMore}>
-                  <Dropdown>
-                    <Dropdown.Trigger>
+          <div className={styles.mainPanel}>
+            <div className={styles.mainCol} ref={mainScrollRef}>
+              <div className={styles.root}>
+                {isDisconnected ? (
+                  <Alert className={styles.wsAlert} status="warning">
+                    <Alert.Indicator />
+                    <Alert.Content>
+                      <Alert.Description>
+                        网络连接已断开，当前可继续本地编辑；网络恢复后会自动同步到云端。
+                      </Alert.Description>
+                    </Alert.Content>
+                    <div className={styles.wsAlertAction}>
                       <Button
                         variant="secondary"
                         size="sm"
-                        isPending={headerMorePending}
-                        isDisabled={showFullPageSpin}
-                        aria-label="更多"
+                        isDisabled={isReconnectLoading}
+                        onPress={handleReconnect}
                       >
-                        更多
+                        重试
                       </Button>
-                    </Dropdown.Trigger>
-                    <Dropdown.Popover placement="bottom end">
-                      <Dropdown.Menu aria-label="笔记更多操作" onAction={handleMoreAction}>
-                        {canManageNotePermission ? (
-                          <Dropdown.Item id="permission" textValue="权限配置">
-                            权限配置
-                          </Dropdown.Item>
-                        ) : null}
-                        <Dropdown.Item id="print-pdf" textValue="打印为pdf">
-                          打印为pdf
-                        </Dropdown.Item>
-                        <Dropdown.Item id="download-md" textValue="下载为md">
-                          下载为md
-                        </Dropdown.Item>
-                      </Dropdown.Menu>
-                    </Dropdown.Popover>
-                  </Dropdown>
-                </div>
-              </div>
-              {showAiDiffDisplayModeSwitch ? (
-                <div className={styles.noteToolbar}>
-                  <SegmentedTabs<AiDiffDisplayMode>
-                    ariaLabel="AI 差异展示模式"
-                    selectedKey={aiDiffDisplayMode}
-                    className={styles.aiDiffDisplayModeSwitch}
-                    items={AI_DIFF_DISPLAY_OPTIONS.map((option) => ({
-                      key: option.value,
-                      label: option.label,
-                      disabled: showFullPageSpin,
-                    }))}
-                    onSelectionChange={setAiDiffDisplayMode}
+                    </div>
+                  </Alert>
+                ) : null}
+                <div ref={titleAnchorRef}>
+                  <NoteTitle
+                    key={`${resourceId}-${noteInfoDisplay?.noteTitle ?? ''}-${noteInfoDisplay.canCollaborativeEdit}`}
+                    ref={titleEditorRef}
+                    id={resourceId}
+                    initialContent={noteInfoDisplay?.noteTitle}
+                    readOnly={isTitleReadOnly}
+                    focusOnMount={isConnected && !isTitleReadOnly}
+                    onEnterKey={focusBody}
                   />
                 </div>
-              ) : null}
-              <div className={styles.body}>
-                <CustomBlockNote
-                  key={`${resourceId}-${noteInfoDisplay.canCollaborativeEdit}`}
-                  ref={bodyEditorRef}
-                  resourceId={resourceId}
-                  doc={doc}
-                  provider={provider}
-                  aiDiffDisplayMode={aiDiffDisplayMode}
-                  readOnly={isEditorReadOnly}
-                  blockLocalDocWrites={blockLocalDocWrites}
-                  onOutlineChange={setOutlineItems}
-                  onActiveHeadingChange={setActiveHeadingId}
-                  onAiDiffPresenceChange={handleAiDiffPresenceChange}
-                />
+                <NoteInfoBar noteInfoDisplay={noteInfoDisplay} />
+                <div className={styles.body}>
+                  {canRenderBodyEditor ? (
+                    <CustomBlockNote
+                      key={`${resourceId}-${noteInfoDisplay.canCollaborativeEdit}-${collaborationUser.name}-${collaborationUser.color}`}
+                      ref={bodyEditorRef}
+                      resourceId={resourceId}
+                      doc={doc}
+                      provider={provider}
+                      collaborationUser={collaborationUser}
+                      aiDiffDisplayMode={aiDiffDisplayMode}
+                      readOnly={isEditorReadOnly}
+                      blockLocalDocWrites={blockLocalDocWrites}
+                      onOutlineChange={setOutlineItems}
+                      onActiveHeadingChange={setActiveHeadingId}
+                      onAiDiffPresenceChange={handleAiDiffPresenceChange}
+                      commentsEnabled={noteInfoDisplay.commentsEnabled}
+                      commentsUiEnabled={isConnected && noteInfoDisplay.commentsEnabled}
+                      commentsAuthorizable={noteInfoDisplay.canEditComments}
+                      commentsWritable={isConnected && noteInfoDisplay.canEditComments}
+                      commentUserId={currentUser?.id}
+                      commentUsersById={noteInfoDisplay.authorsById}
+                      isCommentVisibilityPrivileged={canManageCommentVisibility}
+                      collaboratorVisibility={commentSettings.collaboratorVisibility}
+                      commentsSidebarCollapsed={threadsSidebarCollapsed}
+                      commentsSidebarWidth={commentsSidebarWidth}
+                      onCommentsSidebarWidthChange={(width) =>
+                        setNoteCommentsSidebarWidth(resourceId, width)
+                      }
+                      commentsSidebarPortalContainer={commentsSidebarHostElement}
+                      commentHistoryOpen={isCommentHistoryOpen}
+                      onCommentHistoryOpenChange={setIsCommentHistoryOpen}
+                    />
+                  ) : null}
+                </div>
+                <ResourceActionFooter resourceId={resourceId} onRateSuccess={onRefreshNoteInfo} />
               </div>
             </div>
           </div>
+
+          {isOutlineOpen ? (
+            <div className={styles.outlinePanel}>
+              <aside className={styles.outlineAside} aria-label="文档目录侧栏">
+                <div className={styles.outlineTopRow}>
+                  <span className={styles.outlineTopTitle}>目录</span>
+                  <button
+                    type="button"
+                    className={styles.outlineToggleBtn}
+                    aria-label="收起目录"
+                    onClick={() => setIsOutlineOpen(false)}
+                  >
+                    <ChevronsRight size={20} />
+                  </button>
+                </div>
+                <div className={styles.outlineScrollArea}>
+                  <NoteOutline
+                    items={outlineItems}
+                    activeId={activeHeadingId}
+                    titleResourceId={resourceId}
+                    titleFallback={noteInfoDisplay?.noteTitle}
+                    onNavigate={(id) => {
+                      if (id === NOTE_OUTLINE_TITLE_ID) {
+                        const anchor = titleAnchorRef.current;
+                        if (anchor) {
+                          anchor.scrollIntoView({ block: 'start', behavior: 'smooth' });
+                          window.requestAnimationFrame(() => {
+                            const editable = anchor.querySelector(
+                              '[contenteditable="true"]'
+                            ) as HTMLElement | null;
+                            editable?.focus();
+                          });
+                        } else {
+                          mainScrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+                        }
+                        return;
+                      }
+                      bodyEditorRef.current?.navigateToBlock(id);
+                    }}
+                  />
+                </div>
+              </aside>
+            </div>
+          ) : (
+            <div className={styles.outlineCollapsedPanel}>
+              <div className={styles.outlineCollapsedCol} aria-label="展开目录">
+                <Tooltip>
+                  <Tooltip.Trigger>
+                    <button
+                      type="button"
+                      className={styles.outlineToggleBtn}
+                      aria-label="展开目录"
+                      onClick={() => setIsOutlineOpen(true)}
+                    >
+                      <Menu size={20} />
+                    </button>
+                  </Tooltip.Trigger>
+                  <Tooltip.Content>展开目录</Tooltip.Content>
+                </Tooltip>
+              </div>
+            </div>
+          )}
+
+          {noteInfoDisplay.commentsEnabled && !threadsSidebarCollapsed ? (
+            <div
+              ref={setCommentsSidebarHostElement}
+              className={styles.commentsSidebarPanel}
+              style={
+                {
+                  ['--comments-sidebar-width' as string]: `${commentsSidebarWidth}px`,
+                } as CSSProperties
+              }
+            />
+          ) : null}
         </div>
       </div>
 
@@ -391,16 +574,10 @@ function NoteViewConnected({
         <div className={styles.middleOverlay} aria-busy="true" aria-live="polite">
           <div className={styles.middleOverlayLoading}>
             <Spin size="large" />
-            <span className={styles.middleOverlayText}>正在连接笔记服务...</span>
+            <span className={styles.middleOverlayText}>{middleOverlayText}</span>
           </div>
         </div>
       ) : null}
-      <NotePermissionModal
-        isOpen={isPermissionModalOpen}
-        resourceId={resourceId}
-        onOpenChange={setIsPermissionModalOpen}
-        onSuccess={onRefreshNoteInfo}
-      />
     </>
   );
 }
@@ -498,6 +675,7 @@ function NoteView({ resourceId = '' }: NoteViewProps = {}) {
 
   return (
     <NoteViewConnected
+      key={resourceId}
       resourceId={resourceId}
       noteInfoDisplay={noteInfoDisplay}
       onRefreshNoteInfo={refreshNoteInfo}
