@@ -162,8 +162,8 @@ function toDriveActionTarget(node: DriveNode): DriveActionTarget | null {
   return isDriveActionTarget(node) ? node : null;
 }
 
-function isDriveMoveSource(row: DriveTableRow): boolean {
-  return isDriveActionTarget(row.node) && !isDriveSystemFolderNode(row.node);
+function isDriveDragSource(row: DriveTableRow): boolean {
+  return isDriveActionTarget(row.node);
 }
 
 function isDriveMoveTarget(row: DriveTableRow): boolean {
@@ -404,36 +404,18 @@ const TableDrive = forwardRef<TableDriveHandle, TableDriveProps>(function TableD
       sourceRowIds: string[];
       targetFolderNodeId: string;
     }) => {
-      const sourceRows = sourceRowIds
-        .map((rowId) => rowMap.get(rowId))
-        .filter((row): row is DriveTableRow => {
-          if (!row) return false;
-          return isDriveMoveSource(row);
-        });
-
-      if (sourceRows.length === 0) {
-        return 0;
-      }
-
-      const movableRows = sourceRows.filter(
-        (row) => row.id !== targetFolderNodeId && row.node.parentId !== targetFolderNodeId
-      );
-      if (movableRows.length === 0) {
-        return 0;
-      }
-      await driveService.moveNodesToFolder({
-        nodeIds: movableRows.map((row) => row.node.id),
+      return driveService.moveNodesToFolder({
+        nodeIds: sourceRowIds,
         targetFolderNodeId,
         groupId: finalGroupId,
       });
-
-      return movableRows.length;
     },
     {
       manual: true,
       onSuccess: (movedCount) => {
-        updateDraggingRowKeys(new Set());
-        setActiveDragRowId(null);
+        if (movedCount === 0) {
+          return;
+        }
         handleClearSelection();
         refreshDrive();
         if (movedCount > 1) {
@@ -443,8 +425,6 @@ const TableDrive = forwardRef<TableDriveHandle, TableDriveProps>(function TableD
         }
       },
       onError: (error) => {
-        updateDraggingRowKeys(new Set());
-        setActiveDragRowId(null);
         toast.danger(parseErrorMessage(error));
       },
     }
@@ -664,62 +644,16 @@ const TableDrive = forwardRef<TableDriveHandle, TableDriveProps>(function TableD
 
   const resolveDragSourceIds = useCallback(
     (row: DriveTableRow): string[] => {
-      if (!isDriveMoveSource(row)) {
+      if (!isDriveDragSource(row)) {
         return [];
       }
       const sourceIds = selectedRowKeys.has(row.id) ? [...selectedRowKeys] : [row.id];
-      const movableIds = sourceIds.filter((rowId) => {
+      return sourceIds.filter((rowId) => {
         const sourceRow = rowMap.get(rowId);
-        return sourceRow ? isDriveMoveSource(sourceRow) : false;
-      });
-      const movableIdSet = new Set(movableIds);
-
-      return movableIds.filter((rowId) => {
-        let parentId = rowMap.get(rowId)?.node.parentId;
-        while (parentId) {
-          if (movableIdSet.has(parentId)) {
-            return false;
-          }
-          parentId = rowMap.get(parentId)?.node.parentId ?? null;
-        }
-        return true;
+        return sourceRow ? isDriveDragSource(sourceRow) : false;
       });
     },
     [rowMap, selectedRowKeys]
-  );
-
-  const canDropRowsToTargetNode = useCallback(
-    (sourceRowIds: string[], targetNode: DriveNode): boolean => {
-      if (sourceRowIds.length === 0 || !isDriveMoveTargetNode(targetNode)) {
-        return false;
-      }
-      if (sourceRowIds.includes(targetNode.id)) {
-        return false;
-      }
-      let ancestorId = targetNode.parentId;
-      while (ancestorId) {
-        if (sourceRowIds.includes(ancestorId)) {
-          return false;
-        }
-        ancestorId = driveNodeMap.get(ancestorId)?.parentId ?? null;
-      }
-      const sourceRows = sourceRowIds
-        .map((rowId) => rowMap.get(rowId))
-        .filter((row): row is DriveTableRow => Boolean(row));
-      if (sourceRows.length !== sourceRowIds.length) {
-        return false;
-      }
-      return sourceRows.every((sourceRow) => {
-        return sourceRow.node.scope.rootId === targetNode.scope.rootId;
-      });
-    },
-    [driveNodeMap, rowMap]
-  );
-
-  const canDropRowsToTarget = useCallback(
-    (sourceRowIds: string[], targetRow: DriveTableRow): boolean =>
-      canDropRowsToTargetNode(sourceRowIds, targetRow.node),
-    [canDropRowsToTargetNode]
   );
 
   const handleDragStart = useCallback(
@@ -754,23 +688,17 @@ const TableDrive = forwardRef<TableDriveHandle, TableDriveProps>(function TableD
       const targetNode =
         typeof targetNodeId === 'string' ? driveNodeMap.get(targetNodeId) : undefined;
 
-      if (targetNode && canDropRowsToTargetNode(sourceRowIds, targetNode)) {
-        const changedSourceRowIds = sourceRowIds.filter((rowId) => {
-          const sourceRow = rowMap.get(rowId);
-          return sourceRow ? sourceRow.node.parentId !== targetNode.id : false;
+      if (targetNode && sourceRowIds.length > 0) {
+        runMoveRowsByDrag({
+          sourceRowIds,
+          targetFolderNodeId: targetNode.id,
         });
-        if (changedSourceRowIds.length > 0) {
-          runMoveRowsByDrag({
-            sourceRowIds: changedSourceRowIds,
-            targetFolderNodeId: targetNode.id,
-          });
-        }
       }
 
       updateDraggingRowKeys(new Set());
       setActiveDragRowId(null);
     },
-    [canDropRowsToTargetNode, driveNodeMap, rowMap, runMoveRowsByDrag, updateDraggingRowKeys]
+    [driveNodeMap, runMoveRowsByDrag, updateDraggingRowKeys]
   );
 
   const handleDragCancel = useCallback(() => {
@@ -787,13 +715,13 @@ const TableDrive = forwardRef<TableDriveHandle, TableDriveProps>(function TableD
       return (
         <DriveDroppableBreadcrumb
           targetNode={targetNode}
-          disabled={movingByDrag || !canDropRowsToTargetNode([...draggingRowKeys], targetNode)}
+          disabled={movingByDrag || draggingRowKeys.size === 0}
         >
           {content}
         </DriveDroppableBreadcrumb>
       );
     },
-    [canDropRowsToTargetNode, draggingRowKeys, driveNodeMap, movingByDrag]
+    [draggingRowKeys.size, driveNodeMap, movingByDrag]
   );
 
   const breadcrumb = useMemo(
@@ -811,13 +739,13 @@ const TableDrive = forwardRef<TableDriveHandle, TableDriveProps>(function TableD
     (content: ReactNode, row: DriveTableRow) => (
       <DriveDndNameContent
         row={row}
-        draggableDisabled={movingByDrag || !isDriveMoveSource(row)}
-        droppableDisabled={movingByDrag || !canDropRowsToTarget([...draggingRowKeys], row)}
+        draggableDisabled={movingByDrag || !isDriveDragSource(row)}
+        droppableDisabled={movingByDrag || draggingRowKeys.size === 0 || !isDriveMoveTarget(row)}
       >
         {content}
       </DriveDndNameContent>
     ),
-    [canDropRowsToTarget, draggingRowKeys, movingByDrag]
+    [draggingRowKeys.size, movingByDrag]
   );
 
   return (
