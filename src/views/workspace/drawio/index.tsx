@@ -1,3 +1,4 @@
+import { DRAWIO_EMBED_URL } from '@/apis/clientUrls';
 import { ResultState, Spin } from '@/components/Feedback';
 import { FormField, Input } from '@/components/Input';
 import AppDisplayDialog from '@/components/Overlay/AppDisplayDialog';
@@ -20,9 +21,6 @@ import { useCallback, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import ResourcePermissionControl from '../_components/ResourcePermissionControl';
 import styles from './style.module.less';
-
-const DRAWIO_EMBED_URL =
-  import.meta.env.VITE_DRAWIO_EMBED_URL?.trim() || 'https://embed.diagrams.net/';
 
 const EMPTY_DRAWIO_XML = `<mxfile host="WisePen"><diagram name="Page-1"><mxGraphModel dx="1422" dy="794" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0"><root><mxCell id="0"/><mxCell id="1" parent="0"/></root></mxGraphModel></diagram></mxfile>`;
 const WISEPEN_COLOR_SCHEME_STORAGE_KEY = 'heroui-color-scheme';
@@ -96,7 +94,7 @@ function hasAction(actions: unknown, action: string): boolean {
 }
 
 function readDrawioEmbedUrl(): URL {
-  return new URL(DRAWIO_EMBED_URL, window.location.origin);
+  return new URL(DRAWIO_EMBED_URL);
 }
 
 function readDrawioEmbedOrigin(): string {

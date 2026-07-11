@@ -1,6 +1,6 @@
 // axios request 封装
 import type { ApiErrorBody } from '@/apis/api.type';
-import { getApiBaseUrl } from '@/apis/apiEndpoint';
+import { API_BASE_URL } from '@/apis/clientUrls';
 import { applyXDeveloperHeader } from '@/apis/developmentTraffic';
 import { clearAllServiceCaches } from '@/domains/_shared/cacheRegistry';
 import { clearAllZustandStores } from '@/store';
@@ -92,7 +92,7 @@ const mapAxiosErrorToWisePenError = (error: AxiosError): WisePenError => {
 };
 
 Axios.interceptors.request.use((config) => {
-  config.baseURL = getApiBaseUrl();
+  config.baseURL = API_BASE_URL;
   config.headers = AxiosHeaders.from(config.headers);
   applyXDeveloperHeader(new Headers()).forEach((value, key) => {
     config.headers.set(key, value);

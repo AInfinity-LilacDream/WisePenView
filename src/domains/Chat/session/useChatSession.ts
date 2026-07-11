@@ -1,4 +1,4 @@
-import { getApiBaseUrl } from '@/apis/apiEndpoint';
+import { buildApiUrl } from '@/apis/clientUrls';
 import { applyXDeveloperHeader } from '@/apis/developmentTraffic';
 import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport } from 'ai';
@@ -6,7 +6,7 @@ import { useCallback } from 'react';
 import { mapChatCompletionRequest } from '../mapper/chatCompletion.mapper';
 import type { SendSessionMessageOptions, UseChatSessionOptions } from './index.type';
 
-const getCompletionsApi = (): string => `${getApiBaseUrl()}chat/completions`;
+const CHAT_COMPLETIONS_API = buildApiUrl('/chat/completions');
 
 function buildChatFetchInit(init?: RequestInit): RequestInit {
   return {
@@ -25,7 +25,7 @@ function buildChatFetchInit(init?: RequestInit): RequestInit {
 export const useChatSession = ({ sessionId, model }: UseChatSessionOptions) => {
   const chat = useChat({
     transport: new DefaultChatTransport({
-      api: getCompletionsApi(),
+      api: CHAT_COMPLETIONS_API,
       fetch: (input, init) => fetch(input, buildChatFetchInit(init)),
     }),
   });

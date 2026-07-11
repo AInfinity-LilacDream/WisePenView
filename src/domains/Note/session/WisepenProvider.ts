@@ -1,3 +1,4 @@
+import { NOTE_COLLABORATION_WS_URL } from '@/apis/clientUrls';
 import { getXDeveloper } from '@/apis/developmentTraffic';
 import { WebsocketProvider } from 'y-websocket';
 import type * as Y from 'yjs';
@@ -14,7 +15,7 @@ export class WisepenProvider extends WebsocketProvider {
     // connect: false 让调用方先注册 status/sync 监听再 connect()，防止极快连上时错过 connected 事件
     const actorUserId = options?.actorUserId?.trim();
     const xDeveloper = getXDeveloper();
-    super(import.meta.env.VITE_NOTE_COLLAB_WS_URL, 'ws', doc, {
+    super(NOTE_COLLABORATION_WS_URL, 'ws', doc, {
       connect: options?.connect ?? true,
       disableBc: true,
       params: {
