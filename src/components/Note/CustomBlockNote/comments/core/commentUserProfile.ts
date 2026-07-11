@@ -1,5 +1,3 @@
-import { getApiBaseURL } from '@/apis/apiServerAddr';
-
 type CommentUserProfile = {
   username: string;
   avatarUrl: string;
@@ -11,14 +9,7 @@ type CommentUserDisplay = {
 };
 
 export function normalizeAvatarUrl(avatar?: string): string {
-  const value = avatar?.trim();
-  if (!value) {
-    return '';
-  }
-  if (/^(?:https?:)?\/\//i.test(value) || /^(?:data|blob):/i.test(value)) {
-    return value;
-  }
-  return new URL(value, getApiBaseURL()).toString();
+  return avatar?.trim() || '';
 }
 
 const PLACEHOLDER_COMMENT_USER_ID = 'local' as const;

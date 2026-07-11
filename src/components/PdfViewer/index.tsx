@@ -1,4 +1,4 @@
-import { getApiBaseURL } from '@/apis/apiServerAddr';
+import { buildApiUrl } from '@/apis/clientUrls';
 import { PDFViewer as EmbedPdfViewer } from '@embedpdf/react-pdf-viewer';
 import { useMount, useUnmount } from 'ahooks';
 import clsx from 'clsx';
@@ -65,7 +65,7 @@ function PdfViewer({ resourceId, config, className, onLoadError }: PdfViewerProp
       }
       const documentId = `doc-${resourceId}`;
       await docManager?.openDocumentUrl({
-        url: `${getApiBaseURL()}document/getDocPreview?resourceId=${resourceId}`,
+        url: buildApiUrl(`/document/getDocPreview?resourceId=${encodeURIComponent(resourceId)}`),
         documentId,
         mode: 'range-request',
         requestOptions: {

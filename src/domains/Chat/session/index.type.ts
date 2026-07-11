@@ -9,6 +9,8 @@ export interface ChatWorkspaceContext {
   resourceType: string;
   viewer?: string;
   editorType?: string;
+  noteSyncStatus?: 'connecting' | 'connected' | 'disconnected';
+  getNoteClientStateVector?: () => string | undefined;
 }
 
 interface ChatSelectedResourceContext {
@@ -43,6 +45,8 @@ export interface SendSessionMessageOptions {
   model?: string;
   providerId?: string;
   runtimeOptions?: Record<string, unknown>;
+  selectedText?: string;
+  selectedNoteScope?: SelectedNoteScope;
   workspaceContext?: ChatWorkspaceContext;
   selectedResources?: ChatSelectedResourceContext[];
   uploadedAttachments?: ChatUploadedAttachmentContext[];
@@ -56,3 +60,4 @@ export interface UseChatSessionOptions {
   sessionId: string;
   model?: string;
 }
+import type { SelectedNoteScope } from '@/domains/Note/entity/noteSelection';

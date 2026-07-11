@@ -1,11 +1,7 @@
 // axios request 封装
 import type { ApiErrorBody } from '@/apis/api.type';
-import {
-  awaitAddrReady,
-  getApiBaseURL,
-  initApiServerAddrRuntime,
-  notifyAddrFailure,
-} from '@/apis/apiServerAddr';
+import { API_BASE_URL } from '@/apis/clientUrls';
+import { applyXDeveloperHeader } from '@/apis/developmentTraffic';
 import { clearAllServiceCaches } from '@/domains/_shared/cacheRegistry';
 import { clearAllZustandStores } from '@/store';
 import { emitAuthChangeEvent } from '@/utils/auth/authChange';
@@ -13,15 +9,10 @@ import { WisePenError } from '@/utils/error';
 import { FRONTEND_NETWORK_ERROR } from '@/utils/error/codes';
 import axios, { AxiosHeaders, type AxiosError } from 'axios';
 
-// 初始化 API 服务器地址运行时
-initApiServerAddrRuntime();
-
 const Axios = axios.create({
   timeout: 5000,
   withCredentials: true,
 });
-
-const devDeveloperHeader = import.meta.env.DEV ? import.meta.env.VITE_X_DEVELOPER.trim() : '';
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null;
@@ -100,24 +91,18 @@ const mapAxiosErrorToWisePenError = (error: AxiosError): WisePenError => {
   });
 };
 
-// baseURL 逐次读最新值；addr 可疑不可达时短暂等探测收敛，避免排队请求继续撞旧地址。
-Axios.interceptors.request.use(async (config) => {
-  await awaitAddrReady();
-  config.baseURL = getApiBaseURL();
-  if (devDeveloperHeader) {
-    config.headers = AxiosHeaders.from(config.headers);
-    config.headers.set('x-developer', devDeveloperHeader);
-  }
+Axios.interceptors.request.use((config) => {
+  config.baseURL = API_BASE_URL;
+  config.headers = AxiosHeaders.from(config.headers);
+  applyXDeveloperHeader(new Headers()).forEach((value, key) => {
+    config.headers.set(key, value);
+  });
   return config;
 });
 
 Axios.interceptors.response.use(
   (response) => response.data,
   (error: AxiosError) => {
-    // 无 response：传输层失败，反馈给 ping 模块立即重探测，绕过默认轮询节奏
-    if (!error.response) {
-      notifyAddrFailure();
-    }
     if (error.response?.status === 401) {
       clearAllServiceCaches();
       clearAllZustandStores();

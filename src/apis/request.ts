@@ -3,8 +3,6 @@ import type { ApiResponse } from '@/apis/api.type';
 import { WisePenError } from '@/utils/error';
 import type { AxiosRequestConfig } from 'axios';
 
-export type { ApiResponse } from '@/apis/api.type';
-
 function checkResponse(res: ApiResponse<unknown>): void {
   if (res.code !== 200) {
     throw new WisePenError({

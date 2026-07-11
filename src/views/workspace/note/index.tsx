@@ -19,7 +19,12 @@ import {
 } from '@/components/Note/NoteOutline/index.type';
 import { useNoteService, useResourceService, useUserService } from '@/domains';
 import type { AiDiffDisplayMode, NoteInfoDisplayData } from '@/domains/Note';
-import { AI_DIFF_DISPLAY_MODE, AI_DIFF_DISPLAY_MODE_LABELS, useNoteSession } from '@/domains/Note';
+import {
+  AI_DIFF_DISPLAY_MODE,
+  AI_DIFF_DISPLAY_MODE_LABELS,
+  encodeNoteClientStateVector,
+  useNoteSession,
+} from '@/domains/Note';
 import { RESOURCE_TYPE, isCommentVisibilityPrivileged } from '@/domains/Resource';
 import type { User } from '@/domains/User';
 import { useResourceDisplayName } from '@/hooks/useResourceDisplayName';
@@ -145,7 +150,6 @@ function NoteViewConnected({
     resourceId,
     hasAiDiffContent: false,
   });
-  const { status, doc, provider, reconnect, idbSynced } = useNoteSession(resourceId);
   const resourceService = useResourceService();
   const userService = useUserService();
   const { data: currentUser, error: currentUserError } = useRequest(
@@ -154,6 +158,12 @@ function NoteViewConnected({
       ready: Boolean(resourceId),
     }
   );
+  const shouldWaitCurrentUser = !currentUser && !currentUserError;
+  const { status, doc, provider, reconnect, idbSynced } = useNoteSession(resourceId, {
+    actorUserId: currentUser?.id,
+    enabled: !shouldWaitCurrentUser,
+  });
+  const getNoteClientStateVector = useCallback(() => encodeNoteClientStateVector(doc), [doc]);
   const threadsSidebarCollapsed = useNoteCommentsSidebarStore(
     (state) => state.collapsedByResourceId[resourceId] ?? false
   );
@@ -175,7 +185,6 @@ function NoteViewConnected({
   const isEditorReadOnly = status === 'connecting' || !noteInfoDisplay.canCollaborativeEdit;
   const isTitleReadOnly = !noteInfoDisplay.canCollaborativeEdit;
   const blockLocalDocWrites = isConnected && !noteInfoDisplay.canCollaborativeEdit;
-  const shouldWaitCurrentUser = !currentUser && !currentUserError;
   const showFullPageSpin = (status === 'connecting' && !idbSynced) || shouldWaitCurrentUser;
   const middleOverlayText =
     status === 'connecting' && !idbSynced ? '正在连接笔记服务...' : '正在加载用户信息...';
@@ -283,6 +292,13 @@ function NoteViewConnected({
   const workspaceFrameConfig = useMemo(
     () => ({
       className: styles.pageWrap,
+      chatContext: {
+        resourceId,
+        resourceType: WORKSPACE_RESOURCE_TYPE.NOTE,
+        editorType: 'note',
+        noteSyncStatus: status,
+        getNoteClientStateVector,
+      },
       header: {
         inlineTitle: (
           <NoteToolbarTitle resourceId={resourceId} fallbackTitle={noteInfoDisplay?.noteTitle} />
@@ -397,6 +413,7 @@ function NoteViewConnected({
       canManageCommentVisibility,
       commentSettings.collaboratorVisibility,
       commentsSidebarToggleLabel,
+      getNoteClientStateVector,
       handleMoreAction,
       headerMorePending,
       isConnected,
@@ -409,6 +426,7 @@ function NoteViewConnected({
       setCollaboratorVisibility,
       showAiDiffDisplayModeSwitch,
       showFullPageSpin,
+      status,
       threadsSidebarCollapsed,
       toggleNoteCommentsSidebar,
     ]

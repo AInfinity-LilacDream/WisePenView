@@ -208,12 +208,62 @@ type RawOp = {
   readonly ni: number;
 };
 
+export const AI_DIFF_MAX_LCS_CELLS = 250_000;
+
+function buildLinearFallbackSegments(
+  oldTokens: readonly AiEditToken[],
+  newTokens: readonly AiEditToken[]
+): DiffSegment[] {
+  let prefixLength = 0;
+  while (
+    prefixLength < oldTokens.length &&
+    prefixLength < newTokens.length &&
+    oldTokens[prefixLength].value === newTokens[prefixLength].value
+  ) {
+    prefixLength += 1;
+  }
+
+  let suffixLength = 0;
+  while (
+    suffixLength < oldTokens.length - prefixLength &&
+    suffixLength < newTokens.length - prefixLength &&
+    oldTokens[oldTokens.length - 1 - suffixLength].value ===
+      newTokens[newTokens.length - 1 - suffixLength].value
+  ) {
+    suffixLength += 1;
+  }
+
+  const segments: DiffSegment[] = [];
+  if (prefixLength > 0) {
+    segments.push({
+      kind: 'equal',
+      oldTokens: oldTokens.slice(0, prefixLength),
+      newTokens: newTokens.slice(0, prefixLength),
+    });
+  }
+  const oldMiddle = oldTokens.slice(prefixLength, oldTokens.length - suffixLength);
+  const newMiddle = newTokens.slice(prefixLength, newTokens.length - suffixLength);
+  if (oldMiddle.length > 0) segments.push({ kind: 'delete', oldTokens: oldMiddle });
+  if (newMiddle.length > 0) segments.push({ kind: 'insert', newTokens: newMiddle });
+  if (suffixLength > 0) {
+    segments.push({
+      kind: 'equal',
+      oldTokens: oldTokens.slice(oldTokens.length - suffixLength),
+      newTokens: newTokens.slice(newTokens.length - suffixLength),
+    });
+  }
+  return segments;
+}
+
 export function diffTokens(
   oldTokens: readonly AiEditToken[],
   newTokens: readonly AiEditToken[]
 ): DiffSegment[] {
   const n = oldTokens.length;
   const m = newTokens.length;
+  if (n * m > AI_DIFF_MAX_LCS_CELLS) {
+    return buildLinearFallbackSegments(oldTokens, newTokens);
+  }
   const a = oldTokens.map((t) => t.value);
   const b = newTokens.map((t) => t.value);
   const dp: number[][] = Array.from({ length: n + 1 }, () => Array(m + 1).fill(0));
@@ -449,6 +499,62 @@ export type BuildAiEditJsonUnitsOptions = {
   readonly mergeOptions?: MergeDiffHunksOptions;
 };
 
+function buildHighChangeRatioUnits(origin: string, replace: string): AiEditJsonUnit[] {
+  const oldTokens = tokenizeForAiEdit(origin);
+  const newTokens = tokenizeForAiEdit(replace);
+  let prefixLength = 0;
+  while (
+    prefixLength < oldTokens.length &&
+    prefixLength < newTokens.length &&
+    oldTokens[prefixLength].value === newTokens[prefixLength].value
+  ) {
+    prefixLength += 1;
+  }
+  let suffixLength = 0;
+  while (
+    suffixLength < oldTokens.length - prefixLength &&
+    suffixLength < newTokens.length - prefixLength &&
+    oldTokens[oldTokens.length - 1 - suffixLength].value ===
+      newTokens[newTokens.length - 1 - suffixLength].value
+  ) {
+    suffixLength += 1;
+  }
+
+  const oldPrefixEnd = prefixLength > 0 ? oldTokens[prefixLength - 1].end : 0;
+  const newPrefixEnd = prefixLength > 0 ? newTokens[prefixLength - 1].end : 0;
+  const oldSuffixStart =
+    suffixLength > 0 ? oldTokens[oldTokens.length - suffixLength].start : origin.length;
+  const newSuffixStart =
+    suffixLength > 0 ? newTokens[newTokens.length - suffixLength].start : replace.length;
+  const units: AiEditJsonUnit[] = [];
+  const prefix = origin.slice(0, oldPrefixEnd);
+  const suffix = origin.slice(oldSuffixStart);
+  if (prefix) units.push({ type: 'plain', text: prefix });
+  const originMiddle = origin.slice(oldPrefixEnd, oldSuffixStart);
+  const replaceMiddle = replace.slice(newPrefixEnd, newSuffixStart);
+  if (originMiddle || replaceMiddle) {
+    units.push({ type: 'edit', origin: originMiddle, replace: replaceMiddle });
+  }
+  if (suffix) units.push({ type: 'plain', text: suffix });
+  return units.length > 0 ? units : [{ type: 'edit', origin, replace }];
+}
+
+function ensureConservation(
+  units: AiEditJsonUnit[],
+  origin: string,
+  replace: string
+): AiEditJsonUnit[] {
+  const restoredOrigin = units
+    .map((unit) => (unit.type === 'plain' ? unit.text : unit.origin))
+    .join('');
+  const restoredReplace = units
+    .map((unit) => (unit.type === 'plain' ? unit.text : unit.replace))
+    .join('');
+  return restoredOrigin === origin && restoredReplace === replace
+    ? units
+    : [{ type: 'edit', origin, replace }];
+}
+
 export function buildAiEditJsonUnits(
   origin: string,
   replace: string,
@@ -458,7 +564,7 @@ export function buildAiEditJsonUnits(
   const { merged, highChangeRatio } = computeDiffData(origin, replace, mergeOpt);
 
   if (highChangeRatio) {
-    return [{ type: 'edit', origin, replace }];
+    return ensureConservation(buildHighChangeRatioUnits(origin, replace), origin, replace);
   }
 
   const units: AiEditJsonUnit[] = [];
@@ -482,5 +588,5 @@ export function buildAiEditJsonUnits(
       .join('');
     units.push({ type: 'edit', origin: originText, replace: replaceText });
   }
-  return units;
+  return ensureConservation(units, origin, replace);
 }

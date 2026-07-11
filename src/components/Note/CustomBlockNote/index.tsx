@@ -1,10 +1,15 @@
 import { useChatService, useImageService, useResourceService } from '@/domains';
 import { assertImageProxyUploadLimit } from '@/domains/Image';
-import type { AiDiffDisplayMode } from '@/domains/Note';
+import type { AiDiffDisplayMode, SelectedNoteScope } from '@/domains/Note';
 import { AI_DIFF_DISPLAY_MODE } from '@/domains/Note';
 import type { User } from '@/domains/User';
-import { useChatPanelStore, useCurrentChatSessionStore, useNewNoteStore } from '@/store';
-import { useNoteSelectionStore } from '@/store/useNoteSelectionStore';
+import {
+  useChatPanelStore,
+  useCurrentChatSessionStore,
+  useNewNoteStore,
+  useNoteEditorSelectionStore,
+  usePendingChatContextStore,
+} from '@/store';
 import {
   createClientError,
   FRONTEND_CLIENT_ERROR,
@@ -85,6 +90,7 @@ import {
   type AiDiffActionMode,
 } from './plugins/AIDiffPlugin/patch';
 import aiDiffStyles from './plugins/AIDiffPlugin/style.module.less';
+import { useAiDiffNormalization } from './plugins/AIDiffPlugin/useAiDiffNormalization';
 import { printNotePdfViaBrowser, waitForEditorPaint } from './plugins/noteBrowserPrint';
 import styles from './style.module.less';
 
@@ -110,6 +116,15 @@ function sanitizeMarkdownFileName(fileName?: string): string {
 
 function blockHasNestedChildren(block: { children?: readonly unknown[] }): boolean {
   return Array.isArray(block.children) && block.children.length > 0;
+}
+
+function buildSelectedNoteScope(editor: CustomBlockNoteEditor): SelectedNoteScope | null {
+  const selectedBlocks = editor.getSelection()?.blocks;
+  if (!selectedBlocks?.length) return null;
+  const startBlockId = selectedBlocks[0]?.id;
+  const endBlockId = selectedBlocks[selectedBlocks.length - 1]?.id;
+  if (!startBlockId || !endBlockId) return null;
+  return { type: 'blockRange', startBlockId, endBlockId };
 }
 
 function CustomBlockNoteEditor({
@@ -147,10 +162,12 @@ function CustomBlockNoteEditor({
   const currentSessionId = useCurrentChatSessionStore((state) => state.currentSessionId);
   const setCurrentSession = useCurrentChatSessionStore((state) => state.setCurrentSession);
   const setChatPanelCollapsed = useChatPanelStore((state) => state.setChatPanelCollapsed);
-  const setSelectedText = useNoteSelectionStore((state) => state.setSelectedText);
-  const selectedText = useNoteSelectionStore(
-    (state) => state.selectedTextByResourceId[resourceId] ?? ''
+  const setCurrentSelection = useNoteEditorSelectionStore((state) => state.setCurrentSelection);
+  const clearCurrentSelection = useNoteEditorSelectionStore((state) => state.clearCurrentSelection);
+  const currentSelection = useNoteEditorSelectionStore(
+    (state) => state.currentSelectionByResourceId[resourceId]
   );
+  const setPendingChatContext = usePendingChatContextStore((state) => state.setPendingChatContext);
   const newNoteBodyOnChangeCleanupRef = useRef<(() => void) | null>(null);
   const flatBlocksRef = useRef<{ id: string; type: string }[]>([]);
   const [pmWriteGuardReady, setPmWriteGuardReady] = useState(false);
@@ -371,6 +388,14 @@ function CustomBlockNoteEditor({
     onAiDiffPresenceChange?.(nextHasAiDiffContent);
   }, [editor, onAiDiffPresenceChange]);
 
+  useAiDiffNormalization({
+    doc,
+    noteFragment,
+    editor,
+    provider,
+    onNormalized: syncAiDiffPresence,
+  });
+
   useMount(() => {
     syncAiDiffPresence();
   });
@@ -422,6 +447,7 @@ function CustomBlockNoteEditor({
       newNoteBodyOnChangeCleanupRef.current();
       newNoteBodyOnChangeCleanupRef.current = null;
     }
+    clearCurrentSelection(resourceId);
   });
 
   const {
@@ -569,7 +595,7 @@ function CustomBlockNoteEditor({
   const onKeyDownCapture = useNoteCaptureKeyEvent({ provider, undoManager, readOnly });
 
   const handleSelectionChange = () => {
-    setSelectedText(resourceId, editor.getSelectedText());
+    setCurrentSelection(resourceId, editor.getSelectedText(), buildSelectedNoteScope(editor));
     if (commentsEnabled && commentsWritable && isCommentableSelection(editor)) {
       const selection = capturePendingCommentSelection(editor);
       if (selection) {
@@ -596,8 +622,8 @@ function CustomBlockNoteEditor({
 
   const handleAskAi = async () => {
     let targetSessionId = currentSessionId;
-    const selectedSnapshot = editor.getSelectedText().trim() || selectedText.trim();
-    if (!selectedSnapshot) {
+    const selectedText = editor.getSelectedText().trim() || currentSelection?.text.trim() || '';
+    if (!selectedText) {
       toast.info('请先选中一段文字再问 AI');
       return;
     }
@@ -614,7 +640,10 @@ function CustomBlockNoteEditor({
       }
     }
 
-    useNoteSelectionStore.getState().setSelectedText(targetSessionId, selectedSnapshot);
+    setPendingChatContext(targetSessionId, {
+      text: selectedText,
+      scope: buildSelectedNoteScope(editor) ?? currentSelection?.scope ?? null,
+    });
     setChatPanelCollapsed(false);
   };
 

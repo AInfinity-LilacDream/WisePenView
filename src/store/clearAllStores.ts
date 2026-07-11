@@ -12,8 +12,9 @@ import { clearDriveUploadQueueStore } from './useDriveUploadQueueStore';
 import { clearNewChatSessionStore } from './useNewChatSessionStore';
 import { clearNewNoteStore } from './useNewNoteStore';
 import { clearNoteCommentsSidebarStore } from './useNoteCommentsSidebarStore';
-import { clearNoteSelectionStore } from './useNoteSelectionStore';
+import { clearNoteEditorSelectionStore } from './useNoteEditorSelectionStore';
 import { clearPdfPreviewProgressStore } from './usePdfPreviewProgressStore';
+import { clearPendingChatContextStore } from './usePendingChatContextStore';
 import { clearResourceDisplayNameStore } from './useResourceDisplayNameStore';
 import { clearSystemLayoutStore } from './useSystemLayoutStore';
 import { clearTrashTagStore } from './useTrashTagStore';
@@ -37,5 +38,6 @@ export function clearAllZustandStores(): void {
   clearChatCapabilityStore();
   clearSystemLayoutStore();
   clearNoteCommentsSidebarStore();
-  clearNoteSelectionStore();
+  clearNoteEditorSelectionStore();
+  clearPendingChatContextStore();
 }

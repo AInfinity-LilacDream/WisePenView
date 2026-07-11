@@ -1,89 +1,20 @@
-import { getApiBaseURL } from '@/apis/apiServerAddr';
+import { buildApiUrl } from '@/apis/clientUrls';
+import { applyXDeveloperHeader } from '@/apis/developmentTraffic';
 import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport } from 'ai';
 import { useCallback } from 'react';
-import type {
-  ChatCompletionRequest,
-  ChatFrontendState,
-  SendSessionMessageOptions,
-  UseChatSessionOptions,
-} from './index.type';
+import { mapChatCompletionRequest } from '../mapper/chatCompletion.mapper';
+import type { SendSessionMessageOptions, UseChatSessionOptions } from './index.type';
 
-// 调用时求值：apiServerAddr 会在生产环境随网络变化运行时切换，固化会失效
-const getCompletionsApi = (): string => `${getApiBaseURL()}chat/completions`;
+const CHAT_COMPLETIONS_API = buildApiUrl('/chat/completions');
 
-const buildFrontendStates = ({
-  workspaceContext,
-  selectedResources,
-}: SendSessionMessageOptions): ChatFrontendState[] => {
-  const frontendStates: ChatFrontendState[] = [];
-
-  if (workspaceContext?.resourceId) {
-    frontendStates.push({
-      key: 'workspace_open_resource',
-      value: {
-        resource_id: workspaceContext.resourceId,
-        resource_type: workspaceContext.resourceType,
-        viewer: workspaceContext.viewer,
-        editor_type: workspaceContext.editorType ?? workspaceContext.viewer,
-      },
-    });
-  }
-
-  const activeResources = (selectedResources ?? []).filter((resource) => resource.enabled);
-  if (activeResources.length > 0) {
-    frontendStates.push({
-      key: 'selected_resources',
-      value: activeResources.map((resource) => ({
-        resource_id: resource.resourceId,
-        resource_name: resource.resourceName,
-        resource_type: resource.resourceType,
-      })),
-    });
-  }
-
-  return frontendStates;
-};
-
-const buildRequestBody = ({
-  defaultSessionId,
-  defaultModel,
-  query,
-  options,
-}: {
-  defaultSessionId: string;
-  defaultModel?: string;
-  query: string;
-  options?: SendSessionMessageOptions;
-}): ChatCompletionRequest => {
-  const resolvedModel = options?.model ?? defaultModel;
-  const frontendStates = buildFrontendStates(options ?? {});
-  const attachmentIds = (options?.uploadedAttachments ?? [])
-    .filter((attachment) => attachment.enabled)
-    .map((attachment) => attachment.attachmentId);
-
+function buildChatFetchInit(init?: RequestInit): RequestInit {
   return {
-    session_id: options?.sessionId ?? defaultSessionId,
-    query,
-    ...(resolvedModel ? { model: resolvedModel } : {}),
-    ...(options?.providerId ? { provider_id: options.providerId } : {}),
-    ...(options?.runtimeOptions ? { runtime_options: options.runtimeOptions } : {}),
-    ...(frontendStates.length > 0 ? { frontend_states: frontendStates } : {}),
-    ...(attachmentIds.length > 0 ? { user_defined_attachment_ids: attachmentIds } : {}),
-    ...(options?.allowToolNames && options.allowToolNames.length > 0
-      ? { user_defined_allow_tool_names: options.allowToolNames }
-      : {}),
-    ...(options?.denyToolNames && options.denyToolNames.length > 0
-      ? { user_defined_deny_tool_names: options.denyToolNames }
-      : {}),
-    ...(options?.onDemandSkillIds && options.onDemandSkillIds.length > 0
-      ? { user_defined_on_demand_skill_ids: options.onDemandSkillIds }
-      : {}),
-    ...(options?.forceEnabledSkillIds && options.forceEnabledSkillIds.length > 0
-      ? { user_defined_force_enabled_skill_ids: options.forceEnabledSkillIds }
-      : {}),
+    ...init,
+    credentials: 'include',
+    headers: applyXDeveloperHeader(new Headers(init?.headers)),
   };
-};
+}
 
 /**
  * 对 useChat 的薄封装：
@@ -94,18 +25,14 @@ const buildRequestBody = ({
 export const useChatSession = ({ sessionId, model }: UseChatSessionOptions) => {
   const chat = useChat({
     transport: new DefaultChatTransport({
-      api: getCompletionsApi(),
-      fetch: (input, init) =>
-        fetch(input, {
-          ...init,
-          credentials: 'include',
-        }),
+      api: CHAT_COMPLETIONS_API,
+      fetch: (input, init) => fetch(input, buildChatFetchInit(init)),
     }),
   });
 
   const sendSessionMessage = useCallback(
     async (query: string, options?: SendSessionMessageOptions) => {
-      const requestBody = buildRequestBody({
+      const requestBody = mapChatCompletionRequest({
         defaultSessionId: sessionId,
         defaultModel: model,
         query,

@@ -5,6 +5,8 @@ export interface ChatInputProps {
   onSend: (text: string, opts?: SendOptions) => void | Promise<void>;
   getUploadSessionId: () => Promise<string>;
   sending: boolean;
+  selectedContextText?: string;
+  onClearSelectedContext?: () => void;
 }
 
 export interface LocalAttachmentPayload {

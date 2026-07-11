@@ -1,4 +1,4 @@
-import { getApiServerAddr } from '@/apis/apiServerAddr';
+import { ONLYOFFICE_DOCUMENT_SERVER_PUBLIC_URL } from '@/apis/clientUrls';
 import { ResultState, Spin } from '@/components/Feedback';
 import EntryIcon from '@/components/Icons/EntryIcon';
 import { useDocumentService, useResourceService } from '@/domains';
@@ -45,44 +45,17 @@ interface OfficeViewProps {
   resourceId?: string;
 }
 
-function normalizeServerUrl(url?: string | null): string | undefined {
-  const trimmed = url?.trim();
-  if (!trimmed) return undefined;
-  return trimmed.replace(/\/+$/, '');
-}
-
-function readCurrentServerOnlyOfficeUrl(): string {
-  let hostname = window.location.hostname;
-
-  try {
-    const apiServerAddr = getApiServerAddr();
-    if (apiServerAddr?.trim()) {
-      const apiServerUrl = new URL(
-        apiServerAddr.includes('://')
-          ? apiServerAddr
-          : `${window.location.protocol}//${apiServerAddr}`
-      );
-      hostname = apiServerUrl.hostname;
-    }
-  } catch {
-    // API 地址无法解析时回退到当前页面所在服务器。
-  }
-
-  const host = hostname.includes(':') ? `[${hostname}]` : hostname;
-  return `${window.location.protocol}//${host}:8101`;
-}
-
 function resolveDocumentServerUrl(response: OnlyOfficeEditorConfigResponse): string {
-  return (
-    normalizeServerUrl(response.documentServerPublicUrl) ??
-    normalizeServerUrl(import.meta.env.VITE_ONLYOFFICE_DOCUMENT_SERVER_PUBLIC_URL) ??
-    readCurrentServerOnlyOfficeUrl()
-  );
+  const documentServerUrl =
+    response.documentServerPublicUrl || ONLYOFFICE_DOCUMENT_SERVER_PUBLIC_URL;
+  if (!documentServerUrl) {
+    throw new Error('ONLYOFFICE Document Server 地址未配置');
+  }
+  return documentServerUrl;
 }
 
 function assertDocumentServerUrl(documentServerUrl: string): void {
-  const normalizedUrl = normalizeServerUrl(documentServerUrl);
-  if (!normalizedUrl) {
+  if (!documentServerUrl.trim()) {
     throw new Error('ONLYOFFICE Document Server 地址为空');
   }
 }

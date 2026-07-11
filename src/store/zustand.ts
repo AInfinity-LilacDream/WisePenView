@@ -28,10 +28,18 @@ export {
 export { clearNewChatSessionStore, useNewChatSessionStore } from './useNewChatSessionStore';
 export { clearNewNoteStore, useNewNoteStore } from './useNewNoteStore';
 export {
+  clearNoteEditorSelectionStore,
+  useNoteEditorSelectionStore,
+} from './useNoteEditorSelectionStore';
+export {
   clearPdfPreviewProgressStore,
   usePdfPreviewProgressStore,
   type PdfPreviewProgress,
 } from './usePdfPreviewProgressStore';
+export {
+  clearPendingChatContextStore,
+  usePendingChatContextStore,
+} from './usePendingChatContextStore';
 export {
   clearResourceDisplayNameStore,
   useResourceDisplayNameStore,

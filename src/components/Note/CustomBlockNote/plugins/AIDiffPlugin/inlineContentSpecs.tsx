@@ -47,6 +47,7 @@ const aiLinkAddConfig = {
   propSchema: {
     text: { default: '' },
     href: { default: '' },
+    content: { default: '' },
     key: { default: '' },
   },
   content: 'none',
@@ -57,6 +58,7 @@ const aiLinkDeleteConfig = {
   propSchema: {
     text: { default: '' },
     href: { default: '' },
+    content: { default: '' },
     key: { default: '' },
   },
   content: 'none',

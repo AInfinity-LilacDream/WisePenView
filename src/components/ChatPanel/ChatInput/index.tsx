@@ -1,4 +1,5 @@
 import { TextArea } from '@heroui/react';
+import { X } from 'lucide-react';
 import AttachmentStrip from './AttachmentStrip';
 import { ChatInputFileProvider } from './ChatInputFileContext';
 import { ChatInputStoreProvider } from './ChatInputStoreProvider';
@@ -10,7 +11,12 @@ import OtherSkillModal from './OtherSkillModal';
 import styles from './style.module.less';
 import { useChatInputController } from './useChatInputController';
 
-function ChatInputContent({ onSend, sending }: ChatInputProps) {
+function ChatInputContent({
+  onSend,
+  sending,
+  selectedContextText,
+  onClearSelectedContext,
+}: ChatInputProps) {
   const { attachmentStripProps, containerProps, dropOverlayProps, textAreaProps, toolbarProps } =
     useChatInputController({
       onSend,
@@ -23,6 +29,20 @@ function ChatInputContent({ onSend, sending }: ChatInputProps) {
         <DropOverlay {...dropOverlayProps} />
 
         <AttachmentStrip {...attachmentStripProps} />
+
+        {selectedContextText ? (
+          <div className={styles.selectedContext}>
+            <span className={styles.selectedContextText}>{selectedContextText}</span>
+            <button
+              type="button"
+              className={styles.selectedContextClear}
+              aria-label="移除选中文本上下文"
+              onClick={onClearSelectedContext}
+            >
+              <X size={14} />
+            </button>
+          </div>
+        ) : null}
 
         <TextArea
           {...textAreaProps}

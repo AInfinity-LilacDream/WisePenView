@@ -32,6 +32,40 @@
   padding-block: 2px;
 }
 
+.selectedContext {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  min-width: 0;
+  padding: var(--space-xs) var(--space-sm);
+  border-left: 2px solid var(--accent);
+  background: var(--surface-secondary);
+}
+
+.selectedContextText {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--muted);
+  font-size: var(--font-size-sm);
+}
+
+.selectedContextClear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 24px;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+
 .chatAttachment {
   max-width: min(260px, 78vw);
 }

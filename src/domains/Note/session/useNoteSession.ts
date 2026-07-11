@@ -55,10 +55,16 @@ class NoteIndexeddbSyncObserver {
   };
 }
 
-export function useNoteSession(resourceId: string) {
+export interface UseNoteSessionOptions {
+  actorUserId?: string;
+  enabled?: boolean;
+}
+
+export function useNoteSession(resourceId: string, options: UseNoteSessionOptions = {}) {
+  const { actorUserId, enabled = true } = options;
   const session = useMemo(() => {
     const doc = new Y.Doc();
-    const provider = new WisepenProvider(resourceId, doc, { connect: false });
+    const provider = new WisepenProvider(resourceId, doc, { connect: false, actorUserId });
     const idb = new IndexeddbPersistence(noteYjsIdbRoomName(resourceId), doc);
     const observer = new NoteStatusObserver();
     const idbObserver = new NoteIndexeddbSyncObserver(idb);
@@ -79,7 +85,7 @@ export function useNoteSession(resourceId: string) {
     };
 
     return { doc, provider, observer, idbObserver, reconnect, destroy };
-  }, [resourceId]);
+  }, [actorUserId, resourceId]);
 
   const status = useSyncExternalStore(session.observer.subscribe, session.observer.getSnapshot);
   const idbSynced = useSyncExternalStore(
@@ -93,11 +99,13 @@ export function useNoteSession(resourceId: string) {
    * cleanup：断开 provider、销毁 IndexedDB persistence、observer 与 Y.Doc，避免同一笔记残留连接。
    */
   useEffectForce(() => {
-    session.provider.connect();
+    if (enabled) {
+      session.provider.connect();
+    }
     return () => {
       session.destroy();
     };
-  }, [session]);
+  }, [enabled, session]);
 
   return {
     status,

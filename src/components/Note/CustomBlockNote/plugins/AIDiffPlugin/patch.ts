@@ -2,7 +2,7 @@ import {
   buildAiEditJsonUnits,
   DEFAULT_MERGE_DIFF_HUNKS_OPTIONS,
   tokenizeForAiEdit,
-} from './wordDiff';
+} from './wordDiff.ts';
 
 type TextInlineContent = { type: 'text'; text: string; styles?: Record<string, string> };
 type AiDiffInlineContent = {
@@ -13,11 +13,11 @@ type AiAddInlineContent = { type: 'ai-add'; props: { text: string; key: string }
 type AiDeleteInlineContent = { type: 'ai-delete'; props: { text: string; key: string } };
 type AiLinkAddInlineContent = {
   type: 'ai-link-add';
-  props: { text: string; href: string; key: string };
+  props: { text: string; href: string; content: string; key: string };
 };
 type AiLinkDeleteInlineContent = {
   type: 'ai-link-delete';
-  props: { text: string; href: string; key: string };
+  props: { text: string; href: string; content: string; key: string };
 };
 type LinkInlineContent = {
   type: 'link';
@@ -52,9 +52,7 @@ export type AiDiffActionMode = 'accept' | 'discard';
 type JsonValue = null | boolean | number | string | JsonValue[] | { [k: string]: JsonValue };
 
 type AiDiffPropsActionResult =
-  | { kind: 'none' }
-  | { kind: 'remove' }
-  | { kind: 'update'; props: Record<string, unknown> };
+  { kind: 'none' } | { kind: 'remove' } | { kind: 'update'; props: Record<string, unknown> };
 
 const SUPPORTED_SCHEMA_BLOCK_TYPES = new Set([
   'audio',
@@ -102,11 +100,15 @@ function toTextInline(text: string): TextInlineContent {
   return { type: 'text', text, styles: {} };
 }
 
-function toLinkInline(text: string, href: string): LinkInlineContent {
+function toLinkInline(
+  text: string,
+  href: string,
+  content: TextInlineContent[] = text ? [toTextInline(text)] : []
+): LinkInlineContent {
   return {
     type: 'link',
     href,
-    content: text ? [toTextInline(text)] : [],
+    content,
   };
 }
 
@@ -378,10 +380,15 @@ function mergeAiEditChains(
       const next = nodes[cursor + 1];
       if (shared.type !== 'text' || next.type !== 'AI-Edit') break;
       if (!canMergeAcrossSharedText(shared.text, mergedVisibleLen)) break;
-      oldText += shared.text + (toStringOrEmpty(next.old_text) || toStringOrEmpty(next.text_old));
-      newText += shared.text + (toStringOrEmpty(next.new_text) || toStringOrEmpty(next.text_new));
-      mergedVisibleLen = Math.max(oldText.length, newText.length);
-      if (mergedVisibleLen > mergeOptions.maxMergedLength) break;
+      const nextOldText =
+        oldText + shared.text + (toStringOrEmpty(next.old_text) || toStringOrEmpty(next.text_old));
+      const nextNewText =
+        newText + shared.text + (toStringOrEmpty(next.new_text) || toStringOrEmpty(next.text_new));
+      const nextVisibleLen = Math.max(nextOldText.length, nextNewText.length);
+      if (nextVisibleLen > mergeOptions.maxMergedLength) break;
+      oldText = nextOldText;
+      newText = nextNewText;
+      mergedVisibleLen = nextVisibleLen;
       cursor += 2;
     }
 
@@ -454,8 +461,29 @@ function aiGeneratedMathProps(
 }
 
 export function aiGeneratedBlocksToBlockNoteBlocks(input: unknown): unknown[] | null {
-  const seed = `ai-${Date.now().toString(36)}`;
+  const seed = `ai-${hashStableValue(input)}`;
   return aiGeneratedBlocksToBlockNoteBlocksInner(input, seed, 'root');
+}
+
+function hashStableValue(value: unknown): string {
+  const serialized = stableStringify(value);
+  let hash = 0x811c9dc5;
+  for (let index = 0; index < serialized.length; index += 1) {
+    hash ^= serialized.charCodeAt(index);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return (hash >>> 0).toString(36);
+}
+
+function stableStringify(value: unknown): string {
+  if (value === null || typeof value !== 'object') return JSON.stringify(value) ?? '';
+  if (Array.isArray(value)) return `[${value.map(stableStringify).join(',')}]`;
+  const entries = Object.entries(value as Record<string, unknown>).sort(([a], [b]) =>
+    a.localeCompare(b)
+  );
+  return `{${entries
+    .map(([key, item]) => `${JSON.stringify(key)}:${stableStringify(item)}`)
+    .join(',')}}`;
 }
 
 function aiGeneratedBlocksToBlockNoteBlocksInner(
@@ -501,6 +529,7 @@ function aiGeneratedBlocksToBlockNoteBlocksInner(
     if (!mappedProps) return null;
 
     out.push({
+      id,
       type,
       props: mappedProps,
       ...(isContentNoneBlock ? {} : { content: mappedContent }),
@@ -615,14 +644,14 @@ function mapAiGeneratedInlineLink(
   if (aiDiffType === 'create') {
     return {
       type: 'ai-link-add',
-      props: { text, href, key },
+      props: { text, href, content: JSON.stringify(mapAiGeneratedLinkContent(item.content)), key },
     };
   }
 
   if (aiDiffType === 'delete') {
     return {
       type: 'ai-link-delete',
-      props: { text, href, key },
+      props: { text, href, content: JSON.stringify(mapAiGeneratedLinkContent(item.content)), key },
     };
   }
 
@@ -691,6 +720,16 @@ function getText(v: unknown): string {
   return typeof t === 'string' ? t : '';
 }
 
+function getLinkContentFromProps(props: Record<string, unknown>): TextInlineContent[] {
+  const serialized = getPropString(props, 'content');
+  if (!serialized) return [];
+  try {
+    return mapAiGeneratedLinkContent(JSON.parse(serialized));
+  } catch {
+    return [];
+  }
+}
+
 export function applyAiDiffActionForKey(
   content: unknown,
   key: string,
@@ -702,16 +741,31 @@ export function applyAiDiffActionForKey(
   const nodes = content as unknown[];
   const changeIndex = nodes.findIndex((n) => {
     const t = getType(n);
+    const props = getProps(n);
+    if (t === 'inlineMath') {
+      return (
+        props?.['aiDiffKey'] === key && AI_DIFF_PROP_TYPES.has(getPropString(props, 'aiDiffType'))
+      );
+    }
     if (!t || !AI_DIFF_INLINE_TYPES.has(t)) {
       return false;
     }
-    const props = getProps(n);
     return typeof props?.['key'] === 'string' && props['key'] === key;
   });
   if (changeIndex < 0) return null;
 
   const changeType = getType(nodes[changeIndex]);
   const changeProps = getProps(nodes[changeIndex]) ?? {};
+  if (changeType === 'inlineMath') {
+    const action = applyAiDiffActionToProps(changeProps, mode);
+    if (action.kind === 'none') return null;
+    const out = nodes.flatMap((node, index) => {
+      if (index !== changeIndex) return [node as NoteInlineContentLike];
+      if (action.kind === 'remove') return [];
+      return [{ ...(node as Record<string, unknown>), props: action.props }];
+    });
+    return mergeAdjacentText(out);
+  }
   const replacement = changeType ? resolveAiInlineReplacement(changeType, changeProps, mode) : [];
 
   const out: NoteInlineContentLike[] = [];
@@ -747,11 +801,15 @@ function resolveAiInlineReplacement(
   } else if (changeType === 'ai-link-add') {
     const text = getPropString(changeProps, 'text');
     const href = getPropString(changeProps, 'href');
-    if (mode === 'accept' && (text || href)) replacement.push(toLinkInline(text, href));
+    if (mode === 'accept' && (text || href)) {
+      replacement.push(toLinkInline(text, href, getLinkContentFromProps(changeProps)));
+    }
   } else if (changeType === 'ai-link-delete') {
     const text = getPropString(changeProps, 'text');
     const href = getPropString(changeProps, 'href');
-    if (mode === 'discard' && (text || href)) replacement.push(toLinkInline(text, href));
+    if (mode === 'discard' && (text || href)) {
+      replacement.push(toLinkInline(text, href, getLinkContentFromProps(changeProps)));
+    }
   }
 
   return replacement;

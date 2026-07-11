@@ -1,4 +1,5 @@
-import type { AiGeneratedBlock } from './patch';
+import type { AiGeneratedBlock } from './patch.ts';
+import { AI_DIFF_MAX_LCS_CELLS } from './wordDiff.ts';
 
 type JsonValue = null | boolean | number | string | JsonValue[] | { [k: string]: JsonValue };
 
@@ -497,6 +498,63 @@ function mapInlineContentByIndex(
   return out;
 }
 
+function mapInlineSegment(
+  oldSegment: readonly unknown[],
+  newSegment: readonly unknown[]
+): AiGeneratedInlineContent[] {
+  if (oldSegment.length === 0) return mapCreateContent(newSegment);
+  if (newSegment.length === 0) return mapDeleteContent(oldSegment);
+  return (
+    mapInlineContentByIndex(oldSegment, newSegment) ?? [
+      ...mapDeleteContent(oldSegment),
+      ...mapCreateContent(newSegment),
+    ]
+  );
+}
+
+function mapInlineContentByLcs(
+  oldContent: readonly unknown[],
+  newContent: readonly unknown[]
+): AiGeneratedInlineContent[] | null {
+  if (!hasAtomInline(oldContent) && !hasAtomInline(newContent)) return null;
+  const rows = oldContent.length;
+  const cols = newContent.length;
+  if (rows * cols > AI_DIFF_MAX_LCS_CELLS) return null;
+
+  const table: number[][] = Array.from({ length: rows + 1 }, () => Array(cols + 1).fill(0));
+  for (let i = rows - 1; i >= 0; i -= 1) {
+    for (let j = cols - 1; j >= 0; j -= 1) {
+      table[i][j] = areInlineItemsEqual(oldContent[i], newContent[j])
+        ? table[i + 1][j + 1] + 1
+        : Math.max(table[i + 1][j], table[i][j + 1]);
+    }
+  }
+
+  const out: AiGeneratedInlineContent[] = [];
+  let oldStart = 0;
+  let newStart = 0;
+  let i = 0;
+  let j = 0;
+  while (i < rows && j < cols) {
+    if (areInlineItemsEqual(oldContent[i], newContent[j])) {
+      out.push(
+        ...mapInlineSegment(oldContent.slice(oldStart, i), newContent.slice(newStart, j)),
+        ...mapPlainInline(newContent[j])
+      );
+      i += 1;
+      j += 1;
+      oldStart = i;
+      newStart = j;
+    } else if (table[i + 1][j] >= table[i][j + 1]) {
+      i += 1;
+    } else {
+      j += 1;
+    }
+  }
+  out.push(...mapInlineSegment(oldContent.slice(oldStart), newContent.slice(newStart)));
+  return out;
+}
+
 function transformInlineContent(oldRaw: unknown, newRaw: unknown): AiGeneratedInlineContent[] {
   const oldContent = asInlineArray(oldRaw);
   const newContent = asInlineArray(newRaw);
@@ -519,25 +577,44 @@ function transformInlineContent(oldRaw: unknown, newRaw: unknown): AiGeneratedIn
     return toEditText(extractVisibleText(oldContent), extractVisibleText(newContent));
   }
 
+  const bySequence = mapInlineContentByLcs(oldContent, newContent);
+  if (bySequence) return bySequence;
+
   const byIndex = mapInlineContentByIndex(oldContent, newContent);
   if (byIndex) return byIndex;
+
+  if (hasAtomInline(oldContent) || hasAtomInline(newContent)) {
+    return mapInlineSegment(oldContent, newContent);
+  }
 
   return toEditText(extractVisibleText(oldContent), extractVisibleText(newContent));
 }
 
-function extractMathExpression(content: unknown, props: Record<string, JsonValue>): string {
+function extractMathExpression(
+  content: unknown,
+  props: Record<string, JsonValue>,
+  fallbackToProps = true
+): string {
   const contentText = extractVisibleText(asInlineArray(content));
-  return contentText || toStringOrEmpty(props['expression']);
+  return contentText || (fallbackToProps ? toStringOrEmpty(props['expression']) : '');
+}
+
+function hasMathAiDiffProps(props: Record<string, JsonValue>): boolean {
+  return ['edit', 'create', 'delete'].includes(toStringOrEmpty(props['aiDiffType']));
 }
 
 function transformMathBlockContent(params: {
   props: Record<string, JsonValue>;
   oldContent: unknown;
   newContent: unknown;
+  hasExplicitAiContent: boolean;
 }): { props: Record<string, JsonValue>; content: AiGeneratedInlineContent[] } {
-  const { props, oldContent, newContent } = params;
+  const { props, oldContent, newContent, hasExplicitAiContent } = params;
+  if (hasMathAiDiffProps(props)) {
+    return { props: { ...props, expression: toStringOrEmpty(props['expression']) }, content: [] };
+  }
   const origin = extractMathExpression(oldContent, props);
-  const replace = extractMathExpression(newContent, props);
+  const replace = extractMathExpression(newContent, props, !hasExplicitAiContent);
 
   if (origin === replace) {
     return {
@@ -583,6 +660,7 @@ function transformProtoBlock(
   const props = toJsonProps(raw['props']);
   const oldContent = raw['content'];
   const newContent = getAiContent(raw);
+  const hasExplicitAiContent = Object.prototype.hasOwnProperty.call(raw, 'AI-content');
   const rawChildren = Array.isArray(raw['children']) ? raw['children'] : [];
   const children: AiGeneratedBlock[] = [];
 
@@ -595,7 +673,12 @@ function transformProtoBlock(
   }
 
   if (type === 'math') {
-    const math = transformMathBlockContent({ props, oldContent, newContent });
+    const math = transformMathBlockContent({
+      props,
+      oldContent,
+      newContent,
+      hasExplicitAiContent,
+    });
     return {
       ok: true,
       block: {
