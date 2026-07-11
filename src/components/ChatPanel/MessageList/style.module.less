@@ -10,20 +10,9 @@
   display: flex;
   flex-direction: column;
   padding: 0 var(--space-lg) var(--space-lg);
-  scroll-behavior: smooth;
-
-  &::-webkit-scrollbar {
-    width: 6px;
-  }
-  &::-webkit-scrollbar-thumb {
-    background-color: var(--surface-tertiary);
-    border-radius: 3px;
-  }
 }
 
 .content {
-  flex: 1 0 auto;
-  height: 100%;
   gap: 0;
   padding-top: 0;
 }
@@ -72,7 +61,7 @@
     }
 
     .promptSection {
-      margin-top: 24px;
+      margin-top: var(--space-lg);
     }
 
     .promptChips {
@@ -84,12 +73,12 @@
     .promptChip {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      padding: 8px 16px;
+      gap: var(--space-2xs);
+      padding: var(--space-xs) var(--space-md);
       border: 1px solid var(--border-light);
-      border-radius: 20px;
+      border-radius: var(--radius-full, 999px);
       background: var(--surface);
-      font-size: 13px;
+      font-size: var(--font-size-sm);
       color: var(--muted);
       cursor: pointer;
       transition: border-color 0.2s, color 0.2s;
@@ -109,16 +98,12 @@
 .loadMoreWrapper {
   display: flex;
   justify-content: center;
+  width: 100%;
   margin-bottom: var(--space-sm);
 }
 
-.historyLoadingText {
-  color: var(--muted);
-  padding: 2px 10px;
-  font-size: var(--font-size-sm);
-}
-
 .scrollToBottomButton {
+  z-index: 2;
   box-shadow: var(--card-shadow);
 }
 
