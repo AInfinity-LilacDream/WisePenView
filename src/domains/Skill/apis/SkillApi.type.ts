@@ -1,4 +1,4 @@
-import type { ResourceItem } from '@/domains/Resource';
+import type { ResourceItemApiResponse } from '@/domains/Resource/apis/ResourceApi.type';
 
 export const AssetResourceTypeEnum = {
   MD: 'MD',
@@ -26,7 +26,7 @@ export interface SkillAssetApiInfo {
 }
 
 export interface SkillInfoApiResponse {
-  resourceInfo?: ResourceItem;
+  resourceInfo?: ResourceItemApiResponse;
   skillInfo?: {
     name?: string;
     description?: string;

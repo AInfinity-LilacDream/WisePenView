@@ -78,24 +78,24 @@ export interface JoinGroupApiRequest {
   inviteCode: string;
 }
 
-export interface GroupMemberBaseInfo {
+export interface GroupMemberBaseInfoApiResponse {
   nickname: string;
   realName: string | null;
   avatar: string | null;
   identityType: UserIdentityTypeApiValue;
 }
 
-export interface GroupMemberRawResponse {
+export interface GroupMemberApiResponse {
   role: GroupRoleApiValue;
   joinTime: string;
   tokenLimit: number;
   tokenUsed: number;
   groupId: string | number;
   memberId: string | number;
-  memberInfo: GroupMemberBaseInfo;
+  memberInfo: GroupMemberBaseInfoApiResponse;
 }
 
-export type FetchGroupMembersApiResponse = PageR<GroupMemberRawResponse>;
+export type FetchGroupMembersApiResponse = PageR<GroupMemberApiResponse>;
 
 export interface ListMemberApiRequest {
   groupId: string | number;
@@ -131,7 +131,7 @@ export interface GetMyGroupMemberInfoApiResponse {
   tokenLimit?: number;
   groupId?: string | number;
   memberId?: string | number;
-  memberInfo?: GroupMemberBaseInfo;
+  memberInfo?: GroupMemberBaseInfoApiResponse;
 }
 
 export interface ChangeTokenLimitApiRequest {

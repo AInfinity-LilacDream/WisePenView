@@ -3,7 +3,28 @@
  */
 
 import type { ResourceItem } from '@/domains/Resource';
-import type { TagTreeNode } from '@/domains/Tag';
+import type { AccessControlScope, TagResourceAction, TagVisibilityModeString } from '../enum';
+
+/** Mapper 归一化后的标签树节点。 */
+export interface TagTreeNode {
+  tagId: string;
+  tagName: string;
+  groupId?: string;
+  tagDesc?: string;
+  tagIcon?: string;
+  tagColor?: string;
+  tagCreator?: string;
+  isPath?: boolean;
+  visibilityMode?: TagVisibilityModeString;
+  taggedResourceAclGrantScope?: AccessControlScope;
+  taggedResourceAclGrantSpecifiedUsers?: string[];
+  taggedResourceGrantedActionsMask?: number;
+  tagMountPermissionScope?: AccessControlScope;
+  tagMountSpecifiedUsers?: string[];
+  grantedActions?: TagResourceAction[];
+  parentId?: string;
+  children?: TagTreeNode[];
+}
 
 /** 按标签获取的子标签+文件列表响应（getResByTag 用） */
 export interface TagListByTagResponse {

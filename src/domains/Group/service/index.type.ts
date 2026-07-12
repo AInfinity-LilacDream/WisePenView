@@ -33,32 +33,6 @@ export interface GetGroupWalletInfoRequest {
   groupId: string;
 }
 
-export interface GroupMemberBaseInfo {
-  nickname: string;
-  realName: string | null;
-  avatar: string | null;
-  identityType: string | number | null;
-}
-
-export interface GroupMemberRawResponse {
-  role: string | number | null;
-  joinTime: string;
-  tokenLimit: number;
-  tokenUsed: number;
-  groupId: string | number;
-  memberId: string | number;
-  memberInfo: GroupMemberBaseInfo;
-}
-
-/** GET /group/member/list 的 data */
-export interface FetchGroupMembersResponse {
-  total: string;
-  page: number;
-  size: number;
-  totalPage: number;
-  list: GroupMemberRawResponse[];
-}
-
 /** 获取小组列表请求参数 */
 export interface FetchGroupListRequest {
   groupRoleFilter: 'JOINED' | 'MANAGED';

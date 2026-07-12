@@ -1,22 +1,6 @@
 import type { ResourceItemApiResponse } from '@/domains/Resource/apis/ResourceApi.type';
-import type { UserDisplayBase } from '@/domains/User';
+import type { UserDisplayBaseApiResponse } from '@/domains/User/apis/UserApi.type';
 import type { Config } from '@onlyoffice/doceditor-types';
-
-interface GetDocInfoResourceInteractionInfoApiResponse {
-  readCount?: number;
-  likeCount?: number;
-  scoreCount?: number;
-  scoreTotal?: number;
-  favoriteCount?: number;
-  commentCount?: number;
-}
-
-interface GetDocInfoResourceInfoApiResponse extends Omit<
-  ResourceItemApiResponse,
-  'resourceInteractionInfo'
-> {
-  resourceInteractionInfo?: GetDocInfoResourceInteractionInfoApiResponse;
-}
 
 export interface UploadDocApiRequest {
   filename: string;
@@ -83,7 +67,7 @@ export interface PendingDocItemApiResponse extends DocMetaInfoApiResponse {
 export type ListPendingDocsApiResponse = PendingDocItemApiResponse[];
 
 export interface GetDocInfoApiResponse {
-  resourceInfo: GetDocInfoResourceInfoApiResponse;
+  resourceInfo: ResourceItemApiResponse;
   documentVersionInfo?: DocumentVersionInfoApiResponse;
-  authorsDisplay?: Record<string, UserDisplayBase> | null;
+  authorsDisplay?: Record<string, UserDisplayBaseApiResponse> | null;
 }

@@ -15,7 +15,6 @@ export {
   GROUP_TYPE,
   ROLE,
 } from './enum';
-export { mapGroupMemberRawResponse } from './mapper/groupMember.mapper';
 export type {
   CreateGroupRequest,
   DeleteGroupRequest,
@@ -23,8 +22,6 @@ export type {
   FetchGroupListRequest,
   FetchGroupListResponse,
   GetGroupWalletInfoRequest,
-  GroupMemberBaseInfo,
-  GroupMemberRawResponse,
   IGroupService,
   JoinGroupRequest,
   KickMembersRequest,

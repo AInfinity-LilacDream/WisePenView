@@ -1,4 +1,4 @@
-export type { TagListByTagResponse } from './entity/tag';
+export type { TagListByTagResponse, TagTreeNode } from './entity/tag';
 export {
   ACCESS_CONTROL_SCOPE,
   TAG_MOUNT_PERMISSION_PRESET_VALUES,
@@ -40,7 +40,5 @@ export type {
   TagCreateRequest,
   TagDeleteRequest,
   TagMoveRequest,
-  TagTreeNode,
-  TagTreeResponse,
   TagUpdateRequest,
 } from './service/index.type';

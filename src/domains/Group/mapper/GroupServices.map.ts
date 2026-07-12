@@ -33,7 +33,7 @@ import type {
   UpdateGroupResConfigRequest,
   UpdateMemberRoleRequest,
 } from '../service/index.type';
-import { mapGroupMemberRawResponse } from './groupMember.mapper';
+import { mapGroupMemberFromApi } from './groupMember.mapper';
 
 const normalizeNumberFromApi = (value: unknown, fallback = 0): number => {
   const numericValue = Number(value);
@@ -166,7 +166,7 @@ const mapFetchGroupMembersRequest = (
 });
 
 const mapFetchGroupMembersFromApi = (data: FetchGroupMembersApiResponse): GroupMemberList => ({
-  members: data.list.map(mapGroupMemberRawResponse),
+  members: data.list.map(mapGroupMemberFromApi),
   total: data.total,
 });
 

@@ -22,10 +22,10 @@ export interface ResourceTagBind {
   groupId?: string;
   /** 后端 ResourceTagBindResponse.primaryTagId：该组内的主挂载标签。 */
   primaryTagId?: string;
-  tags?: Record<string, ResourceTagInfo | string | null | undefined>;
+  tags?: Record<string, ResourceTagInfo | null | undefined>;
 }
 
-/** 资源项（与 OpenAPI ResourceItemResponse 字段一致） */
+/** 供前端展示与业务编排使用的稳定资源实体 */
 export interface ResourceItem {
   resourceId: string;
   resourceName: string;

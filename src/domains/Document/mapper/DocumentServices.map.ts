@@ -1,4 +1,5 @@
 import { ResourceServicesMap } from '@/domains/Resource/mapper/ResourceServices.map';
+import { normalizeUserDisplayBaseFromApi } from '@/domains/User/mapper/userEnum.mapper';
 import { normalizeId } from '@/utils/normalize/normalizeId';
 import type {
   DocMetaInfoApiResponse,
@@ -44,7 +45,14 @@ const readDocumentVersionInfoFromApi = (
 const mapGetDocInfoFromApi = (data: GetDocInfoApiResponse): DocDisplayInfoResponse => ({
   docMetaInfo: mapDocMetaInfoFromApi(readDocumentVersionInfoFromApi(data)),
   resourceInfo: ResourceServicesMap.mapResourceItemFromApi(data.resourceInfo),
-  authorsDisplay: data.authorsDisplay ?? undefined,
+  authorsDisplay: data.authorsDisplay
+    ? Object.fromEntries(
+        Object.entries(data.authorsDisplay).flatMap(([userId, userInfo]) => {
+          const normalized = normalizeUserDisplayBaseFromApi(userInfo);
+          return normalized ? [[userId, normalized] as const] : [];
+        })
+      )
+    : undefined,
 });
 
 export const DocumentServicesMap = {

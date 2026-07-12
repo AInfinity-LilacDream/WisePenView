@@ -1,4 +1,5 @@
-import type { NoteInfoResponse } from '@/domains/Note';
+import type { ResourceItemApiResponse } from '@/domains/Resource/apis/ResourceApi.type';
+import type { UserDisplayBaseApiResponse } from '@/domains/User/apis/UserApi.type';
 
 export interface AddNoteApiRequest {
   title: string;
@@ -12,7 +13,18 @@ export interface GetNoteInfoApiRequest {
   targetVersion?: number;
 }
 
-export type GetNoteInfoApiResponse = NoteInfoResponse;
+export interface NoteMetaInfoApiResponse {
+  authors?: string[];
+  lastUpdatedAt?: number | string | null;
+}
+
+export interface GetNoteInfoApiResponse {
+  authorsDisplay?: Record<string, UserDisplayBaseApiResponse> | null;
+  resourceInfo: ResourceItemApiResponse;
+  /** 当前笔记版本号。 */
+  version?: number;
+  noteInfo?: NoteMetaInfoApiResponse;
+}
 
 export interface GetDrawIoLatestSnapshotApiRequest {
   resourceId: string;
