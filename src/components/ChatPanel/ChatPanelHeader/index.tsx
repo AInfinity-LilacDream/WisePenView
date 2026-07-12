@@ -1,6 +1,6 @@
-import { Tooltip } from '@heroui/react';
+import AppIconButton from '@/components/AppIconButton';
 import clsx from 'clsx';
-import { History, IndentIncrease, Plus } from 'lucide-react';
+import { History, PanelRightClose, Plus } from 'lucide-react';
 import styles from '../style.module.less';
 import type { ChatPanelHeaderProps } from './index.type';
 
@@ -20,19 +20,11 @@ function ChatPanelHeader({
     <div className={clsx(styles.header, collapsed && styles.collapsedHeader)}>
       <div className={styles.headerLeft}>
         {!collapsed && !fullWidth && showCollapseButton ? (
-          <Tooltip>
-            <Tooltip.Trigger>
-              <button
-                type="button"
-                onClick={onCollapsePanel}
-                className={styles.headerIconButton}
-                aria-label="收起聊天面板"
-              >
-                <IndentIncrease size={18} aria-hidden="true" />
-              </button>
-            </Tooltip.Trigger>
-            <Tooltip.Content>收起聊天面板</Tooltip.Content>
-          </Tooltip>
+          <AppIconButton
+            icon={<PanelRightClose size={18} aria-hidden="true" />}
+            label="收起聊天面板"
+            onPress={onCollapsePanel}
+          />
         ) : null}
         {!collapsed ? (
           <div className={styles.titleWrap}>
@@ -43,36 +35,17 @@ function ChatPanelHeader({
 
       {!collapsed ? (
         <div className={styles.headerRight}>
-          <Tooltip>
-            <Tooltip.Trigger>
-              <button
-                type="button"
-                className={styles.headerIconButton}
-                onClick={onNewChat}
-                aria-label="新建对话"
-              >
-                <Plus size={18} aria-hidden="true" />
-              </button>
-            </Tooltip.Trigger>
-            <Tooltip.Content>新建对话</Tooltip.Content>
-          </Tooltip>
-          <Tooltip>
-            <Tooltip.Trigger>
-              <button
-                type="button"
-                className={clsx(
-                  styles.headerIconButton,
-                  sessionBarOpen && styles.headerIconButtonActive
-                )}
-                onClick={onToggleSessionBar}
-                aria-label={sessionBarLabel}
-                aria-pressed={sessionBarOpen}
-              >
-                <History size={18} aria-hidden="true" />
-              </button>
-            </Tooltip.Trigger>
-            <Tooltip.Content>{sessionBarLabel}</Tooltip.Content>
-          </Tooltip>
+          <AppIconButton
+            icon={<Plus size={18} aria-hidden="true" />}
+            label="新建对话"
+            onPress={onNewChat}
+          />
+          <AppIconButton
+            icon={<History size={18} aria-hidden="true" />}
+            label={sessionBarLabel}
+            isActive={sessionBarOpen}
+            onPress={onToggleSessionBar}
+          />
         </div>
       ) : null}
     </div>

@@ -16,6 +16,11 @@ const STYLESHEET_LOAD_TIMEOUT_MS = 5_000;
 
 const PRINT_SUPPLEMENTAL_CSS = `
   @page { size: A4; margin: 18mm 16mm 20mm; }
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
   html,
   body {
     margin: 0;
@@ -26,41 +31,71 @@ const PRINT_SUPPLEMENTAL_CSS = `
   }
   body {
     padding: 0 8px;
-    box-sizing: border-box;
+    color: var(--foreground, #111827);
+    font-family: var(--app-font-family, sans-serif);
   }
   .print-doc-title {
-    font-size: 22px;
-    font-weight: 600;
+    font-size: 34px;
+    font-weight: 500;
+    line-height: 1.625;
     margin: 0 0 1em;
-    letter-spacing: 0.02em;
-    color: #111;
+    color: inherit;
     page-break-after: avoid;
   }
   .note-print-title {
     margin: 0 0 1em;
     page-break-after: avoid;
-    color: #111;
+    color: inherit;
   }
-  .note-print-title .bn-editor {
-    padding-block: 0 !important;
-    padding-bottom: 8px !important;
+  .note-print-scope {
+    display: block !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    height: auto !important;
   }
   .note-print-content {
     margin: 0;
   }
   .note-print-body {
-    color: #111;
+    color: inherit;
   }
   .note-print-body img,
   .note-print-title img {
     max-width: 100% !important;
     height: auto !important;
   }
-  @media print {
-    .note-print-body .bn-editor,
-    .note-print-title .bn-editor {
-      padding-bottom: 8px !important;
-    }
+  .note-print-body .bn-editor {
+    padding-bottom: 0 !important;
+  }
+  .note-print-body .bodyBlockNoteView {
+    padding-right: 0 !important;
+  }
+  .note-print-body .bn-block-content[data-content-type='heading'],
+  .note-print-title .bn-block-content[data-content-type='heading'],
+  .note-print-body .bn-block-content[data-content-type='quote'] {
+    break-after: avoid-page;
+    page-break-after: avoid;
+  }
+  .note-print-body .bn-block-content[data-content-type='codeBlock'],
+  .note-print-body .bn-block-content[data-content-type='math'],
+  .note-print-body .bn-block-content[data-content-type='table'],
+  .note-print-body .bn-block-content[data-content-type='image'],
+  .note-print-body .bn-block-content[data-content-type='video'],
+  .note-print-body .bn-block-content[data-content-type='audio'],
+  .note-print-body table,
+  .note-print-body figure,
+  .note-print-body img {
+    break-inside: avoid-page;
+    page-break-inside: avoid;
+  }
+  .note-print-body table {
+    max-width: 100% !important;
+  }
+  .note-print-body .bn-block-content[data-content-type='codeBlock'] > pre {
+    overflow: visible !important;
+    white-space: pre-wrap !important;
+    overflow-wrap: anywhere;
   }
   .note-print-body .bn-editor .katex-display,
   .note-print-title .katex-display {
@@ -84,6 +119,18 @@ const PRINT_SUPPLEMENTAL_CSS = `
   .note-print-body [class*='mathDiffActions'] {
     display: none !important;
     visibility: hidden !important;
+  }
+  .note-print-body .bn-side-menu,
+  .note-print-body .bn-formatting-toolbar,
+  .note-print-body .bn-slash-menu,
+  .note-print-body .bn-table-handle,
+  .note-print-body .bn-thread-mark::before,
+  .note-print-body .column-resize-handle,
+  .note-print-body .bn-table-drop-cursor {
+    display: none !important;
+  }
+  .note-print-body [data-show-selection] {
+    background-color: transparent !important;
   }
 `;
 
@@ -163,9 +210,50 @@ async function waitForPrintIframeReady(win: Window): Promise<void> {
     void 0;
   }
 
+  await Promise.all(
+    [...win.document.images].map(
+      (image) =>
+        new Promise<void>((resolve) => {
+          if (image.complete) {
+            resolve();
+            return;
+          }
+          image.addEventListener('load', () => resolve(), { once: true });
+          image.addEventListener('error', () => resolve(), { once: true });
+          window.setTimeout(resolve, STYLESHEET_LOAD_TIMEOUT_MS);
+        })
+    )
+  );
+
   await new Promise<void>((resolve) =>
     win.requestAnimationFrame(() => win.requestAnimationFrame(() => resolve()))
   );
+}
+
+/**
+ * 保留 ProseMirror 到 BlockNote React 外壳的节点路径，使 CSS Module 的作用域选择器在打印文档中继续生效。
+ * 仅克隆路径本身，不带入工具栏、批注侧栏等兄弟节点。
+ */
+function cloneEditorWithStyleScope(doc: Document, proseMirrorRoot: HTMLElement): HTMLElement {
+  const blockNoteContainer = proseMirrorRoot.closest<HTMLElement>('.bn-container');
+  if (!blockNoteContainer) {
+    return doc.importNode(proseMirrorRoot, true);
+  }
+
+  const styleScope = blockNoteContainer.parentElement ?? blockNoteContainer;
+  let clonedPath = doc.importNode(proseMirrorRoot, true);
+  let sourceParent = proseMirrorRoot.parentElement;
+
+  while (sourceParent) {
+    const clonedParent = doc.importNode(sourceParent, false);
+    clonedParent.appendChild(clonedPath);
+    clonedPath = clonedParent;
+    if (sourceParent === styleScope) break;
+    sourceParent = sourceParent.parentElement;
+  }
+
+  clonedPath.classList.add('note-print-scope');
+  return clonedPath;
 }
 
 function buildPrintDocument(
@@ -190,7 +278,7 @@ function buildPrintDocument(
   if (titleRoot) {
     const titleHost = doc.createElement('div');
     titleHost.className = 'note-print-title';
-    titleHost.appendChild(doc.importNode(titleRoot, true));
+    titleHost.appendChild(cloneEditorWithStyleScope(doc, titleRoot));
     article.appendChild(titleHost);
   } else if (titleText) {
     const h1 = doc.createElement('h1');
@@ -201,7 +289,7 @@ function buildPrintDocument(
 
   const contentHost = doc.createElement('div');
   contentHost.className = 'note-print-content';
-  contentHost.appendChild(doc.importNode(proseMirrorRoot, true));
+  contentHost.appendChild(cloneEditorWithStyleScope(doc, proseMirrorRoot));
   article.appendChild(contentHost);
   doc.body.appendChild(article);
 }

@@ -28,6 +28,7 @@ const mockDetail = {
 export const SkillServicesMock: ISkillService = {
   getSkillSummaries: async () => [mockDetail],
   createSkill: async () => mockDetail.resourceId,
+  forkSkill: async () => `mock-skill-copy-${Date.now()}`,
   getSkillDetail: async () => mockDetail,
   getSkillVersionFiles: async () => mockDetail,
   updateSkillInfo: async () => undefined,

@@ -29,10 +29,12 @@
       color 0.16s ease,
       background-color 0.16s ease;
 
-    &:hover,
-    &:focus-within {
-      color: var(--foreground);
-      background: var(--surface-tertiary);
+    &[data-selectable='true'] {
+      &:hover,
+      &:focus-within {
+        color: var(--foreground);
+        background: var(--surface-tertiary);
+      }
     }
   }
 

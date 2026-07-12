@@ -51,6 +51,14 @@ export interface CreateSkillData {
   };
 }
 
+export interface ForkSkillData {
+  body: {
+    resourceId: string;
+    forkedResourceVersion?: number;
+    forkedResourceName: string;
+  };
+}
+
 export interface GetSkillInfoData {
   query: {
     resourceId: string;

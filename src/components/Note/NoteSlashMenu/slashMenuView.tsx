@@ -138,10 +138,12 @@ export function SlashMenuListBoxItems({
   getItemId,
   items,
   onItemClick,
+  selectedItemId,
 }: {
   getItemId: (item: DefaultReactSuggestionItem, index: number) => string;
   items: DefaultReactSuggestionItem[];
   onItemClick?: (item: DefaultReactSuggestionItem) => void;
+  selectedItemId?: string;
 }) {
   const groupedItems = groupSuggestionItems(items);
 
@@ -157,12 +159,18 @@ export function SlashMenuListBoxItems({
             <Header className={styles.sectionTitle}>{group}</Header>
             {groupItems.map((item, itemIndexInGroup) => {
               const itemIndex = currentOffset + itemIndexInGroup;
+              const itemId = getItemId(item, itemIndex);
               const title = resolveSlashMenuTitle(item);
 
               return (
                 <ListBoxItem
-                  key={getItemId(item, itemIndex)}
-                  id={getItemId(item, itemIndex)}
+                  key={itemId}
+                  ref={(node) => {
+                    if (itemId === selectedItemId) {
+                      node?.scrollIntoView({ block: 'nearest' });
+                    }
+                  }}
+                  id={itemId}
                   textValue={title}
                   className={styles.item}
                   onMouseDown={(event) => event.preventDefault()}

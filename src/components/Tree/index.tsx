@@ -338,6 +338,7 @@ function Tree({
             )}
             draggable={canDragNode(node)}
             role="treeitem"
+            data-selectable={canSelect}
             aria-expanded={expandable ? expanded : undefined}
             aria-selected={canSelect ? selected : undefined}
             aria-disabled={node.disabled || undefined}

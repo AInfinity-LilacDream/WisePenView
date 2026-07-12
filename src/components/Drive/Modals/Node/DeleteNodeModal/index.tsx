@@ -43,7 +43,13 @@ function DeleteNodeModal({
           }
         }
         toast.success(
-          isGroupNode ? '已从小组移除' : isPermanentDelete ? '已彻底删除' : '已移入最近删除'
+          node?.type === 'link'
+            ? '链接已删除'
+            : isGroupNode
+              ? '已从小组移除'
+              : isPermanentDelete
+                ? '已彻底删除'
+                : '已删除'
         );
         onSuccess?.();
         onOpenChange(false);
@@ -60,15 +66,25 @@ function DeleteNodeModal({
   };
 
   const isFolder = node?.type === 'folder';
+  const isLink = node?.type === 'link';
   const isPrimaryGroupMount = Boolean(groupId && node?.type === 'resource');
   const nodeName = getNodeName(node);
-  const title = isGroupNode ? '从小组移除' : isPermanentDelete ? '彻底删除' : '移入最近删除';
+  const title = isLink
+    ? '删除链接'
+    : isGroupNode
+      ? '从小组移除'
+      : isPermanentDelete
+        ? '彻底删除'
+        : '删除文件';
   const description = (() => {
     if (isPermanentDelete && isFolder) {
       return `确定彻底删除「${nodeName}」及其下属内容吗？此操作不可撤销。`;
     }
     if (isPermanentDelete) {
       return `确定彻底删除「${nodeName}」吗？此操作不可撤销。`;
+    }
+    if (isLink) {
+      return `确定删除「${nodeName}」在当前文件夹中的链接吗？文件本体不会被删除。`;
     }
     if (groupId && isFolder) {
       return `确定从当前小组移除「${nodeName}」及其下属内容的挂载吗？`;
@@ -82,9 +98,15 @@ function DeleteNodeModal({
     if (isFolder) {
       return `确定将「${nodeName}」及其下属内容移入最近删除吗？`;
     }
-    return `确定将「${nodeName}」移入最近删除吗？`;
+    return `确定删除「${nodeName}」吗？它的所有链接会同步失效，并可在最近删除中恢复。`;
   })();
-  const confirmText = isGroupNode ? '移除' : isPermanentDelete ? '彻底删除' : '移入最近删除';
+  const confirmText = isLink
+    ? '删除链接'
+    : isGroupNode
+      ? '移除'
+      : isPermanentDelete
+        ? '彻底删除'
+        : '删除';
 
   return (
     <AppAlertDialog

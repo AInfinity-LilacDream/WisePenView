@@ -1,6 +1,6 @@
 import { Popover } from '@/components/Overlay';
 import { Tooltip } from '@heroui/react';
-import { CloudUpload, FilePlus2, FolderPlus, Pencil, Trash2 } from 'lucide-react';
+import { CloudUpload, FolderPlus, Pencil, Plus, Trash2 } from 'lucide-react';
 import type { KeyboardEvent, MouseEvent } from 'react';
 
 import { ROOT_DISPLAY } from '@/components/Drive/common/constants';
@@ -82,7 +82,6 @@ function SidebarDriveNodeTitle({
           onClick={stopTreeAction}
           onKeyDown={stopTreeAction}
         >
-          {node.type === 'root' ? scopeSwitcher : null}
           {canCreateFolder ? (
             <Popover>
               <Tooltip>
@@ -93,7 +92,7 @@ function SidebarDriveNodeTitle({
                       className={styles.nodeActionBtn}
                       aria-label={`在${label}中新建`}
                     >
-                      <FilePlus2 size={14} aria-hidden="true" />
+                      <Plus size={14} aria-hidden="true" />
                     </button>
                   </Popover.Trigger>
                 </Tooltip.Trigger>
@@ -185,6 +184,7 @@ function SidebarDriveNodeTitle({
               <Tooltip.Content>删除</Tooltip.Content>
             </Tooltip>
           ) : null}
+          {node.type === 'root' ? scopeSwitcher : null}
         </span>
       ) : null}
     </span>

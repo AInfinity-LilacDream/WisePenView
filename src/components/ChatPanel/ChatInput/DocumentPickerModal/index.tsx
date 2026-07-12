@@ -48,7 +48,6 @@ function DocumentPickerContent() {
             <div className={styles.navTree}>
               <DriveNavigator
                 scopeMode="all"
-                renderableTypes={['root', 'folder', 'resource', 'link']}
                 selectableTypes={['resource', 'link']}
                 multiple
                 onChange={handleSelectionChange}

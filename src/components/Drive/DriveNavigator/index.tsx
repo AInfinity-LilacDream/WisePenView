@@ -25,6 +25,7 @@ const DEFAULT_RENDERABLE_TYPES: DriveItemKind[] = ['root', 'folder', 'resource',
 const DEFAULT_SELECTABLE_TYPES: DriveItemKind[] = ['folder'];
 const PERSONAL_SCOPE_KEY = 'personal';
 const GROUP_SCOPE_PAGE_SIZE = 100;
+const DEFAULT_RESOURCE_PREVIEW_LIMIT = 8;
 const TREE_KEY_SEPARATOR = '\u001f';
 
 interface DriveNavigatorScopeOption {
@@ -123,16 +124,20 @@ function mergeScopeGroups(groups: Group[]): Group[] {
 }
 
 async function fetchAllScopeOptions(
-  groupService: IGroupService
+  groupService: IGroupService,
+  includePersonal: boolean,
+  excludedGroupIds: Set<string>
 ): Promise<DriveNavigatorScopeOption[]> {
   const [joinedGroups, managedGroups] = await Promise.all([
     fetchGroupsByRole(groupService, 'JOINED'),
     fetchGroupsByRole(groupService, 'MANAGED'),
   ]);
-  const groups = mergeScopeGroups([...joinedGroups, ...managedGroups]);
+  const groups = mergeScopeGroups([...joinedGroups, ...managedGroups]).filter(
+    (group) => !excludedGroupIds.has(group.groupId)
+  );
 
   return [
-    buildScopeOption({ type: 'personal' }, '个人云盘'),
+    ...(includePersonal ? [buildScopeOption({ type: 'personal' }, '个人云盘')] : []),
     ...groups.map((group) =>
       buildScopeOption({ type: 'group', groupId: group.groupId }, group.groupName || '未命名小组')
     ),
@@ -144,8 +149,10 @@ function DriveNavigator({
   scope,
   groupId,
   scopeMode = 'single',
+  excludedGroupIds,
   renderableTypes = DEFAULT_RENDERABLE_TYPES,
   selectableTypes = DEFAULT_SELECTABLE_TYPES,
+  resourcePreviewLimit = DEFAULT_RESOURCE_PREVIEW_LIMIT,
   disabledNodeIds,
   multiple = false,
   initialSelectedIds,
@@ -170,6 +177,11 @@ function DriveNavigator({
   const renderableTypeKey = [...renderableTypes].sort().join('\u0001');
   const selectableTypeKey = [...selectableTypes].sort().join('\u0001');
   const disabledNodeIdKey = [...(disabledNodeIds ?? [])].sort().join('\u0001');
+  const excludedGroupIdKey = [...(excludedGroupIds ?? [])].sort().join('\u0001');
+  const excludedGroupIdSet = useMemo(
+    () => buildSetFromStableKey(excludedGroupIdKey),
+    [excludedGroupIdKey]
+  );
 
   const renderableTypeSet = useMemo(
     () => buildSetFromStableKey<DriveItemKind>(renderableTypeKey),
@@ -179,6 +191,10 @@ function DriveNavigator({
     () => buildSetFromStableKey<DriveItemKind>(selectableTypeKey),
     [selectableTypeKey]
   );
+  const showsResources = renderableTypeSet.has('resource') || renderableTypeSet.has('link');
+  const selectsResources = selectableTypeSet.has('resource') || selectableTypeSet.has('link');
+  const effectiveResourceLimit =
+    showsResources && !selectsResources ? resourcePreviewLimit : undefined;
   const disabledNodeIdSet = useMemo(
     () => buildSetFromStableKey(disabledNodeIdKey),
     [disabledNodeIdKey]
@@ -225,13 +241,14 @@ function DriveNavigator({
         return await driveService.listNodeChildren({
           nodeId: node.id,
           groupId: getDriveScopeGroupId(node.scope),
+          resourceLimit: effectiveResourceLimit,
         });
       } catch (err) {
         toast.danger(parseErrorMessage(err));
         return [];
       }
     },
-    [driveService]
+    [driveService, effectiveResourceLimit]
   );
 
   const resolveInputKey = useCallback((key: string): string | undefined => {
@@ -317,8 +334,12 @@ function DriveNavigator({
       nodeMapRef.current.clear();
       rootLabelRef.current.clear();
 
-      if (scopeMode === 'all') {
-        const scopeOptions = await fetchAllScopeOptions(groupService);
+      if (scopeMode === 'all' || scopeMode === 'groups') {
+        const scopeOptions = await fetchAllScopeOptions(
+          groupService,
+          scopeMode === 'all',
+          excludedGroupIdSet
+        );
         const rootNodes = await Promise.all(scopeOptions.map(loadRootNode));
         return buildChildrenData(rootNodes);
       }
@@ -337,14 +358,17 @@ function DriveNavigator({
     {
       refreshDeps: [
         scopeMode,
+        excludedGroupIdKey,
         finalRootId,
         finalGroupId,
         refreshTrigger,
+        effectiveResourceLimit,
         renderableTypeKey,
         selectableTypeKey,
         disabledNodeIdKey,
         buildChildrenData,
         groupService,
+        excludedGroupIdSet,
         isNodeSelectable,
         isNodeDisabled,
         loadChildrenForNode,

@@ -275,9 +275,10 @@ export const createDriveServices = (
     );
   };
 
-  const fetchAllResourceNodes = async (
+  const fetchResourceNodes = async (
     nodeId: string,
-    groupId: string | undefined
+    groupId: string | undefined,
+    resourceLimit?: number
   ): Promise<Array<ResourceNode | LinkNode>> => {
     const { parentTagId, isVirtualRoot } = await resolveParentTagId(nodeId, groupId);
     if (!parentTagId || isVirtualRoot) {
@@ -289,10 +290,17 @@ export const createDriveServices = (
     const nodes: Array<ResourceNode | LinkNode> = [];
     let page = 1;
 
+    const normalizedResourceLimit =
+      resourceLimit == null ? undefined : Math.max(0, Math.floor(resourceLimit));
+    if (normalizedResourceLimit === 0) return [];
+
     while (true) {
+      const requestSize = normalizedResourceLimit
+        ? Math.min(pageSize, normalizedResourceLimit - nodes.length)
+        : pageSize;
       const listParams = {
         page,
-        size: pageSize,
+        size: requestSize,
         sortBy: RESOURCE_SORT_BY.UPDATE_TIME,
         sortDir: RESOURCE_SORT_DIR.DESC,
         tagIds: [parentTagId],
@@ -308,9 +316,13 @@ export const createDriveServices = (
         nodes.push(childNode);
       }
 
+      if (normalizedResourceLimit && nodes.length >= normalizedResourceLimit) {
+        return nodes.slice(0, normalizedResourceLimit);
+      }
+
       const reachedKnownTotal = result.total > 0 && nodes.length >= result.total;
       const reachedKnownLastPage = result.totalPage > 0 && page >= result.totalPage;
-      const reachedShortPage = result.list.length < pageSize;
+      const reachedShortPage = result.list.length < requestSize;
       if (reachedKnownTotal || reachedKnownLastPage || reachedShortPage) {
         break;
       }
@@ -327,17 +339,23 @@ export const createDriveServices = (
     nodeMap.set(parentId, parent);
   };
 
-  const listNodeChildren: IDriveService['listNodeChildren'] = async ({ nodeId, groupId }) => {
+  const listNodeChildren: IDriveService['listNodeChildren'] = async ({
+    nodeId,
+    groupId,
+    resourceLimit,
+  }) => {
     const effectiveGroupId = resolveEffectiveGroupId(nodeId, groupId);
     const groupKey = resolveGroupKey(effectiveGroupId);
     const folderNodes = await loadFolderNodes(nodeId, effectiveGroupId);
-    const resourceNodes = await fetchAllResourceNodes(nodeId, effectiveGroupId);
+    const resourceNodes = await fetchResourceNodes(nodeId, effectiveGroupId, resourceLimit);
     const dedup = new Map<string, DriveNode>();
     [...folderNodes, ...resourceNodes].forEach((node) => dedup.set(node.id, node));
     const children = [...dedup.values()];
 
     trackNodes(children, groupKey);
-    updateParentChildren(nodeId, children);
+    if (resourceLimit == null) {
+      updateParentChildren(nodeId, children);
+    }
     return children;
   };
 
@@ -515,7 +533,7 @@ export const createDriveServices = (
   ): Promise<void> => {
     const [folderChildren, resourceChildren] = await Promise.all([
       loadFolderNodes(folder.id, groupId),
-      fetchAllResourceNodes(folder.id, groupId),
+      fetchResourceNodes(folder.id, groupId),
     ]);
 
     addTagIdToDeletePlan(plan, folder.tagId, depth);
@@ -621,6 +639,64 @@ export const createDriveServices = (
       return buildPathByFolderTag(decoded.parentTagId, effectiveGroupId);
     }
     return [await getRootNode({ groupId: effectiveGroupId })];
+  };
+
+  const getResourceNode: IDriveService['getResourceNode'] = async (params) => {
+    const children = await listNodeChildren({
+      nodeId: params.parentNodeId,
+      groupId: params.groupId,
+    });
+    return children.find(
+      (node): node is ResourceNode | LinkNode =>
+        (node.type === 'resource' || node.type === 'link') &&
+        node.resourceId === params.resourceId &&
+        (!params.nodeId || node.id === params.nodeId)
+    );
+  };
+
+  const createLink: IDriveService['createLink'] = async (params) => {
+    await ensureMoveRootTargetTracked(params);
+    const source = getNodeOrThrow(params.nodeId);
+    const target = getNodeOrThrow(params.targetFolderNodeId);
+    const groupId =
+      normalizeTagGroupId(params.groupId) ?? getNodeGroupId(source.id) ?? getNodeGroupId(target.id);
+
+    if (
+      !groupId ||
+      source.type !== 'resource' ||
+      (target.type !== 'folder' && target.type !== 'root')
+    ) {
+      throw createClientError(FRONTEND_CLIENT_ERROR.DRIVE_NODE_UNSUPPORTED_MOVE);
+    }
+    if (source.scope.rootId !== target.scope.rootId) {
+      throw createClientError(FRONTEND_CLIENT_ERROR.DRIVE_NODE_UNSUPPORTED_MOVE);
+    }
+
+    const targetTagId =
+      target.type === 'root' ? (target.canMountResources ? target.tagId : undefined) : target.tagId;
+    if (!targetTagId || targetTagId === source.folderTagId) {
+      throw createClientError(FRONTEND_CLIENT_ERROR.DRIVE_NODE_UNSUPPORTED_MOVE);
+    }
+
+    const sourceItem = resourceItemByNodeId.get(source.id);
+    if (!sourceItem) {
+      throw createClientError(FRONTEND_CLIENT_ERROR.DRIVE_RESOURCE_TAG_INFO_MISSING);
+    }
+    const currentTagIds = Object.keys(sourceItem.currentTags ?? {});
+    if (currentTagIds.includes(targetTagId)) {
+      return;
+    }
+
+    await resourceService.updateResourceTags({
+      resourceId: source.resourceId,
+      groupId,
+      tagIds: [
+        source.folderTagId,
+        ...currentTagIds.filter((id) => id !== source.folderTagId),
+        targetTagId,
+      ],
+    });
+    clearCache();
   };
 
   const createMoveNodeToFolderPlan = (params: MoveToFolderParams): MoveNodeToFolderPlan => {
@@ -789,9 +865,14 @@ export const createDriveServices = (
         newParentId: trashTagId,
         groupId,
       });
-    } else if (isResourceNode(source)) {
-      const trashTagId = await ensureTrashTagId();
-      await moveResourceNode(source, trashTagId, groupId);
+    } else if (source.type === 'link') {
+      await resourceService.updateResourceTags({
+        resourceId: source.resourceId,
+        tagIds: resolveLinkTagIdsAfterUnmount(source, new Set([source.folderTagId])),
+      });
+    } else if (source.type === 'resource') {
+      // 删除主文件由资源服务统一软删除，确保所有辅助挂载同步失效。
+      await resourceService.removeResources({ resourceIds: [source.resourceId] });
     } else {
       throw createClientError(FRONTEND_CLIENT_ERROR.DRIVE_NODE_UNSUPPORTED_DELETE);
     }
@@ -860,7 +941,9 @@ export const createDriveServices = (
     getTrashFolderNodeId,
     listNodeChildren,
     getNodePath,
+    getResourceNode,
     moveToFolder,
+    createLink,
     moveNodesToFolder,
     removeNode,
     renameNode,

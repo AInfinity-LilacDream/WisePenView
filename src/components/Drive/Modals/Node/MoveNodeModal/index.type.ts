@@ -7,5 +7,5 @@ export interface MoveNodeModalProps {
   groupId?: string;
   isTrashView?: boolean;
   onOpenChange: (open: boolean) => void;
-  onSuccess?: () => void;
+  onSuccess?: (targetFolderNodeId: string) => void;
 }

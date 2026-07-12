@@ -26,6 +26,12 @@ export interface GetDocInfoApiRequest {
   targetVersion?: number;
 }
 
+export interface ForkDocumentApiRequest {
+  resourceId: string;
+  forkedResourceVersion?: number;
+  forkedResourceName: string;
+}
+
 export interface GetOnlyOfficeEditorConfigApiRequest {
   resourceId: string;
 }

@@ -1,6 +1,7 @@
 import { apiGet, apiPost } from '@/apis/request';
 import type {
   DocumentIdApiRequest,
+  ForkDocumentApiRequest,
   GetDocInfoApiRequest,
   GetDocInfoApiResponse,
   GetOnlyOfficeEditorConfigApiRequest,
@@ -35,6 +36,10 @@ function getDocInfo(req: GetDocInfoApiRequest): Promise<GetDocInfoApiResponse> {
   return apiGet('/document/getDocInfo', { params: req });
 }
 
+function forkDocument(req: ForkDocumentApiRequest): Promise<string> {
+  return apiPost('/document/forkDocument', req);
+}
+
 function getOnlyOfficeEditorConfig(
   req: GetOnlyOfficeEditorConfigApiRequest
 ): Promise<OnlyOfficeEditorConfigApiResponse> {
@@ -48,5 +53,6 @@ export const DocumentApi = {
   retryDocProcess,
   cancelDocProcess,
   getDocInfo,
+  forkDocument,
   getOnlyOfficeEditorConfig,
 };

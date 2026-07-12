@@ -61,38 +61,6 @@
   min-height: 40px;
 }
 
-.headerIconButton {
-  width: 32px;
-  height: 32px;
-  flex-shrink: 0;
-  margin: 0;
-  padding: 0;
-  border: none;
-  border-radius: var(--radius, 8px);
-  background: transparent;
-  color: var(--muted);
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-
-  &:hover {
-    color: var(--foreground);
-    background: var(--surface-tertiary);
-  }
-
-  &:focus-visible {
-    outline: 2px solid var(--primary);
-    outline-offset: 2px;
-  }
-}
-
-.headerIconButtonActive {
-  color: var(--primary);
-  background: color-mix(in srgb, var(--primary) 12%, var(--surface));
-}
-
 .titleWrap {
   display: flex;
   flex-direction: column;
@@ -102,6 +70,7 @@
 
 .title {
   font-size: var(--font-size-base);
+  font-weight: 600;
   color: var(--foreground);
   white-space: nowrap;
   overflow: hidden;

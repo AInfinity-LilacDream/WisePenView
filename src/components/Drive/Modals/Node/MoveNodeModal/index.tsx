@@ -25,7 +25,11 @@ async function collectFolderDescendantIds(
   if (visited.has(folderId)) return;
   visited.add(folderId);
 
-  const children = await driveService.listNodeChildren({ nodeId: folderId, groupId });
+  const children = await driveService.listNodeChildren({
+    nodeId: folderId,
+    groupId,
+    resourceLimit: 0,
+  });
   const folderChildren = children.filter((child): child is FolderNode => child.type === 'folder');
   await Promise.all(
     folderChildren.map((child) =>
@@ -90,7 +94,9 @@ function MoveNodeModal({
       manual: true,
       onSuccess: () => {
         toast.success(isTrashView ? '已移动到云盘' : '移动成功');
-        onSuccess?.();
+        if (selectedTargetId) {
+          onSuccess?.(selectedTargetId);
+        }
         onOpenChange(false);
       },
       onError: (err) => {
@@ -138,7 +144,6 @@ function MoveNodeModal({
           <DriveNavigator
             rootId={effectiveRootId}
             groupId={effectiveGroupId}
-            renderableTypes={['root', 'folder']}
             selectableTypes={['root', 'folder']}
             disabledNodeIds={[...disabledTargetIds]}
             onChange={(selected) => {

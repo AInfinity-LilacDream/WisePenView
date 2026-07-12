@@ -10,6 +10,7 @@ export type {
   DocumentAllowedExtension,
   DocumentUploadInitRequestBody,
   DocumentUploadInitResponse,
+  ForkDocumentRequest,
   IDocumentService,
   OnlyOfficeEditorConfig,
   OnlyOfficeEditorConfigResponse,

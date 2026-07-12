@@ -780,7 +780,6 @@ const TagPolicyModalBase = ({
               <div className={styles.leftTitle}>选择标签</div>
               <DriveNavigator
                 scope={groupId ? { type: 'group', groupId } : undefined}
-                renderableTypes={['root', 'folder']}
                 selectableTypes={['folder']}
                 multiple={false}
                 refreshTrigger={tagRefreshSeed}

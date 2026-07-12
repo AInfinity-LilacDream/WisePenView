@@ -1,14 +1,15 @@
 import { useSystemLayoutStore } from '@/layouts/_common/_store/useSystemLayoutStore';
 import AppSidebar from '@/layouts/_common/Sidebar/AppSidebar';
+import DriveSidebar from '@/layouts/_common/Sidebar/DriveSidebar';
 import {
   SystemResizableHandle,
   SystemResizablePanel,
   SystemResizablePanelGroup,
 } from '@/layouts/_common/SystemResizable';
 import { useResizablePanelSize } from '@/layouts/_common/useResizablePanelSize';
-import { Tooltip } from '@heroui/react';
+import { useAppNavigation } from '@/layouts/AppNavigation/AppNavigationContext';
+import AppNavigationControls from '@/layouts/AppNavigation/AppNavigationControls';
 import clsx from 'clsx';
-import { PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { useCallback, useRef, useState } from 'react';
 import type {
   Layout,
@@ -16,7 +17,7 @@ import type {
   PanelImperativeHandle,
   PanelSize,
 } from 'react-resizable-panels';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import styles from './AppLayout.module.less';
 
 const SIDEBAR_MIN_WIDTH = 240;
@@ -28,6 +29,12 @@ const clampSidebarWidth = (width: number): number =>
   Math.min(Math.max(Math.round(width), SIDEBAR_MIN_WIDTH), SIDEBAR_MAX_WIDTH);
 
 function AppLayout() {
+  const appNavigation = useAppNavigation();
+  const location = useLocation();
+  const showSessionHistorySidebar =
+    location.pathname === '/app/drive' ||
+    location.pathname === '/app/chat' ||
+    location.pathname.startsWith('/app/chat/');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const storedSidebarWidth = useSystemLayoutStore((state) => state.appSidebarWidth);
   const setSidebarWidth = useSystemLayoutStore((state) => state.setAppSidebarWidth);
@@ -35,7 +42,6 @@ function AppLayout() {
   const pendingSidebarWidthRef = useRef<number | null>(null);
   const sidebarWidth = clampSidebarWidth(storedSidebarWidth);
   const sidebarPanelSize = sidebarCollapsed ? SIDEBAR_COLLAPSED_WIDTH : sidebarWidth;
-  const sidebarToggleLabel = sidebarCollapsed ? '展开侧边栏' : '收起侧边栏';
 
   useResizablePanelSize({
     panelRef: sidebarPanelRef,
@@ -77,28 +83,18 @@ function AppLayout() {
 
   return (
     <div className={styles.root}>
-      <div className={styles.sidebarToggleHost}>
-        <Tooltip>
-          <Tooltip.Trigger>
-            <button
-              type="button"
-              className={clsx(
-                styles.sidebarToggle,
-                sidebarCollapsed && styles.sidebarToggleCollapsed
-              )}
-              onClick={handleSidebarToggle}
-              aria-label={sidebarToggleLabel}
-            >
-              {sidebarCollapsed ? (
-                <PanelLeftOpen size={18} aria-hidden="true" />
-              ) : (
-                <PanelLeftClose size={18} aria-hidden="true" />
-              )}
-            </button>
-          </Tooltip.Trigger>
-          <Tooltip.Content>{sidebarToggleLabel}</Tooltip.Content>
-        </Tooltip>
-      </div>
+      {sidebarCollapsed ? (
+        <div className={styles.collapsedHeaderControls}>
+          <AppNavigationControls
+            sidebarCollapsed
+            canGoBack={appNavigation.canGoBack}
+            canGoForward={appNavigation.canGoForward}
+            onGoBack={appNavigation.goBack}
+            onGoForward={appNavigation.goForward}
+            onToggleSidebar={handleSidebarToggle}
+          />
+        </div>
+      ) : null}
 
       <SystemResizablePanelGroup
         orientation="horizontal"
@@ -112,12 +108,30 @@ function AppLayout() {
           minSize={sidebarCollapsed ? SIDEBAR_COLLAPSED_WIDTH : SIDEBAR_MIN_WIDTH}
           maxSize={sidebarCollapsed ? SIDEBAR_COLLAPSED_WIDTH : SIDEBAR_MAX_WIDTH}
           groupResizeBehavior="preserve-pixel-size"
-          className={clsx(styles.leftSider, sidebarCollapsed && styles.leftSiderCollapsed)}
-          aria-label="应用侧边栏"
+          className={styles.leftSider}
+          aria-label={showSessionHistorySidebar ? '会话历史侧边栏' : '云盘侧边栏'}
           aria-hidden={sidebarCollapsed ? true : undefined}
           onResize={handleSidebarResize}
         >
-          <AppSidebar collapsed={sidebarCollapsed} />
+          {showSessionHistorySidebar ? (
+            <AppSidebar
+              collapsed={sidebarCollapsed}
+              canGoBack={appNavigation.canGoBack}
+              canGoForward={appNavigation.canGoForward}
+              onGoBack={appNavigation.goBack}
+              onGoForward={appNavigation.goForward}
+              onToggle={handleSidebarToggle}
+            />
+          ) : (
+            <DriveSidebar
+              collapsed={sidebarCollapsed}
+              canGoBack={appNavigation.canGoBack}
+              canGoForward={appNavigation.canGoForward}
+              onGoBack={appNavigation.goBack}
+              onGoForward={appNavigation.goForward}
+              onToggle={handleSidebarToggle}
+            />
+          )}
         </SystemResizablePanel>
 
         <SystemResizableHandle

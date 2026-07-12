@@ -15,12 +15,15 @@ export {
   DRIVE_SHARED_TAG_NAME,
   buildDriveNodeScope,
   decodeRootNodeScope,
+  encodeNodeId,
   encodeRootNodeId,
 } from './mapper/DriveServices.map';
 export type {
   CreateDriveServiceOptions,
   CreateFolderParams,
+  CreateLinkParams,
   GetNodePathParams,
+  GetResourceNodeParams,
   GetRootNodeParams,
   IDriveService,
   ListNodeChildrenParams,

@@ -1,8 +1,7 @@
 import { ResultState, Spin } from '@/components/Feedback';
-import EntryIcon from '@/components/Icons/EntryIcon';
 import PdfViewer from '@/components/PdfViewer/index';
 import { useDocumentService, useResourceService } from '@/domains';
-import { RESOURCE_TYPE } from '@/domains/Resource';
+import type { ResourceAction } from '@/domains/Resource';
 import { useWorkspaceLayoutConfig } from '@/layouts/Workspace/WorkspaceOutletContext';
 import { parseErrorMessage } from '@/utils/error';
 import { WORKSPACE_RESOURCE_TYPE } from '@/utils/navigation/workspaceRoute';
@@ -10,30 +9,14 @@ import { Button } from '@heroui/react';
 import { useRequest } from 'ahooks';
 import { useMemo, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import ResourcePermissionControl from '../_components/ResourcePermissionControl';
 import styles from './style.module.less';
-
-interface PdfToolbarTitleProps {
-  resourceName: string;
-  resourceType?: string;
-}
-
-function PdfToolbarTitle({ resourceName, resourceType }: PdfToolbarTitleProps) {
-  return (
-    <span className={styles.toolbarTitleText}>
-      <span className={styles.toolbarTitleIcon} aria-hidden="true">
-        <EntryIcon entryType="resource" resourceType={resourceType ?? RESOURCE_TYPE.FILE} />
-      </span>
-      <span className={styles.toolbarTitleLabel}>{resourceName}</span>
-    </span>
-  );
-}
 
 interface PdfLayoutConfigProps {
   children: ReactNode;
   resourceId?: string;
   resourceName?: string;
   resourceType?: string;
+  resourceInfoActions?: ResourceAction[] | null;
   ownerId?: string | null;
   onPermissionSuccess?: () => void;
 }
@@ -43,6 +26,7 @@ function PdfLayoutConfig({
   resourceId,
   resourceName,
   resourceType,
+  resourceInfoActions,
   ownerId,
   onPermissionSuccess,
 }: PdfLayoutConfigProps) {
@@ -51,21 +35,19 @@ function PdfLayoutConfig({
       className: styles.container,
       header: resourceName
         ? {
-            inlineTitle: (
-              <PdfToolbarTitle resourceName={resourceName} resourceType={resourceType} />
-            ),
-            extra: resourceId ? (
-              <ResourcePermissionControl
-                resourceId={resourceId}
-                resourceType={WORKSPACE_RESOURCE_TYPE.FILE}
-                ownerId={ownerId}
-                onSuccess={onPermissionSuccess}
-              />
-            ) : undefined,
+            resource: {
+              resourceId,
+              resourceName,
+              resourceType,
+              currentActions: resourceInfoActions,
+              permissionResourceType: WORKSPACE_RESOURCE_TYPE.FILE,
+              ownerId,
+              onPermissionSuccess,
+            },
           }
         : {},
     }),
-    [onPermissionSuccess, ownerId, resourceId, resourceName, resourceType]
+    [onPermissionSuccess, ownerId, resourceId, resourceInfoActions, resourceName, resourceType]
   );
   useWorkspaceLayoutConfig(frameConfig);
 
@@ -195,6 +177,7 @@ function DocumentPreview({ resourceId }: DocumentPreviewProps = {}) {
         resourceId={docInfo.resourceInfo.resourceId || resourceId}
         resourceName={docInfo.resourceInfo.resourceName}
         resourceType={docInfo.resourceInfo.resourceType}
+        resourceInfoActions={docInfo.resourceInfo.currentActions}
         ownerId={docInfo.resourceInfo.ownerId}
         onPermissionSuccess={refreshDocInfo}
       >
@@ -221,6 +204,7 @@ function DocumentPreview({ resourceId }: DocumentPreviewProps = {}) {
       resourceId={docInfo.resourceInfo.resourceId || resourceId}
       resourceName={docInfo.resourceInfo.resourceName}
       resourceType={docInfo.resourceInfo.resourceType}
+      resourceInfoActions={docInfo.resourceInfo.currentActions}
       ownerId={docInfo.resourceInfo.ownerId}
       onPermissionSuccess={refreshDocInfo}
     >

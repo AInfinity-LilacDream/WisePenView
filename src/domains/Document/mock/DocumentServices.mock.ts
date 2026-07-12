@@ -86,6 +86,11 @@ const getDocInfo = async (documentId: string): Promise<DocDisplayInfoResponse> =
   };
 };
 
+const forkDocument: IDocumentService['forkDocument'] = async () => {
+  await delay(200);
+  return `mock-doc-copy-${Date.now()}`;
+};
+
 const getOnlyOfficeEditorConfig = async (
   resourceId: string
 ): Promise<OnlyOfficeEditorConfigResponse> => {
@@ -105,5 +110,6 @@ export const DocumentServicesMock: IDocumentService = {
   retryPendingDoc,
   cancelPendingDoc,
   getDocInfo,
+  forkDocument,
   getOnlyOfficeEditorConfig,
 };

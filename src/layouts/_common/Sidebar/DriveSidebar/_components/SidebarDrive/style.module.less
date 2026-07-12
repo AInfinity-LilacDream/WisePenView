@@ -18,17 +18,25 @@
   padding: 24px 12px;
 }
 
+.sectionTitle {
+  flex: 0 0 auto;
+  padding: 8px 12px 6px;
+  color: var(--text-tertiary);
+  font-size: 12px;
+  line-height: 18px;
+}
+
 .tree {
   color: var(--foreground);
   font-size: var(--font-size-md, 14px);
-  gap: 1px;
+  gap: var(--space-2xs, 4px);
 
   :global(.wisepen-tree__item) {
-    min-height: 36px;
+    min-height: 40px;
     width: 100%;
     padding: 0 2px;
     color: var(--muted);
-    border-radius: var(--radius-md, 6px);
+    border-radius: var(--app-radius-interactive, var(--radius-2xl));
     box-sizing: border-box;
     transition:
       color 0.16s ease,
@@ -42,7 +50,7 @@
   }
 
   :global(.wisepen-tree__content) {
-    min-height: 36px;
+    min-height: 40px;
     flex: 1;
     min-width: 0;
     padding: 0;

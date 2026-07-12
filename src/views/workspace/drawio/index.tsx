@@ -1,25 +1,25 @@
 import { DRAWIO_EMBED_URL } from '@/apis/clientUrls';
 import { ResultState, Spin } from '@/components/Feedback';
-import { FormField, Input } from '@/components/Input';
 import AppDisplayDialog from '@/components/Overlay/AppDisplayDialog';
-import AppFormDialog from '@/components/Overlay/AppFormDialog';
 import { useNoteService, useResourceService, useUserService } from '@/domains';
 import type {
   DrawIoLatestSnapshotData,
   NoteInfoDisplayData,
   NoteVersionListPage,
 } from '@/domains/Note';
-import { useOpenInWorkspace } from '@/hooks/useOpenInWorkspace';
+import type { ResourceAction } from '@/domains/Resource';
 import { useResourceDisplayName } from '@/hooks/useResourceDisplayName';
-import { useWorkspaceLayoutConfig } from '@/layouts/Workspace/WorkspaceOutletContext';
+import {
+  useWorkspaceLayoutConfig,
+  type WorkspaceLayoutConfig,
+} from '@/layouts/Workspace/WorkspaceOutletContext';
 import { parseErrorMessage } from '@/utils/error';
 import { WORKSPACE_RESOURCE_TYPE } from '@/utils/navigation/workspaceRoute';
 import { Button, toast } from '@heroui/react';
 import { useEventListener, useRequest, useUnmount, useUpdateEffect } from 'ahooks';
-import { Copy, History, Save } from 'lucide-react';
+import { History, Save } from 'lucide-react';
 import { useCallback, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import ResourcePermissionControl from '../_components/ResourcePermissionControl';
 import styles from './style.module.less';
 
 const EMPTY_DRAWIO_XML = `<mxfile host="WisePen"><diagram name="Page-1"><mxGraphModel dx="1422" dy="794" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0"><root><mxCell id="0"/><mxCell id="1" parent="0"/></root></mxGraphModel></diagram></mxfile>`;
@@ -89,10 +89,6 @@ function extractPlainText(xml: string): string | undefined {
   }
 }
 
-function hasAction(actions: unknown, action: string): boolean {
-  return Array.isArray(actions) && actions.some((item) => item === action);
-}
-
 function readDrawioEmbedUrl(): URL {
   return new URL(DRAWIO_EMBED_URL);
 }
@@ -156,21 +152,53 @@ function buildDrawioUrl(canEdit: boolean): string {
 
 function DrawioLayoutConfig({
   children,
-  extra,
+  resourceId,
+  resourceName = 'Draw.io 图',
+  ownerId,
+  currentActions,
+  copyVersion,
+  onPermissionSuccess,
+  titleMeta,
+  actions,
 }: {
   children: ReactNode;
   resourceId?: string;
-  noteInfoDisplay?: NoteInfoDisplayData;
-  extra?: ReactNode;
+  resourceName?: string;
+  ownerId?: string | null;
+  currentActions?: ResourceAction[] | null;
+  copyVersion?: number;
+  onPermissionSuccess?: () => void;
+  titleMeta?: ReactNode;
+  actions?: ReactNode;
 }) {
-  const frameConfig = useMemo(
+  const frameConfig = useMemo<WorkspaceLayoutConfig>(
     () => ({
       className: styles.container,
       header: {
-        extra,
+        resource: {
+          resourceId,
+          resourceName,
+          resourceIconType: 'drawio',
+          currentActions,
+          copyVersion,
+          permissionResourceType: WORKSPACE_RESOURCE_TYPE.DRAWIO,
+          ownerId,
+          onPermissionSuccess,
+          titleMeta,
+          actions,
+        },
       },
     }),
-    [extra]
+    [
+      actions,
+      copyVersion,
+      currentActions,
+      onPermissionSuccess,
+      ownerId,
+      resourceId,
+      resourceName,
+      titleMeta,
+    ]
   );
   useWorkspaceLayoutConfig(frameConfig);
 
@@ -238,72 +266,9 @@ function VersionModal({
   );
 }
 
-function CopyModal({
-  open,
-  name,
-  loading,
-  onNameChange,
-  onClose,
-  onConfirm,
-}: {
-  open: boolean;
-  name: string;
-  loading: boolean;
-  onNameChange: (value: string) => void;
-  onClose: () => void;
-  onConfirm: () => void;
-}) {
-  const [nameError, setNameError] = useState('');
-
-  const handleNameChange = (value: string) => {
-    onNameChange(value);
-    setNameError('');
-  };
-
-  const handleConfirm = () => {
-    if (!name.trim()) {
-      setNameError('请输入复制后的名称');
-      return;
-    }
-    onConfirm();
-  };
-
-  const handleClose = () => {
-    setNameError('');
-    onClose();
-  };
-
-  return (
-    <AppFormDialog
-      isOpen={open}
-      onOpenChange={(visible) => !visible && handleClose()}
-      title="复制 Draw.io 图"
-      confirmText="复制"
-      onCancel={handleClose}
-      onSubmit={handleConfirm}
-      isSubmitting={loading}
-      isSubmitDisabled={loading}
-      isDismissable={!loading}
-    >
-      <FormField
-        aria-label="复制后的名称"
-        label="复制后的名称"
-        name="copyName"
-        value={name}
-        onChange={handleNameChange}
-        errorMessage={nameError}
-        isRequired
-      >
-        <Input placeholder="请输入名称" autoFocus />
-      </FormField>
-    </AppFormDialog>
-  );
-}
-
 function DrawioViewConnected({ resourceId, data, onRefreshDrawioInfo }: DrawioViewConnectedProps) {
   const { noteInfoDisplay, snapshot, initialXml } = data;
   const noteService = useNoteService();
-  const openInWorkspace = useOpenInWorkspace();
   const userService = useUserService();
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const initialVersion = Math.max(noteInfoDisplay.version ?? 0, snapshot.version ?? 0);
@@ -315,11 +280,8 @@ function DrawioViewConnected({ resourceId, data, onRefreshDrawioInfo }: DrawioVi
   const [saveState, setSaveState] = useState<SaveState>('saved');
   const [editorReady, setEditorReady] = useState(false);
   const [editorLoaded, setEditorLoaded] = useState(false);
-  const [copyOpen, setCopyOpen] = useState(false);
-  const [copyName, setCopyName] = useState('');
   const [versionOpen, setVersionOpen] = useState(false);
   const canEdit = noteInfoDisplay.canCollaborativeEdit;
-  const canFork = hasAction(noteInfoDisplay.resourceInfo?.currentActions, 'FORK');
   const canViewVersions = Boolean(noteInfoDisplay.ownerId);
   const title = useResourceDisplayName(resourceId, noteInfoDisplay.noteTitle, '未命名图表');
   const drawioUrl = useMemo(() => buildDrawioUrl(canEdit), [canEdit]);
@@ -481,65 +443,17 @@ function DrawioViewConnected({ resourceId, data, onRefreshDrawioInfo }: DrawioVi
     manual: true,
   });
 
-  const { loading: copyLoading, run: runCopy } = useRequest(
-    async () => {
-      const trimmed = copyName.trim();
-      const res = await noteService.forkNote({
-        resourceId,
-        forkedResourceVersion: currentVersion,
-        forkedResourceName: trimmed,
-      });
-      if (!res.resourceId) {
-        throw new Error('复制结果缺少资源 ID');
-      }
-      return res.resourceId;
-    },
-    {
-      manual: true,
-      onSuccess: (newResourceId) => {
-        setCopyOpen(false);
-        toast.success('复制成功');
-        openInWorkspace({
-          resourceId: newResourceId,
-          resourceType: WORKSPACE_RESOURCE_TYPE.DRAWIO,
-        });
-      },
-      onError: (err) => {
-        toast.danger(parseErrorMessage(err));
-      },
-    }
-  );
-
-  const handleOpenCopy = () => {
-    setCopyName(`${title} 副本`);
-    setCopyOpen(true);
-  };
-
   const handleOpenVersions = () => {
     setVersionOpen(true);
     runLoadVersions();
   };
 
-  const headerExtra = (
+  const headerActions = (
     <div className={styles.headerExtra}>
-      <span className={styles.versionBadge}>v{currentVersion}</span>
-      <SaveStatusText state={saveState} />
-      <ResourcePermissionControl
-        resourceId={resourceId}
-        resourceType={WORKSPACE_RESOURCE_TYPE.DRAWIO}
-        ownerId={noteInfoDisplay.ownerId}
-        onSuccess={onRefreshDrawioInfo}
-      />
       {currentUser?.id === noteInfoDisplay.ownerId && canViewVersions ? (
         <Button size="sm" variant="secondary" onPress={handleOpenVersions} aria-label="版本记录">
           <History size={16} />
           <span>版本</span>
-        </Button>
-      ) : null}
-      {canFork ? (
-        <Button size="sm" variant="secondary" onPress={handleOpenCopy} aria-label="复制">
-          <Copy size={16} />
-          <span>复制</span>
         </Button>
       ) : null}
       {canEdit ? (
@@ -560,8 +474,18 @@ function DrawioViewConnected({ resourceId, data, onRefreshDrawioInfo }: DrawioVi
   return (
     <DrawioLayoutConfig
       resourceId={resourceId}
-      noteInfoDisplay={noteInfoDisplay}
-      extra={headerExtra}
+      resourceName={title}
+      ownerId={noteInfoDisplay.ownerId}
+      currentActions={noteInfoDisplay.resourceInfo?.currentActions}
+      copyVersion={currentVersion}
+      onPermissionSuccess={onRefreshDrawioInfo}
+      titleMeta={
+        <>
+          <span className={styles.versionBadge}>v{currentVersion}</span>
+          <SaveStatusText state={saveState} />
+        </>
+      }
+      actions={headerActions}
     >
       <div className={styles.content}>
         <iframe
@@ -579,14 +503,6 @@ function DrawioViewConnected({ resourceId, data, onRefreshDrawioInfo }: DrawioVi
           </div>
         )}
       </div>
-      <CopyModal
-        open={copyOpen}
-        name={copyName}
-        loading={copyLoading}
-        onNameChange={setCopyName}
-        onClose={() => setCopyOpen(false)}
-        onConfirm={runCopy}
-      />
       <VersionModal
         open={versionOpen}
         loading={versionsLoading}

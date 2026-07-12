@@ -88,8 +88,16 @@ export interface IDocumentService {
   cancelPendingDoc(documentId: string): Promise<void>;
   /** 获取文档详情信息（用于预览页展示） */
   getDocInfo(resourceId: string): Promise<DocDisplayInfoResponse>;
+  /** 复制已有文档，后端统一校验 FORK 权限。 */
+  forkDocument(params: ForkDocumentRequest): Promise<string>;
   /** 获取 ONLYOFFICE 编辑器初始化配置 */
   getOnlyOfficeEditorConfig(resourceId: string): Promise<OnlyOfficeEditorConfigResponse>;
+}
+
+export interface ForkDocumentRequest {
+  resourceId: string;
+  forkedResourceName: string;
+  forkedResourceVersion?: number;
 }
 
 export interface UploadDocumentParams {

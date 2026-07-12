@@ -16,7 +16,7 @@ export const DRIVE_SHARED_TAG_NAME = '/.shared';
 export const DRIVE_SHARED_FOLDER_DISPLAY_NAME = '共享';
 const DRIVE_GROUP_ROOT_PREFIX = 'drive-root:group:';
 
-type EncodedNodeKind = 'folder' | 'resource' | 'link' | 'loading';
+export type EncodedNodeKind = 'folder' | 'resource' | 'link' | 'loading';
 
 type DecodedNodeId =
   | { kind: 'root'; groupId?: string }

@@ -8,6 +8,8 @@ import {
 
 export type NoteResourceAsideMode = 'closed' | 'annotation' | 'discussion';
 
+export const DEFAULT_NOTE_RESOURCE_ASIDE_MODE: NoteResourceAsideMode = 'closed';
+
 interface NoteResourceAsideState {
   /** key 为笔记 resourceId。 */
   modeByResourceId: Record<string, NoteResourceAsideMode>;
@@ -23,14 +25,14 @@ export const useNoteResourceAsideStore = create<NoteResourceAsideState>((set, ge
   widthByResourceId: {},
   setMode: (resourceId, mode) =>
     set((state) => {
-      const currentMode = state.modeByResourceId[resourceId] ?? 'annotation';
+      const currentMode = state.modeByResourceId[resourceId] ?? DEFAULT_NOTE_RESOURCE_ASIDE_MODE;
       if (currentMode === mode) return state;
       return {
         modeByResourceId: { ...state.modeByResourceId, [resourceId]: mode },
       };
     }),
   toggleMode: (resourceId, mode) => {
-    const currentMode = get().modeByResourceId[resourceId] ?? 'annotation';
+    const currentMode = get().modeByResourceId[resourceId] ?? DEFAULT_NOTE_RESOURCE_ASIDE_MODE;
     get().setMode(resourceId, currentMode === mode ? 'closed' : mode);
   },
   setWidth: (resourceId, width) => {

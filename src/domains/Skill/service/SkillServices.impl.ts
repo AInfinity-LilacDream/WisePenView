@@ -116,6 +116,14 @@ export const createSkillServices = (deps: SkillServicesDeps): ISkillService => {
     return resourceId;
   };
 
+  const forkSkill: ISkillService['forkSkill'] = async (params) => {
+    const resourceId = await SkillApi.forkSkill(params);
+    if (!resourceId) {
+      throw new Error('复制 Skill 接口未返回资源 ID');
+    }
+    return resourceId;
+  };
+
   const getSkillDetail = async (resourceId: string) => {
     const [currentUser, info] = await Promise.all([
       userService.getUserInfo(),
@@ -302,6 +310,7 @@ export const createSkillServices = (deps: SkillServicesDeps): ISkillService => {
   return {
     getSkillSummaries,
     createSkill,
+    forkSkill,
     getSkillDetail,
     getSkillVersionFiles,
     updateSkillInfo,

@@ -10,6 +10,7 @@ import {
   SystemResizablePanelGroup,
 } from '@/layouts/_common/SystemResizable';
 import { useResizablePanelSize } from '@/layouts/_common/useResizablePanelSize';
+import { useAppNavigation } from '@/layouts/AppNavigation/AppNavigationContext';
 import {
   normalizeWorkspaceResourceType,
   resolveLegacyEditorTypeForWorkspace,
@@ -28,6 +29,7 @@ import { Outlet, useLocation, useMatch } from 'react-router-dom';
 import WorkspaceFrame from './_common/WorkspaceFrame';
 import WorkspaceHeader from './_common/WorkspaceHeader';
 import { useWorkspaceChatProtocolStore } from './_store/useWorkspaceChatProtocolStore';
+import { useWorkspaceResourceBreadcrumb } from './useWorkspaceResourceBreadcrumb';
 import { createResourceWorkspaceChatStateProvider } from './WorkspaceChatProtocol';
 import styles from './WorkspaceLayout.module.less';
 import type { WorkspaceLayoutConfig, WorkspaceOutletContextValue } from './WorkspaceOutletContext';
@@ -46,6 +48,7 @@ const clampWorkspaceLeftSidebarWidth = (width: number): number =>
   clampPanelWidth(width, WORKSPACE_LEFT_SIDEBAR_MIN_WIDTH, WORKSPACE_LEFT_SIDEBAR_MAX_WIDTH);
 
 function WorkspaceLayout() {
+  const appNavigation = useAppNavigation();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [layoutConfig, setLayoutConfigState] = useState<WorkspaceLayoutConfig>({});
   const storedLeftSidebarWidth = useSystemLayoutStore((state) => state.workspaceLeftSidebarWidth);
@@ -110,6 +113,7 @@ function WorkspaceLayout() {
       editorType: resolveLegacyEditorTypeForWorkspace(resourceType, viewer),
     });
   }, [routeContext]);
+  const resourceBreadcrumb = useWorkspaceResourceBreadcrumb(routeContext.resourceId);
   const workspaceChatStateProvider = layoutConfig.chatStateProvider ?? routeChatStateProvider;
 
   useResizablePanelSize({
@@ -249,11 +253,25 @@ function WorkspaceLayout() {
   const renderHeader = () => {
     if (layoutConfig.header === false) return null;
 
+    const headerConfig = layoutConfig.header ?? {};
+    const resource = headerConfig.resource
+      ? {
+          ...headerConfig.resource,
+          breadcrumbItems: resourceBreadcrumb.items,
+          onBreadcrumbNavigate: resourceBreadcrumb.navigateToNode,
+        }
+      : undefined;
+
     return (
       <WorkspaceHeader
-        {...(layoutConfig.header ?? {})}
+        {...headerConfig}
+        resource={resource}
+        canGoBack={appNavigation.canGoBack}
+        canGoForward={appNavigation.canGoForward}
         leftSidebarCollapsed={sidebarCollapsed}
         rightSidebarCollapsed={safeChatPanelCollapsed}
+        onGoBack={appNavigation.goBack}
+        onGoForward={appNavigation.goForward}
         onToggleLeftSidebar={handleSidebarToggle}
         onToggleRightSidebar={handleChatPanelToggle}
       />
@@ -274,12 +292,19 @@ function WorkspaceLayout() {
         minSize={sidebarCollapsed ? 0 : WORKSPACE_LEFT_SIDEBAR_MIN_WIDTH}
         maxSize={sidebarCollapsed ? 0 : WORKSPACE_LEFT_SIDEBAR_MAX_WIDTH}
         groupResizeBehavior="preserve-pixel-size"
-        className={clsx(styles.leftSider, sidebarCollapsed && styles.leftSiderCollapsed)}
+        className={styles.leftSider}
         aria-label="资源侧边栏"
         aria-hidden={sidebarCollapsed ? true : undefined}
         onResize={handleLeftSidebarResize}
       >
-        <DriveSidebar collapsed={sidebarCollapsed} />
+        <DriveSidebar
+          collapsed={sidebarCollapsed}
+          canGoBack={appNavigation.canGoBack}
+          canGoForward={appNavigation.canGoForward}
+          onGoBack={appNavigation.goBack}
+          onGoForward={appNavigation.goForward}
+          onToggle={handleSidebarToggle}
+        />
       </SystemResizablePanel>
 
       <SystemResizableHandle
@@ -340,7 +365,6 @@ function WorkspaceLayout() {
                   context: workspaceChatContext,
                   clearContext: clearWorkspaceChatContext,
                 }}
-                showCollapseButton={false}
               />
             ) : null}
           </SystemResizablePanel>

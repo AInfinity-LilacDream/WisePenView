@@ -133,13 +133,13 @@ function SessionListGroup({
 
   return (
     <ListBox
-      aria-label="聊天记录"
+      aria-label="会话历史"
       selectionMode="single"
       className={styles.sessionMenu}
       selectedKeys={selectedKeys}
     >
       <ListBoxSection id="recent-session" className={styles.section}>
-        <Header className={styles.sectionTitle}>聊天记录</Header>
+        <Header className={styles.sectionTitle}>会话历史</Header>
         {sessionListLoading && sessionItems.length === 0 ? (
           <ListBoxItem
             id="session-loading"

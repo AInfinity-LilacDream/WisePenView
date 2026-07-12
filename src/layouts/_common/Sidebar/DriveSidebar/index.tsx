@@ -6,12 +6,27 @@ import SidebarDrive from './_components/SidebarDrive';
 import type { DriveSidebarProps } from './index.type';
 import styles from './style.module.less';
 
-function DriveSidebar({ collapsed }: DriveSidebarProps) {
+function DriveSidebar({
+  collapsed,
+  canGoBack,
+  canGoForward,
+  onGoBack,
+  onGoForward,
+  onToggle,
+}: DriveSidebarProps) {
   return (
     <div className={styles.sider}>
       {!collapsed ? (
         <>
-          <SidebarHeader collapsed={collapsed} nav={<AppHeaderNav collapsed={collapsed} />} />
+          <SidebarHeader
+            collapsed={collapsed}
+            canGoBack={canGoBack}
+            canGoForward={canGoForward}
+            nav={<AppHeaderNav collapsed={collapsed} />}
+            onGoBack={onGoBack}
+            onGoForward={onGoForward}
+            onToggle={onToggle}
+          />
 
           <div className={styles.body}>
             <SidebarDrive />

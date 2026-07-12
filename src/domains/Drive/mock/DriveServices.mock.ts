@@ -90,11 +90,11 @@ const normalizeNode = (node: LegacyNode): DriveNode | null => {
       childrenIds: node.childrenIds ?? [],
     };
   }
-  if (node.type === 'resource' && node.resourceId) {
+  if (node.type === 'resource' && node.resourceId && node.parentId) {
     return {
       id: node.id,
       type: 'resource',
-      parentId: node.parentId ?? null,
+      parentId: node.parentId,
       scope: buildDriveNodeScope(),
       resourceId: node.resourceId,
       title: node.title ?? '未命名文件',
@@ -106,11 +106,11 @@ const normalizeNode = (node: LegacyNode): DriveNode | null => {
       folderTagId: node.tagId ?? node.parentId ?? '',
     };
   }
-  if (node.type === 'link' && node.resourceId) {
+  if (node.type === 'link' && node.resourceId && node.parentId) {
     return {
       id: node.id,
       type: 'link',
-      parentId: node.parentId ?? null,
+      parentId: node.parentId,
       scope: buildDriveNodeScope(),
       resourceId: node.resourceId,
       title: node.title ?? '未命名文件',
@@ -235,12 +235,61 @@ function createDriveServiceMock(opts?: CreateDriveServiceOptions): IDriveService
       .filter((node): node is DriveNode => node != null && node.type !== 'loading');
     const folderNodes = children.filter((node): node is FolderNode => node.type === 'folder');
     const otherNodes = children.filter((node) => node.type !== 'folder');
-    return [...orderDriveFolderNodes(folderNodes), ...otherNodes];
+    const normalizedResourceLimit =
+      params.resourceLimit == null ? undefined : Math.max(0, Math.floor(params.resourceLimit));
+    return [
+      ...orderDriveFolderNodes(folderNodes),
+      ...(normalizedResourceLimit == null
+        ? otherNodes
+        : otherNodes.slice(0, normalizedResourceLimit)),
+    ];
   };
 
   const getNodePath: IDriveService['getNodePath'] = async (params: GetNodePathParams) => {
     await delay(NETWORK_DELAY_MS);
     return buildPath(params.nodeId);
+  };
+
+  const getResourceNode: IDriveService['getResourceNode'] = async (params) => {
+    await delay(NETWORK_DELAY_MS);
+    const parent = getContainer(params.parentNodeId);
+    return parent?.childrenIds
+      .map((id) => nodes.get(id))
+      .find(
+        (node): node is Extract<DriveNode, { type: 'resource' | 'link' }> =>
+          (node?.type === 'resource' || node?.type === 'link') &&
+          node.resourceId === params.resourceId &&
+          (!params.nodeId || node.id === params.nodeId)
+      );
+  };
+
+  const createLink: IDriveService['createLink'] = async (params) => {
+    await delay(NETWORK_DELAY_MS);
+    const source = nodes.get(params.nodeId);
+    const target = getContainer(params.targetFolderNodeId);
+    if (
+      source?.scope.type !== 'group' ||
+      source.type !== 'resource' ||
+      !target ||
+      source.scope.rootId !== target.scope.rootId
+    ) {
+      throw createClientError(FRONTEND_CLIENT_ERROR.DRIVE_NODE_UNSUPPORTED_MOVE);
+    }
+    const targetTagId = target.tagId;
+    if (!targetTagId) {
+      throw createClientError(FRONTEND_CLIENT_ERROR.DRIVE_NODE_UNSUPPORTED_MOVE);
+    }
+    const linkId = `link:${source.resourceId}:${targetTagId}`;
+    if (nodes.has(linkId)) return;
+    nodes.set(linkId, {
+      ...source,
+      id: linkId,
+      type: 'link',
+      parentId: target.id,
+      folderTagId: targetTagId,
+      primaryTagId: source.folderTagId,
+    });
+    target.childrenIds.push(linkId);
   };
 
   function createMovePlan(params: MoveToFolderParams): MockMovePlan {
@@ -415,7 +464,9 @@ function createDriveServiceMock(opts?: CreateDriveServiceOptions): IDriveService
     getTrashFolderNodeId,
     listNodeChildren,
     getNodePath,
+    getResourceNode,
     moveToFolder,
+    createLink,
     moveNodesToFolder,
     removeNode,
     renameNode,

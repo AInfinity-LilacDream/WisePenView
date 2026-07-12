@@ -1,3 +1,4 @@
+import { coerceResourceActions } from '@/domains/Resource';
 import {
   AssetResourceTypeEnum,
   type SkillAssetApiInfo,
@@ -134,6 +135,7 @@ function mapSkillDetail(params: {
     updatedAt: '',
     creatorId: ownerId,
     ownerId,
+    currentActions: coerceResourceActions(resourceInfo?.currentActions),
     fileCount: files.length,
     files,
     isOwner: Boolean(params.currentUserId && ownerId === params.currentUserId),

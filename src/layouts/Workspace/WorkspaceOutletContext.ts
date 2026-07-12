@@ -1,9 +1,11 @@
 import type { WorkspaceResourceType, WorkspaceViewer } from '@/utils/navigation/workspaceRoute';
 import { useLayoutEffect, type ReactNode } from 'react';
 import { useOutletContext } from 'react-router-dom';
+import type { ResourceHeaderConfig } from './_common/ResourceHeader/index.type';
 import type { WorkspaceChatStateProvider } from './WorkspaceChatProtocol';
 
 export interface WorkspaceHeaderConfig {
+  resource?: ResourceHeaderConfig;
   inlineTitle?: ReactNode;
   extra?: ReactNode;
   titleBlock?: ReactNode;
@@ -39,10 +41,6 @@ function useWorkspaceOutletContext() {
 
 export function useWorkspaceRouteContext() {
   return useWorkspaceOutletContext().routeContext;
-}
-
-export function useOptionalWorkspaceRouteContext() {
-  return useOutletContext<WorkspaceOutletContextValue | null>()?.routeContext;
 }
 
 export function useWorkspaceLayoutConfig(config: WorkspaceLayoutConfig) {

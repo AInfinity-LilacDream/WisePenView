@@ -1,3 +1,4 @@
+import type { ResourceAction } from '@/domains/Resource';
 import type { SkillVersionStatus } from '../enum';
 
 export type SkillScopeType = 'PERSONAL' | 'GROUP';
@@ -36,4 +37,5 @@ export interface SkillDetail extends SkillSummary {
   files: SkillFileNode[];
   isOwner: boolean;
   ownerId?: string;
+  currentActions?: ResourceAction[] | null;
 }

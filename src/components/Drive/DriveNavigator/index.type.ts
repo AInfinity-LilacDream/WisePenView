@@ -1,15 +1,19 @@
 import type { DriveNode } from '@/domains/Drive';
 import type { DriveItemKind, DriveScope, DriveSelectionItem } from '../common/driveComponentModel';
 
-export type DriveNavigatorScopeMode = 'single' | 'all';
+export type DriveNavigatorScopeMode = 'single' | 'all' | 'groups';
 
 export interface DriveNavigatorProps {
   rootId?: string;
   scope?: DriveScope;
   groupId?: string;
   scopeMode?: DriveNavigatorScopeMode;
+  /** 多 scope 模式下不展示的组 ID。 */
+  excludedGroupIds?: string[];
   renderableTypes?: DriveItemKind[];
   selectableTypes?: DriveItemKind[];
+  /** 资源仅作辅助展示时，每个目录最多加载的 resource/link 数量。 */
+  resourcePreviewLimit?: number;
   disabledNodeIds?: string[];
   multiple?: boolean;
   initialSelectedIds?: string[];

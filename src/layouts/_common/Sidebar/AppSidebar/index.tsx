@@ -7,13 +7,24 @@ import AppHeaderNav from './AppHeaderNav';
 import AppSessionMenu from './AppSessionMenu';
 import type { AppSidebarProps } from './index.type';
 
-function AppSidebar({ collapsed }: AppSidebarProps) {
+function AppSidebar({
+  collapsed,
+  canGoBack,
+  canGoForward,
+  onGoBack,
+  onGoForward,
+  onToggle,
+}: AppSidebarProps) {
   return (
     <div className={clsx(styles.sider, collapsed && styles.collapsed)}>
       <SidebarHeader
         collapsed={collapsed}
-        reserveToggleSlot
+        canGoBack={canGoBack}
+        canGoForward={canGoForward}
         nav={<AppHeaderNav collapsed={collapsed} />}
+        onGoBack={onGoBack}
+        onGoForward={onGoForward}
+        onToggle={onToggle}
       />
       <AppSessionMenu collapsed={collapsed} />
       <UserProfile collapsed={collapsed} />

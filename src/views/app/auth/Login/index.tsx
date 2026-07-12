@@ -32,7 +32,7 @@ function Login() {
     {
       manual: true,
       onSuccess: () => {
-        navigate('/app/drive');
+        navigate('/app/chat', { replace: true });
       },
       onError: (err: unknown) => {
         toast.danger(parseErrorMessage(err));

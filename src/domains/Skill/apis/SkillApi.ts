@@ -2,6 +2,7 @@ import { apiGet, apiPost } from '@/apis/request';
 import type {
   CreateSkillData,
   DeleteSkillAssetsData,
+  ForkSkillData,
   GetSkillAssetStsTokenData,
   GetSkillInfoData,
   GetSkillVersionBundleInfoData,
@@ -18,6 +19,10 @@ import type {
 
 function createSkill(body: CreateSkillData['body']): Promise<RString['data']> {
   return apiPost('/skill/createSkill', body);
+}
+
+function forkSkill(body: ForkSkillData['body']): Promise<RString['data']> {
+  return apiPost('/skill/forkSkill', body);
 }
 
 function getSkillInfo(
@@ -58,6 +63,7 @@ function publishSkillVersion(body: PublishSkillVersionData['body']): Promise<RVo
 
 export const SkillApi = {
   createSkill,
+  forkSkill,
   getSkillInfo,
   getSkillVersionBundleInfo,
   getSkillAssetStsToken,
