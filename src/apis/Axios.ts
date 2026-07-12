@@ -2,9 +2,7 @@
 import type { ApiErrorBody } from '@/apis/api.type';
 import { API_BASE_URL } from '@/apis/clientUrls';
 import { applyXDeveloperHeader } from '@/apis/developmentTraffic';
-import { clearAllServiceCaches } from '@/domains/_shared/cacheRegistry';
-import { resetSessionStores } from '@/store/lifecycle';
-import { emitAuthChangeEvent } from '@/utils/auth/authChange';
+import { authSessionCoordinator } from '@/utils/auth/authSessionCoordinator';
 import { WisePenError } from '@/utils/error';
 import { FRONTEND_NETWORK_ERROR } from '@/utils/error/codes';
 import axios, { AxiosHeaders, type AxiosError } from 'axios';
@@ -104,10 +102,7 @@ Axios.interceptors.response.use(
   (response) => response.data,
   (error: AxiosError) => {
     if (error.response?.status === 401) {
-      clearAllServiceCaches();
-      resetSessionStores();
-      emitAuthChangeEvent();
-      window.location.href = '/login';
+      authSessionCoordinator.unauthorized();
     }
     return Promise.reject(mapAxiosErrorToWisePenError(error));
   }

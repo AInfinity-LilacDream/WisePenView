@@ -7,7 +7,7 @@ import router from './router';
 
 import { ServicesProvider } from '@/domains';
 import { DEFAULT_HEROUI_THEME, ThemeApplier } from '@/theme';
-import { subscribeAuthChangeEvent } from '@/utils/auth/authChange';
+import { authSessionCoordinator } from '@/utils/auth/authSessionCoordinator';
 import styles from './App.module.less';
 
 function PageLoadingFallback() {
@@ -19,15 +19,15 @@ function PageLoadingFallback() {
 }
 
 function App() {
-  const unsubscribeAuthChangeRef = useRef<(() => void) | null>(null);
+  const unsubscribeAuthSessionRef = useRef<(() => void) | null>(null);
 
   useMount(() => {
-    unsubscribeAuthChangeRef.current = subscribeAuthChangeEvent();
+    unsubscribeAuthSessionRef.current = authSessionCoordinator.subscribe();
   });
 
   useUnmount(() => {
-    unsubscribeAuthChangeRef.current?.();
-    unsubscribeAuthChangeRef.current = null;
+    unsubscribeAuthSessionRef.current?.();
+    unsubscribeAuthSessionRef.current = null;
   });
 
   return (
