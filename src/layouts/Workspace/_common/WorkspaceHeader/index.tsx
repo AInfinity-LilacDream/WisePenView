@@ -2,10 +2,12 @@ import { Tooltip } from '@heroui/react';
 import clsx from 'clsx';
 import { PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen } from 'lucide-react';
 
+import ResourceHeader from '../ResourceHeader';
 import type { WorkspaceHeaderProps } from './index.type';
 import styles from './style.module.less';
 
 function WorkspaceHeader({
+  resource,
   inlineTitle,
   extra,
   titleBlock,
@@ -41,11 +43,17 @@ function WorkspaceHeader({
               <Tooltip.Content>{leftSidebarLabel}</Tooltip.Content>
             </Tooltip>
           ) : null}
-          <div className={styles.toolbarMiddle}>
-            {inlineTitle ? <div className={styles.inlineTitle}>{inlineTitle}</div> : null}
-          </div>
+          {resource ? (
+            <div className={styles.resourceHeader}>
+              <ResourceHeader {...resource} />
+            </div>
+          ) : (
+            <div className={styles.toolbarMiddle}>
+              {inlineTitle ? <div className={styles.inlineTitle}>{inlineTitle}</div> : null}
+            </div>
+          )}
           <div className={styles.toolbarEnd}>
-            {extra}
+            {resource ? null : extra}
             {onToggleRightSidebar ? (
               <div className={styles.sidebarControls}>
                 <Tooltip>

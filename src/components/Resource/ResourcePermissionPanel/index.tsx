@@ -670,12 +670,6 @@ function ResourcePermissionPanel({
 
   return (
     <div className={styles.panel} aria-busy={isUpdating || undefined}>
-      <div className={styles.panelHeader}>
-        <div>
-          <div className={styles.panelTitle}>管理协作者</div>
-          <div className={styles.panelSubtitle}>所有可访问此资源的用户</div>
-        </div>
-      </div>
       <div className={styles.panelBody}>
         {loading ? (
           <PermissionPanelSkeleton />

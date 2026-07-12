@@ -11,7 +11,10 @@ import type {
 } from '@/domains/Note';
 import { useOpenInWorkspace } from '@/hooks/useOpenInWorkspace';
 import { useResourceDisplayName } from '@/hooks/useResourceDisplayName';
-import { useWorkspaceLayoutConfig } from '@/layouts/Workspace/WorkspaceOutletContext';
+import {
+  useWorkspaceLayoutConfig,
+  type WorkspaceLayoutConfig,
+} from '@/layouts/Workspace/WorkspaceOutletContext';
 import { parseErrorMessage } from '@/utils/error';
 import { WORKSPACE_RESOURCE_TYPE } from '@/utils/navigation/workspaceRoute';
 import { Button, toast } from '@heroui/react';
@@ -19,7 +22,6 @@ import { useEventListener, useRequest, useUnmount, useUpdateEffect } from 'ahook
 import { Copy, History, Save } from 'lucide-react';
 import { useCallback, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import ResourcePermissionControl from '../_components/ResourcePermissionControl';
 import styles from './style.module.less';
 
 const EMPTY_DRAWIO_XML = `<mxfile host="WisePen"><diagram name="Page-1"><mxGraphModel dx="1422" dy="794" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0"><root><mxCell id="0"/><mxCell id="1" parent="0"/></root></mxGraphModel></diagram></mxfile>`;
@@ -156,21 +158,38 @@ function buildDrawioUrl(canEdit: boolean): string {
 
 function DrawioLayoutConfig({
   children,
-  extra,
+  resourceId,
+  resourceName = 'Draw.io 图',
+  ownerId,
+  onPermissionSuccess,
+  titleMeta,
+  actions,
 }: {
   children: ReactNode;
   resourceId?: string;
-  noteInfoDisplay?: NoteInfoDisplayData;
-  extra?: ReactNode;
+  resourceName?: string;
+  ownerId?: string | null;
+  onPermissionSuccess?: () => void;
+  titleMeta?: ReactNode;
+  actions?: ReactNode;
 }) {
-  const frameConfig = useMemo(
+  const frameConfig = useMemo<WorkspaceLayoutConfig>(
     () => ({
       className: styles.container,
       header: {
-        extra,
+        resource: {
+          resourceId,
+          resourceName,
+          resourceIconType: 'drawio',
+          permissionResourceType: WORKSPACE_RESOURCE_TYPE.DRAWIO,
+          ownerId,
+          onPermissionSuccess,
+          titleMeta,
+          actions,
+        },
       },
     }),
-    [extra]
+    [actions, onPermissionSuccess, ownerId, resourceId, resourceName, titleMeta]
   );
   useWorkspaceLayoutConfig(frameConfig);
 
@@ -520,16 +539,8 @@ function DrawioViewConnected({ resourceId, data, onRefreshDrawioInfo }: DrawioVi
     runLoadVersions();
   };
 
-  const headerExtra = (
+  const headerActions = (
     <div className={styles.headerExtra}>
-      <span className={styles.versionBadge}>v{currentVersion}</span>
-      <SaveStatusText state={saveState} />
-      <ResourcePermissionControl
-        resourceId={resourceId}
-        resourceType={WORKSPACE_RESOURCE_TYPE.DRAWIO}
-        ownerId={noteInfoDisplay.ownerId}
-        onSuccess={onRefreshDrawioInfo}
-      />
       {currentUser?.id === noteInfoDisplay.ownerId && canViewVersions ? (
         <Button size="sm" variant="secondary" onPress={handleOpenVersions} aria-label="版本记录">
           <History size={16} />
@@ -560,8 +571,16 @@ function DrawioViewConnected({ resourceId, data, onRefreshDrawioInfo }: DrawioVi
   return (
     <DrawioLayoutConfig
       resourceId={resourceId}
-      noteInfoDisplay={noteInfoDisplay}
-      extra={headerExtra}
+      resourceName={title}
+      ownerId={noteInfoDisplay.ownerId}
+      onPermissionSuccess={onRefreshDrawioInfo}
+      titleMeta={
+        <>
+          <span className={styles.versionBadge}>v{currentVersion}</span>
+          <SaveStatusText state={saveState} />
+        </>
+      }
+      actions={headerActions}
     >
       <div className={styles.content}>
         <iframe

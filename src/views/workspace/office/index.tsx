@@ -1,8 +1,6 @@
 import { ONLYOFFICE_DOCUMENT_SERVER_PUBLIC_URL } from '@/apis/clientUrls';
 import { ResultState, Spin } from '@/components/Feedback';
-import EntryIcon from '@/components/Icons/EntryIcon';
 import { useDocumentService, useResourceService } from '@/domains';
-import { RESOURCE_TYPE } from '@/domains/Resource';
 import {
   useWorkspaceLayoutConfig,
   type WorkspaceLayoutConfig,
@@ -15,13 +13,7 @@ import { DocumentEditor } from '@onlyoffice/document-editor-react';
 import { useRequest } from 'ahooks';
 import { useCallback, useMemo, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import ResourcePermissionControl from '../_components/ResourcePermissionControl';
 import styles from './style.module.less';
-
-interface OfficeToolbarTitleProps {
-  resourceName: string;
-  resourceType?: string;
-}
 
 interface OfficeLayoutConfigProps {
   children: ReactNode;
@@ -44,17 +36,6 @@ interface OfficeViewProps {
   resourceId?: string;
 }
 
-function OfficeToolbarTitle({ resourceName, resourceType }: OfficeToolbarTitleProps) {
-  return (
-    <span className={styles.toolbarTitleText}>
-      <span className={styles.toolbarTitleIcon} aria-hidden="true">
-        <EntryIcon entryType="resource" resourceType={resourceType ?? RESOURCE_TYPE.FILE} />
-      </span>
-      <span className={styles.toolbarTitleLabel}>{resourceName}</span>
-    </span>
-  );
-}
-
 function OfficeLayoutConfig({
   children,
   resourceId,
@@ -68,17 +49,14 @@ function OfficeLayoutConfig({
       className: styles.container,
       header: resourceName
         ? {
-            inlineTitle: (
-              <OfficeToolbarTitle resourceName={resourceName} resourceType={resourceType} />
-            ),
-            extra: resourceId ? (
-              <ResourcePermissionControl
-                resourceId={resourceId}
-                resourceType={WORKSPACE_RESOURCE_TYPE.FILE}
-                ownerId={ownerId}
-                onSuccess={onPermissionSuccess}
-              />
-            ) : undefined,
+            resource: {
+              resourceId,
+              resourceName,
+              resourceType,
+              permissionResourceType: WORKSPACE_RESOURCE_TYPE.FILE,
+              ownerId,
+              onPermissionSuccess,
+            },
           }
         : {},
     }),
