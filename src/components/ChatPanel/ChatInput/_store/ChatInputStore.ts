@@ -3,9 +3,9 @@ import {
   buildDefaultPersonalAgent,
   type CapabilitySkillSelection,
   type CapabilityToolOption,
+  type ChatAgentOption,
 } from '@/domains/Chat';
 import type { SkillSummary } from '@/domains/Resource';
-import type { ChatAgentOption } from '@/store';
 import { createContext, useContext } from 'react';
 import { useStore } from 'zustand';
 import { createStore, type StoreApi } from 'zustand/vanilla';
@@ -14,7 +14,7 @@ import type {
   LocalAttachmentUpload,
   LocalPendingImageMeta,
   LocalResourcePayload,
-} from './index.type';
+} from '../index.type';
 
 export const DEFAULT_PERSONAL_AGENT = buildDefaultPersonalAgent();
 

@@ -1,4 +1,5 @@
-import { useActiveDriveScopeStore, usePdfPreviewProgressStore } from '@/store';
+import { useActiveDriveScopeStore } from '@/components/Drive/_store/useActiveDriveScopeStore';
+import { usePdfPreviewProgressStore } from '@/components/PdfViewer/_store/usePdfPreviewProgressStore';
 import {
   WORKSPACE_VIEWER,
   buildWorkspaceResourcePath,

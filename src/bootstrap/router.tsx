@@ -32,7 +32,7 @@ const ResetPassword = lazy(() => import('@/views/app/auth/ResetPassword'));
 const NewPassword = lazy(() => import('@/views/app/auth/NewPassword'));
 const VerifyEmail = lazy(() => import('@/views/app/auth/VerifyEmail'));
 const WorkspaceResourceView = lazy(() => import('@/views/workspace/WorkspaceResourceView'));
-const ChatPage = lazy(() => import('@/views/chat'));
+const ChatPage = lazy(() => import('@/views/app/chat'));
 const ResourceNotFound = lazy(() => import('@/views/app/error/ResourceNotFound'));
 const AppError = lazy(() => import('@/views/app/error/AppError'));
 

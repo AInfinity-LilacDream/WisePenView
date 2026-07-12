@@ -1,6 +1,6 @@
 import type { Group, IGroupService } from '@/domains/Group';
 import type { IResourceService, SkillSummary } from '@/domains/Resource';
-import type { ChatAgentOption } from '@/store';
+import type { ChatAgentOption } from '../entity/agent';
 import type { CapabilityToolOption } from '../mapper/capabilityPicker.mapper';
 import type { SkillScopeTreeGroup } from '../mapper/skillScope.mapper';
 

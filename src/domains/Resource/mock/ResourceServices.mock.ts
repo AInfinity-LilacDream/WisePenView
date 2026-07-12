@@ -28,7 +28,7 @@ import {
   resolveResourceIconType,
   RESOURCE_ACTION,
 } from '@/domains/Resource';
-import { useNewNoteStore, usePdfPreviewProgressStore, useResourceDisplayNameStore } from '@/store';
+import { useResourceDisplayNameStore } from '../store/useResourceDisplayNameStore';
 import mockdata from './mockdata.json';
 import { simulateGlobalSearch } from './searchMockData';
 
@@ -184,12 +184,8 @@ const renameResource = async (params: RenameResourceRequest): Promise<void> => {
   useResourceDisplayNameStore.getState().setDisplayName(params.resourceId, params.newName);
 };
 
-const removeResources = async (params: RemoveResourcesRequest): Promise<void> => {
+const removeResources = async (_params: RemoveResourcesRequest): Promise<void> => {
   await delay(150);
-  for (const resourceId of params.resourceIds) {
-    usePdfPreviewProgressStore.getState().removeProgress(resourceId);
-    useNewNoteStore.getState().clearNewNoteResourceId(resourceId);
-  }
 };
 
 const updateResourceTags = async (): Promise<void> => {

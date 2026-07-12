@@ -11,7 +11,7 @@ import {
 } from '@/components/_shadcn';
 import { Image, X } from 'lucide-react';
 import { useShallow } from 'zustand/react/shallow';
-import { useChatInputStore, useChatInputStoreApi } from '../ChatInputStore';
+import { useChatInputStore, useChatInputStoreApi } from '../_store/ChatInputStore';
 import styles from '../style.module.less';
 
 function getUploadAttachmentState(status: 'pending' | 'uploading' | 'failed') {

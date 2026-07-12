@@ -1,4 +1,5 @@
 import type { NoteSelectionSnapshot, SelectedNoteScope } from '@/domains/Note';
+import { registerStore } from '@/store/lifecycle';
 import { create } from 'zustand';
 
 interface NoteEditorSelectionState {
@@ -29,6 +30,12 @@ export const useNoteEditorSelectionStore = create<NoteEditorSelectionState>()((s
     }),
 }));
 
-export function clearNoteEditorSelectionStore(): void {
+function resetNoteEditorSelectionStore(): void {
   useNoteEditorSelectionStore.setState(DEFAULT_NOTE_EDITOR_SELECTION_STATE);
 }
+
+registerStore({
+  id: 'note-ui.editor-selection',
+  scope: 'tab',
+  reset: resetNoteEditorSelectionStore,
+});

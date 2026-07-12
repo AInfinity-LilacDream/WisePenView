@@ -1,7 +1,8 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-import { zustandSessionStorage } from './sessionStorage';
+import { registerStore } from '@/store/lifecycle';
+import { createStoreJSONStorage } from '@/store/persistence';
 
 /**
  * 记录用户最后一次从 Drive 打开资源时所在的 scope（个人 / 群组）。
@@ -22,11 +23,16 @@ export const useActiveDriveScopeStore = create<ActiveDriveScopeState>()(
       ...DEFAULT_STATE,
       setGroupId: (groupId) => set((state) => (state.groupId === groupId ? state : { groupId })),
     }),
-    { name: 'active-drive-scope', storage: zustandSessionStorage }
+    { name: 'active-drive-scope', storage: createStoreJSONStorage('tab') }
   )
 );
 
-export const clearActiveDriveScopeStore = (): void => {
+const resetActiveDriveScopeStore = (): void => {
   useActiveDriveScopeStore.setState(DEFAULT_STATE);
-  useActiveDriveScopeStore.persist.clearStorage();
 };
+
+registerStore({
+  id: 'drive-ui.active-scope',
+  scope: 'tab',
+  reset: resetActiveDriveScopeStore,
+});

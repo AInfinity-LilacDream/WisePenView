@@ -1,3 +1,7 @@
+import {
+  useDriveUploadQueueStore,
+  type DriveUploadQueueItem,
+} from '@/components/Drive/_store/useDriveUploadQueueStore';
 import { DataTable, type DataTableColumn } from '@/components/Table';
 import { useDocumentService } from '@/domains';
 import type { PendingDocItem } from '@/domains/Document';
@@ -7,7 +11,6 @@ import {
   isDocumentRetryableStatus,
   isDocumentTerminalStatus,
 } from '@/domains/Document';
-import { useDriveUploadQueueStore, type DriveUploadQueueItem } from '@/store';
 import { parseErrorMessage } from '@/utils/error';
 import { formatFileSize } from '@/utils/format/formatFileSize';
 import { Button, ProgressBar, toast } from '@heroui/react';

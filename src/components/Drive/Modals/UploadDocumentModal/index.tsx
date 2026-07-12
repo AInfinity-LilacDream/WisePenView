@@ -1,4 +1,5 @@
 import type { ApiErrorBody } from '@/apis/api.type';
+import { useDriveUploadQueueStore } from '@/components/Drive/_store/useDriveUploadQueueStore';
 import {
   buildUploadedResourceMountTagIds,
   resolveResourcePrimaryTagId,
@@ -6,7 +7,6 @@ import {
 import AppModal from '@/components/Overlay/AppModal';
 import UploadZone from '@/components/UploadZone';
 import { useDocumentService, useDriveService, useResourceService } from '@/domains';
-import { useDriveUploadQueueStore } from '@/store';
 import { parseErrorMessage } from '@/utils/error';
 import { parseExtension } from '@/utils/parser/extensionParser';
 import { Button, toast } from '@heroui/react';

@@ -1,6 +1,6 @@
 import type { Group } from '@/domains/Group';
 import type { SkillSummary } from '@/domains/Resource';
-import type { ChatAgentOption } from '@/store';
+import type { ChatAgentOption } from '../entity/agent';
 import { buildAgentFromSkillTreeGroup } from './agent.mapper';
 
 export interface SkillScopeTreeGroup {

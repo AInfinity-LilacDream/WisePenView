@@ -1,3 +1,4 @@
+export type { ChatAgentOption, ChatAgentType } from './entity/agent';
 export type { Model } from './entity/model';
 export { MODEL_PROVIDER_ID, MODEL_TYPE } from './enum/model';
 export type { ModelProviderId, ModelType } from './enum/model';
@@ -43,7 +44,6 @@ export type {
 export type {
   ChatCompletionRequest,
   ChatFrontendState,
-  ChatWorkspaceContext,
   SendSessionMessageOptions,
   UseChatSessionOptions,
 } from './session/index.type';

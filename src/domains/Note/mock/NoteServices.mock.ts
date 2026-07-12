@@ -8,7 +8,7 @@ import type {
   SaveDrawIoSnapshotRequest,
   SyncTitleRequest,
 } from '@/domains/Note';
-import { useResourceDisplayNameStore } from '@/store';
+import { useResourceDisplayNameStore } from '@/domains/Resource/store/useResourceDisplayNameStore';
 
 /** Mock 占位：与实现层一致，同步更新展示名 store */
 const syncTitle = async (params: SyncTitleRequest): Promise<void> => {

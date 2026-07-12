@@ -107,6 +107,17 @@ const getRawTagById = (tagId: string): TagTreeNode | undefined => {
   return flatMap.get(tagId);
 };
 
+const getTrashTagId = (): string | undefined => {
+  const nodes = [...tagTree];
+  while (nodes.length > 0) {
+    const node = nodes.shift();
+    if (!node) continue;
+    if (node.tagName === '.Trash') return node.tagId;
+    nodes.push(...(node.children ?? []));
+  }
+  return undefined;
+};
+
 const getResByTag = async (params: GetResByTagRequest): Promise<TagListByTagResponse> => {
   await delay(250);
   if (!flatMap) flatMap = buildFlatMap(tagTree);
@@ -145,6 +156,7 @@ export const TagServicesMock: ITagService = {
   getRawTagById,
   getTagTree,
   getTagById,
+  getTrashTagId,
   getResByTag,
   updateTag,
   addTag,

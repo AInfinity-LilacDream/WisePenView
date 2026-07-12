@@ -1,3 +1,4 @@
+import { useSystemLayoutStore } from '@/layouts/_common/_store/useSystemLayoutStore';
 import AdminSidebar from '@/layouts/_common/Sidebar/AdminSidebar';
 import {
   SystemResizableHandle,
@@ -5,7 +6,6 @@ import {
   SystemResizablePanelGroup,
 } from '@/layouts/_common/SystemResizable';
 import { useResizablePanelSize } from '@/layouts/_common/useResizablePanelSize';
-import { useSystemLayoutStore } from '@/store';
 import clsx from 'clsx';
 import { useCallback, useRef, useState } from 'react';
 import type {

@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 
+import { registerStore } from '@/store/lifecycle';
+
 interface NewNoteState {
   newNoteResourceId: string | null;
   /** 与当前 new 笔记标题编辑器内容绑定：trim 后无字为 true */
@@ -7,7 +9,6 @@ interface NewNoteState {
   /** 与当前 new 笔记正文编辑器内容绑定：trim 后无字为 true */
   isNoteEmpty: boolean;
   setNewNoteResourceId: (resourceId: string) => void;
-  clearNewNoteResourceId: (resourceId: string) => void;
   syncNewNoteTitleFromEditor: (resourceId: string, isTitleEmpty: boolean) => void;
   syncNewNoteBodyFromEditor: (resourceId: string, isNoteEmpty: boolean) => void;
 }
@@ -26,14 +27,6 @@ export const useNewNoteStore = create<NewNoteState>()((set) => ({
       newNoteResourceId: resourceId,
       isTitleEmpty: true,
       isNoteEmpty: true,
-    }),
-
-  clearNewNoteResourceId: (resourceId) =>
-    set((state) => {
-      if (state.newNoteResourceId !== resourceId) {
-        return state;
-      }
-      return DEFAULT_NEW_NOTE_STATE;
     }),
 
   syncNewNoteTitleFromEditor: (resourceId, isTitleEmpty) =>
@@ -59,6 +52,15 @@ export const useNewNoteStore = create<NewNoteState>()((set) => ({
     }),
 }));
 
-export const clearNewNoteStore = (): void => {
+export const clearNewNoteStore = (resourceId?: string): void => {
+  if (resourceId && useNewNoteStore.getState().newNoteResourceId !== resourceId) {
+    return;
+  }
   useNewNoteStore.setState(DEFAULT_NEW_NOTE_STATE);
 };
+
+registerStore({
+  id: 'note-ui.new-note',
+  scope: 'tab',
+  reset: clearNewNoteStore,
+});

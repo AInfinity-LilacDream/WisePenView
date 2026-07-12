@@ -7,7 +7,7 @@ import { useRequest } from 'ahooks';
 import { Check, ChevronDown, LoaderCircle } from 'lucide-react';
 import { useMemo } from 'react';
 import { useShallow } from 'zustand/react/shallow';
-import { useChatInputStore, useChatInputStoreApi } from '../ChatInputStore';
+import { useChatInputStore, useChatInputStoreApi } from '../_store/ChatInputStore';
 import styles from '../style.module.less';
 
 function ModelPicker() {

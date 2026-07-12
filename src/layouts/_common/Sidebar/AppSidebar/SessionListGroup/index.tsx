@@ -1,6 +1,7 @@
+import { useCurrentChatSessionStore } from '@/components/ChatPanel/_store/useCurrentChatSessionStore';
+import { useNewChatSessionStore } from '@/components/ChatPanel/_store/useNewChatSessionStore';
 import { useChatService } from '@/domains';
 import type { ChatSession } from '@/domains/Chat';
-import { useCurrentChatSessionStore } from '@/store';
 import { parseErrorMessage } from '@/utils/error';
 import { Button, Header, ListBox, ListBoxItem, ListBoxSection, toast } from '@heroui/react';
 import { useMount, useRequest } from 'ahooks';
@@ -86,6 +87,7 @@ const useSessionListGroup = ({ onActiveSessionMenuKeyChange }: SessionListGroupP
     if (currentSessionId === sessionId) {
       clearCurrentSession();
     }
+    useNewChatSessionStore.getState().clearNewChatSessionById(sessionId);
     onActiveSessionMenuKeyChange?.(undefined);
   };
 

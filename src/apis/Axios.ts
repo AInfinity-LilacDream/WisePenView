@@ -3,7 +3,7 @@ import type { ApiErrorBody } from '@/apis/api.type';
 import { API_BASE_URL } from '@/apis/clientUrls';
 import { applyXDeveloperHeader } from '@/apis/developmentTraffic';
 import { clearAllServiceCaches } from '@/domains/_shared/cacheRegistry';
-import { clearAllZustandStores } from '@/store';
+import { resetSessionStores } from '@/store/lifecycle';
 import { emitAuthChangeEvent } from '@/utils/auth/authChange';
 import { WisePenError } from '@/utils/error';
 import { FRONTEND_NETWORK_ERROR } from '@/utils/error/codes';
@@ -105,7 +105,7 @@ Axios.interceptors.response.use(
   (error: AxiosError) => {
     if (error.response?.status === 401) {
       clearAllServiceCaches();
-      clearAllZustandStores();
+      resetSessionStores();
       emitAuthChangeEvent();
       window.location.href = '/login';
     }

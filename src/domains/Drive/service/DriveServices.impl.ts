@@ -3,7 +3,6 @@ import type { DriveNode, FolderNode, LinkNode, ResourceNode, RootNode } from '@/
 import type { IResourceService, ResourceItem } from '@/domains/Resource';
 import { RESOURCE_SORT_BY, RESOURCE_SORT_DIR } from '@/domains/Resource';
 import type { ITagService, TagTreeNode } from '@/domains/Tag';
-import { useTrashTagStore } from '@/store';
 import { createClientError, FRONTEND_CLIENT_ERROR } from '@/utils/error';
 import { normalizeTagGroupId } from '@/utils/normalize/normalizeTagGroupId';
 import {
@@ -35,10 +34,6 @@ const isVisibleFolderTag = (node: TagTreeNode): boolean => {
   const name = (node.tagName ?? '').trim();
   if (name === TRASH_TAG_NAME) return false;
   return !name.startsWith(HIDDEN_TAG_PREFIX);
-};
-
-const findTrashTag = (roots: TagTreeNode[]): TagTreeNode | undefined => {
-  return roots.find((node) => node.tagName === TRASH_TAG_NAME);
 };
 
 const findSharedFolderTag = (roots: TagTreeNode[]): TagTreeNode | undefined => {
@@ -147,8 +142,6 @@ export const createDriveServices = (
   ): Promise<TagTreeNode[]> => {
     const normalized = normalizeTagGroupId(groupId);
     const roots = await tagService.getRawTagTree(normalized, options);
-    const trashTag = findTrashTag(roots);
-    useTrashTagStore.getState().setTrashTagId(normalized, trashTag?.tagId);
     return roots;
   };
 
@@ -349,14 +342,20 @@ export const createDriveServices = (
   };
 
   const ensureTrashTagId = async (groupId?: string): Promise<string> => {
-    let trashTagId = useTrashTagStore.getState().getTrashTagId(groupId);
+    let trashTagId = tagService.getTrashTagId(groupId);
     if (trashTagId) return trashTagId;
     await readRawRoots(groupId);
-    trashTagId = useTrashTagStore.getState().getTrashTagId(groupId);
+    trashTagId = tagService.getTrashTagId(groupId);
     if (!trashTagId) {
       throw createClientError(FRONTEND_CLIENT_ERROR.DRIVE_TRASH_TAG_NOT_FOUND);
     }
     return trashTagId;
+  };
+
+  const getTrashFolderNodeId: IDriveService['getTrashFolderNodeId'] = async (groupId) => {
+    await readRawRoots(groupId);
+    const trashTagId = tagService.getTrashTagId(groupId);
+    return trashTagId ? encodeNodeId('folder', trashTagId) : undefined;
   };
 
   const buildPathByFolderTag = async (
@@ -858,6 +857,7 @@ export const createDriveServices = (
 
   return {
     getRootNode,
+    getTrashFolderNodeId,
     listNodeChildren,
     getNodePath,
     moveToFolder,

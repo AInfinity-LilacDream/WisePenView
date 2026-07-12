@@ -1,4 +1,5 @@
-import { useChatSessionHistoryRefreshStore, useCurrentChatSessionStore } from '@/store';
+import { useChatSessionHistoryRefreshStore } from '@/components/ChatPanel/_store/useChatSessionHistoryRefreshStore';
+import { useCurrentChatSessionStore } from '@/components/ChatPanel/_store/useCurrentChatSessionStore';
 import { useUpdateEffect } from 'ahooks';
 import clsx from 'clsx';
 import { useMemo, useRef } from 'react';

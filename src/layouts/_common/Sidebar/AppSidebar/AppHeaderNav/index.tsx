@@ -1,4 +1,5 @@
-import { clearNewChatSessionStore, useCurrentChatSessionStore } from '@/store';
+import { useCurrentChatSessionStore } from '@/components/ChatPanel/_store/useCurrentChatSessionStore';
+import { clearNewChatSessionStore } from '@/components/ChatPanel/_store/useNewChatSessionStore';
 import { ListBox, ListBoxItem } from '@heroui/react';
 import clsx from 'clsx';
 import { FileText, MessageSquarePlus, Users } from 'lucide-react';

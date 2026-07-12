@@ -13,7 +13,7 @@ import {
   selectChatInputSelectedModel,
   useChatInputStore,
   useChatInputStoreApi,
-} from '../ChatInputStore';
+} from '../_store/ChatInputStore';
 import type { ChatInputProps } from '../index.type';
 import { useChatInputFiles } from '../useChatInputFiles';
 

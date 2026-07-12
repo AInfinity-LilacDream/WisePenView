@@ -2,7 +2,8 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
 import { AI_DIFF_DISPLAY_MODE, type AiDiffDisplayMode } from '@/domains/Note';
-import { zustandSessionStorage } from './sessionStorage';
+import { registerStore } from '@/store/lifecycle';
+import { createStoreJSONStorage } from '@/store/persistence';
 
 export const DEFAULT_AI_DIFF_DISPLAY_MODE = AI_DIFF_DISPLAY_MODE.COMPARE;
 
@@ -17,11 +18,16 @@ export const useAiDiffDisplayStore = create<AiDiffDisplayState>()(
       displayMode: DEFAULT_AI_DIFF_DISPLAY_MODE,
       setDisplayMode: (mode) => set({ displayMode: mode }),
     }),
-    { name: 'ai-diff-display', storage: zustandSessionStorage }
+    { name: 'ai-diff-display', storage: createStoreJSONStorage('tab') }
   )
 );
 
-export const clearAiDiffDisplayStore = (): void => {
+const resetAiDiffDisplayStore = (): void => {
   useAiDiffDisplayStore.setState({ displayMode: DEFAULT_AI_DIFF_DISPLAY_MODE });
-  useAiDiffDisplayStore.persist.clearStorage();
 };
+
+registerStore({
+  id: 'note-view.ai-diff-display',
+  scope: 'tab',
+  reset: resetAiDiffDisplayStore,
+});

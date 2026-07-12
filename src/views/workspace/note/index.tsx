@@ -17,8 +17,9 @@ import {
   NOTE_OUTLINE_TITLE_ID,
   type NoteOutlineItem,
 } from '@/components/Note/NoteOutline/index.type';
+import { useNoteCommentsSidebarStore } from '@/components/Note/_store/useNoteCommentsSidebarStore';
 import { useNoteService, useResourceService, useUserService } from '@/domains';
-import type { AiDiffDisplayMode, NoteInfoDisplayData } from '@/domains/Note';
+import type { AiDiffDisplayMode, NoteInfoDisplayData, NoteSelectionSnapshot } from '@/domains/Note';
 import {
   AI_DIFF_DISPLAY_MODE,
   AI_DIFF_DISPLAY_MODE_LABELS,
@@ -30,15 +31,19 @@ import type { User } from '@/domains/User';
 import { useResourceDisplayName } from '@/hooks/useResourceDisplayName';
 import { useSmoothFlag } from '@/hooks/useSmoothFlag';
 import { useWorkspaceLayoutConfig } from '@/layouts/Workspace/WorkspaceOutletContext';
-import { useAiDiffDisplayStore } from '@/store';
-import { useNoteCommentsSidebarStore } from '@/store/useNoteCommentsSidebarStore';
+import { useWorkspaceChatProtocolStore } from '@/layouts/Workspace/_store/useWorkspaceChatProtocolStore';
 import { parseErrorMessage } from '@/utils/error';
 import { WORKSPACE_RESOURCE_TYPE } from '@/utils/navigation/workspaceRoute';
 import { Alert, Button, Dropdown, Switch, Tooltip, toast } from '@heroui/react';
 import ResourcePermissionControl from '../_components/ResourcePermissionControl';
+import {
+  createNoteSelectionChatContext,
+  createNoteWorkspaceChatStateProvider,
+} from './NoteWorkspaceChatProtocol';
 import NoteInfoBar from './_components/NoteInfoBar';
 import NoteTitle from './_components/NoteTitle';
 import type { NoteTitleHandle } from './_components/NoteTitle/index.type';
+import { useAiDiffDisplayStore } from './_store/useAiDiffDisplayStore';
 import styles from './style.module.less';
 
 interface NoteViewConnectedProps {
@@ -128,6 +133,7 @@ function NoteViewConnected({
 }: NoteViewConnectedProps) {
   const aiDiffDisplayMode = useAiDiffDisplayStore((state) => state.displayMode);
   const setAiDiffDisplayMode = useAiDiffDisplayStore((state) => state.setDisplayMode);
+  const setWorkspaceChatContext = useWorkspaceChatProtocolStore((state) => state.setContext);
   const bodyEditorRef = useRef<NoteBodyEditorHandle>(null);
   const titleEditorRef = useRef<NoteTitleHandle>(null);
   const mainScrollRef = useRef<HTMLDivElement>(null);
@@ -289,16 +295,27 @@ function NoteViewConnected({
     }
   });
 
+  const noteChatStateProvider = useMemo(
+    () =>
+      createNoteWorkspaceChatStateProvider({
+        resourceId,
+        syncStatus: status,
+        getClientStateVector: getNoteClientStateVector,
+      }),
+    [getNoteClientStateVector, resourceId, status]
+  );
+
+  const handleAskAi = useCallback(
+    (selection: NoteSelectionSnapshot) => {
+      setWorkspaceChatContext(createNoteSelectionChatContext(resourceId, selection));
+    },
+    [resourceId, setWorkspaceChatContext]
+  );
+
   const workspaceFrameConfig = useMemo(
     () => ({
       className: styles.pageWrap,
-      chatContext: {
-        resourceId,
-        resourceType: WORKSPACE_RESOURCE_TYPE.NOTE,
-        editorType: 'note',
-        noteSyncStatus: status,
-        getNoteClientStateVector,
-      },
+      chatStateProvider: noteChatStateProvider,
       header: {
         inlineTitle: (
           <NoteToolbarTitle resourceId={resourceId} fallbackTitle={noteInfoDisplay?.noteTitle} />
@@ -410,11 +427,11 @@ function NoteViewConnected({
       canManageCommentVisibility,
       commentSettings.collaboratorVisibility,
       commentsSidebarToggleLabel,
-      getNoteClientStateVector,
       handleMoreAction,
       headerMorePending,
       isConnected,
-      noteInfoDisplay?.noteTitle,
+      noteChatStateProvider,
+      noteInfoDisplay.noteTitle,
       noteInfoDisplay.commentsEnabled,
       noteInfoDisplay.ownerId,
       onRefreshNoteInfo,
@@ -423,7 +440,6 @@ function NoteViewConnected({
       setCollaboratorVisibility,
       showAiDiffDisplayModeSwitch,
       showFullPageSpin,
-      status,
       threadsSidebarCollapsed,
       toggleNoteCommentsSidebar,
     ]
@@ -484,6 +500,7 @@ function NoteViewConnected({
                       onOutlineChange={setOutlineItems}
                       onActiveHeadingChange={setActiveHeadingId}
                       onAiDiffPresenceChange={handleAiDiffPresenceChange}
+                      onAskAi={handleAskAi}
                       commentsEnabled={noteInfoDisplay.commentsEnabled}
                       commentsUiEnabled={isConnected && noteInfoDisplay.commentsEnabled}
                       commentsAuthorizable={noteInfoDisplay.canEditComments}

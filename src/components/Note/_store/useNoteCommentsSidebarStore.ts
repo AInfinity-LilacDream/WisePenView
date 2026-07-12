@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 
+import { registerStore } from '@/store/lifecycle';
 import {
   DEFAULT_COMMENTS_SIDEBAR_WIDTH,
   normalizeCommentsSidebarWidth,
@@ -48,6 +49,12 @@ export const useNoteCommentsSidebarStore = create<NoteCommentsSidebarState>((set
     get().widthByResourceId[resourceId] ?? DEFAULT_COMMENTS_SIDEBAR_WIDTH,
 }));
 
-export const clearNoteCommentsSidebarStore = (): void => {
+const resetNoteCommentsSidebarStore = (): void => {
   useNoteCommentsSidebarStore.setState({ collapsedByResourceId: {}, widthByResourceId: {} });
 };
+
+registerStore({
+  id: 'note-ui.comments-sidebar',
+  scope: 'tab',
+  reset: resetNoteCommentsSidebarStore,
+});

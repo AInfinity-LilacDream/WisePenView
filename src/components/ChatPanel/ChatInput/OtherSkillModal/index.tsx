@@ -2,9 +2,9 @@ import AppModal from '@/components/Overlay/AppModal';
 import type { TreeDataNode } from '@/components/Tree';
 import Tree from '@/components/Tree';
 import { useChatService } from '@/domains';
+import type { ChatAgentOption } from '@/domains/Chat';
 import { buildOtherSkillTreeGroups } from '@/domains/Chat';
 import type { SkillSummary } from '@/domains/Resource';
-import type { ChatAgentOption } from '@/store';
 import { parseErrorMessage } from '@/utils/error';
 import { Button, toast } from '@heroui/react';
 import { useRequest } from 'ahooks';
@@ -12,7 +12,7 @@ import { Folder } from 'lucide-react';
 import type { Key } from 'react';
 import { useMemo, useState } from 'react';
 import { useShallow } from 'zustand/react/shallow';
-import { useChatInputStore, useChatInputStoreApi } from '../ChatInputStore';
+import { useChatInputStore, useChatInputStoreApi } from '../_store/ChatInputStore';
 import styles from './style.module.less';
 
 function OtherSkillModal() {

@@ -8,11 +8,11 @@ import {
   type ResourcePermissionModalTarget,
 } from '@/components/Drive/Modals';
 import { FormField, Input } from '@/components/Input';
+import { useNewNoteStore } from '@/components/Note/_store/useNewNoteStore';
 import AppFormDialog from '@/components/Overlay/AppFormDialog';
 import CreateSkillModal from '@/components/Skill/CreateSkillModal';
 import { useDocumentService, useDriveService, useNoteService, useResourceService } from '@/domains';
 import { useOpenInWorkspace } from '@/hooks/useOpenInWorkspace';
-import { useNewNoteStore } from '@/store';
 import { createClientError, FRONTEND_CLIENT_ERROR, parseErrorMessage } from '@/utils/error';
 import { WORKSPACE_RESOURCE_TYPE } from '@/utils/navigation/workspaceRoute';
 import { toast } from '@heroui/react';

@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 
+import { registerStore } from '@/store/lifecycle';
+
 export type DriveUploadQueuePhase = 'hashing' | 'uploading' | 'confirming' | 'done' | 'failed';
 
 export interface DriveUploadQueueItem {
@@ -80,9 +82,15 @@ export const useDriveUploadQueueStore = create<DriveUploadQueueState>()((set) =>
   clearUploads: () => set(initialState),
 }));
 
-export const clearDriveUploadQueueStore = (): void => {
+const resetDriveUploadQueueStore = (): void => {
   useDriveUploadQueueStore.setState(initialState);
 };
+
+registerStore({
+  id: 'drive-ui.upload-queue',
+  scope: 'tab',
+  reset: resetDriveUploadQueueStore,
+});
 
 function normalizeUploadPatch(patch: DriveUploadQueuePatch): DriveUploadQueuePatch {
   if (patch.progress == null) {

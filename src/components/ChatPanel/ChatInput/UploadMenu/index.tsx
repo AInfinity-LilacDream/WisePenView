@@ -2,7 +2,7 @@ import { Popover } from '@/components/Overlay';
 import { Button, ListBox, ListBoxItem } from '@heroui/react';
 import { Cloud, Plus, Upload } from 'lucide-react';
 import type { Key } from 'react';
-import { useChatInputStore, useChatInputStoreApi } from '../ChatInputStore';
+import { useChatInputStore, useChatInputStoreApi } from '../_store/ChatInputStore';
 import styles from '../style.module.less';
 import { useChatInputFiles } from '../useChatInputFiles';
 

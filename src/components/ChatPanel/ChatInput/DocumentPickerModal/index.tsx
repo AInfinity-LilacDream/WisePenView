@@ -3,7 +3,7 @@ import type { DriveSelectionItem } from '@/components/Drive/common/driveComponen
 import AppModal from '@/components/Overlay/AppModal';
 import { Button } from '@heroui/react';
 import { useState } from 'react';
-import { useChatInputStore, useChatInputStoreApi } from '../ChatInputStore';
+import { useChatInputStore, useChatInputStoreApi } from '../_store/ChatInputStore';
 import type { LocalResourcePayload } from '../index.type';
 import styles from './style.module.less';
 

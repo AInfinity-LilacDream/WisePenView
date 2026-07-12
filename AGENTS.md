@@ -55,6 +55,7 @@
 - 组件放置位置、components 与 views 边界：`docs/agent/component-boundary.md`
 - React、Hooks、JSX、TypeScript：`docs/agent/component-react.md`
 - 样式、UI 组件库、Overlay：`docs/agent/component-style.md`、`docs/agent/overlay.md`
+- Store 归属、注册和生命周期：`docs/agent/store.md`
 - 分支与 commit：`docs/agent/commit.md`
 
 跨层任务按数据流补读：`view/component -> service -> mapper -> api -> entity/enum`。

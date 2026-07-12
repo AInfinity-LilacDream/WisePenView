@@ -7,6 +7,8 @@ export interface IDriveService {
    * - 小组 root 抽象为 group 本身，是虚拟容器，不可直接挂载资源。
    */
   getRootNode(params?: GetRootNodeParams): Promise<RootNode>;
+  /** 获取当前 scope 的回收站文件夹节点 ID；未初始化或不存在时返回 undefined。 */
+  getTrashFolderNodeId(groupId?: string): Promise<string | undefined>;
   /** nodeId 可独立携带 scope 信息；并列展示多个 root 时不强依赖全局 groupId。 */
   listNodeChildren(params: ListNodeChildrenParams): Promise<DriveNode[]>;
   getNodePath(params: GetNodePathParams): Promise<Array<RootNode | FolderNode>>;

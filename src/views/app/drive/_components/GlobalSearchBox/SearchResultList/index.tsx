@@ -1,10 +1,10 @@
+import { useActiveDriveScopeStore } from '@/components/Drive/_store/useActiveDriveScopeStore';
 import { Empty, Spin } from '@/components/Feedback';
 import EntryIcon from '@/components/Icons/EntryIcon';
 import { useResourceService } from '@/domains';
 import type { SearchHitItem, SearchResultPage } from '@/domains/Resource';
 import { SEARCH_SCOPE } from '@/domains/Resource';
 import { useOpenInWorkspace } from '@/hooks/useOpenInWorkspace';
-import { useActiveDriveScopeStore } from '@/store';
 import { parseErrorMessage } from '@/utils/error';
 import { toast } from '@heroui/react';
 import { useInfiniteScroll, useKeyPress, useUpdateEffect } from 'ahooks';

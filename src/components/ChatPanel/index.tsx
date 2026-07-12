@@ -1,15 +1,13 @@
+import { useChatSessionHistoryRefreshStore } from '@/components/ChatPanel/_store/useChatSessionHistoryRefreshStore';
+import { useCurrentChatSessionStore } from '@/components/ChatPanel/_store/useCurrentChatSessionStore';
+import {
+  clearNewChatSessionStore,
+  useNewChatSessionStore,
+} from '@/components/ChatPanel/_store/useNewChatSessionStore';
 import type { ChatPanelProps, Message, Model } from '@/components/ChatPanel/index.type';
 import { useChatService } from '@/domains';
 import type { ChatSession } from '@/domains/Chat';
 import { useChatSession } from '@/domains/Chat/session/useChatSession';
-import {
-  clearNewChatSessionStore,
-  useChatPanelStore,
-  useChatSessionHistoryRefreshStore,
-  useCurrentChatSessionStore,
-  useNewChatSessionStore,
-  usePendingChatContextStore,
-} from '@/store';
 import { parseErrorMessage } from '@/utils/error';
 import { toast } from '@heroui/react';
 import { useMount, useRequest, useUpdateEffect } from 'ahooks';
@@ -28,6 +26,7 @@ import {
 import ChatPanelHeader from './ChatPanelHeader';
 import ChatSessionBar from './ChatSessionBar';
 import MessageList from './MessageList';
+import { useChatPanelStore } from './_store/useChatPanelStore';
 import styles from './style.module.less';
 
 function ChatPanel({
@@ -35,7 +34,7 @@ function ChatPanel({
   fullWidth = false,
   showHeader = true,
   onNewChat,
-  workspaceContext,
+  workspaceChat,
   showCollapseButton = true,
 }: ChatPanelProps) {
   const navigate = useNavigate();
@@ -50,12 +49,9 @@ function ChatPanel({
   const currentSessionTitle = useCurrentChatSessionStore((state) => state.currentSessionTitle);
   const setCurrentSession = useCurrentChatSessionStore((state) => state.setCurrentSession);
   const clearCurrentSession = useCurrentChatSessionStore((state) => state.clearCurrentSession);
-  const pendingChatContext = usePendingChatContextStore((state) =>
-    currentSessionId ? state.pendingChatContextBySessionId[currentSessionId] : undefined
-  );
-  const clearPendingChatContext = usePendingChatContextStore(
-    (state) => state.clearPendingChatContext
-  );
+  const workspaceStateProvider = workspaceChat?.provider;
+  const workspaceChatContext = workspaceChat?.context;
+  const clearWorkspaceChatContext = workspaceChat?.clearContext;
 
   const [currentModel, setCurrentModel] = useState<Model | null>(null);
   const [sessionBarOpen, setSessionBarOpen] = useState(false);
@@ -133,7 +129,7 @@ function ChatPanel({
   }, [currentSessionId, hasRenderableChatContent, requestChatSessionHistoryRefresh]);
 
   const sending = status === 'submitted' || status === 'streaming';
-  const hasSelectedContext = Boolean(pendingChatContext?.text.trim());
+  const hasWorkspaceChatContext = Boolean(workspaceChatContext);
   const panelTitle = currentSessionTitle || '新对话';
 
   const ensureChatSession = async (): Promise<string> => {
@@ -166,6 +162,7 @@ function ChatPanel({
     } catch (error) {
       const errorMessage = parseErrorMessage(error);
       if (isSessionInvalidMessage(errorMessage)) {
+        clearWorkspaceChatContext?.();
         clearCurrentSession();
         setHistoryMessages([]);
         setHistoryPage(1);
@@ -204,11 +201,13 @@ function ChatPanel({
   const handleSend = async (text: string, opts?: SendOptions) => {
     const targetModel = opts?.model ?? currentModel;
     if (!targetModel) return;
-    if (
-      workspaceContext?.editorType === 'note' &&
-      workspaceContext.noteSyncStatus !== 'connected'
-    ) {
-      toast.warning('笔记仍在同步或已断开连接，请连接成功后再让 AI 读取当前笔记');
+    const sendBlockedReason = workspaceStateProvider?.getBlockedReason?.();
+    if (sendBlockedReason) {
+      toast.warning(sendBlockedReason);
+      return;
+    }
+    if (workspaceChatContext && workspaceChatContext.providerKey !== workspaceStateProvider?.key) {
+      toast.warning('所选上下文属于其他资源，请移除后在当前资源中重新选择');
       return;
     }
     setCurrentModel(targetModel);
@@ -227,25 +226,28 @@ function ChatPanel({
       model: targetModel.modelId,
       providerId: targetModel.providerId,
       sessionId: targetSessionId,
-      selectedText: pendingChatContext?.text,
-      selectedNoteScope: pendingChatContext?.scope ?? undefined,
-      workspaceContext,
+      frontendStates: [
+        ...(workspaceStateProvider?.getStates() ?? []),
+        ...(workspaceChatContext?.states ?? []),
+      ],
       selectedResources: opts?.activeDocRefs,
       uploadedAttachments: opts?.activeAttachments,
       onDemandSkillIds: opts?.selectedSkills?.map((skill) => skill.skillId),
-      allowToolNames: opts?.selectedTools?.map((tool) => tool.toolId),
+      allowToolNames: [
+        ...(workspaceStateProvider?.allowToolNames ?? []),
+        ...(opts?.selectedTools?.map((tool) => tool.toolId) ?? []),
+      ],
+      forceEnabledSkillIds: [...(workspaceStateProvider?.forceEnabledSkillIds ?? [])],
     });
 
     await sendPromise;
-    if (hasSelectedContext) {
-      clearPendingChatContext(targetSessionId);
+    if (hasWorkspaceChatContext) {
+      clearWorkspaceChatContext?.(workspaceChatContext);
     }
   };
 
-  const handleClearSelectedContext = () => {
-    if (currentSessionId) {
-      clearPendingChatContext(currentSessionId);
-    }
+  const handleClearContext = () => {
+    clearWorkspaceChatContext?.();
   };
 
   const handleCollapsePanel = () => {
@@ -266,6 +268,7 @@ function ChatPanel({
   };
 
   const handleSelectSession = (session: ChatSession) => {
+    clearWorkspaceChatContext?.();
     setCurrentSession({ id: session.id, title: session.title });
     clearNewChatSessionStore();
     setChatPanelDraftOpen(false);
@@ -276,6 +279,7 @@ function ChatPanel({
   };
 
   const handleNewChat = () => {
+    clearWorkspaceChatContext?.();
     setSessionBarOpen(false);
     if (onNewChat) {
       onNewChat();
@@ -366,8 +370,8 @@ function ChatPanel({
                   onSend={handleSend}
                   getUploadSessionId={ensureChatSession}
                   sending={sending}
-                  selectedContextText={pendingChatContext?.text}
-                  onClearSelectedContext={handleClearSelectedContext}
+                  contextPreview={workspaceChatContext?.preview}
+                  onClearContext={handleClearContext}
                 />
               </div>
             </div>

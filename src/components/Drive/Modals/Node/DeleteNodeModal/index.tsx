@@ -1,4 +1,6 @@
+import { clearNewNoteStore } from '@/components/Note/_store/useNewNoteStore';
 import AppAlertDialog from '@/components/Overlay/AppAlertDialog';
+import { removePdfPreviewProgress } from '@/components/PdfViewer/_store/usePdfPreviewProgressStore';
 import { useDriveService } from '@/domains';
 import { parseErrorMessage } from '@/utils/error';
 import { toast } from '@heroui/react';
@@ -32,6 +34,14 @@ function DeleteNodeModal({
     {
       manual: true,
       onSuccess: () => {
+        if (isPermanentDelete) {
+          if (node?.type === 'folder') {
+            clearNewNoteStore();
+          } else if (node) {
+            clearNewNoteStore(node.resourceId);
+            removePdfPreviewProgress(node.resourceId);
+          }
+        }
         toast.success(
           isGroupNode ? '已从小组移除' : isPermanentDelete ? '已彻底删除' : '已移入最近删除'
         );

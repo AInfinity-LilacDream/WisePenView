@@ -1,7 +1,8 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-import { zustandSessionStorage } from './sessionStorage';
+import { registerStore } from '@/store/lifecycle';
+import { createStoreJSONStorage } from '@/store/persistence';
 
 interface SystemLayoutState {
   appSidebarWidth: number;
@@ -36,11 +37,16 @@ export const useSystemLayoutStore = create<SystemLayoutState>()(
       setWorkspaceLeftSidebarWidth: (width) =>
         set((state) => setWidth('workspaceLeftSidebarWidth', width)(state)),
     }),
-    { name: 'system-layout', storage: zustandSessionStorage }
+    { name: 'system-layout', storage: createStoreJSONStorage('tab') }
   )
 );
 
-export const clearSystemLayoutStore = (): void => {
+const resetSystemLayoutStore = (): void => {
   useSystemLayoutStore.setState(DEFAULT_SYSTEM_LAYOUT_STATE);
-  useSystemLayoutStore.persist.clearStorage();
 };
+
+registerStore({
+  id: 'layout.system-layout',
+  scope: 'tab',
+  reset: resetSystemLayoutStore,
+});

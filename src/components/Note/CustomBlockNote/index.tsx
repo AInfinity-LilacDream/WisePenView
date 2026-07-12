@@ -1,15 +1,9 @@
-import { useChatService, useImageService, useResourceService } from '@/domains';
+import { useNewNoteStore } from '@/components/Note/_store/useNewNoteStore';
+import { useImageService, useResourceService } from '@/domains';
 import { assertImageProxyUploadLimit } from '@/domains/Image';
 import type { AiDiffDisplayMode, SelectedNoteScope } from '@/domains/Note';
 import { AI_DIFF_DISPLAY_MODE } from '@/domains/Note';
 import type { User } from '@/domains/User';
-import {
-  useChatPanelStore,
-  useCurrentChatSessionStore,
-  useNewNoteStore,
-  useNoteEditorSelectionStore,
-  usePendingChatContextStore,
-} from '@/store';
 import {
   createClientError,
   FRONTEND_CLIENT_ERROR,
@@ -32,6 +26,7 @@ import {
   type CSSProperties,
   type Ref,
 } from 'react';
+import { useNoteEditorSelectionStore } from '../_store/useNoteEditorSelectionStore';
 import NoteSideMenu from '../NoteSideMenu';
 import NoteSlashMenu from '../NoteSlashMenu';
 import NoteTableHandles from '../NoteTableHandles';
@@ -138,6 +133,7 @@ function CustomBlockNoteEditor({
   onOutlineChange,
   onActiveHeadingChange,
   onAiDiffPresenceChange,
+  onAskAi,
   commentsEnabled = false,
   commentsUiEnabled,
   commentsAuthorizable = false,
@@ -157,17 +153,12 @@ function CustomBlockNoteEditor({
   ref,
 }: CustomBlockNoteProps & { commentUser: User | null; ref?: Ref<NoteBodyEditorHandle> }) {
   const imageService = useImageService();
-  const chatService = useChatService();
   const resourceService = useResourceService();
-  const currentSessionId = useCurrentChatSessionStore((state) => state.currentSessionId);
-  const setCurrentSession = useCurrentChatSessionStore((state) => state.setCurrentSession);
-  const setChatPanelCollapsed = useChatPanelStore((state) => state.setChatPanelCollapsed);
   const setCurrentSelection = useNoteEditorSelectionStore((state) => state.setCurrentSelection);
   const clearCurrentSelection = useNoteEditorSelectionStore((state) => state.clearCurrentSelection);
   const currentSelection = useNoteEditorSelectionStore(
     (state) => state.currentSelectionByResourceId[resourceId]
   );
-  const setPendingChatContext = usePendingChatContextStore((state) => state.setPendingChatContext);
   const newNoteBodyOnChangeCleanupRef = useRef<(() => void) | null>(null);
   const flatBlocksRef = useRef<{ id: string; type: string }[]>([]);
   const [pmWriteGuardReady, setPmWriteGuardReady] = useState(false);
@@ -620,31 +611,17 @@ function CustomBlockNoteEditor({
     onActiveHeadingChange(activeId);
   };
 
-  const handleAskAi = async () => {
-    let targetSessionId = currentSessionId;
+  const handleAskAi = () => {
     const selectedText = editor.getSelectedText().trim() || currentSelection?.text.trim() || '';
     if (!selectedText) {
       toast.info('请先选中一段文字再问 AI');
       return;
     }
 
-    if (!targetSessionId) {
-      try {
-        const createdSession = await chatService.createSession();
-        targetSessionId = createdSession.id;
-        setCurrentSession({ id: createdSession.id, title: createdSession.title });
-      } catch (error) {
-        const text = error instanceof Error ? error.message : '新建聊天失败';
-        toast.danger(text);
-        return;
-      }
-    }
-
-    setPendingChatContext(targetSessionId, {
+    onAskAi({
       text: selectedText,
       scope: buildSelectedNoteScope(editor) ?? currentSelection?.scope ?? null,
     });
-    setChatPanelCollapsed(false);
   };
 
   const applyAllAiDiffActions = useCallback(

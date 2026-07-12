@@ -1,7 +1,8 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-import { zustandSessionStorage } from './sessionStorage';
+import { registerStore } from '@/store/lifecycle';
+import { createStoreJSONStorage } from '@/store/persistence';
 
 interface ChatPanelState {
   chatPanelCollapsed: boolean;
@@ -50,10 +51,16 @@ export const useChatPanelStore = create<ChatPanelState>()(
       toggleChatPanelCollapsed: () =>
         set((state) => ({ chatPanelCollapsed: !state.chatPanelCollapsed })),
     }),
-    { name: 'chat-panel', storage: zustandSessionStorage }
+    { name: 'chat-panel', storage: createStoreJSONStorage('tab') }
   )
 );
-export const clearChatPanelStore = (): void => {
+
+const resetChatPanelStore = (): void => {
   useChatPanelStore.setState(DEFAULT_CHAT_PANEL_STATE);
-  useChatPanelStore.persist.clearStorage();
 };
+
+registerStore({
+  id: 'chat-panel.panel-layout',
+  scope: 'tab',
+  reset: resetChatPanelStore,
+});

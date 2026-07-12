@@ -4,6 +4,7 @@ import type { NoteOutlineItem } from '@/components/Note/NoteOutline/index.type';
 import type {
   AiDiffDisplayMode,
   NoteCommentUserDisplayRecord,
+  NoteSelectionSnapshot,
   WisepenProvider,
 } from '@/domains/Note';
 import type { BlockNoteCommentDocumentRole } from './comments/comments.types';
@@ -39,6 +40,7 @@ export interface CustomBlockNoteProps {
   onOutlineChange?: (items: NoteOutlineItem[]) => void;
   onActiveHeadingChange?: (activeId: string | undefined) => void;
   onAiDiffPresenceChange?: (hasAiDiffContent: boolean) => void;
+  onAskAi: (context: NoteSelectionSnapshot) => void;
   /**
    * 是否挂载批注 schema/扩展（与笔记是否开启批注能力一致，不受连接状态影响）。
    * 连接中也必须为 true，否则 y-prosemirror 无法解析 Yjs 中的 comment mark，会删除正文。

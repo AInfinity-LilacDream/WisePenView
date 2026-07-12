@@ -20,6 +20,8 @@ export interface ITagService {
   getTagTree(groupId?: string): Promise<TagTreeNode[]>;
   /** 从已缓存的扁平索引中按 tagId 查找标签节点（需先调用 getTagTree） */
   getTagById(tagId: string, groupId?: string): TagTreeNode | undefined;
+  /** 获取原始标签树中解析出的系统回收站 tagId。 */
+  getTrashTagId(groupId?: string): string | undefined;
   /** 获取某标签下的子标签 + 文件列表（分页） */
   getResByTag(params: GetResByTagRequest): Promise<TagListByTagResponse>;
   updateTag(params: TagUpdateRequest): Promise<void>;

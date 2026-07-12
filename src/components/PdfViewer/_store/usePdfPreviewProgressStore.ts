@@ -1,7 +1,8 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-import { zustandSessionStorage } from './sessionStorage';
+import { registerStore } from '@/store/lifecycle';
+import { createStoreJSONStorage } from '@/store/persistence';
 
 export interface PdfPreviewProgress {
   page: number;
@@ -15,7 +16,6 @@ const DEFAULT_PDF_PREVIEW_PROGRESS = {
 type PdfPreviewProgressState = {
   progressByResourceId: Record<string, PdfPreviewProgress>;
   setProgress: (resourceId: string, progress: PdfPreviewProgress) => void;
-  removeProgress: (resourceId: string) => void;
 };
 
 export const usePdfPreviewProgressStore = create<PdfPreviewProgressState>()(
@@ -36,21 +36,28 @@ export const usePdfPreviewProgressStore = create<PdfPreviewProgressState>()(
             },
           };
         }),
-
-      removeProgress: (resourceId) =>
-        set((state) => {
-          if (state.progressByResourceId[resourceId] == null) {
-            return state;
-          }
-          const next = { ...state.progressByResourceId };
-          delete next[resourceId];
-          return { progressByResourceId: next };
-        }),
     }),
-    { name: 'pdf-preview-progress', storage: zustandSessionStorage }
+    { name: 'pdf-preview-progress', storage: createStoreJSONStorage('tab') }
   )
 );
-export const clearPdfPreviewProgressStore = (): void => {
-  usePdfPreviewProgressStore.setState(DEFAULT_PDF_PREVIEW_PROGRESS);
-  usePdfPreviewProgressStore.persist.clearStorage();
+
+export const removePdfPreviewProgress = (resourceId: string): void => {
+  usePdfPreviewProgressStore.setState((state) => {
+    if (state.progressByResourceId[resourceId] == null) {
+      return state;
+    }
+    const progressByResourceId = { ...state.progressByResourceId };
+    delete progressByResourceId[resourceId];
+    return { progressByResourceId };
+  });
 };
+
+const resetPdfPreviewProgressStore = (): void => {
+  usePdfPreviewProgressStore.setState(DEFAULT_PDF_PREVIEW_PROGRESS);
+};
+
+registerStore({
+  id: 'pdf-viewer.preview-progress',
+  scope: 'tab',
+  reset: resetPdfPreviewProgressStore,
+});

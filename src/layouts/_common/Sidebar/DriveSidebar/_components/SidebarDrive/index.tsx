@@ -1,3 +1,4 @@
+import { useActiveDriveScopeStore } from '@/components/Drive/_store/useActiveDriveScopeStore';
 import {
   buildDriveTreeData,
   replaceDriveTreeNodeChildren,
@@ -25,7 +26,6 @@ import Tree from '@/components/Tree';
 import { useDocumentService, useDriveService, useNoteService, useResourceService } from '@/domains';
 import type { DriveNode, FolderNode, RootNode } from '@/domains/Drive';
 import { useOpenInWorkspace } from '@/hooks/useOpenInWorkspace';
-import { useActiveDriveScopeStore } from '@/store';
 import { createClientError, FRONTEND_CLIENT_ERROR, parseErrorMessage } from '@/utils/error';
 import { WORKSPACE_RESOURCE_TYPE } from '@/utils/navigation/workspaceRoute';
 import { toast } from '@heroui/react';

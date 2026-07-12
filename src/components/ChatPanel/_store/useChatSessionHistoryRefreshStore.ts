@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 
+import { registerStore } from '@/store/lifecycle';
+
 interface ChatSessionHistoryRefreshState {
   refreshVersion: number;
   requestRefresh: () => void;
@@ -16,6 +18,12 @@ export const useChatSessionHistoryRefreshStore = create<ChatSessionHistoryRefres
   })
 );
 
-export const clearChatSessionHistoryRefreshStore = (): void => {
+const resetChatSessionHistoryRefreshStore = (): void => {
   useChatSessionHistoryRefreshStore.setState(DEFAULT_CHAT_SESSION_HISTORY_REFRESH_STATE);
 };
+
+registerStore({
+  id: 'chat-panel.session-history-refresh',
+  scope: 'tab',
+  reset: resetChatSessionHistoryRefreshStore,
+});

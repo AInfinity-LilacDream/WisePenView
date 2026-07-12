@@ -1,7 +1,6 @@
 import { DocumentApi } from '@/domains/Document/apis/DocumentApi';
 import { NoteApi } from '@/domains/Note/apis/NoteApi';
 import { SkillApi } from '@/domains/Skill/apis/SkillApi';
-import { useNewNoteStore, usePdfPreviewProgressStore, useResourceDisplayNameStore } from '@/store';
 import { ResourceInteractApi } from '../apis/InteractApi';
 import { ResourceInlineCommentApi, ResourceItemApi } from '../apis/ResourceApi';
 import type { ListResourceItemsApiRequest } from '../apis/ResourceApi.type';
@@ -9,6 +8,7 @@ import type { ResourceItem } from '../entity/resource';
 import { RESOURCE_SORT_BY, RESOURCE_SORT_DIR } from '../enum';
 import type { ResourceInteractStats } from '../mapper/ResourceServices.map';
 import { ResourceServicesMap } from '../mapper/ResourceServices.map';
+import { useResourceDisplayNameStore } from '../store/useResourceDisplayNameStore';
 import type {
   AddInlineCommentItemRequest,
   ChangeInlineCommentResolveStatusRequest,
@@ -60,11 +60,6 @@ const renameResource = async (params: RenameResourceRequest): Promise<void> => {
 
 const removeResources = async (params: RemoveResourcesRequest): Promise<void> => {
   await ResourceItemApi.removeResources(params);
-  for (const resourceId of params.resourceIds) {
-    // 资源已删除，同步清理与之绑定的临时状态
-    usePdfPreviewProgressStore.getState().removeProgress(resourceId);
-    useNewNoteStore.getState().clearNewNoteResourceId(resourceId);
-  }
 };
 
 const updateResourceTags = async (params: UpdateResourceTagsRequest): Promise<void> => {

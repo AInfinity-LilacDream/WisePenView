@@ -1,7 +1,8 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-import { zustandSessionStorage } from './sessionStorage';
+import { registerStore } from '@/store/lifecycle';
+import { createStoreJSONStorage } from '@/store/persistence';
 
 export type DriveViewMode = 'uploadQueue' | 'tableDrive';
 
@@ -20,10 +21,16 @@ export const useDrivePreferencesStore = create<DrivePreferencesState>()(
       ...DEFAULT_DRIVE_PREFERENCES,
       setViewMode: (v) => set({ viewMode: v }),
     }),
-    { name: 'drive-preferences', storage: zustandSessionStorage }
+    { name: 'drive-preferences', storage: createStoreJSONStorage('tab') }
   )
 );
-export const clearDrivePreferencesStore = (): void => {
+
+const resetDrivePreferencesStore = (): void => {
   useDrivePreferencesStore.setState(DEFAULT_DRIVE_PREFERENCES);
-  useDrivePreferencesStore.persist.clearStorage();
 };
+
+registerStore({
+  id: 'drive-view.preferences',
+  scope: 'tab',
+  reset: resetDrivePreferencesStore,
+});

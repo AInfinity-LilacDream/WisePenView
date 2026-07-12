@@ -1,5 +1,5 @@
 import { clearAllServiceCaches } from '@/domains/_shared/cacheRegistry';
-import { clearAllZustandStores } from '@/store';
+import { resetSessionStores } from '@/store/lifecycle';
 
 interface AuthChangePayload {
   sourceTabId: string;
@@ -39,7 +39,7 @@ export const subscribeAuthChangeEvent = (): (() => void) => {
 
 export const handleAuthChangeEvent = (): void => {
   clearAllServiceCaches();
-  clearAllZustandStores();
+  resetSessionStores();
   if (window.location.pathname !== '/login') {
     window.location.href = '/login';
   }

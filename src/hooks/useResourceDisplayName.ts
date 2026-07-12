@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { useResourceDisplayNameStore } from '@/store';
+import { useResourceDisplayNameStore } from '@/domains/Resource/store/useResourceDisplayNameStore';
 
 export function useResourceDisplayName(
   resourceId: string | undefined,

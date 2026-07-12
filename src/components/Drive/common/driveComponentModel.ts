@@ -8,7 +8,7 @@ import {
   type FolderNode,
   type LoadingNode,
 } from '@/domains/Drive';
-import { decodeNodeId, encodeNodeId } from '@/domains/Drive/mapper/DriveServices.map';
+import { decodeNodeId } from '@/domains/Drive/mapper/DriveServices.map';
 import type { IResourceService, ResourceItem } from '@/domains/Resource';
 
 export const DEFAULT_DRIVE_ROOT_ID = DRIVE_ROOT_ID;
@@ -87,10 +87,6 @@ export const getNodeDescription = (node: DriveNode): string | undefined => {
     return node.description;
   }
   return undefined;
-};
-
-export const buildTrashFolderNodeId = (trashTagId: string): string => {
-  return encodeNodeId('folder', trashTagId);
 };
 
 /** 从当前目录 nodeId 解析可挂载资源的 tagId */

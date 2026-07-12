@@ -1,7 +1,7 @@
+import { useActiveDriveScopeStore } from '@/components/Drive/_store/useActiveDriveScopeStore';
 import { Popover } from '@/components/Overlay';
 import { useGroupService } from '@/domains';
 import type { Group } from '@/domains/Group';
-import { useActiveDriveScopeStore } from '@/store';
 import { toast } from '@heroui/react';
 import { useRequest } from 'ahooks';
 import { Check, ChevronsUpDown, HardDrive, UsersRound } from 'lucide-react';

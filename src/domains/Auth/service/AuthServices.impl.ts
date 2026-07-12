@@ -1,5 +1,5 @@
 import { clearAllServiceCaches } from '@/domains/_shared/cacheRegistry';
-import { clearAllZustandStores } from '@/store';
+import { resetSessionStores } from '@/store/lifecycle';
 import { emitAuthChangeEvent } from '@/utils/auth/authChange';
 import { AuthApi } from '../apis/AuthApi';
 import { AuthServicesMap } from '../mapper/AuthServices.map';
@@ -15,14 +15,14 @@ const login = async (params: LoginRequest) => {
   const apiParams = AuthServicesMap.mapLoginRequest(params);
   await AuthApi.login(apiParams);
   clearAllServiceCaches();
-  clearAllZustandStores();
+  resetSessionStores();
   emitAuthChangeEvent();
 };
 
 const logout = async () => {
   await AuthApi.logout();
   clearAllServiceCaches();
-  clearAllZustandStores();
+  resetSessionStores();
   emitAuthChangeEvent();
 };
 

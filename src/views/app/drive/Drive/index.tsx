@@ -1,10 +1,10 @@
 import TableDrive from '@/components/Drive/TableDrive';
 import type { TableDriveHandle } from '@/components/Drive/TableDrive/index.type';
 import SegmentedTabs from '@/components/SegmentedTabs';
-import { useDrivePreferencesStore, type DriveViewMode } from '@/store';
 import { Button } from '@heroui/react';
 import { Trash2 } from 'lucide-react';
 import { useRef, useState } from 'react';
+import { useDrivePreferencesStore, type DriveViewMode } from '../_store/useDrivePreferencesStore';
 
 import GlobalSearchBox from '../_components/GlobalSearchBox';
 import type { UploadQueueTabRef } from '../_components/UploadQueueTab';

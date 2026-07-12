@@ -1,6 +1,5 @@
 import type { Group } from '@/domains/Group';
 import type { ResourceItem } from '@/domains/Resource';
-import { useCurrentChatSessionStore, useNewChatSessionStore } from '@/store';
 import { createClientError, FRONTEND_CLIENT_ERROR } from '@/utils/error';
 import { computeFileMd5 } from '@/utils/oss/computeFileMd5';
 import { putOssPresignedUrl } from '@/utils/oss/ossPresignedPut';
@@ -203,8 +202,6 @@ const renameSession = async (params: RenameSessionRequest): Promise<ChatSession>
 
 const deleteSession = async (params: DeleteSessionRequest): Promise<void> => {
   await ChatSessionApi.deleteSession({ session_id: params.sessionId });
-  useCurrentChatSessionStore.getState().clearCurrentSessionById(params.sessionId);
-  useNewChatSessionStore.getState().clearNewChatSessionById(params.sessionId);
 };
 
 const listSessions = async (params?: ListSessionsRequest): Promise<PageResult<ChatSession>> => {

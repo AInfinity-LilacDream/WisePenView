@@ -1,14 +1,14 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-import { zustandSessionStorage } from './sessionStorage';
+import { registerStore } from '@/store/lifecycle';
+import { createStoreJSONStorage } from '@/store/persistence';
 
 interface CurrentChatSessionState {
   currentSessionId?: string;
   currentSessionTitle?: string;
   setCurrentSession: (session: { id: string; title: string }) => void;
   clearCurrentSession: () => void;
-  clearCurrentSessionById: (sessionId: string) => void;
 }
 
 const DEFAULT_CURRENT_CHAT_SESSION_STATE: Pick<
@@ -41,18 +41,17 @@ export const useCurrentChatSessionStore = create<CurrentChatSessionState>()(
           }
           return DEFAULT_CURRENT_CHAT_SESSION_STATE;
         }),
-      clearCurrentSessionById: (sessionId) =>
-        set((state) => {
-          if (state.currentSessionId !== sessionId) {
-            return state;
-          }
-          return DEFAULT_CURRENT_CHAT_SESSION_STATE;
-        }),
     }),
-    { name: 'current-chat-session', storage: zustandSessionStorage }
+    { name: 'current-chat-session', storage: createStoreJSONStorage('tab') }
   )
 );
-export const clearCurrentChatSessionStore = (): void => {
+
+const resetCurrentChatSessionStore = (): void => {
   useCurrentChatSessionStore.setState(DEFAULT_CURRENT_CHAT_SESSION_STATE);
-  useCurrentChatSessionStore.persist.clearStorage();
 };
+
+registerStore({
+  id: 'chat-panel.current-session',
+  scope: 'tab',
+  reset: resetCurrentChatSessionStore,
+});

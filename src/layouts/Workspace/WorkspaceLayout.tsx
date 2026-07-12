@@ -1,4 +1,8 @@
 import ChatPanel from '@/components/ChatPanel';
+import { useChatPanelStore } from '@/components/ChatPanel/_store/useChatPanelStore';
+import { useCurrentChatSessionStore } from '@/components/ChatPanel/_store/useCurrentChatSessionStore';
+import { clearNewChatSessionStore } from '@/components/ChatPanel/_store/useNewChatSessionStore';
+import { useSystemLayoutStore } from '@/layouts/_common/_store/useSystemLayoutStore';
 import DriveSidebar from '@/layouts/_common/Sidebar/DriveSidebar';
 import {
   SystemResizableHandle,
@@ -6,12 +10,6 @@ import {
   SystemResizablePanelGroup,
 } from '@/layouts/_common/SystemResizable';
 import { useResizablePanelSize } from '@/layouts/_common/useResizablePanelSize';
-import {
-  clearNewChatSessionStore,
-  useChatPanelStore,
-  useCurrentChatSessionStore,
-  useSystemLayoutStore,
-} from '@/store';
 import {
   normalizeWorkspaceResourceType,
   resolveLegacyEditorTypeForWorkspace,
@@ -29,6 +27,8 @@ import type {
 import { Outlet, useLocation, useMatch } from 'react-router-dom';
 import WorkspaceFrame from './_common/WorkspaceFrame';
 import WorkspaceHeader from './_common/WorkspaceHeader';
+import { useWorkspaceChatProtocolStore } from './_store/useWorkspaceChatProtocolStore';
+import { createResourceWorkspaceChatStateProvider } from './WorkspaceChatProtocol';
 import styles from './WorkspaceLayout.module.less';
 import type { WorkspaceLayoutConfig, WorkspaceOutletContextValue } from './WorkspaceOutletContext';
 
@@ -63,6 +63,8 @@ function WorkspaceLayout() {
   const setChatPanelWidth = useChatPanelStore((state) => state.setChatPanelWidth);
   const currentSessionId = useCurrentChatSessionStore((state) => state.currentSessionId);
   const clearCurrentSession = useCurrentChatSessionStore((state) => state.clearCurrentSession);
+  const workspaceChatContext = useWorkspaceChatProtocolStore((state) => state.context);
+  const clearWorkspaceChatContext = useWorkspaceChatProtocolStore((state) => state.clearContext);
   const hasSessionId = Boolean(currentSessionId);
   const shouldRenderChatPanel = hasSessionId || chatPanelDraftOpen;
   const safeChatPanelCollapsed = !shouldRenderChatPanel || chatPanelCollapsed;
@@ -98,17 +100,17 @@ function WorkspaceLayout() {
     resourceRouteMatch?.params.resourceId,
     resourceRouteMatch?.params.resourceType,
   ]);
-  const routeChatContext = useMemo(() => {
+  const routeChatStateProvider = useMemo(() => {
     const { resourceId, resourceType, viewer } = routeContext;
     if (!resourceId || !resourceType) return undefined;
-    return {
+    return createResourceWorkspaceChatStateProvider({
       resourceId,
       resourceType,
       viewer,
       editorType: resolveLegacyEditorTypeForWorkspace(resourceType, viewer),
-    };
+    });
   }, [routeContext]);
-  const chatWorkspaceContext = layoutConfig.chatContext ?? routeChatContext;
+  const workspaceChatStateProvider = layoutConfig.chatStateProvider ?? routeChatStateProvider;
 
   useResizablePanelSize({
     panelRef: leftSidebarPanelRef,
@@ -134,6 +136,14 @@ function WorkspaceLayout() {
       setChatPanelDraftOpen(false);
     }
   }, [chatPanelDraftOpen, hasSessionId, setChatPanelDraftOpen]);
+
+  useUpdateEffect(() => {
+    if (!workspaceChatContext) return;
+    if (!hasSessionId) {
+      setChatPanelDraftOpen(true);
+    }
+    setChatPanelCollapsed(false);
+  }, [hasSessionId, setChatPanelCollapsed, setChatPanelDraftOpen, workspaceChatContext]);
 
   const handleSidebarToggle = useCallback(() => {
     setSidebarCollapsed((collapsed) => {
@@ -325,7 +335,11 @@ function WorkspaceLayout() {
               <ChatPanel
                 collapsed={false}
                 onNewChat={handleNewChat}
-                workspaceContext={chatWorkspaceContext}
+                workspaceChat={{
+                  provider: workspaceChatStateProvider,
+                  context: workspaceChatContext,
+                  clearContext: clearWorkspaceChatContext,
+                }}
                 showCollapseButton={false}
               />
             ) : null}

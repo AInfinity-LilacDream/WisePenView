@@ -6,9 +6,9 @@ import { useCreateBlockNote } from '@blocknote/react';
 import { useMount, useUnmount, useUpdateEffect } from 'ahooks';
 import React, { useImperativeHandle, useMemo, useRef, type Ref } from 'react';
 
+import { useNewNoteStore } from '@/components/Note/_store/useNewNoteStore';
 import { getProseMirrorRoot } from '@/components/Note/CustomBlockNote/plugins/editorProseMirrorRoot';
 import { useNoteService } from '@/domains';
-import { useNewNoteStore } from '@/store';
 
 import { parseErrorMessage } from '@/utils/error';
 import { toast } from '@heroui/react';

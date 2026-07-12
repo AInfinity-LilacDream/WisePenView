@@ -3,7 +3,7 @@ import { useExtensionState } from '@blocknote/react';
 import { useCallback, useRef, useState, type RefObject } from 'react';
 import type { Doc } from 'yjs';
 
-import { useNoteCommentsSidebarStore } from '@/store/useNoteCommentsSidebarStore';
+import { useNoteCommentsSidebarStore } from '@/components/Note/_store/useNoteCommentsSidebarStore';
 import type { CustomBlockNoteEditor } from '../../../blockNoteSchema';
 import { runWithFormulaCommentSync } from '../../../comments/core/commentDocumentMarks';
 import type { CollaboratorCommentVisibility } from '../../../comments/core/commentSettings';

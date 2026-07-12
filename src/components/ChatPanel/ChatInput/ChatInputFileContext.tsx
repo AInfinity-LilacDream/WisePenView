@@ -5,7 +5,7 @@ import { toast } from '@heroui/react';
 import { useMount, useUnmount } from 'ahooks';
 import { useRef, type ChangeEvent, type ReactNode } from 'react';
 import { ChatInputFileContext, type ChatInputFileContextValue } from './ChatInputFileContextValue';
-import { selectChatInputSelectedModel, useChatInputStoreApi } from './ChatInputStore';
+import { selectChatInputSelectedModel, useChatInputStoreApi } from './_store/ChatInputStore';
 import type { LocalAttachmentPayload } from './index.type';
 
 const MAX_IMAGE_BASE64_BYTES = 5 * 1024 * 1024;

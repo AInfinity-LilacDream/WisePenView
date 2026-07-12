@@ -27,6 +27,7 @@ const ROOT_ID = 'drive-root';
 const GROUP_ROOT_PREFIX = 'drive-root:group:';
 const SHARED_FOLDER_NODE_ID = 'folder-shared';
 const SHARED_FOLDER_TAG_ID = 'tag-shared';
+const TRASH_FOLDER_NODE_ID = 'trash-root';
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -404,8 +405,14 @@ function createDriveServiceMock(opts?: CreateDriveServiceOptions): IDriveService
     return node.tagId;
   };
 
+  const getTrashFolderNodeId = async (): Promise<string | undefined> => {
+    await delay(NETWORK_DELAY_MS);
+    return md.nodes[TRASH_FOLDER_NODE_ID] ? TRASH_FOLDER_NODE_ID : undefined;
+  };
+
   return {
     getRootNode,
+    getTrashFolderNodeId,
     listNodeChildren,
     getNodePath,
     moveToFolder,

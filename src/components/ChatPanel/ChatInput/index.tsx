@@ -1,8 +1,8 @@
 import { TextArea } from '@heroui/react';
 import { X } from 'lucide-react';
+import { ChatInputStoreProvider } from './_store/ChatInputStoreProvider';
 import AttachmentStrip from './AttachmentStrip';
 import { ChatInputFileProvider } from './ChatInputFileContext';
-import { ChatInputStoreProvider } from './ChatInputStoreProvider';
 import DocumentPickerModal from './DocumentPickerModal';
 import DropOverlay from './DropOverlay';
 import type { ChatInputProps } from './index.type';
@@ -11,12 +11,7 @@ import OtherSkillModal from './OtherSkillModal';
 import styles from './style.module.less';
 import { useChatInputController } from './useChatInputController';
 
-function ChatInputContent({
-  onSend,
-  sending,
-  selectedContextText,
-  onClearSelectedContext,
-}: ChatInputProps) {
+function ChatInputContent({ onSend, sending, contextPreview, onClearContext }: ChatInputProps) {
   const { attachmentStripProps, containerProps, dropOverlayProps, textAreaProps, toolbarProps } =
     useChatInputController({
       onSend,
@@ -30,14 +25,14 @@ function ChatInputContent({
 
         <AttachmentStrip {...attachmentStripProps} />
 
-        {selectedContextText ? (
-          <div className={styles.selectedContext}>
-            <span className={styles.selectedContextText}>{selectedContextText}</span>
+        {contextPreview ? (
+          <div className={styles.contextAttachment}>
+            <span className={styles.contextAttachmentPreview}>{contextPreview}</span>
             <button
               type="button"
-              className={styles.selectedContextClear}
-              aria-label="移除选中文本上下文"
-              onClick={onClearSelectedContext}
+              className={styles.contextAttachmentClear}
+              aria-label="移除上下文"
+              onClick={onClearContext}
             >
               <X size={14} />
             </button>

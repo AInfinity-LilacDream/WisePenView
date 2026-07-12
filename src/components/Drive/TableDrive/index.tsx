@@ -9,7 +9,6 @@ import {
 } from '@/components/Table';
 import { useDriveService } from '@/domains';
 import type { DriveNode } from '@/domains/Drive';
-import { useTrashTagStore } from '@/store';
 import { parseErrorMessage } from '@/utils/error';
 import { formatFileSize } from '@/utils/format/formatFileSize';
 import { findTreeNodeById } from '@/utils/tree/findTreeNodeById';
@@ -38,7 +37,6 @@ import {
   type ReactNode,
 } from 'react';
 import {
-  buildTrashFolderNodeId,
   getDriveNodeLabel,
   isDriveActionTarget,
   isDriveSharedFolderNode,
@@ -430,12 +428,14 @@ const TableDrive = forwardRef<TableDriveHandle, TableDriveProps>(function TableD
     }
   );
 
-  const trashTagId = useTrashTagStore((state) => state.getTrashTagId(finalGroupId));
-  const trashFolderNodeId = useMemo(
-    () => (trashTagId ? buildTrashFolderNodeId(trashTagId) : undefined),
-    [trashTagId]
-  );
   const canOpenTrash = !finalGroupId;
+  const { data: trashFolderNodeId, runAsync: resolveTrashFolderNodeId } = useRequest(
+    () => driveService.getTrashFolderNodeId(finalGroupId),
+    {
+      ready: canOpenTrash,
+      refreshDeps: [finalGroupId],
+    }
+  );
   const isTrashView = Boolean(
     canOpenTrash &&
     trashFolderNodeId &&
@@ -449,20 +449,16 @@ const TableDrive = forwardRef<TableDriveHandle, TableDriveProps>(function TableD
     }
 
     try {
-      let resolvedTrashTagId = useTrashTagStore.getState().getTrashTagId(finalGroupId);
-      if (!resolvedTrashTagId) {
-        await driveService.getRootNode({ rootId: finalRootId, groupId: finalGroupId });
-        resolvedTrashTagId = useTrashTagStore.getState().getTrashTagId(finalGroupId);
-      }
-      if (!resolvedTrashTagId) {
+      const resolvedTrashFolderNodeId = trashFolderNodeId ?? (await resolveTrashFolderNodeId());
+      if (!resolvedTrashFolderNodeId) {
         toast.danger('未找到回收站');
         return;
       }
-      handleEnterFolder(buildTrashFolderNodeId(resolvedTrashTagId));
+      handleEnterFolder(resolvedTrashFolderNodeId);
     } catch (error) {
       toast.danger(parseErrorMessage(error));
     }
-  }, [canOpenTrash, driveService, finalGroupId, finalRootId, handleEnterFolder, isTrashView]);
+  }, [canOpenTrash, handleEnterFolder, isTrashView, resolveTrashFolderNodeId, trashFolderNodeId]);
 
   useImperativeHandle(ref, () => ({ openTrash }), [openTrash]);
 

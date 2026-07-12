@@ -3,7 +3,6 @@ import type { IResourceService } from '@/domains/Resource';
 import { RESOURCE_SORT_BY, RESOURCE_SORT_DIR } from '@/domains/Resource';
 import { ResourceTagApi } from '@/domains/Resource/apis/ResourceApi';
 import type { TagListByTagResponse } from '@/domains/Tag';
-import { useTrashTagStore } from '@/store';
 import { normalizeTagGroupId } from '@/utils/normalize/normalizeTagGroupId';
 import { TagServicesMap } from '../mapper/TagServices.map';
 import type {
@@ -46,22 +45,6 @@ const filterHiddenTags = (nodes: TagTreeNode[]): TagTreeNode[] => {
   return filtered;
 };
 
-const syncTrashTagIdToStore = (groupId: string | undefined, roots: TagTreeResponse[]): void => {
-  const queue: TagTreeResponse[] = [...roots];
-  while (queue.length > 0) {
-    const node = queue.shift();
-    if (!node) continue;
-    if (node.tagName === TRASH_FOLDER_NAME) {
-      useTrashTagStore.getState().setTrashTagId(groupId, node.tagId);
-      return;
-    }
-    if (Array.isArray(node.children) && node.children.length > 0) {
-      queue.push(...node.children);
-    }
-  }
-  useTrashTagStore.getState().setTrashTagId(groupId, undefined);
-};
-
 interface TagServicesDeps {
   resourceService: IResourceService;
 }
@@ -77,6 +60,25 @@ export const createTagServices = (deps: TagServicesDeps): ITagService => {
   const tagTreeCache = new Map<string, TagTreeNode[]>();
   /** 扁平索引：cacheKey → (tagId → TagTreeNode)，与 tagTreeCache 同步维护 */
   const tagFlatCache = new Map<string, Map<string, TagTreeNode>>();
+  /** 系统回收站属于原始标签树元数据，不进入 UI 过滤后的 tagTreeCache。 */
+  const trashTagIdCache = new Map<string, string>();
+
+  const syncTrashTagId = (groupId: string | undefined, roots: TagTreeResponse[]): void => {
+    const cacheKey = normalizeTagGroupId(groupId) ?? CACHE_KEY_DEFAULT;
+    const queue: TagTreeResponse[] = [...roots];
+    while (queue.length > 0) {
+      const node = queue.shift();
+      if (!node) continue;
+      if (node.tagName === TRASH_FOLDER_NAME) {
+        trashTagIdCache.set(cacheKey, node.tagId);
+        return;
+      }
+      if (Array.isArray(node.children) && node.children.length > 0) {
+        queue.push(...node.children);
+      }
+    }
+    trashTagIdCache.delete(cacheKey);
+  };
 
   const clearTagTreeCache = (groupId?: string): void => {
     if (groupId !== undefined) {
@@ -85,11 +87,13 @@ export const createTagServices = (deps: TagServicesDeps): ITagService => {
       rawTagFlatCache.delete(cacheKey);
       tagTreeCache.delete(cacheKey);
       tagFlatCache.delete(cacheKey);
+      trashTagIdCache.delete(cacheKey);
     } else {
       rawTagTreeCache.clear();
       rawTagFlatCache.clear();
       tagTreeCache.clear();
       tagFlatCache.clear();
+      trashTagIdCache.clear();
     }
   };
 
@@ -108,7 +112,7 @@ export const createTagServices = (deps: TagServicesDeps): ITagService => {
     const params = TagServicesMap.mapGetTagTreeRequest(normalizedGroupId);
     const data = await ResourceTagApi.getTagTree(params);
     const roots = TagServicesMap.mapTagTreeFromApi(data);
-    syncTrashTagIdToStore(normalizedGroupId, roots);
+    syncTrashTagId(normalizedGroupId, roots);
     rawTagTreeCache.set(cacheKey, roots);
     rawTagFlatCache.set(cacheKey, buildFlatMap(roots));
     return roots;
@@ -141,6 +145,11 @@ export const createTagServices = (deps: TagServicesDeps): ITagService => {
   const getTagById = (tagId: string, groupId?: string): TagTreeNode | undefined => {
     const cacheKey = normalizeTagGroupId(groupId) ?? CACHE_KEY_DEFAULT;
     return tagFlatCache.get(cacheKey)?.get(tagId);
+  };
+
+  const getTrashTagId = (groupId?: string): string | undefined => {
+    const cacheKey = normalizeTagGroupId(groupId) ?? CACHE_KEY_DEFAULT;
+    return trashTagIdCache.get(cacheKey);
   };
 
   const updateTag = async (params: TagUpdateRequest): Promise<void> => {
@@ -194,6 +203,7 @@ export const createTagServices = (deps: TagServicesDeps): ITagService => {
     getRawTagById,
     getTagTree,
     getTagById,
+    getTrashTagId,
     getResByTag,
     updateTag,
     addTag,

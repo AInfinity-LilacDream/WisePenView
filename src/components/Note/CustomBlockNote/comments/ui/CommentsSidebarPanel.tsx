@@ -1,7 +1,7 @@
 import clsx from 'clsx';
 import type { CSSProperties, ReactNode } from 'react';
 
-import { MIN_COMMENTS_SIDEBAR_WIDTH } from '@/store/noteCommentsSidebarConfig';
+import { MIN_COMMENTS_SIDEBAR_WIDTH } from '@/components/Note/_store/noteCommentsSidebarConfig';
 import { useCommentsSidebarResize } from '../hooks/useCommentsSidebarResize';
 import styles from './commentStyles.module.less';
 

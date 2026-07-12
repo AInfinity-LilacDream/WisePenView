@@ -1,7 +1,7 @@
-import type { ChatWorkspaceContext } from '@/domains/Chat';
 import type { WorkspaceResourceType, WorkspaceViewer } from '@/utils/navigation/workspaceRoute';
 import { useLayoutEffect, type ReactNode } from 'react';
 import { useOutletContext } from 'react-router-dom';
+import type { WorkspaceChatStateProvider } from './WorkspaceChatProtocol';
 
 export interface WorkspaceHeaderConfig {
   inlineTitle?: ReactNode;
@@ -14,7 +14,7 @@ export interface WorkspaceLayoutConfig {
   className?: string;
   bodyClassName?: string;
   header?: WorkspaceHeaderConfig | false;
-  chatContext?: ChatWorkspaceContext;
+  chatStateProvider?: WorkspaceChatStateProvider;
 }
 
 export interface WorkspaceRouteContext {

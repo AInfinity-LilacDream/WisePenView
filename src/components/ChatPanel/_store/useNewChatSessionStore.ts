@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 
+import { registerStore } from '@/store/lifecycle';
+
 interface NewChatSessionState {
   newChatSessionId: string | null;
   newChatSessionTitle: string;
@@ -35,3 +37,9 @@ export const useNewChatSessionStore = create<NewChatSessionState>()((set) => ({
 export const clearNewChatSessionStore = (): void => {
   useNewChatSessionStore.setState(DEFAULT_NEW_CHAT_SESSION_STATE);
 };
+
+registerStore({
+  id: 'chat-panel.new-session',
+  scope: 'tab',
+  reset: clearNewChatSessionStore,
+});

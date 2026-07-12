@@ -1,13 +1,13 @@
 import { Popover } from '@/components/Overlay';
 import { useChatService } from '@/domains';
+import type { ChatAgentOption } from '@/domains/Chat';
 import { buildChatInputAgentOptions, resolveChatInputSelectedAgent } from '@/domains/Chat';
-import type { ChatAgentOption } from '@/store';
 import { parseErrorMessage } from '@/utils/error';
 import { Button, ListBox, ListBoxItem, toast } from '@heroui/react';
 import { useRequest } from 'ahooks';
 import { Bot, Check } from 'lucide-react';
 import { useState } from 'react';
-import { useChatInputStore, useChatInputStoreApi } from '../ChatInputStore';
+import { useChatInputStore, useChatInputStoreApi } from '../_store/ChatInputStore';
 import styles from '../style.module.less';
 
 function AgentPicker() {
