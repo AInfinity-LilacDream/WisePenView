@@ -73,8 +73,7 @@ function UserProfile({ collapsed, menuMode = 'app' }: UserProfileProps) {
       // case 'theme':
       //   break;
       case 'logout':
-        authService.logout();
-        navigate('/login', { replace: true });
+        void authService.logout();
         break;
       default:
         break;

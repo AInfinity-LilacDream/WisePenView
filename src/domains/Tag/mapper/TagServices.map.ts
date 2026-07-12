@@ -1,9 +1,3 @@
-import type {
-  AddTagApiRequest,
-  ChangeTagApiRequest,
-  GetTagTreeApiRequest,
-  GetTagTreeApiResponse,
-} from '@/domains/Resource/apis/ResourceApi.type';
 import {
   ACCESS_CONTROL_SCOPE,
   coerceResourceActions,
@@ -16,7 +10,14 @@ import {
   type TagVisibilityModeString,
 } from '@/domains/Tag';
 import { normalizeTagGroupId } from '@/utils/normalize/normalizeTagGroupId';
-import type { TagCreateRequest, TagTreeNode, TagUpdateRequest } from '../service/index.type';
+import type {
+  AddTagApiRequest,
+  ChangeTagApiRequest,
+  GetTagTreeApiRequest,
+  GetTagTreeApiResponse,
+} from '../apis/TagApi.type';
+import type { TagTreeNode } from '../entity/tag';
+import type { TagCreateRequest, TagUpdateRequest } from '../service/index.type';
 
 const mapGetTagTreeRequest = (groupId?: string): GetTagTreeApiRequest | undefined => {
   const normalizedGroupId = normalizeTagGroupId(groupId);

@@ -1,9 +1,9 @@
 import { registerServiceCacheCleaner } from '@/domains/_shared/cacheRegistry';
 import type { IResourceService } from '@/domains/Resource';
 import { RESOURCE_SORT_BY, RESOURCE_SORT_DIR } from '@/domains/Resource';
-import { ResourceTagApi } from '@/domains/Resource/apis/ResourceApi';
-import type { TagListByTagResponse } from '@/domains/Tag';
+import type { TagListByTagResponse, TagTreeNode } from '@/domains/Tag';
 import { normalizeTagGroupId } from '@/utils/normalize/normalizeTagGroupId';
+import { TagApi } from '../apis/TagApi';
 import { TagServicesMap } from '../mapper/TagServices.map';
 import type {
   GetResByTagRequest,
@@ -11,8 +11,6 @@ import type {
   TagCreateRequest,
   TagDeleteRequest,
   TagMoveRequest,
-  TagTreeNode,
-  TagTreeResponse,
   TagUpdateRequest,
 } from './index.type';
 
@@ -63,9 +61,9 @@ export const createTagServices = (deps: TagServicesDeps): ITagService => {
   /** 系统回收站属于原始标签树元数据，不进入 UI 过滤后的 tagTreeCache。 */
   const trashTagIdCache = new Map<string, string>();
 
-  const syncTrashTagId = (groupId: string | undefined, roots: TagTreeResponse[]): void => {
+  const syncTrashTagId = (groupId: string | undefined, roots: TagTreeNode[]): void => {
     const cacheKey = normalizeTagGroupId(groupId) ?? CACHE_KEY_DEFAULT;
-    const queue: TagTreeResponse[] = [...roots];
+    const queue: TagTreeNode[] = [...roots];
     while (queue.length > 0) {
       const node = queue.shift();
       if (!node) continue;
@@ -110,7 +108,7 @@ export const createTagServices = (deps: TagServicesDeps): ITagService => {
       return cached;
     }
     const params = TagServicesMap.mapGetTagTreeRequest(normalizedGroupId);
-    const data = await ResourceTagApi.getTagTree(params);
+    const data = await TagApi.getTagTree(params);
     const roots = TagServicesMap.mapTagTreeFromApi(data);
     syncTrashTagId(normalizedGroupId, roots);
     rawTagTreeCache.set(cacheKey, roots);
@@ -154,19 +152,19 @@ export const createTagServices = (deps: TagServicesDeps): ITagService => {
 
   const updateTag = async (params: TagUpdateRequest): Promise<void> => {
     const payload = TagServicesMap.mapUpdateTagRequest(params);
-    await ResourceTagApi.changeTag(payload);
+    await TagApi.changeTag(payload);
     clearTagTreeCache(params.groupId);
   };
 
   const addTag = async (params: TagCreateRequest): Promise<string> => {
     const payload = TagServicesMap.mapAddTagRequest(params);
-    const data = await ResourceTagApi.addTag(payload);
+    const data = await TagApi.addTag(payload);
     clearTagTreeCache(params.groupId);
     return TagServicesMap.mapAddTagFromApi(data);
   };
 
   const deleteTag = async (params: TagDeleteRequest): Promise<void> => {
-    await ResourceTagApi.removeTag(params);
+    await TagApi.removeTag(params);
     clearTagTreeCache(params.groupId);
   };
 
@@ -194,7 +192,7 @@ export const createTagServices = (deps: TagServicesDeps): ITagService => {
   };
 
   const moveTag = async (params: TagMoveRequest): Promise<void> => {
-    await ResourceTagApi.moveTag(params);
+    await TagApi.moveTag(params);
     clearTagTreeCache(params.groupId);
   };
 

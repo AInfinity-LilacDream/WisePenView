@@ -3,9 +3,6 @@
  * 与 blocknote/docs/API.md、design-editor-final 对齐
  */
 
-import type { ResourceItem } from '@/domains/Resource';
-import type { UserDisplayBase } from '@/domains/User';
-
 export type DeltaOp = 'insert' | 'update' | 'delete' | 'move';
 
 export interface JsonDelta {
@@ -63,16 +60,3 @@ export interface CustomInlineContent {
 }
 
 export type TableContent = unknown;
-
-export interface NoteMetaInfo {
-  authors?: string[];
-  lastUpdatedAt?: number | string | null;
-}
-
-export interface NoteInfoResponse {
-  authorsDisplay?: Record<string, UserDisplayBase> | null;
-  resourceInfo: ResourceItem;
-  /** 当前笔记版本号。 */
-  version?: number;
-  noteInfo?: NoteMetaInfo;
-}

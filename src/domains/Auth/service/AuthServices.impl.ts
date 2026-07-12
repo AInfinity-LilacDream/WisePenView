@@ -1,6 +1,4 @@
-import { clearAllServiceCaches } from '@/domains/_shared/cacheRegistry';
-import { resetSessionStores } from '@/store/lifecycle';
-import { emitAuthChangeEvent } from '@/utils/auth/authChange';
+import { authSessionCoordinator } from '@/utils/auth/authSessionCoordinator';
 import { AuthApi } from '../apis/AuthApi';
 import { AuthServicesMap } from '../mapper/AuthServices.map';
 import type {
@@ -14,16 +12,12 @@ import type { IAuthService } from './index.type';
 const login = async (params: LoginRequest) => {
   const apiParams = AuthServicesMap.mapLoginRequest(params);
   await AuthApi.login(apiParams);
-  clearAllServiceCaches();
-  resetSessionStores();
-  emitAuthChangeEvent();
+  authSessionCoordinator.login();
 };
 
 const logout = async () => {
   await AuthApi.logout();
-  clearAllServiceCaches();
-  resetSessionStores();
-  emitAuthChangeEvent();
+  authSessionCoordinator.logout();
 };
 
 const register = async (params: RegisterRequest) => {

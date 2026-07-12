@@ -1,7 +1,7 @@
 import type { GroupMember } from '@/domains/Group';
 import { ROLE } from '@/domains/Group';
 import { normalizeId } from '@/utils/normalize/normalizeId';
-import type { GroupMemberRawResponse } from '../service/index.type';
+import type { GroupMemberApiResponse } from '../apis/GroupApi.type';
 
 const normalizeRoleFromApi = (value: unknown): GroupMember['role'] => {
   const numericValue = Number(value);
@@ -10,7 +10,7 @@ const normalizeRoleFromApi = (value: unknown): GroupMember['role'] => {
 };
 
 /** OpenAPI GroupMemberDetailResponse -> 领域 GroupMember（userId <- memberId） */
-export const mapGroupMemberRawResponse = (raw: GroupMemberRawResponse): GroupMember => ({
+export const mapGroupMemberFromApi = (raw: GroupMemberApiResponse): GroupMember => ({
   userId: normalizeId(raw.memberId),
   realname: raw.memberInfo.realName ?? '',
   nickname: raw.memberInfo.nickname,

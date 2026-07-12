@@ -7,6 +7,7 @@ import type {
   AccessControlScope,
   TagListByTagResponse,
   TagResourceAction,
+  TagTreeNode,
   TagVisibilityModeString,
 } from '@/domains/Tag';
 
@@ -41,35 +42,6 @@ export interface GetResByTagRequest {
   filePage?: number;
   filePageSize?: number;
 }
-
-export type { AccessControlScope, TagResourceAction, TagVisibilityModeString };
-
-/**
- * 标签树节点（OpenAPI TagTreeResponse）
- * 接口实际始终返回 tagId、tagName；其余字段与文档一致。children 为树形递归。
- */
-export interface TagTreeResponse {
-  tagId: string;
-  tagName: string;
-  groupId?: string;
-  tagDesc?: string;
-  tagIcon?: string;
-  tagColor?: string;
-  tagCreator?: string;
-  isPath?: boolean;
-  visibilityMode?: TagVisibilityModeString;
-  taggedResourceAclGrantScope?: AccessControlScope;
-  taggedResourceAclGrantSpecifiedUsers?: string[];
-  taggedResourceGrantedActionsMask?: number;
-  tagMountPermissionScope?: AccessControlScope;
-  tagMountSpecifiedUsers?: string[];
-  grantedActions?: TagResourceAction[];
-  parentId?: string;
-  children?: TagTreeResponse[];
-}
-
-/** 领域别名：路径文件夹语义（与 TagTreeResponse 相同结构） */
-export type TagTreeNode = TagTreeResponse;
 
 /** POST /resource/tag/addTag */
 export interface TagCreateRequest {

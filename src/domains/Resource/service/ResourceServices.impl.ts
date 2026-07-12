@@ -179,10 +179,7 @@ const getPermissionResourceInfo = async (params: GetResourcePermissionOverviewRe
 
 const getResourcePermissionOverview = async (params: GetResourcePermissionOverviewRequest) => {
   const resourceInfo = await getPermissionResourceInfo(params);
-  return ResourceServicesMap.mapResourcePermissionOverviewFromResourceItem(
-    resourceInfo,
-    params.resourceId
-  );
+  return ResourceServicesMap.mapResourcePermissionOverviewFromApi(resourceInfo, params.resourceId);
 };
 
 /** 获取当前用户点赞状态，供点赞组件薄层调用 */

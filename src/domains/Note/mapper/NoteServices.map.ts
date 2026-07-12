@@ -1,10 +1,10 @@
-import type { NoteInfoResponse } from '@/domains/Note';
 import type {
   AddNoteApiRequest,
+  GetNoteInfoApiResponse,
   SaveDrawIoSnapshotApiRequest,
 } from '@/domains/Note/apis/NoteApi.type';
 import { coerceResourceActions, RESOURCE_ACTION, resourceActionsInclude } from '@/domains/Resource';
-import { normalizeResourceItem } from '@/domains/Resource/mapper/ResourceServices.map';
+import { ResourceServicesMap } from '@/domains/Resource/mapper/ResourceServices.map';
 import { formatTimestampToDateTime } from '@/utils/format/formatTime';
 import { normalizeId } from '@/utils/normalize/normalizeId';
 import type {
@@ -42,19 +42,19 @@ const mapForkNoteFromApi = (resourceId: string): ForkNoteResponse => ({
 const mapAuthorDisplay = (
   authorId: string,
   author?: {
-    nickname?: string;
-    realName?: string;
-    avatar?: string;
+    nickname?: string | null;
+    realName?: string | null;
+    avatar?: string | null;
   }
 ): NoteInfoDisplayAuthor => ({
   id: normalizeId(authorId),
   // fallback：作者展示名缺失时显示未知用户
   name: author?.nickname || author?.realName || '未知用户',
-  avatar: author?.avatar,
+  avatar: author?.avatar ?? undefined,
 });
 
-const mapNoteInfoDisplayFromApi = (data: NoteInfoResponse): NoteInfoDisplayData => {
-  const resourceInfo = normalizeResourceItem(data.resourceInfo);
+const mapNoteInfoDisplayFromApi = (data: GetNoteInfoApiResponse): NoteInfoDisplayData => {
+  const resourceInfo = ResourceServicesMap.mapResourceItemFromApi(data.resourceInfo);
   const ownerId = normalizeId(resourceInfo.ownerId) || undefined;
   const currentActions = coerceResourceActions(
     resourceInfo.currentActions as unknown[] | undefined

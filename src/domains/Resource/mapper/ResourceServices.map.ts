@@ -11,12 +11,10 @@ import type {
   ListInlineCommentsApiRequest,
   ListInlineCommentsApiResponse,
   ListResourceItemsApiRequest,
-  ResourceActionApiList,
   ResourceGroupDisplayBaseApiResponse,
   ResourceGroupGrantedActionsApiResponse,
   ResourceInlineCommentApiResponse,
   ResourceInlineCommentItemApiResponse,
-  ResourceInteractionInfoApiResponse,
   ResourceItemApiResponse,
   ResourceListPageApiResponse,
   ResourceSpecifiedUserGrantedActionsApiResponse,
@@ -57,114 +55,15 @@ const PERSONAL_GROUP_PREFIX = 'p_';
 const isPersonalGroupId = (groupId?: string): boolean =>
   groupId?.startsWith(PERSONAL_GROUP_PREFIX) ?? false;
 
-type ResourceItemNumericField = 'size' | 'readCount' | 'likeCount' | 'scoreAvg';
 type ResourceItemApiSize = ResourceItemApiResponse['size'];
-type ResourceItemApiOwnerInfo = ResourceItemApiResponse['ownerInfo'];
-type ResourceItemRawOwnerInfo = ResourceItem['ownerInfo'] | ResourceItemApiOwnerInfo;
-type ResourceItemRawTagBinds = ResourceItem['tagBinds'] | ResourceItemApiResponse['tagBinds'];
-type ResourceActionsBySubject = Record<string, unknown[] | null | undefined>;
-type NormalizedResourceActionsBySubject = Record<
-  string,
-  ResourceAction[] | ResourceActionApiList | null | undefined
->;
-type ResourceItemRawActionFields = {
-  currentActions?: ResourceAction[] | ResourceActionApiList | null;
-  overrideGrantedActions?:
-    ResourceGroupGrantedActionsApiResponse[] | NormalizedResourceActionsBySubject | null;
-  specifiedUsersGrantedActions?:
-    ResourceSpecifiedUserGrantedActionsApiResponse[] | NormalizedResourceActionsBySubject | null;
-};
 type ResourcePermissionActionField =
   | ResourceGroupGrantedActionsApiResponse[]
   | ResourceSpecifiedUserGrantedActionsApiResponse[]
-  | ResourceActionsBySubject
   | null
   | undefined;
-type NormalizedResourceActionFields = {
-  currentActions?: ResourceAction[] | null;
-  overrideGrantedActions?: Record<string, ResourceAction[]> | null;
-  specifiedUsersGrantedActions?: Record<string, ResourceAction[]> | null;
-};
-
-type NormalizableResourceItem = Omit<
-  Partial<ResourceItem>,
-  | ResourceItemNumericField
-  | 'ownerInfo'
-  | 'tagBinds'
-  | 'currentActions'
-  | 'overrideGrantedActions'
-  | 'specifiedUsersGrantedActions'
-> &
-  Omit<
-    Partial<ResourceItemApiResponse>,
-    | ResourceItemNumericField
-    | 'ownerInfo'
-    | 'tagBinds'
-    | 'currentActions'
-    | 'overrideGrantedActions'
-    | 'specifiedUsersGrantedActions'
-  > & {
-    size?: ResourceItemApiSize;
-    readCount?: number | null;
-    likeCount?: number | null;
-    scoreAvg?: number | null;
-    ownerInfo?: ResourceItemRawOwnerInfo;
-    tagBinds?: ResourceItemRawTagBinds;
-    resourceInteractionInfo?: ResourceInteractionInfoApiResponse;
-  } & ResourceItemRawActionFields;
-
-type NormalizedResourceItem<T extends NormalizableResourceItem> = Omit<
-  T,
-  ResourceItemNumericField | keyof ResourceItemRawActionFields
-> &
-  Partial<Pick<ResourceItem, ResourceItemNumericField>> &
-  NormalizedResourceActionFields;
 
 interface MapResourceItemContext {
   groupId?: string;
-}
-
-/**
- * 将后端 ResourceItemResponse 原始数据归一化为前端 ResourceItem
- */
-export function normalizeResourceItem<T extends null | undefined>(raw: T): T;
-export function normalizeResourceItem<T extends NormalizableResourceItem>(
-  raw: T
-): NormalizedResourceItem<T>;
-export function normalizeResourceItem(
-  raw: NormalizableResourceItem | null | undefined
-): NormalizedResourceItem<NormalizableResourceItem> | null | undefined {
-  if (raw == null) return raw;
-  const {
-    currentActions: rawCurrentActions,
-    overrideGrantedActions: rawOverrideGrantedActions,
-    specifiedUsersGrantedActions: rawSpecifiedUsersGrantedActions,
-    ...rawRest
-  } = raw;
-  const next: NormalizedResourceItem<NormalizableResourceItem> = {
-    ...rawRest,
-    // 后端 resourceInfo.size 当前以字符串返回，前端统一归一化为 number。
-    size: normalizeResourceSize(raw.size),
-    readCount: raw.readCount,
-    likeCount: raw.likeCount,
-    scoreAvg: raw.scoreAvg,
-  };
-
-  const interactionInfo = raw.resourceInteractionInfo;
-
-  if (interactionInfo) {
-    next.readCount = interactionInfo.readCount;
-    next.likeCount = interactionInfo.likeCount;
-    const scoreCount = interactionInfo.scoreCount ?? 0;
-    const scoreTotal = interactionInfo.scoreTotal ?? 0;
-    next.scoreAvg = scoreCount > 0 ? scoreTotal / scoreCount : null;
-  }
-
-  next.currentActions = coerceResourceActions(rawCurrentActions as unknown[] | null | undefined);
-  next.overrideGrantedActions = normalizeResourceActionMap(rawOverrideGrantedActions);
-  next.specifiedUsersGrantedActions = normalizeResourceActionMap(rawSpecifiedUsersGrantedActions);
-
-  return next;
 }
 
 const normalizeResourceSize = (value: ResourceItemApiSize): number | undefined => {
@@ -199,15 +98,6 @@ const mapListResourceItemsRequest = (
   };
 };
 
-const resolveTagName = (value: unknown): string => {
-  if (typeof value === 'string') return value;
-  if (value && typeof value === 'object' && 'tagName' in value) {
-    const tagName = (value as { tagName?: unknown }).tagName;
-    if (typeof tagName === 'string') return tagName;
-  }
-  return '';
-};
-
 const resolveCurrentTagBind = (
   item: ResourceItem,
   context: MapResourceItemContext
@@ -223,18 +113,20 @@ const resolveCurrentTagBind = (
 const mapTagsToCurrentTags = (
   tags: ResourceTagBind['tags']
 ): Record<string, string> | undefined => {
-  if (!tags || typeof tags !== 'object') return undefined;
+  if (!tags) return undefined;
   return Object.fromEntries(
-    Object.entries(tags).map(([tagId, tagInfo]) => [tagId, resolveTagName(tagInfo)])
+    Object.entries(tags).map(([tagId, tagInfo]) => [tagId, tagInfo?.tagName ?? ''])
   );
 };
 
-const normalizeOwnerInfo = (
-  ownerInfo: ResourceItemRawOwnerInfo | undefined
-): ResourceItem['ownerInfo'] | undefined => {
-  if (ownerInfo == null) return undefined;
-  return normalizeUserDisplayBaseFromApi(ownerInfo as ResourceItemApiOwnerInfo);
-};
+const mapResourceTagBindsFromApi = (
+  tagBinds: ResourceItemApiResponse['tagBinds']
+): ResourceTagBind[] | undefined =>
+  tagBinds?.map((bind) => ({
+    groupId: bind.groupId,
+    primaryTagId: bind.primaryTagId,
+    tags: bind.tags,
+  }));
 
 const resolveUserDisplayName = (
   userInfo: UserDisplayBase | undefined,
@@ -268,7 +160,7 @@ const getGrantedActionSubjectId = (
 };
 
 const mapOverrideGroupInfoByIdFromApi = (
-  value: NormalizableResourceItem['overrideGrantedActions']
+  value: ResourceItemApiResponse['overrideGrantedActions']
 ): Record<string, ResourceGroupDisplayBaseApiResponse> => {
   if (!Array.isArray(value)) return {};
   return Object.fromEntries(
@@ -284,7 +176,7 @@ const mapOverrideGroupInfoByIdFromApi = (
 };
 
 const mapSpecifiedUserInfoByIdFromApi = (
-  value: NormalizableResourceItem['specifiedUsersGrantedActions']
+  value: ResourceItemApiResponse['specifiedUsersGrantedActions']
 ): Record<string, UserDisplayBase> => {
   if (!Array.isArray(value)) return {};
   return Object.fromEntries(
@@ -300,19 +192,38 @@ const mapSpecifiedUserInfoByIdFromApi = (
 
 /** 单条资源：Java Long 字符串、标签派生字段 */
 const mapResourceItemFromApi = (
-  raw: NormalizableResourceItem,
+  raw: ResourceItemApiResponse,
   context: MapResourceItemContext = {}
 ): ResourceItem => {
-  const item = normalizeResourceItem(raw) as ResourceItem;
+  const interactionInfo = raw.resourceInteractionInfo;
+  const scoreCount = interactionInfo?.scoreCount ?? 0;
+  const scoreTotal = interactionInfo?.scoreTotal ?? 0;
+  const item: ResourceItem = {
+    resourceId: raw.resourceId,
+    resourceName: raw.resourceName,
+    ownerId: raw.ownerId,
+    ownerInfo: normalizeUserDisplayBaseFromApi(raw.ownerInfo) ?? {},
+    resourceType: raw.resourceType,
+    preview: raw.preview,
+    // 后端 resourceInfo.size 当前以字符串返回，前端统一归一化为 number。
+    size: normalizeResourceSize(raw.size),
+    path: raw.path,
+    tagBinds: mapResourceTagBindsFromApi(raw.tagBinds),
+    currentActions: coerceResourceActions(raw.currentActions),
+    resourceAccessRole: raw.resourceAccessRole,
+    overrideGrantedActions: normalizeResourceActionMap(raw.overrideGrantedActions),
+    specifiedUsersGrantedActions: normalizeResourceActionMap(raw.specifiedUsersGrantedActions),
+    readCount: interactionInfo?.readCount,
+    likeCount: interactionInfo?.likeCount,
+    scoreAvg: scoreCount > 0 ? scoreTotal / scoreCount : null,
+  };
   const currentTagBind = resolveCurrentTagBind(item, context);
   const currentTags = mapTagsToCurrentTags(currentTagBind?.tags);
   const tagIds = Object.keys(currentTags ?? {});
   const mainTagId = currentTagBind?.primaryTagId ?? tagIds[0];
-  const ownerInfo = normalizeOwnerInfo(item.ownerInfo) ?? item.ownerInfo;
 
   return {
     ...item,
-    ownerInfo,
     currentTags,
     resourceIconType: resolveResourceIconType({
       resourceType: item.resourceType,
@@ -434,14 +345,14 @@ const mapPermissionActionOptions = (
 const resolveOwnerName = (ownerInfo: UserDisplayBase | undefined, ownerId?: string): string =>
   ownerInfo?.realName?.trim() || ownerInfo?.nickname?.trim() || ownerId || '所有者';
 
-const mapResourcePermissionOverviewFromResourceItem = (
-  raw: NormalizableResourceItem,
+const mapResourcePermissionOverviewFromApi = (
+  raw: ResourceItemApiResponse,
   fallbackResourceId: string
 ): ResourcePermissionOverview => {
   const overrideGroupInfoById = mapOverrideGroupInfoByIdFromApi(raw.overrideGrantedActions);
   const specifiedUserInfoById = mapSpecifiedUserInfoByIdFromApi(raw.specifiedUsersGrantedActions);
-  const resourceInfo = normalizeResourceItem(raw);
-  const ownerInfo = normalizeOwnerInfo(resourceInfo.ownerInfo);
+  const resourceInfo = mapResourceItemFromApi(raw);
+  const ownerInfo = resourceInfo.ownerInfo;
   const resourceId = resourceInfo.resourceId || fallbackResourceId;
   const supportedActions = getSupportedResourcePermissionActions(resourceInfo.resourceType);
   const actionOptions = mapPermissionActionOptions(supportedActions);
@@ -465,12 +376,8 @@ const mapResourcePermissionOverviewFromResourceItem = (
 
   subjects.push(owner);
 
-  const overrideGrantedActions = normalizeResourceActionMap(
-    resourceInfo.overrideGrantedActions as ResourceActionsBySubject | null | undefined
-  );
-  const specifiedUsersGrantedActions = normalizeResourceActionMap(
-    resourceInfo.specifiedUsersGrantedActions as ResourceActionsBySubject | null | undefined
-  );
+  const overrideGrantedActions = resourceInfo.overrideGrantedActions;
+  const specifiedUsersGrantedActions = resourceInfo.specifiedUsersGrantedActions;
   const visibleOverrideGrantedActions = Object.fromEntries(
     Object.entries(overrideGrantedActions ?? {}).filter(([groupId]) => !isPersonalGroupId(groupId))
   );
@@ -549,24 +456,13 @@ const normalizeResourceActionMap = (
     return null;
   }
 
-  // API 响应是携带 groupInfo/userInfo 的列表；内部 ResourceItem/mock 数据可能已是按 subjectId 归一化的 map。
-  if (Array.isArray(value)) {
-    const entries = value
-      .filter(isGrantedActionListItem)
-      .map((item) => {
-        const subjectId = getGrantedActionSubjectId(item);
-        return subjectId
-          ? ([subjectId, coerceResourceActions(item.grantedActions)] as const)
-          : null;
-      })
-      .filter((entry): entry is readonly [string, ResourceAction[]] => Boolean(entry));
-    return entries.length > 0 ? Object.fromEntries(entries) : null;
-  }
-
-  const entries = Object.entries(value).map(([subjectId, actions]) => [
-    subjectId,
-    coerceResourceActions(actions),
-  ]);
+  const entries = value
+    .filter(isGrantedActionListItem)
+    .map((item) => {
+      const subjectId = getGrantedActionSubjectId(item);
+      return subjectId ? ([subjectId, coerceResourceActions(item.grantedActions)] as const) : null;
+    })
+    .filter((entry): entry is readonly [string, ResourceAction[]] => Boolean(entry));
   return entries.length > 0 ? Object.fromEntries(entries) : null;
 };
 
@@ -592,13 +488,15 @@ export interface ResourceInteractStats {
   scoreAvgText: string;
 }
 
-/** ResourceItem → 聚合互动统计，供互动统计组件展示 */
-const mapInteractStatsFromApi = (resourceInfo: NormalizableResourceItem): ResourceInteractStats => {
-  const normalized = normalizeResourceItem(resourceInfo);
-  const scoreAvg = normalized.scoreAvg ?? null;
+/** 资源 API 响应 → 聚合互动统计，供互动统计组件展示 */
+const mapInteractStatsFromApi = (resourceInfo: ResourceItemApiResponse): ResourceInteractStats => {
+  const interactionInfo = resourceInfo.resourceInteractionInfo;
+  const scoreCount = interactionInfo?.scoreCount ?? 0;
+  const scoreTotal = interactionInfo?.scoreTotal ?? 0;
+  const scoreAvg = scoreCount > 0 ? scoreTotal / scoreCount : null;
   return {
-    readCount: normalized.readCount ?? null,
-    likeCount: normalized.likeCount ?? null,
+    readCount: interactionInfo?.readCount ?? null,
+    likeCount: interactionInfo?.likeCount ?? null,
     scoreAvgText: scoreAvg != null ? `${scoreAvg.toFixed(1)} 分` : '暂无评分',
   };
 };
@@ -806,7 +704,7 @@ export const ResourceServicesMap = {
   mapResourceItemFromApi,
   mapChangeResourceActionPermissionRequest,
   mapChangeResourceActionPermissionRequestFromSubjects,
-  mapResourcePermissionOverviewFromResourceItem,
+  mapResourcePermissionOverviewFromApi,
   mapLikeStatusFromApi,
   mapRateFromApi,
   mapInteractStatsFromApi,

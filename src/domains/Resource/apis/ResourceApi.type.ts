@@ -1,9 +1,17 @@
 import type { PageR } from '@/apis/api.type';
-import type { ResourceActionKey, ResourceItem } from '@/domains/Resource';
-import type { AccessControlScope, TagResourceActionKey } from '@/domains/Tag';
 import type { UserDisplayBaseApiResponse } from '@/domains/User/apis/UserApi.type';
 
-type ResourceActionApiValue = ResourceActionKey | number | `${number}`;
+export type ResourceActionApiKey =
+  | 'DISCOVER'
+  | 'VIEW'
+  | 'LOAD'
+  | 'EDIT'
+  | 'INLINE_COMMENT'
+  | 'DOWNLOAD_WATERMARK'
+  | 'DOWNLOAD_ORIGINAL'
+  | 'FORK'
+  | 'COMMENT';
+type ResourceActionApiValue = ResourceActionApiKey | number | `${number}`;
 export type ResourceActionApiList = ResourceActionApiValue[];
 type ResourceSizeApiValue = number | `${number}`;
 
@@ -52,27 +60,19 @@ export interface ResourceSpecifiedUserGrantedActionsApiResponse {
   grantedActions?: ResourceActionApiList | null;
 }
 
-export interface ResourceItemApiResponse extends Omit<
-  ResourceItem,
-  | 'size'
-  | 'ownerInfo'
-  | 'readCount'
-  | 'likeCount'
-  | 'scoreAvg'
-  | 'currentTags'
-  | 'tagBinds'
-  | 'resourceIconType'
-  | 'mainTagId'
-  | 'linkTagIds'
-  | 'currentActions'
-  | 'overrideGrantedActions'
-  | 'specifiedUsersGrantedActions'
-> {
+export interface ResourceItemApiResponse {
+  resourceId: string;
+  resourceName: string;
+  ownerId?: string;
   size?: ResourceSizeApiValue | null;
   ownerInfo: UserDisplayBaseApiResponse;
+  resourceType?: string;
+  preview?: string;
+  path?: string;
   resourceInteractionInfo?: ResourceInteractionInfoApiResponse;
   tagBinds?: ResourceTagBindApiResponse[];
   currentActions?: ResourceActionApiList | null;
+  resourceAccessRole?: 'OWNER' | 'OWNER_SPECIFIED' | 'GROUP_ADMIN' | 'GROUP_MEMBER' | 'NONE';
   overrideGrantedActions?: ResourceGroupGrantedActionsApiResponse[] | null;
   specifiedUsersGrantedActions?: ResourceSpecifiedUserGrantedActionsApiResponse[] | null;
 }
@@ -104,8 +104,8 @@ export interface ChangeResourceTagsApiRequest {
 
 export interface ChangeResourceActionPermissionApiRequest {
   resourceId: string;
-  overrideGrantedActions?: Record<string, ResourceActionKey[] | null> | null;
-  specifiedUsersGrantedActions?: Record<string, ResourceActionKey[]> | null;
+  overrideGrantedActions?: Record<string, ResourceActionApiKey[] | null> | null;
+  specifiedUsersGrantedActions?: Record<string, ResourceActionApiKey[]> | null;
 }
 
 export interface RemoveResourcesApiRequest {
@@ -128,77 +128,6 @@ export interface GlobalSearchItemApiResponse {
 }
 
 export type GlobalSearchApiResponse = PageR<GlobalSearchItemApiResponse>;
-
-export interface AddTagApiRequest {
-  groupId?: string;
-  parentId?: string;
-  tagName: string;
-  tagDesc?: string;
-  tagIcon?: string;
-  tagColor?: string;
-  tagCreator?: string;
-  isPath?: boolean;
-  visibilityMode?: string;
-  taggedResourceAclGrantScope?: AccessControlScope;
-  taggedResourceAclGrantSpecifiedUsers?: string[];
-  tagMountPermissionScope?: AccessControlScope;
-  tagMountSpecifiedUsers?: string[];
-  grantedActions?: TagResourceActionKey[];
-}
-
-export interface ChangeTagApiRequest {
-  groupId?: string;
-  tagName?: string;
-  tagDesc?: string;
-  tagIcon?: string;
-  tagColor?: string;
-  tagCreator?: string;
-  isPath?: boolean;
-  visibilityMode?: string;
-  taggedResourceAclGrantScope?: AccessControlScope;
-  taggedResourceAclGrantSpecifiedUsers?: string[];
-  tagMountPermissionScope?: AccessControlScope;
-  tagMountSpecifiedUsers?: string[];
-  grantedActions?: TagResourceActionKey[];
-  targetTagId: string;
-}
-
-export interface RemoveTagApiRequest {
-  groupId?: string;
-  targetTagId: string;
-}
-
-export interface MoveTagApiRequest {
-  groupId?: string;
-  targetTagId: string;
-  newParentId?: string;
-}
-
-export interface GetTagTreeApiRequest {
-  groupId?: string;
-}
-
-export interface TagTreeResponse {
-  tagId: string;
-  tagName: string;
-  groupId?: string;
-  tagDesc?: string;
-  tagIcon?: string;
-  tagColor?: string;
-  tagCreator?: string;
-  isPath?: boolean;
-  visibilityMode?: string;
-  taggedResourceAclGrantScope?: AccessControlScope;
-  taggedResourceAclGrantSpecifiedUsers?: string[];
-  taggedResourceGrantedActionsMask?: number;
-  tagMountPermissionScope?: AccessControlScope;
-  tagMountSpecifiedUsers?: string[];
-  grantedActions?: ResourceActionApiList;
-  parentId?: string;
-  children?: TagTreeResponse[];
-}
-
-export type GetTagTreeApiResponse = TagTreeResponse[];
 
 export interface ResourceInlineCommentAnchorRefApiResponse {
   externalAnchorId?: string | null;
