@@ -57,6 +57,7 @@ function NoteSuggestionMenu({
       <SlashMenuListBoxItems
         items={displayItems}
         getItemId={(_item, index) => getSuggestionItemId(index)}
+        selectedItemId={selectedKey}
         onItemClick={onItemClick}
       />
     </ListBox>
