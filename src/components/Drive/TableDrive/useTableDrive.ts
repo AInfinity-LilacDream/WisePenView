@@ -3,7 +3,7 @@ import type { DriveNode, DriveNodeScope } from '@/domains/Drive';
 import { parseErrorMessage } from '@/utils/error';
 import { toast } from '@heroui/react';
 import { useRequest } from 'ahooks';
-import { startTransition, useCallback, useMemo, useState } from 'react';
+import { startTransition, useCallback, useMemo, useRef, useState } from 'react';
 import { useDriveTreeChildren } from '../common/useDriveTreeChildren';
 import type { DriveRow } from './index.type';
 
@@ -33,6 +33,12 @@ interface DrivePathResult {
   nodes: DriveNode[];
 }
 
+interface DriveRowsResult {
+  locationKey: string;
+  rows: DriveRow[];
+  expandedRowKeys: string[];
+}
+
 /**
  * TableDrive 核心 hook：
  * - 维护 currentNodeId / rows / expandedRowKeys / expandedChildrenMap
@@ -54,20 +60,66 @@ export function useTableDrive({ initialNodeId, scope }: UseTableDriveParams): Us
     currentLocation.navigationKey === navigationKey ? currentLocation.nodeId : initialCurrentNodeId;
   const [rows, setRows] = useState<DriveRow[]>([]);
   const [expandedRowKeys, setExpandedRowKeys] = useState<string[]>([]);
+  const expandedRowKeysRef = useRef<string[]>([]);
+  const loadedLocationKeyRef = useRef<string | undefined>(undefined);
+  const locationKey = `${navigationKey}\u0000${currentNodeId}`;
 
-  // 切换 currentNodeId / groupId：拉取当前层级 children
+  const updateExpandedRowKeys = useCallback(
+    (updater: string[] | ((currentKeys: string[]) => string[])) => {
+      const nextKeys =
+        typeof updater === 'function' ? updater(expandedRowKeysRef.current) : updater;
+      expandedRowKeysRef.current = nextKeys;
+      setExpandedRowKeys(nextKeys);
+    },
+    []
+  );
+
+  // 切换目录时清空展开状态；同目录刷新时重载已展开分支并保留仍然存在的节点。
   const { loading, refresh } = useRequest(
-    async () => {
+    async (): Promise<DriveRowsResult> => {
+      const expandedKeysToRestore =
+        loadedLocationKeyRef.current === locationKey ? new Set(expandedRowKeysRef.current) : null;
       reset();
-      return loadChildren(currentNodeId);
+      const nextRows = await loadChildren(currentNodeId);
+      if (!expandedKeysToRestore?.size) {
+        return { locationKey, rows: nextRows as DriveRow[], expandedRowKeys: [] };
+      }
+
+      const restoredExpandedKeys: string[] = [];
+      const reloadExpandedChildren = async (nodes: DriveNode[]): Promise<void> => {
+        await Promise.all(
+          nodes.map(async (node) => {
+            if (
+              (node.type !== 'root' && node.type !== 'folder') ||
+              !expandedKeysToRestore.has(node.id)
+            ) {
+              return;
+            }
+            restoredExpandedKeys.push(node.id);
+            const children = await loadChildren(node.id);
+            await reloadExpandedChildren(children);
+          })
+        );
+      };
+      await reloadExpandedChildren(nextRows);
+
+      return {
+        locationKey,
+        rows: nextRows as DriveRow[],
+        expandedRowKeys: restoredExpandedKeys,
+      };
     },
     {
       refreshDeps: [currentNodeId, groupId, rootId],
       onBefore: () => {
-        setExpandedRowKeys([]);
+        if (loadedLocationKeyRef.current !== locationKey) {
+          updateExpandedRowKeys([]);
+        }
       },
-      onSuccess: (children) => {
-        setRows(children as DriveRow[]);
+      onSuccess: (result) => {
+        loadedLocationKeyRef.current = result.locationKey;
+        setRows(result.rows);
+        updateExpandedRowKeys(result.expandedRowKeys);
       },
     }
   );
@@ -103,15 +155,15 @@ export function useTableDrive({ initialNodeId, scope }: UseTableDriveParams): Us
   const handleExpand = useCallback(
     async (expanded: boolean, record: DriveRow) => {
       if (!expanded || (record.type !== 'root' && record.type !== 'folder')) {
-        setExpandedRowKeys((keys) => keys.filter((k) => k !== record.id));
+        updateExpandedRowKeys((keys) => keys.filter((k) => k !== record.id));
         return;
       }
       if (!childrenMap.has(record.id)) {
         await loadChildren(record.id);
       }
-      setExpandedRowKeys((keys) => (keys.includes(record.id) ? keys : [...keys, record.id]));
+      updateExpandedRowKeys((keys) => (keys.includes(record.id) ? keys : [...keys, record.id]));
     },
-    [childrenMap, loadChildren]
+    [childrenMap, loadChildren, updateExpandedRowKeys]
   );
 
   // 浅 map：folder 命中 expandedChildrenMap 时挂 children，否则原样返回

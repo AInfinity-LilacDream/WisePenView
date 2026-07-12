@@ -58,6 +58,32 @@
   width: min(880px, calc(100vw - 48px));
 }
 
+.aboutContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px 0 20px;
+}
+
+.aboutLogo {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+}
+
+.aboutProductName {
+  margin-top: 12px;
+  color: var(--foreground);
+  font-size: 20px;
+  font-weight: @font-weight-semibold;
+}
+
+.aboutVersion {
+  margin-top: 4px;
+  color: var(--text-tertiary);
+  font-size: var(--font-size-md, 14px);
+}
+
 .avatar {
   flex-shrink: 0;
   background-color: color-mix(in srgb, var(--accent-secondary, var(--contrast)) 12%, var(--surface)) !important;

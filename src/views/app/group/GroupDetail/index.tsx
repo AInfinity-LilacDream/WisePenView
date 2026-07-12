@@ -10,13 +10,14 @@ import UserCapsule from '@/components/UserCapsule';
 import { useGroupService } from '@/domains';
 import type { Group, GroupResConfig } from '@/domains/Group';
 import { WALLET_TARGET_TYPE } from '@/domains/Wallet';
+import { parseDriveInitialNodeId } from '@/utils/navigation/driveRoute';
 import ComputeWallet from '@/views/app/_common/Wallet/ComputeWallet';
 import type { ComputeWalletRef } from '@/views/app/_common/Wallet/ComputeWallet/index.type';
 import { Button, toast } from '@heroui/react';
 import { useRequest } from 'ahooks';
 import type { ReactNode } from 'react';
 import { useMemo, useRef, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useLocation, useParams } from 'react-router-dom';
 import { getGroupDisplayConfig } from '../_components/GroupDisplayConfig';
 import { DissolveGroupModal, EditGroupInfoModal, ExitGroupModal } from '../_components/GroupModals';
 import MemberList from '../_components/MemberList';
@@ -39,6 +40,8 @@ type GroupDetailTabItem = SegmentedTabItem<GroupDetailTabKey> & {
 function GroupDetail() {
   const groupService = useGroupService();
   const { id } = useParams<{ id: string }>();
+  const location = useLocation();
+  const initialNodeId = useMemo(() => parseDriveInitialNodeId(location.search), [location.search]);
 
   const { loading, data, refresh } = useRequest(
     async (): Promise<GroupDetailLoaded> => {
@@ -107,6 +110,7 @@ function GroupDetail() {
           <div className={layout.tabPane}>
             <TableDrive
               scope={{ type: 'group', groupId: gid }}
+              initialNodeId={initialNodeId}
               showToolbarTrash={false}
               actions={{
                 toolbar: {
@@ -186,7 +190,7 @@ function GroupDetail() {
     });
 
     return items;
-  }, [group, id, groupDisplayConfig, resConfig]);
+  }, [group, id, groupDisplayConfig, initialNodeId, resConfig]);
 
   const detailTabKeys = useMemo(() => tabItems.map((item) => item.key), [tabItems]);
 

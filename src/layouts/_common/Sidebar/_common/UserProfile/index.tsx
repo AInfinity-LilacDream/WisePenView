@@ -1,3 +1,4 @@
+import logoImg from '@/assets/images/logo-icon.png';
 import AppDisplayDialog from '@/components/Overlay/AppDisplayDialog';
 import { useUserService } from '@/domains';
 import type { User } from '@/domains/User';
@@ -8,6 +9,7 @@ import clsx from 'clsx';
 import {
   ChartPie,
   Home,
+  Info,
   LogOut,
   MessageSquare,
   Palette,
@@ -34,6 +36,7 @@ function UserProfile({ collapsed, menuMode = 'app' }: UserProfileProps) {
   const userService = useUserService();
   const [user, setUser] = useState<User | null>(null);
   const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
+  const [aboutDialogOpen, setAboutDialogOpen] = useState(false);
   const authService = useAuthService();
 
   useMount(() => {
@@ -68,6 +71,9 @@ function UserProfile({ collapsed, menuMode = 'app' }: UserProfileProps) {
       case 'feedback':
         setFeedbackModalOpen(true);
         break;
+      case 'about':
+        setAboutDialogOpen(true);
+        break;
       // case 'language':
       //   break;
       // case 'theme':
@@ -99,6 +105,10 @@ function UserProfile({ collapsed, menuMode = 'app' }: UserProfileProps) {
             <Dropdown.Item id="back-app" textValue="回到用户端" className={styles.profileMenuItem}>
               <Home size={16} />
               <span>回到用户端</span>
+            </Dropdown.Item>
+            <Dropdown.Item id="about" textValue="关于" className={styles.profileMenuItem}>
+              <Info size={16} />
+              <span>关于</span>
             </Dropdown.Item>
             <Dropdown.Item id="logout" textValue="退出登录" className={styles.profileMenuItem}>
               <LogOut size={16} />
@@ -133,6 +143,10 @@ function UserProfile({ collapsed, menuMode = 'app' }: UserProfileProps) {
                 <span>进入管理</span>
               </Dropdown.Item>
             )}
+            <Dropdown.Item id="about" textValue="关于" className={styles.profileMenuItem}>
+              <Info size={16} />
+              <span>关于</span>
+            </Dropdown.Item>
             <Dropdown.Item id="logout" textValue="退出登录" className={styles.profileMenuItem}>
               <LogOut size={16} />
               <span>退出登录</span>
@@ -169,6 +183,19 @@ function UserProfile({ collapsed, menuMode = 'app' }: UserProfileProps) {
           </>
         )}
       </div>
+
+      <AppDisplayDialog
+        isOpen={aboutDialogOpen}
+        onOpenChange={setAboutDialogOpen}
+        title="关于 WisePen"
+        closeText="关闭"
+      >
+        <div className={styles.aboutContent}>
+          <img className={styles.aboutLogo} src={logoImg} alt="" />
+          <div className={styles.aboutProductName}>WisePen</div>
+          <div className={styles.aboutVersion}>版本 v{__APP_VERSION__}</div>
+        </div>
+      </AppDisplayDialog>
 
       <AppDisplayDialog
         isOpen={feedbackModalOpen}
