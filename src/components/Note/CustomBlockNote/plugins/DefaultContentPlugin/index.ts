@@ -7,10 +7,12 @@ import {
 } from '@blocknote/core';
 import { Image as ImageIcon } from 'lucide-react';
 
-import { plainInlineAiDiff } from '../AIDiffPlugin/ownerPresence';
+import { plainLinkInlineAiDiff, plainTextInlineAiDiff } from '../AIDiffPlugin/ownerPresence';
 import { atomicPropsBlockAiDiff, richTextBlockAiDiff } from '../AIDiffPlugin/patch';
+import { shouldFoldAiDiffInlineContent } from '../presence';
 import { projectInlinePlainText } from '../projection';
 import type {
+  NoteBlockAiDiff,
   NoteBlockPlugin,
   NoteCapabilityDeclaration,
   NoteContentCapabilityDeclarations,
@@ -114,7 +116,7 @@ function createDefaultInlinePlugin(type: 'text' | 'link') {
         return projectInlinePlainText(inline.content, registry);
       },
     },
-    aiDiff: plainInlineAiDiff,
+    aiDiff: type === 'text' ? plainTextInlineAiDiff : plainLinkInlineAiDiff,
     comments: { canCreateDocumentThread: true },
   } satisfies NoteInlinePlugin;
 }
@@ -131,6 +133,22 @@ const richTextBlockTypes = [
 
 const passThroughAtomicBlockTypes = ['audio', 'divider', 'file', 'image', 'video'] as const;
 
+const toggleListItemAiDiff = {
+  ...richTextBlockAiDiff,
+  getFoldedChildrenAnchorId(block, mode, registry) {
+    if (!Array.isArray(block.children) || block.children.length === 0) return '';
+    const first = block.children[0];
+    if (typeof first !== 'object' || first === null || typeof first.id !== 'string') return '';
+    for (const child of block.children) {
+      if (typeof child !== 'object' || child === null) return '';
+      const record = child as Record<string, unknown>;
+      if (typeof record.id !== 'string') return '';
+      if (!shouldFoldAiDiffInlineContent(record.content, mode, registry)) return '';
+    }
+    return first.id;
+  },
+} satisfies NoteBlockAiDiff;
+
 export const defaultContentPlugin = {
   kind: 'bundle',
   id: 'default-content',
@@ -140,7 +158,7 @@ export const defaultContentPlugin = {
     ...richTextBlockTypes.map((type) =>
       createDefaultBlockPlugin(type, richTextCapabilities(), {
         outline: type === 'heading',
-        aiDiff: richTextBlockAiDiff,
+        aiDiff: type === 'toggleListItem' ? toggleListItemAiDiff : richTextBlockAiDiff,
         ...(type === 'heading'
           ? {
               sideMenu: {

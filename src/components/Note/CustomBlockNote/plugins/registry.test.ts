@@ -38,7 +38,7 @@ function inlinePlugin(id: string, type: string): NoteInlinePlugin {
     type,
     spec: defaultInlineContentSpecs.text,
     capabilities: defaultCapabilities,
-    aiDiff: { isPresent: () => false },
+    aiDiff: { isPresent: () => false, isVisible: () => true, apply: () => undefined },
     comments: { canCreateDocumentThread: true },
   };
 }
@@ -100,7 +100,7 @@ describe('createNotePluginRegistry', () => {
       markdownImport: { support: 'custom' },
     };
     expect(() => createNotePluginRegistry(bundle([missingCodec]))).toThrow(
-      'Note 插件 missing-codec 声明自定义 Markdown 导入但未提供 codec'
+      'Note 插件 missing-codec 的 Markdown 导入：声明为 custom，但未提供实现'
     );
 
     const undeclaredCodec = blockPlugin('undeclared-codec', 'undeclaredCodec');
@@ -108,7 +108,36 @@ describe('createNotePluginRegistry', () => {
       restore: () => undefined,
     };
     expect(() => createNotePluginRegistry(bundle([undeclaredCodec]))).toThrow(
-      'Note 插件 undeclared-codec 提供了 Markdown 导入 codec 但未声明 custom'
+      'Note 插件 undeclared-codec 提供了 Markdown 导入 实现，但未声明为 custom'
+    );
+  });
+
+  it('拒绝 Markdown 导出与 AI Diff 的声明实现不一致', () => {
+    const missingExport = blockPlugin('missing-export', 'missingExport');
+    missingExport.capabilities = {
+      ...defaultCapabilities,
+      markdownExport: { support: 'custom' },
+    };
+    expect(() => createNotePluginRegistry(bundle([missingExport]))).toThrow(
+      'Note 插件 missing-export 的 Markdown 导出：声明为 custom，但未提供实现'
+    );
+
+    const missingAiDiff = blockPlugin('missing-ai-diff', 'missingAiDiff');
+    missingAiDiff.capabilities = {
+      ...defaultCapabilities,
+      aiDiff: { support: 'custom' },
+    };
+    expect(() => createNotePluginRegistry(bundle([missingAiDiff]))).toThrow(
+      'Note 插件 missing-ai-diff 的 AI Diff：声明为 custom，但未提供实现'
+    );
+
+    const missingInheritedAiDiff = blockPlugin('missing-inherited-ai-diff', 'inheritedAiDiff');
+    missingInheritedAiDiff.capabilities = {
+      ...defaultCapabilities,
+      aiDiff: { support: 'inherited', profile: 'richTextBlock' },
+    };
+    expect(() => createNotePluginRegistry(bundle([missingInheritedAiDiff]))).toThrow(
+      'Note 插件 missing-inherited-ai-diff 的 AI Diff：声明为 inherited，但未提供实现'
     );
   });
 

@@ -5,6 +5,7 @@ import type {
   StyleSchema,
 } from '@blocknote/core';
 
+import { AI_DIFF_DISPLAY_MODE, type AiDiffDisplayMode } from '@/domains/Note';
 import type { NotePluginRegistry } from './types';
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -24,6 +25,26 @@ export function hasAiDiffInInlineContent(content: unknown, registry: NotePluginR
     const owner = type ? registry.inlinePlugins.get(type) : undefined;
     if (owner?.aiDiff.isPresent(inline)) return true;
     return hasAiDiffInInlineContent(inline.content, registry);
+  });
+}
+
+export function shouldFoldAiDiffInlineContent(
+  content: unknown,
+  mode: AiDiffDisplayMode,
+  registry: NotePluginRegistry
+): boolean {
+  if (mode === AI_DIFF_DISPLAY_MODE.COMPARE || !Array.isArray(content) || content.length === 0) {
+    return false;
+  }
+  const nodes = content.filter(isRecord);
+  const hasAiDiff = nodes.some((inline) => {
+    const type = readType(inline);
+    return Boolean(type && registry.inlinePlugins.get(type)?.aiDiff.isPresent(inline));
+  });
+  if (!hasAiDiff) return false;
+  return !nodes.some((inline) => {
+    const type = readType(inline);
+    return Boolean(type && registry.inlinePlugins.get(type)?.aiDiff.isVisible(inline, mode));
   });
 }
 

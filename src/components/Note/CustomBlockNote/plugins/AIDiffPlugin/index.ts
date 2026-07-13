@@ -6,8 +6,13 @@ import type { EditorProps, EditorView } from '@tiptap/pm/view';
 import { Decoration, DecorationSet } from '@tiptap/pm/view';
 
 import { AI_DIFF_DISPLAY_MODE, type AiDiffDisplayMode } from '@/domains/Note';
-import type { NoteInlinePlugin, NotePluginBundle, NoteRuntimeExtension } from '../types';
-import { isRecord, shouldFoldInlineContent } from './exportVisibility';
+import { shouldFoldAiDiffInlineContent } from '../presence';
+import type {
+  NoteInlinePlugin,
+  NotePluginBundle,
+  NotePluginRegistry,
+  NoteRuntimeExtension,
+} from '../types';
 import {
   aiAddInlineContentSpec,
   aiDeleteInlineContentSpec,
@@ -16,7 +21,7 @@ import {
   aiLinkDeleteInlineContentSpec,
 } from './inlineContentSpecs';
 import { createAiDiffSyntaxMarkdownExport } from './ownerExport';
-import { syntaxInlineAiDiff } from './ownerPresence';
+import { createSyntaxInlineAiDiff } from './ownerPresence';
 
 const aiDiffBlockFoldPluginKey = new PluginKey('AIDiffBlockFold');
 
@@ -25,29 +30,8 @@ type AiDiffBlockFoldPluginState = {
   decorations: DecorationSet;
 };
 
-// 针对于toggleListItem 如果包含子块且所有子块都折叠，容易“无法添加新子块”
-// 返回第一个子块的id，作为新增子块的锚点
-function resolveAllChildrenFoldedAnchorId(
-  children: unknown,
-  displayMode: AiDiffDisplayMode
-): string {
-  if (!Array.isArray(children) || children.length === 0) return '';
-  const first = children[0];
-  if (!isRecord(first)) return '';
-  const firstId = first['id'];
-  if (typeof firstId !== 'string' || !firstId) return '';
-
-  for (const child of children) {
-    if (!isRecord(child)) return '';
-    const id = child['id'];
-    if (typeof id !== 'string' || !id) return '';
-    const content = Array.isArray(child['content']) ? (child['content'] as unknown[]) : [];
-    if (!shouldFoldInlineContent(content, displayMode)) {
-      return '';
-    }
-  }
-
-  return firstId;
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
 }
 
 function buildAiDiffHiddenBlockDecorations(params: {
@@ -59,8 +43,9 @@ function buildAiDiffHiddenBlockDecorations(params: {
   };
   displayMode: AiDiffDisplayMode;
   proseMirrorSchema: unknown;
+  registry: NotePluginRegistry;
 }): DecorationSet {
-  const { doc, editorSchema, displayMode, proseMirrorSchema } = params;
+  const { doc, editorSchema, displayMode, proseMirrorSchema, registry } = params;
   // 新旧对比模式下无需折叠
   if (displayMode === AI_DIFF_DISPLAY_MODE.COMPARE) {
     return DecorationSet.empty;
@@ -73,7 +58,7 @@ function buildAiDiffHiddenBlockDecorations(params: {
       return true;
     }
 
-    let block: { type: string; content?: unknown; children?: unknown };
+    let block: Record<string, unknown> & { type: string };
     try {
       block = nodeToBlock(
         node,
@@ -81,33 +66,32 @@ function buildAiDiffHiddenBlockDecorations(params: {
         editorSchema.blockSchema as never,
         editorSchema.inlineContentSchema as never,
         editorSchema.styleSchema as never
-      ) as unknown as { type: string; content?: unknown; children?: unknown };
+      ) as unknown as Record<string, unknown> & { type: string };
     } catch {
       return true;
     }
 
-    if (block.type === 'math') {
-      return true;
-    }
-    const content = Array.isArray(block.content) ? (block.content as unknown[]) : [];
-    if (!shouldFoldInlineContent(content, displayMode)) {
-      if (block.type === 'toggleListItem') {
-        const anchorChildId = resolveAllChildrenFoldedAnchorId(block.children, displayMode);
-        if (anchorChildId) {
-          decorations.push(
-            Decoration.widget(pos + node.nodeSize - 1, () => {
-              const el = document.createElement('button');
-              el.className = 'bn-toggle-add-block-button';
-              el.setAttribute('data-ai-diff-toggle-add-placeholder', 'true');
-              el.setAttribute('data-ai-diff-toggle-anchor-child-id', anchorChildId);
-              el.setAttribute('contenteditable', 'false');
-              el.setAttribute('type', 'button');
-              el.setAttribute('role', 'button');
-              el.textContent = '点击添加区块。';
-              return el;
-            })
-          );
-        }
+    const owner = registry.blockPlugins.get(block.type);
+    if (!shouldFoldAiDiffInlineContent(block.content, displayMode, registry)) {
+      const anchorChildId = owner?.aiDiff?.getFoldedChildrenAnchorId?.(
+        block,
+        displayMode,
+        registry
+      );
+      if (anchorChildId) {
+        decorations.push(
+          Decoration.widget(pos + node.nodeSize - 1, () => {
+            const el = document.createElement('button');
+            el.className = 'bn-toggle-add-block-button';
+            el.setAttribute('data-ai-diff-toggle-add-placeholder', 'true');
+            el.setAttribute('data-ai-diff-toggle-anchor-child-id', anchorChildId);
+            el.setAttribute('contenteditable', 'false');
+            el.setAttribute('type', 'button');
+            el.setAttribute('role', 'button');
+            el.textContent = '点击添加区块。';
+            return el;
+          })
+        );
       }
       return true;
     }
@@ -125,130 +109,133 @@ function buildAiDiffHiddenBlockDecorations(params: {
 }
 
 // 创建折叠extension
-const aiDiffBlockFoldExtension = createExtension(({ editor }) => {
-  return {
-    key: 'AIDiffBlockFold',
-    prosemirrorPlugins: [
-      new Plugin<AiDiffBlockFoldPluginState>({
-        key: aiDiffBlockFoldPluginKey,
-        state: {
-          // 初始化插件状态
-          init: (_config, state) => {
-            const displayMode: AiDiffDisplayMode = AI_DIFF_DISPLAY_MODE.COMPARE;
-            return {
-              displayMode,
-              decorations: buildAiDiffHiddenBlockDecorations({
-                doc: state.doc as unknown as PMNode,
-                editorSchema: editor.schema as unknown as {
-                  blockSchema: unknown;
-                  inlineContentSchema: unknown;
-                  styleSchema: unknown;
-                },
+const createAiDiffBlockFoldExtension = (registry: NotePluginRegistry) =>
+  createExtension(({ editor }) => {
+    return {
+      key: 'AIDiffBlockFold',
+      prosemirrorPlugins: [
+        new Plugin<AiDiffBlockFoldPluginState>({
+          key: aiDiffBlockFoldPluginKey,
+          state: {
+            // 初始化插件状态
+            init: (_config, state) => {
+              const displayMode: AiDiffDisplayMode = AI_DIFF_DISPLAY_MODE.COMPARE;
+              return {
                 displayMode,
-                proseMirrorSchema: state.schema,
-              }),
-            };
-          },
-          // 运行时更新插件状态
-          apply: (tr, value, _oldState, newState) => {
-            const meta = tr.getMeta(aiDiffBlockFoldPluginKey) as
-              { displayMode?: AiDiffDisplayMode } | undefined;
-            const nextDisplayMode = meta?.displayMode ?? value.displayMode;
-            if (!tr.docChanged && nextDisplayMode === value.displayMode) {
-              return value;
-            }
-            return {
-              displayMode: nextDisplayMode,
-              decorations: buildAiDiffHiddenBlockDecorations({
-                doc: newState.doc as unknown as PMNode,
-                editorSchema: editor.schema as unknown as {
-                  blockSchema: unknown;
-                  inlineContentSchema: unknown;
-                  styleSchema: unknown;
-                },
+                decorations: buildAiDiffHiddenBlockDecorations({
+                  doc: state.doc as unknown as PMNode,
+                  editorSchema: editor.schema as unknown as {
+                    blockSchema: unknown;
+                    inlineContentSchema: unknown;
+                    styleSchema: unknown;
+                  },
+                  displayMode,
+                  proseMirrorSchema: state.schema,
+                  registry,
+                }),
+              };
+            },
+            // 运行时更新插件状态
+            apply: (tr, value, _oldState, newState) => {
+              const meta = tr.getMeta(aiDiffBlockFoldPluginKey) as
+                { displayMode?: AiDiffDisplayMode } | undefined;
+              const nextDisplayMode = meta?.displayMode ?? value.displayMode;
+              if (!tr.docChanged && nextDisplayMode === value.displayMode) {
+                return value;
+              }
+              return {
                 displayMode: nextDisplayMode,
-                proseMirrorSchema: newState.schema,
-              }),
-            };
+                decorations: buildAiDiffHiddenBlockDecorations({
+                  doc: newState.doc as unknown as PMNode,
+                  editorSchema: editor.schema as unknown as {
+                    blockSchema: unknown;
+                    inlineContentSchema: unknown;
+                    styleSchema: unknown;
+                  },
+                  displayMode: nextDisplayMode,
+                  proseMirrorSchema: newState.schema,
+                  registry,
+                }),
+              };
+            },
           },
-        },
-        props: {
-          // 应当应用的装饰
-          decorations: (state) => {
-            const pluginState = aiDiffBlockFoldPluginKey.getState(state) as
-              AiDiffBlockFoldPluginState | undefined;
-            return pluginState?.decorations ?? null;
-          },
-          // 拦截“点击添加区块”按钮的点击事件
-          handleClick: (view, _pos, event) => {
-            // 仅处理鼠标左键点击事件
-            if (!(event instanceof MouseEvent)) return false;
-            if (event.button !== 0) return false;
+          props: {
+            // 应当应用的装饰
+            decorations: (state) => {
+              const pluginState = aiDiffBlockFoldPluginKey.getState(state) as
+                AiDiffBlockFoldPluginState | undefined;
+              return pluginState?.decorations ?? null;
+            },
+            // 拦截“点击添加区块”按钮的点击事件
+            handleClick: (view, _pos, event) => {
+              // 仅处理鼠标左键点击事件
+              if (!(event instanceof MouseEvent)) return false;
+              if (event.button !== 0) return false;
 
-            const target = event.target;
-            if (!(target instanceof HTMLElement)) return false;
+              const target = event.target;
+              if (!(target instanceof HTMLElement)) return false;
 
-            // 读取displayMode
-            const pluginState = aiDiffBlockFoldPluginKey.getState(view.state) as
-              AiDiffBlockFoldPluginState | undefined;
+              // 读取displayMode
+              const pluginState = aiDiffBlockFoldPluginKey.getState(view.state) as
+                AiDiffBlockFoldPluginState | undefined;
 
-            // “新旧对比”时不起作用
-            const displayMode = pluginState?.displayMode ?? AI_DIFF_DISPLAY_MODE.COMPARE;
-            if (displayMode === AI_DIFF_DISPLAY_MODE.COMPARE) return false;
+              // “新旧对比”时不起作用
+              const displayMode = pluginState?.displayMode ?? AI_DIFF_DISPLAY_MODE.COMPARE;
+              if (displayMode === AI_DIFF_DISPLAY_MODE.COMPARE) return false;
 
-            // 寻找占位按钮节点
-            const placeholder = target.closest('[data-ai-diff-toggle-add-placeholder="true"]');
-            if (!(placeholder instanceof HTMLElement)) return false;
-            const anchorChildId =
-              placeholder.getAttribute('data-ai-diff-toggle-anchor-child-id') ?? '';
-            if (!anchorChildId) return false;
+              // 寻找占位按钮节点
+              const placeholder = target.closest('[data-ai-diff-toggle-add-placeholder="true"]');
+              if (!(placeholder instanceof HTMLElement)) return false;
+              const anchorChildId =
+                placeholder.getAttribute('data-ai-diff-toggle-anchor-child-id') ?? '';
+              if (!anchorChildId) return false;
 
-            const ed = editor as unknown as {
-              forEachBlock?: (cb: (block: unknown) => boolean) => void;
-              insertBlocks: (
-                blocks: unknown[],
-                referenceBlock: unknown,
-                placement: 'before' | 'after'
-              ) => unknown[];
-              setTextCursorPosition: (id: string, pos: 'start' | 'end') => void;
-              focus: () => void;
-            };
+              const ed = editor as unknown as {
+                forEachBlock?: (cb: (block: unknown) => boolean) => void;
+                insertBlocks: (
+                  blocks: unknown[],
+                  referenceBlock: unknown,
+                  placement: 'before' | 'after'
+                ) => unknown[];
+                setTextCursorPosition: (id: string, pos: 'start' | 'end') => void;
+                focus: () => void;
+              };
 
-            // 在文档块树中查找 anchorChildId 对应的 block，作为插入参照点
-            let refBlock: unknown | null = null;
-            ed.forEachBlock?.((b) => {
-              if (isRecord(b) && b['id'] === anchorChildId) {
-                refBlock = b;
-                return false;
+              // 在文档块树中查找 anchorChildId 对应的 block，作为插入参照点
+              let refBlock: unknown | null = null;
+              ed.forEachBlock?.((b) => {
+                if (isRecord(b) && b['id'] === anchorChildId) {
+                  refBlock = b;
+                  return false;
+                }
+                return true;
+              });
+              if (!refBlock) return false;
+
+              event.preventDefault();
+              event.stopPropagation();
+
+              // 插入空 paragraph作为子块
+              try {
+                const inserted = ed.insertBlocks([{ type: 'paragraph' }], refBlock, 'before');
+                const firstInserted = inserted?.[0];
+                if (isRecord(firstInserted) && typeof firstInserted['id'] === 'string') {
+                  ed.setTextCursorPosition(firstInserted['id'] as string, 'start');
+                }
+              } catch {
+                // 插入失败静默处理
+                void 0;
               }
+              // 聚焦编辑器，便于用户直接开始输入
+              ed.focus();
+
               return true;
-            });
-            if (!refBlock) return false;
-
-            event.preventDefault();
-            event.stopPropagation();
-
-            // 插入空 paragraph作为子块
-            try {
-              const inserted = ed.insertBlocks([{ type: 'paragraph' }], refBlock, 'before');
-              const firstInserted = inserted?.[0];
-              if (isRecord(firstInserted) && typeof firstInserted['id'] === 'string') {
-                ed.setTextCursorPosition(firstInserted['id'] as string, 'start');
-              }
-            } catch {
-              // 插入失败静默处理
-              void 0;
-            }
-            // 聚焦编辑器，便于用户直接开始输入
-            ed.focus();
-
-            return true;
+            },
           },
-        },
-      }),
-    ],
-  };
-});
+        }),
+      ],
+    };
+  });
 
 // 不依赖store，prop驱动更新displaymode
 export function syncAiDiffBlockFoldDisplayMode(
@@ -342,7 +329,7 @@ export const aiDiffRuntimeExtension = {
     'ai-diff.inline.link-add',
     'ai-diff.inline.link-delete',
   ],
-  extensions: () => [aiDiffBlockFoldExtension()],
+  extensions: ({ registry }) => [createAiDiffBlockFoldExtension(registry)()],
   editorProps: () => {
     const props: Partial<EditorProps> = {
       handleDOMEvents: {
@@ -435,7 +422,7 @@ function createAiDiffInlinePlugin(params: {
       },
     },
     markdownExport: createAiDiffSyntaxMarkdownExport(params.type),
-    aiDiff: syntaxInlineAiDiff,
+    aiDiff: createSyntaxInlineAiDiff(params.type),
     comments: { canCreateDocumentThread: false },
   };
 }

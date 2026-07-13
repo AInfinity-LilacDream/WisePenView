@@ -1,8 +1,9 @@
 import { defaultBlockSpecs, defaultInlineContentSpecs } from '@blocknote/core';
 import { describe, expect, it } from 'vitest';
 
+import { AI_DIFF_DISPLAY_MODE } from '@/domains/Note';
 import { notePluginRegistry } from '.';
-import { hasAiDiffInBlock } from './presence';
+import { hasAiDiffInBlock, shouldFoldAiDiffInlineContent } from './presence';
 import { createNotePluginRegistry } from './registry';
 import type {
   NoteBlockPlugin,
@@ -89,9 +90,14 @@ describe('Note AI Diff presence', () => {
       id: 'test.inline.change',
       type: 'custom-change',
       spec: defaultInlineContentSpecs.text,
-      capabilities: unsupportedCapabilities,
+      capabilities: {
+        ...unsupportedCapabilities,
+        aiDiff: { support: 'custom' },
+      },
       aiDiff: {
         isPresent: (inline) => inline.changed === true,
+        isVisible: () => true,
+        apply: () => undefined,
       },
       comments: { canCreateDocumentThread: false },
     } satisfies NoteInlinePlugin;
@@ -129,5 +135,36 @@ describe('Note AI Diff presence', () => {
     expect(notePluginRegistry.inlinePlugins.get('ai-diff')?.comments.canCreateDocumentThread).toBe(
       false
     );
+  });
+
+  it('由 inline owner 决定非对比模式下是否折叠整个块', () => {
+    const content = [{ type: 'ai-add', props: { text: '新增', key: 'change-1' } }];
+
+    expect(
+      shouldFoldAiDiffInlineContent(content, AI_DIFF_DISPLAY_MODE.OLD_ONLY, notePluginRegistry)
+    ).toBe(true);
+    expect(
+      shouldFoldAiDiffInlineContent(content, AI_DIFF_DISPLAY_MODE.NEW_ONLY, notePluginRegistry)
+    ).toBe(false);
+  });
+
+  it('由 toggleListItem owner 决定全部折叠子块的新增锚点', () => {
+    const owner = notePluginRegistry.blockPlugins.get('toggleListItem');
+    const anchorId = owner?.aiDiff?.getFoldedChildrenAnchorId?.(
+      {
+        type: 'toggleListItem',
+        children: [
+          {
+            id: 'first-hidden-child',
+            type: 'paragraph',
+            content: [{ type: 'ai-add', props: { text: '新增' } }],
+          },
+        ],
+      },
+      AI_DIFF_DISPLAY_MODE.OLD_ONLY,
+      notePluginRegistry
+    );
+
+    expect(anchorId).toBe('first-hidden-child');
   });
 });

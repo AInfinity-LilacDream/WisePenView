@@ -70,6 +70,11 @@ export type NoteAiDiffAction = 'accept' | 'discard';
 
 export interface NoteInlineAiDiff {
   isPresent: (inline: Record<string, unknown>) => boolean;
+  isVisible: (inline: Record<string, unknown>, mode: AiDiffDisplayMode) => boolean;
+  apply: (
+    inline: Record<string, unknown>,
+    action: NoteAiDiffAction
+  ) => readonly Record<string, unknown>[] | undefined;
 }
 
 export interface NoteInlineComments {
@@ -88,12 +93,18 @@ export type NoteAiDiffBlockActionResult =
 
 export interface NoteBlockAiDiff {
   isPresent?: (block: Record<string, unknown>) => boolean;
+  getFoldedChildrenAnchorId?: (
+    block: Record<string, unknown>,
+    mode: AiDiffDisplayMode,
+    registry: NotePluginRegistry
+  ) => string;
   normalizeGenerated: (
     input: NoteAiDiffGeneratedBlockInput
   ) => NoteAiDiffGeneratedBlockProjection | null;
   applyAll: (
     block: Record<string, unknown>,
-    action: NoteAiDiffAction
+    action: NoteAiDiffAction,
+    registry: NotePluginRegistry
   ) => NoteAiDiffBlockActionResult;
 }
 
@@ -153,7 +164,7 @@ interface NotePluginNodeBase {
 interface NoteContentPluginBase extends NotePluginNodeBase {
   type: string;
   capabilities: NoteContentCapabilityDeclarations;
-  extensions?: () => ExtensionFactoryInstance[];
+  extensions?: (context: NotePluginRuntimeContext) => ExtensionFactoryInstance[];
   editorProps?: () => Partial<EditorProps>;
   slashMenu?: (ctx: { editor: PluginEditor }) => DefaultReactSuggestionItem[];
 }
@@ -187,8 +198,12 @@ export type NoteContentPlugin = NoteBlockPlugin | NoteInlinePlugin;
 export type NotePluginNode = NotePluginBundle | NoteContentPlugin;
 
 export interface NoteRuntimeExtension extends NotePluginNodeBase {
-  extensions?: () => ExtensionFactoryInstance[];
+  extensions?: (context: NotePluginRuntimeContext) => ExtensionFactoryInstance[];
   editorProps?: () => Partial<EditorProps>;
+}
+
+export interface NotePluginRuntimeContext {
+  registry: NotePluginRegistry;
 }
 
 export interface NotePluginRegistry {

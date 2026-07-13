@@ -693,7 +693,11 @@ function CustomBlockNote({
 
       for (const block of blocks) {
         const owner = notePluginRegistry.blockPlugins.get(block.type);
-        const action = owner?.aiDiff?.applyAll(block as unknown as Record<string, unknown>, mode);
+        const action = owner?.aiDiff?.applyAll(
+          block as unknown as Record<string, unknown>,
+          mode,
+          notePluginRegistry
+        );
         if (!action || action.kind === 'none') continue;
 
         if (action.kind === 'remove') {

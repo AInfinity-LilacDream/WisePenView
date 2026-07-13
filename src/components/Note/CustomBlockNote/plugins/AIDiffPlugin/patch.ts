@@ -1,5 +1,4 @@
 import type { NoteAiDiffAction, NoteBlockAiDiff, NotePluginRegistry } from '../types';
-import { hasAtomicAiDiff } from './ownerPresence';
 import {
   buildAiEditJsonUnits,
   DEFAULT_MERGE_DIFF_HUNKS_OPTIONS,
@@ -63,6 +62,11 @@ const AI_DIFF_INLINE_TYPES = new Set([
 ]);
 
 const AI_DIFF_PROP_TYPES = new Set(['edit', 'create', 'delete']);
+
+export function hasAtomicAiDiff(content: Record<string, unknown>): boolean {
+  const props = isRecord(content.props) ? content.props : content;
+  return AI_DIFF_PROP_TYPES.has(getPropString(props, 'aiDiffType'));
+}
 
 function toTextInline(text: string): TextInlineContent {
   return { type: 'text', text, styles: {} };
@@ -424,8 +428,8 @@ export const richTextBlockAiDiff: NoteBlockAiDiff = {
     const mapped = aiGeneratedInlineToInlineContentArray(normalized, keyPrefix);
     return mapped ? { props, content: mapped } : null;
   },
-  applyAll(block, action) {
-    const content = applyAllAiDiffActionsToContent(block.content, action);
+  applyAll(block, action, registry) {
+    const content = applyAllAiDiffActionsToContent(block.content, action, registry);
     if (!content) return { kind: 'none' };
     return {
       kind: 'update',
@@ -712,11 +716,13 @@ function getText(v: unknown): string {
 
 function getLinkContentFromProps(props: Record<string, unknown>): TextInlineContent[] {
   const serialized = getPropString(props, 'content');
-  if (!serialized) return [];
+  const fallbackText = getPropString(props, 'text');
+  if (!serialized) return fallbackText ? [toTextInline(fallbackText)] : [];
   try {
-    return mapAiGeneratedLinkContent(JSON.parse(serialized));
+    const content = mapAiGeneratedLinkContent(JSON.parse(serialized));
+    return content.length > 0 ? content : fallbackText ? [toTextInline(fallbackText)] : [];
   } catch {
-    return [];
+    return fallbackText ? [toTextInline(fallbackText)] : [];
   }
 }
 
@@ -769,7 +775,7 @@ export function applyAiDiffActionForKey(
   return mergeAdjacentText(out);
 }
 
-function resolveAiInlineReplacement(
+export function resolveAiInlineReplacement(
   changeType: string,
   changeProps: Record<string, unknown>,
   mode: NoteAiDiffAction
@@ -849,7 +855,8 @@ export function applyAiDiffActionToProps(
 
 export function applyAllAiDiffActionsToContent(
   content: unknown,
-  mode: NoteAiDiffAction
+  mode: NoteAiDiffAction,
+  registry: NotePluginRegistry
 ): NoteInlineContentLike[] | null {
   if (!Array.isArray(content)) return null;
 
@@ -857,29 +864,17 @@ export function applyAllAiDiffActionsToContent(
   const out: NoteInlineContentLike[] = [];
 
   for (const node of content as unknown[]) {
-    const type = getType(node);
-    const props = getProps(node) ?? {};
-
-    if (type && AI_DIFF_INLINE_TYPES.has(type)) {
-      changed = true;
-      out.push(...resolveAiInlineReplacement(type, props, mode));
+    if (!isRecord(node)) {
+      out.push(node as NoteInlineContentLike);
       continue;
     }
-
-    if (type === 'inlineMath') {
-      const propsAction = applyAiDiffActionToProps(props, mode);
-      if (propsAction.kind === 'remove') {
-        changed = true;
-        continue;
-      }
-      if (propsAction.kind === 'update') {
-        changed = true;
-        out.push({
-          ...(node as Record<string, unknown>),
-          props: propsAction.props,
-        });
-        continue;
-      }
+    const type = getType(node);
+    const owner = type ? registry.inlinePlugins.get(type) : undefined;
+    const replacement = owner?.aiDiff.apply(node, mode);
+    if (replacement !== undefined) {
+      changed = true;
+      out.push(...replacement);
+      continue;
     }
 
     out.push(node as NoteInlineContentLike);
@@ -963,15 +958,6 @@ export function isInlineContentEffectivelyEmpty(content: unknown): boolean {
   if (content.length === 0) return true;
   for (const n of content) {
     const t = getType(n);
-    if (
-      t === 'ai-diff' ||
-      t === 'ai-add' ||
-      t === 'ai-delete' ||
-      t === 'ai-link-add' ||
-      t === 'ai-link-delete'
-    ) {
-      return false;
-    }
     if (t === 'text') {
       if (getText(n).trim() !== '') return false;
       continue;

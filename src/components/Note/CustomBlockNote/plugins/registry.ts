@@ -86,12 +86,22 @@ export function createNotePluginRegistry(
   const inlinePlugins = new Map<string, NoteInlinePlugin>();
 
   for (const plugin of sortedContentPlugins) {
-    const markdownImportSupport = plugin.capabilities.markdownImport.support;
-    if (markdownImportSupport === 'custom' && !plugin.markdownImport) {
-      throw new Error(`Note 插件 ${plugin.id} 声明自定义 Markdown 导入但未提供 codec`);
-    }
-    if (markdownImportSupport !== 'custom' && plugin.markdownImport) {
-      throw new Error(`Note 插件 ${plugin.id} 提供了 Markdown 导入 codec 但未声明 custom`);
+    const executableCapabilities = [
+      ['Markdown 导入', plugin.capabilities.markdownImport, plugin.markdownImport],
+      ['Markdown 导出', plugin.capabilities.markdownExport, plugin.markdownExport],
+      ['AI Diff', plugin.capabilities.aiDiff, plugin.aiDiff],
+    ] as const;
+    for (const [name, declaration, implementation] of executableCapabilities) {
+      const needsImplementation =
+        declaration.support === 'custom' || declaration.support === 'inherited';
+      if (needsImplementation && !implementation) {
+        throw new Error(
+          `Note 插件 ${plugin.id} 的 ${name}：声明为 ${declaration.support}，但未提供实现`
+        );
+      }
+      if (!needsImplementation && implementation) {
+        throw new Error(`Note 插件 ${plugin.id} 提供了 ${name} 实现，但未声明为 custom`);
+      }
     }
 
     const owners = plugin.kind === 'block' ? blockPlugins : inlinePlugins;
@@ -135,7 +145,7 @@ export function collectNoteEditorExtensions(
   registry: NotePluginRegistry
 ): ExtensionFactoryInstance[] {
   return [...registry.contentPlugins, ...registry.runtimeExtensions].flatMap(
-    (plugin) => plugin.extensions?.() ?? []
+    (plugin) => plugin.extensions?.({ registry }) ?? []
   );
 }
 

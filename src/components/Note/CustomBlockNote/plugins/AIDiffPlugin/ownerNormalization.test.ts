@@ -105,7 +105,8 @@ describe('aiGeneratedBlocksToBlockNoteBlocks', () => {
           content: [{ type: 'ai-add', props: { text: '新增', key: 'change-1' } }],
           children: [],
         },
-        'discard'
+        'discard',
+        notePluginRegistry
       )
     ).toEqual({ kind: 'update', content: [], removeWhenChildless: true });
   });
@@ -125,7 +126,8 @@ describe('aiGeneratedBlocksToBlockNoteBlocks', () => {
           },
           children: [],
         },
-        'accept'
+        'accept',
+        notePluginRegistry
       )
     ).toEqual({
       kind: 'update',
