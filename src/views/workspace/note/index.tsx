@@ -100,6 +100,32 @@ function pickNoteCollaborationColor(seed: string): string {
   return NOTE_COLLABORATION_COLORS[hash % NOTE_COLLABORATION_COLORS.length];
 }
 
+function sanitizeDownloadFileName(fileName: string): string {
+  const normalizedName = fileName.trim().replace(/[\\/:*?"<>|]+/g, '_');
+  const safeName = normalizedName.replace(/[.\s]+$/g, '');
+  return safeName || '未命名笔记';
+}
+
+function downloadTextArtifact(params: {
+  content: string;
+  mimeType: string;
+  fileName: string;
+}): void {
+  const blob = new Blob([params.content], { type: params.mimeType });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = params.fileName;
+  anchor.style.display = 'none';
+  document.body.appendChild(anchor);
+  try {
+    anchor.click();
+  } finally {
+    document.body.removeChild(anchor);
+    URL.revokeObjectURL(url);
+  }
+}
+
 function buildNoteCollaborationUser(user?: User): NoteCollaborationUser {
   const name = getNoteCollaborationUserName(user);
   const colorSeed = user?.id?.trim() || user?.username?.trim() || name;
@@ -202,9 +228,7 @@ function NoteViewConnected({
   const middleOverlayText =
     status === 'connecting' && !idbSynced ? '正在连接笔记服务...' : '正在加载用户信息...';
   const fallbackNoteTitle = noteInfoDisplay.noteTitle;
-  const [aiDiffBodyContentHash, setAiDiffBodyContentHash] = useState<string | undefined>(
-    undefined
-  );
+  const [aiDiffBodyContentHash, setAiDiffBodyContentHash] = useState<string | undefined>(undefined);
   const handleAiDiffBodyContentHashChange = useCallback(
     (hash: string | undefined) => setAiDiffBodyContentHash(hash),
     []
@@ -315,7 +339,12 @@ function NoteViewConnected({
     try {
       setIsDownloadingMarkdown(true);
       const title = titleEditorRef.current?.getPlainTitle() ?? fallbackNoteTitle ?? '未命名笔记';
-      await bodyApi.downloadMarkdown(title);
+      const artifact = bodyApi.exportMarkdown();
+      downloadTextArtifact({
+        content: artifact.content,
+        mimeType: artifact.mimeType,
+        fileName: `${sanitizeDownloadFileName(title)}.${artifact.extension}`,
+      });
       toast.success('Markdown 下载已开始');
     } catch (err) {
       toast.danger(parseErrorMessage(err));

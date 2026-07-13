@@ -97,12 +97,6 @@ function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === 'object' && v !== null;
 }
 
-function sanitizeMarkdownFileName(fileName?: string): string {
-  const normalizedName = (fileName ?? '').trim().replace(/[\\/:*?"<>|]+/g, '_');
-  const safeName = normalizedName.replace(/[.\s]+$/g, '');
-  return safeName || '未命名笔记';
-}
-
 function blockHasNestedChildren(block: { children?: readonly unknown[] }): boolean {
   return Array.isArray(block.children) && block.children.length > 0;
 }
@@ -597,7 +591,6 @@ function CustomBlockNoteEditor({
           editor.focus();
         }
       },
-      getAiDiffBodyContentHash: () => aiDiffBodyContentHashRef.current,
       exportPdf: async (options) => {
         try {
           setExportDisplayModeOverride(AI_DIFF_DISPLAY_MODE.OLD_ONLY);
@@ -616,24 +609,17 @@ function CustomBlockNoteEditor({
           }
         }
       },
-      downloadMarkdown: async (fileName?: string) => {
-        const markdown = exportNoteMarkdown(
-          editor,
-          notePluginRegistry,
-          editor.document,
-          AI_DIFF_DISPLAY_MODE.OLD_ONLY
-        );
-        const blob = new Blob([markdown], { type: 'text/markdown;charset=utf-8' });
-        const url = URL.createObjectURL(blob);
-        const anchor = document.createElement('a');
-
-        anchor.href = url;
-        anchor.download = `${sanitizeMarkdownFileName(fileName)}.md`;
-        anchor.style.display = 'none';
-        document.body.appendChild(anchor);
-        anchor.click();
-        document.body.removeChild(anchor);
-        URL.revokeObjectURL(url);
+      exportMarkdown: () => {
+        return {
+          content: exportNoteMarkdown(
+            editor,
+            notePluginRegistry,
+            editor.document,
+            AI_DIFF_DISPLAY_MODE.OLD_ONLY
+          ),
+          mimeType: 'text/markdown;charset=utf-8',
+          extension: 'md',
+        };
       },
     }),
     [aiDiffDisplayMode, editor]

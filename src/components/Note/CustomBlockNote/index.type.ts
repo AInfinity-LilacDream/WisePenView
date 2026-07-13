@@ -13,11 +13,16 @@ import type { CollaboratorCommentVisibility } from './comments/core/commentSetti
 export interface NoteBodyEditorHandle {
   focus: () => void;
   navigateToBlock: (id: string) => void;
-  getAiDiffBodyContentHash: () => string | undefined;
   /** 通过系统打印对话框另存为 PDF（克隆 DOM + 打印前临时仅旧文本） */
   exportPdf: (options?: { title?: string; titleRoot?: HTMLElement | null }) => Promise<void>;
-  /** 下载正文为 Markdown（AIDiff 按仅旧文本过滤后导出） */
-  downloadMarkdown: (fileName?: string) => Promise<void>;
+  /** 导出正文 Markdown artifact（AIDiff 按仅旧文本投影） */
+  exportMarkdown: () => NoteMarkdownArtifact;
+}
+
+export interface NoteMarkdownArtifact {
+  content: string;
+  mimeType: 'text/markdown;charset=utf-8';
+  extension: 'md';
 }
 
 export interface NoteCollaborationUser {
