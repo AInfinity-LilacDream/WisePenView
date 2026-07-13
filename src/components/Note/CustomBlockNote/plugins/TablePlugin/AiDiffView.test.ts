@@ -95,4 +95,56 @@ describe('TablePlugin AiDiffView', () => {
     expect(rows?.[1]?.querySelectorAll('th')).toHaveLength(0);
     expect(rows?.[1]?.querySelector('td')?.textContent).toBe('第二行');
   });
+
+  it('整张 AI Diff 表格及其行内内容保持只读', () => {
+    const preview = notePluginRegistry.blockPlugins.get('table')?.aiDiff?.renderCandidate(
+      {
+        type: 'table',
+        props: {},
+        content: {
+          type: 'tableContent',
+          columnWidths: [160],
+          rows: [
+            {
+              cells: [
+                [
+                  {
+                    type: 'link',
+                    href: '/docs',
+                    content: [{ type: 'text', text: '文档', styles: {} }],
+                  },
+                ],
+              ],
+            },
+          ],
+        },
+      },
+      notePluginRegistry
+    );
+
+    const elements = preview ? [preview, ...preview.querySelectorAll<HTMLElement>('*')] : [];
+    expect(preview?.dataset.readOnly).toBe('true');
+    expect(preview?.dataset.hoverEffects).toBe('disabled');
+    expect(preview?.getAttribute('aria-readonly')).toBe('true');
+    expect(elements.every((element) => element.contentEditable === 'false')).toBe(true);
+    expect(elements.every((element) => element.draggable === false)).toBe(true);
+
+    const link = preview?.querySelector('a');
+    expect(link?.tabIndex).toBe(-1);
+    expect(link?.getAttribute('aria-disabled')).toBe('true');
+    expect(link?.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }))).toBe(
+      false
+    );
+
+    const host = document.createElement('div');
+    let editorHoverEventCount = 0;
+    host.addEventListener('mousemove', () => {
+      editorHoverEventCount += 1;
+    });
+    if (preview) host.appendChild(preview);
+    preview
+      ?.querySelector('td')
+      ?.dispatchEvent(new MouseEvent('mousemove', { bubbles: true, cancelable: true }));
+    expect(editorHoverEventCount).toBe(0);
+  });
 });

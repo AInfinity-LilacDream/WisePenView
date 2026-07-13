@@ -73,7 +73,16 @@
   max-width: 100%;
   background: transparent;
   color: inherit;
+  pointer-events: none;
   text-decoration: none;
+}
+
+.current[data-content-type='table'] :global(.table-widgets-container),
+.current[data-content-type='table'] :global(.bn-table-handle),
+.current[data-content-type='table'] :global(.bn-table-cell-handle),
+.current[data-content-type='table'] :global(.column-resize-handle),
+.current[data-content-type='table'] :global(.bn-table-drop-cursor) {
+  display: none !important;
 }
 
 .current[data-content-type='table'] :global(.tableWrapper) {

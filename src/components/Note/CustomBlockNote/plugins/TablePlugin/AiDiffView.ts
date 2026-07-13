@@ -6,6 +6,17 @@ interface TableCellLike {
   props: Record<string, unknown>;
 }
 
+const TABLE_INTERACTIVE_SELECTOR = 'a, button, input, select, textarea, [tabindex]';
+const TABLE_EDITOR_EVENTS = [
+  'mousedown',
+  'mouseup',
+  'mousemove',
+  'mouseover',
+  'pointerdown',
+  'pointerup',
+  'pointermove',
+] as const;
+
 export interface TableContentLike {
   rows: Array<{ cells: unknown[] }>;
   columnWidths: Array<number | undefined>;
@@ -75,6 +86,34 @@ function createColumnGroup(columnWidths: readonly (number | undefined)[]): HTMLT
   return columnGroup;
 }
 
+/** AI Diff 表格只用于审阅；保留文字选择，但关闭编辑、拖拽、聚焦和内容内操作。 */
+function makeTableReadOnly(root: HTMLElement): HTMLElement {
+  root.contentEditable = 'false';
+  root.draggable = false;
+  root.dataset.readOnly = 'true';
+  root.dataset.hoverEffects = 'disabled';
+  root.setAttribute('aria-readonly', 'true');
+
+  root.querySelectorAll<HTMLElement>('*').forEach((element) => {
+    element.contentEditable = 'false';
+    element.draggable = false;
+    if (element.matches(TABLE_INTERACTIVE_SELECTOR)) {
+      element.tabIndex = -1;
+      element.setAttribute('aria-disabled', 'true');
+    }
+  });
+  root.addEventListener('click', (event) => {
+    const target = event.target;
+    if (!(target instanceof Element) || !target.closest(TABLE_INTERACTIVE_SELECTOR)) return;
+    event.preventDefault();
+    event.stopPropagation();
+  });
+  TABLE_EDITOR_EVENTS.forEach((eventName) => {
+    root.addEventListener(eventName, (event) => event.stopPropagation());
+  });
+  return root;
+}
+
 /** 使用表格原生结构渲染只读 AI 候选，并保留表头、合并单元格与列宽。 */
 export function TableAiDiffView(
   candidate: Record<string, unknown>,
@@ -98,7 +137,7 @@ export function TableAiDiffView(
     tableWrapperInner.appendChild(table);
     tableWrapper.appendChild(tableWrapperInner);
     root.appendChild(tableWrapper);
-    return root;
+    return makeTableReadOnly(root);
   }
 
   table.appendChild(createColumnGroup(content.columnWidths));
@@ -146,5 +185,5 @@ export function TableAiDiffView(
   tableWrapperInner.appendChild(table);
   tableWrapper.appendChild(tableWrapperInner);
   root.appendChild(tableWrapper);
-  return root;
+  return makeTableReadOnly(root);
 }
