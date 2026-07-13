@@ -122,25 +122,6 @@
     padding-bottom: 60vh;
   }
 
-  /* 显示策略为 hidden 时，整块区块不占布局（外层 block-outer 或内层标记触发） */
-  :global(.bn-editor .bn-block-outer:has([data-math-ai-diff-display-hidden='true'])),
-  :global(.bn-editor .bn-block-outer[data-ai-diff-block-display-hidden='true']),
-  :global(.bn-editor .bn-block-outer:has(> .bn-block-content [data-ai-diff-block-display-hidden='true'])) {
-    display: none;
-  }
-
-  :global(.bn-editor button.bn-toggle-add-block-button[data-ai-diff-toggle-add-placeholder='true']) {
-    display: none;
-  }
-
-  :global(
-      .bn-editor
-        .bn-block-outer:has(.bn-toggle-wrapper[data-show-children='true'])
-        button.bn-toggle-add-block-button[data-ai-diff-toggle-add-placeholder='true']
-    ) {
-    display: block;
-  }
-
   :global(.bn-editor .bn-block-content) {
     margin-top: 0;
   }

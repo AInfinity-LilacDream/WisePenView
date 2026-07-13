@@ -84,7 +84,6 @@ export function createNotePluginRegistry(
   const sortedRuntimeExtensions = sortByDependencies(runtimeExtensions, seenIds);
   const blockPlugins = new Map<string, NoteBlockPlugin>();
   const inlinePlugins = new Map<string, NoteInlinePlugin>();
-  let aiDiffText: NotePluginRegistry['aiDiffText'];
   let defaultBlock: NotePluginRegistry['defaultBlock'];
 
   for (const plugin of sortedContentPlugins) {
@@ -119,12 +118,6 @@ export function createNotePluginRegistry(
       );
     }
     owners.set(plugin.type, plugin as never);
-    if (plugin.kind === 'inline' && plugin.aiDiff.generatedText) {
-      if (aiDiffText) {
-        throw new Error(`Note AI Diff plain text adapter 存在多个 owner：${plugin.id}`);
-      }
-      aiDiffText = plugin.aiDiff.generatedText;
-    }
     if (plugin.kind === 'block' && plugin.insertion?.default) {
       if (defaultBlock) {
         throw new Error(`Note 默认插入 block 存在多个 owner：${plugin.id}`);
@@ -133,16 +126,11 @@ export function createNotePluginRegistry(
     }
   }
 
-  if (sortedRuntimeExtensions.some((extension) => extension.requiresAiDiffText) && !aiDiffText) {
-    throw new Error('Note AI Diff runtime 缺少 plain text owner adapter');
-  }
-
   return {
     root,
     contentPlugins: sortedContentPlugins,
     blockPlugins,
     inlinePlugins,
-    aiDiffText,
     defaultBlock,
     runtimeExtensions: sortedRuntimeExtensions,
   };

@@ -1,5 +1,5 @@
 import type { NoteBlockPlugin, NoteInlinePlugin, NotePluginBundle } from '../types';
-import { inlineMathAiDiff, mathAiDiffMarkdownExport, mathBlockAiDiff } from './aiDiff';
+import { inlineMathAiDiff, mathBlockAiDiff } from './aiDiff';
 import { inlineMathContentSpec } from './InlineMath';
 import { createInlineMathDollarExtension } from './InlineMath/inlineMathDollarExtension';
 import { inlineMathMarkdownImport, mathBlockMarkdownImport } from './markdownImport';
@@ -29,11 +29,6 @@ export const mathBlockPlugin = {
 .note-print-body .bn-editor .katex-display,
 .note-print-title .katex-display {
   margin: 0.6em 0 !important;
-}
-.note-print-body [class*='mathDiffActionLayer'],
-.note-print-body [class*='mathDiffActions'] {
-  display: none !important;
-  visibility: hidden !important;
 }`,
     ],
   },
@@ -49,7 +44,7 @@ export const mathBlockPlugin = {
   },
   markdownImport: mathBlockMarkdownImport,
   markdownExport: {
-    ...mathAiDiffMarkdownExport,
+    project: (block) => block,
     renderMarkdown(block) {
       const props =
         typeof block.props === 'object' && block.props !== null
@@ -85,7 +80,7 @@ export const inlineMathPlugin = {
     },
   },
   markdownImport: inlineMathMarkdownImport,
-  markdownExport: mathAiDiffMarkdownExport,
+  markdownExport: { project: (inline) => inline },
   aiDiff: inlineMathAiDiff,
   comments: { documentThreads: 'dedicated', hideFormattingToolbar: true },
 } satisfies NoteInlinePlugin;

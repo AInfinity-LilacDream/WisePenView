@@ -54,73 +54,37 @@ export interface NoteMarkdownExportProjection {
   renderMarkdown?: (node: Record<string, unknown>, context: NoteMarkdownExportContext) => string;
 }
 
-export interface NoteAiDiffGeneratedBlockInput {
-  props: Record<string, unknown>;
-  content: unknown;
-  keyPrefix: string;
-}
-
-export interface NoteAiDiffGeneratedBlockProjection {
-  props: Record<string, unknown>;
-  content?: unknown;
-}
-
-export interface NoteAiDiffProtocolBlockInput {
-  props: Record<string, unknown>;
-  content: unknown;
-  aiContent: unknown;
-  hasExplicitAiContent: boolean;
-}
-
-export interface NoteAiDiffProtocolInline {
-  kind: 'text' | 'atom';
-  normalize: (inline: Record<string, unknown>) => unknown;
-  visibleText: (inline: Record<string, unknown>) => string;
-  plain: (inline: Record<string, unknown>) => readonly Record<string, unknown>[];
-  create: (inline: Record<string, unknown>) => readonly Record<string, unknown>[];
-  delete: (inline: Record<string, unknown>) => readonly Record<string, unknown>[];
-  edit: (
-    origin: Record<string, unknown>,
-    replace: Record<string, unknown>
-  ) => readonly Record<string, unknown>[] | null;
-  editText?: (origin: string, replace: string) => readonly Record<string, unknown>[];
-}
-
 export type NoteAiDiffAction = 'accept' | 'discard';
 
-export interface NoteAiDiffTextValue {
-  text: string;
-  styles: Record<string, string>;
+export interface NoteAiContentCandidate {
+  props: Record<string, unknown>;
+  content: unknown;
 }
 
-export interface NoteAiDiffTextAdapter {
-  read: (inline: Record<string, unknown>) => NoteAiDiffTextValue | undefined;
-  create: (value: NoteAiDiffTextValue) => Record<string, unknown>;
+export interface NoteAiContentPayload {
+  revision: string;
+  baseHash: string;
+  operation: 'create' | 'update' | 'delete';
+  candidate: NoteAiContentCandidate | null;
 }
 
-export interface NoteAiDiffGeneratedInlineContext {
-  key: string;
-  text: NoteAiDiffTextAdapter;
-  normalizeInline: (
-    inline: Record<string, unknown>,
-    key: string
-  ) => readonly Record<string, unknown>[] | null;
+export interface NoteAiDiffBlockProjection {
+  current: Record<string, unknown> | null;
+  candidate: Record<string, unknown> | null;
+  stale: boolean;
 }
+
+export type NoteAiDiffBlockMutation =
+  | { kind: 'none' }
+  | { kind: 'remove' }
+  | { kind: 'update'; props: Record<string, unknown>; content?: unknown };
 
 export interface NoteInlineAiDiff {
-  reviewChange?: boolean;
-  isPresent: (inline: Record<string, unknown>) => boolean;
-  isVisible: (inline: Record<string, unknown>, mode: AiDiffDisplayMode) => boolean;
-  apply: (
-    inline: Record<string, unknown>,
-    action: NoteAiDiffAction
-  ) => readonly Record<string, unknown>[] | undefined;
-  normalizeGenerated?: (
-    inline: Record<string, unknown>,
-    context: NoteAiDiffGeneratedInlineContext
-  ) => readonly Record<string, unknown>[] | null;
-  generatedText?: NoteAiDiffTextAdapter;
-  protocol?: NoteAiDiffProtocolInline;
+  equals: (current: Record<string, unknown>, candidate: Record<string, unknown>) => boolean;
+  renderCandidate: (
+    candidate: Record<string, unknown>,
+    registry: NotePluginRegistry
+  ) => HTMLElement;
 }
 
 export interface NoteContentComments {
@@ -132,36 +96,22 @@ export interface NotePrintContribution {
   styles: readonly string[];
 }
 
-export type NoteAiDiffBlockActionResult =
-  | { kind: 'none' }
-  | { kind: 'remove' }
-  | {
-      kind: 'update';
-      props?: Record<string, unknown>;
-      content?: unknown;
-      removeWhenChildless?: boolean;
-    };
-
 export interface NoteBlockAiDiff {
-  isPresent?: (block: Record<string, unknown>) => boolean;
-  getFoldedChildrenAnchorId?: (
+  resolve: (
     block: Record<string, unknown>,
-    mode: AiDiffDisplayMode,
+    aiContent: NoteAiContentPayload,
     registry: NotePluginRegistry
-  ) => string;
-  normalizeProtocol: (
-    input: NoteAiDiffProtocolBlockInput,
+  ) => NoteAiDiffBlockProjection | null;
+  renderCandidate: (
+    candidate: Record<string, unknown>,
     registry: NotePluginRegistry
-  ) => NoteAiDiffGeneratedBlockProjection | null;
-  normalizeGenerated: (
-    input: NoteAiDiffGeneratedBlockInput,
-    registry: NotePluginRegistry
-  ) => NoteAiDiffGeneratedBlockProjection | null;
-  applyAll: (
+  ) => HTMLElement;
+  apply: (
     block: Record<string, unknown>,
+    aiContent: NoteAiContentPayload,
     action: NoteAiDiffAction,
     registry: NotePluginRegistry
-  ) => NoteAiDiffBlockActionResult;
+  ) => NoteAiDiffBlockMutation;
 }
 
 export type NoteMarkdownImportSegment =
@@ -269,7 +219,6 @@ export type NoteContentPlugin = NoteBlockPlugin | NoteInlinePlugin;
 export type NotePluginNode = NotePluginBundle | NoteContentPlugin;
 
 export interface NoteRuntimeExtension extends NotePluginNodeBase {
-  requiresAiDiffText?: boolean;
   print?: NotePrintContribution;
   extensions?: (context: NotePluginRuntimeContext) => ExtensionFactoryInstance[];
   editorProps?: (context: NotePluginRuntimeContext) => Partial<EditorProps>;
@@ -284,7 +233,6 @@ export interface NotePluginRegistry {
   contentPlugins: readonly NoteContentPlugin[];
   blockPlugins: ReadonlyMap<string, NoteBlockPlugin>;
   inlinePlugins: ReadonlyMap<string, NoteInlinePlugin>;
-  aiDiffText?: NoteAiDiffTextAdapter;
   defaultBlock?: NoteBlockInsertion;
   runtimeExtensions: readonly NoteRuntimeExtension[];
 }

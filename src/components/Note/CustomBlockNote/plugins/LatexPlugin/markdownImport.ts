@@ -256,10 +256,6 @@ export const mathBlockMarkdownImport: NoteMarkdownBlockImport = {
       props: {
         expression,
         autoEdit: false,
-        aiDiffType: '',
-        aiDiffKey: '',
-        aiDiffOrigin: '',
-        aiDiffReplace: '',
       },
     };
   },
@@ -288,10 +284,6 @@ export const inlineMathMarkdownImport: NoteMarkdownInlineImport = {
         props: {
           expression: segment.value,
           autoOpenEdit: false,
-          aiDiffType: '',
-          aiDiffKey: '',
-          aiDiffOrigin: '',
-          aiDiffReplace: '',
         },
       });
     }

@@ -1,109 +1,57 @@
+/** @vitest-environment jsdom */
 import { describe, expect, it } from 'vitest';
 
-import { AI_DIFF_DISPLAY_MODE } from '@/domains/Note';
 import { notePluginRegistry } from '..';
-import { normalizeAiGeneratedBlocks } from '../runtime/aiDiff/normalizeGeneratedBlocks';
+import { hashNoteBlockForAiDiff } from '../../engines/aiDiff/projection';
 
 describe('DefaultContentPlugin AI Diff', () => {
-  it('由 paragraph owner 规范化富文本差异', () => {
-    expect(
-      normalizeAiGeneratedBlocks(
-        [
-          {
-            id: 'paragraph-1',
-            type: 'paragraph',
-            props: { textAlignment: 'left' },
-            content: [{ type: 'AI-Edit', old_text: '旧', new_text: '新' }],
-            children: [],
-          },
-        ],
-        notePluginRegistry
-      )
-    ).toEqual([
+  it('由 paragraph owner 解析 native candidate', () => {
+    const block = {
+      id: 'paragraph-1',
+      type: 'paragraph',
+      props: { textAlignment: 'left' },
+      content: [{ type: 'text', text: '旧', styles: {} }],
+      children: [],
+    };
+    const projection = notePluginRegistry.blockPlugins.get('paragraph')?.aiDiff?.resolve(
+      block,
       {
-        id: 'paragraph-1',
-        type: 'paragraph',
-        props: { textAlignment: 'left' },
-        content: [
-          {
-            type: 'ai-diff',
-            props: {
-              origin: '旧',
-              replace: '新',
-              key: expect.stringContaining(':c1'),
-              granularity: 'word',
-            },
-          },
-        ],
-        children: [],
-      },
-    ]);
-  });
-
-  it('由 link owner 恢复普通生成内容', () => {
-    const result = normalizeAiGeneratedBlocks(
-      [
-        {
-          id: 'paragraph-link',
-          type: 'paragraph',
-          props: {},
-          content: [
-            {
-              type: 'link',
-              href: '/docs',
-              content: [{ type: 'text', text: '文档', styles: { bold: 'true' } }],
-            },
-          ],
-          children: [],
+        revision: 'r1',
+        baseHash: hashNoteBlockForAiDiff(block),
+        operation: 'update',
+        candidate: {
+          props: { textAlignment: 'left' },
+          content: [{ type: 'text', text: '新', styles: {} }],
         },
-      ],
+      },
       notePluginRegistry
     );
 
-    expect(result?.[0]).toMatchObject({
-      content: [
-        {
-          type: 'link',
-          href: '/docs',
-          content: [{ type: 'text', text: '文档', styles: { bold: 'true' } }],
-        },
-      ],
+    expect(projection).toEqual({
+      current: block,
+      candidate: { ...block, content: [{ type: 'text', text: '新', styles: {} }] },
+      stale: false,
     });
   });
 
-  it('由 paragraph owner 决定批量拒绝后可删除空块', () => {
-    const owner = notePluginRegistry.blockPlugins.get('paragraph');
-    expect(
-      owner?.aiDiff?.applyAll(
+  it('富文本 block 委托 inline owner 渲染文本与链接候选', () => {
+    const candidate = {
+      type: 'paragraph',
+      props: {},
+      content: [
+        { type: 'text', text: '访问 ', styles: {} },
         {
-          type: 'paragraph',
-          props: {},
-          content: [{ type: 'ai-add', props: { text: '新增', key: 'change-1' } }],
-          children: [],
+          type: 'link',
+          href: '/docs',
+          content: [{ type: 'text', text: '文档', styles: {} }],
         },
-        'discard',
-        notePluginRegistry
-      )
-    ).toEqual({ kind: 'update', content: [], removeWhenChildless: true });
-  });
+      ],
+    };
+    const preview = notePluginRegistry.blockPlugins
+      .get('paragraph')
+      ?.aiDiff?.renderCandidate(candidate, notePluginRegistry);
 
-  it('由 toggleListItem owner 决定折叠子块的新增锚点', () => {
-    const owner = notePluginRegistry.blockPlugins.get('toggleListItem');
-    expect(
-      owner?.aiDiff?.getFoldedChildrenAnchorId?.(
-        {
-          type: 'toggleListItem',
-          children: [
-            {
-              id: 'first-hidden-child',
-              type: 'paragraph',
-              content: [{ type: 'ai-add', props: { text: '新增' } }],
-            },
-          ],
-        },
-        AI_DIFF_DISPLAY_MODE.OLD_ONLY,
-        notePluginRegistry
-      )
-    ).toBe('first-hidden-child');
+    expect(preview?.textContent).toBe('访问 文档');
+    expect(preview?.querySelector('a')?.getAttribute('href')).toContain('/docs');
   });
 });

@@ -1,5 +1,5 @@
 import type { CustomBlockNoteEditor } from '../blockNoteSchema';
-import { hasAiDiffInBlock } from './runtime/aiDiff/presence';
+import { hasAiDiffForBlockInEditorState } from '../engines/aiDiff/runtime';
 import type { NoteContentComments, NotePluginRegistry } from './types';
 
 function getCommentsPolicy(
@@ -10,11 +10,19 @@ function getCommentsPolicy(
 }
 
 function blockRejectsDocumentThread(
+  editor: CustomBlockNoteEditor,
   block: { type: string },
   registry: NotePluginRegistry
 ): boolean {
   const policy = registry.blockPlugins.get(block.type)?.comments;
-  return policy?.documentThreads !== 'range' || hasAiDiffInBlock(block, registry);
+  return (
+    policy?.documentThreads !== 'range' ||
+    hasAiDiffForBlockInEditorState(
+      editor.prosemirrorView.state,
+      block as unknown as Record<string, unknown>,
+      registry
+    )
+  );
 }
 
 function currentBlockRejectsDocumentThread(
@@ -23,13 +31,15 @@ function currentBlockRejectsDocumentThread(
 ): boolean {
   try {
     const selectedBlocks = editor.getSelection()?.blocks;
-    if (selectedBlocks?.some((block) => blockRejectsDocumentThread(block, registry))) return true;
+    if (selectedBlocks?.some((block) => blockRejectsDocumentThread(editor, block, registry))) {
+      return true;
+    }
   } catch {
     // 自定义原子块选区不一定能映射为 BlockNote selection，继续检查 PM selection。
   }
 
   try {
-    return blockRejectsDocumentThread(editor.getTextCursorPosition().block, registry);
+    return blockRejectsDocumentThread(editor, editor.getTextCursorPosition().block, registry);
   } catch {
     return false;
   }

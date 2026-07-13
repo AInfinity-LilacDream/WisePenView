@@ -8,9 +8,7 @@ import {
 import { Image as ImageIcon } from 'lucide-react';
 
 import { projectInlinePlainText } from '../projection';
-import { shouldFoldAiDiffInlineContent } from '../runtime/aiDiff/presence';
 import type {
-  NoteBlockAiDiff,
   NoteBlockPlugin,
   NoteCapabilityDeclaration,
   NoteContentCapabilityDeclarations,
@@ -173,22 +171,6 @@ const atomicMediaPrint: NotePrintContribution = {
   ],
 };
 
-const toggleListItemAiDiff = {
-  ...richTextBlockAiDiff,
-  getFoldedChildrenAnchorId(block, mode, registry) {
-    if (!Array.isArray(block.children) || block.children.length === 0) return '';
-    const first = block.children[0];
-    if (typeof first !== 'object' || first === null || typeof first.id !== 'string') return '';
-    for (const child of block.children) {
-      if (typeof child !== 'object' || child === null) return '';
-      const record = child as Record<string, unknown>;
-      if (typeof record.id !== 'string') return '';
-      if (!shouldFoldAiDiffInlineContent(record.content, mode, registry)) return '';
-    }
-    return first.id;
-  },
-} satisfies NoteBlockAiDiff;
-
 export const defaultContentPlugin = {
   kind: 'bundle',
   id: 'default-content',
@@ -206,7 +188,7 @@ export const defaultContentPlugin = {
         },
         {
           outline: type === 'heading',
-          aiDiff: type === 'toggleListItem' ? toggleListItemAiDiff : richTextBlockAiDiff,
+          aiDiff: richTextBlockAiDiff,
           comments: { documentThreads: 'range' },
           defaultInsertion: type === 'paragraph',
           inlineMathDollar:

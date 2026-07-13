@@ -1,30 +1,34 @@
 import { createPortal } from 'react-dom';
+import type * as Y from 'yjs';
 
-import type { CustomBlockNoteEditor } from '../../../blockNoteSchema';
-import type { NoteAiDiffAction, NotePluginRegistry } from '../../types';
-import { applyAllNoteAiDiffActions } from './applyAll';
+import type { CustomBlockNoteEditor } from '../../blockNoteSchema';
+import type { NoteAiDiffAction, NotePluginRegistry } from '../../plugins/types';
+import { applyAllNoteAiDiffActions } from './action';
 import styles from './style.module.less';
 
 interface AiDiffBulkActionsProps {
+  doc: Y.Doc;
   editor: CustomBlockNoteEditor;
   registry: NotePluginRegistry;
+  undoManager: Y.UndoManager;
   visible: boolean;
   portalContainer: HTMLElement | null;
-  onApplied: () => void;
 }
 
 export function AiDiffBulkActions({
+  doc,
   editor,
   registry,
+  undoManager,
   visible,
   portalContainer,
-  onApplied,
 }: AiDiffBulkActionsProps) {
   if (!visible || !portalContainer) return null;
 
   const apply = (action: NoteAiDiffAction) => {
-    applyAllNoteAiDiffActions(editor, registry, action);
-    onApplied();
+    undoManager.stopCapturing();
+    applyAllNoteAiDiffActions({ doc, editor, registry, action });
+    undoManager.stopCapturing();
   };
   const preventEditorInteraction = (event: React.MouseEvent) => {
     event.preventDefault();
@@ -32,30 +36,30 @@ export function AiDiffBulkActions({
   };
 
   return createPortal(
-    <div className={styles.aiBulkActions} contentEditable={false}>
+    <div className={styles.bulkActions} contentEditable={false}>
       <button
         type="button"
-        aria-label="Keep all AI changes"
-        className={`${styles.aiActionBtn} ${styles.aiActionAccept} ${styles.aiBulkActionBtn}`}
+        aria-label="保留全部 AI 修改"
+        className={`${styles.actionButton} ${styles.accept}`}
         onMouseDown={preventEditorInteraction}
         onClick={(event) => {
           preventEditorInteraction(event);
           apply('accept');
         }}
       >
-        Keep all
+        全部保留
       </button>
       <button
         type="button"
-        aria-label="Undo all AI changes"
-        className={`${styles.aiActionBtn} ${styles.aiActionDiscard} ${styles.aiBulkActionBtn}`}
+        aria-label="撤销全部 AI 修改"
+        className={`${styles.actionButton} ${styles.discard}`}
         onMouseDown={preventEditorInteraction}
         onClick={(event) => {
           preventEditorInteraction(event);
           apply('discard');
         }}
       >
-        Undo all
+        全部撤销
       </button>
     </div>,
     portalContainer

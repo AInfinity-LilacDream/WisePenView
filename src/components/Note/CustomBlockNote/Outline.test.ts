@@ -13,7 +13,6 @@ describe('Note outline projection', () => {
           { type: 'text', text: '算法 ', styles: {} },
           { type: 'link', href: '/docs', content: [{ type: 'text', text: '文档', styles: {} }] },
           { type: 'inlineMath', props: { expression: 'x^2' } },
-          { type: 'ai-add', props: { text: ' 新增' } },
         ],
       },
     ];
@@ -24,7 +23,7 @@ describe('Note outline projection', () => {
     };
 
     expect(buildOutlineProjection(editor as never)).toEqual({
-      items: [{ id: 'heading-1', level: 2, text: '算法 文档x^2 新增' }],
+      items: [{ id: 'heading-1', level: 2, text: '算法 文档x^2' }],
       flatBlocks: [{ id: 'heading-1', outline: true }],
     });
   });

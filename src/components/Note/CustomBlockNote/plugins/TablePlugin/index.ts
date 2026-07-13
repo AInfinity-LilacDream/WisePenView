@@ -1,7 +1,11 @@
 import { defaultBlockSpecs } from '@blocknote/core';
 import { PanelLeft, PanelTop, StretchHorizontal, Table2 } from 'lucide-react';
 
-import type { NoteBlockPlugin, NoteSideMenuAction } from '../types';
+import {
+  resolveNoteAiDiffBlock,
+  resolveNoteAiDiffBlockAction,
+} from '../../engines/aiDiff/projection';
+import type { NoteBlockPlugin, NotePluginRegistry, NoteSideMenuAction } from '../types';
 
 interface TableContentLike {
   rows: Array<{ cells: unknown[] }>;
@@ -50,6 +54,21 @@ function tableActions(content: TableContentLike | null): NoteSideMenuAction[] {
   ];
 }
 
+function renderTableCell(cell: unknown, registry: NotePluginRegistry) {
+  const td = document.createElement('td');
+  const content = Array.isArray(cell)
+    ? cell
+    : isRecord(cell) && Array.isArray(cell.content)
+      ? cell.content
+      : [];
+  for (const inline of content) {
+    if (!isRecord(inline) || typeof inline.type !== 'string') continue;
+    const owner = registry.inlinePlugins.get(inline.type);
+    if (owner) td.appendChild(owner.aiDiff.renderCandidate(inline, registry));
+  }
+  return td;
+}
+
 export const tablePlugin = {
   kind: 'block',
   id: 'table',
@@ -59,11 +78,27 @@ export const tablePlugin = {
   capabilities: {
     markdownImport: { support: 'default' },
     markdownExport: { support: 'default' },
-    aiDiff: { support: 'unsupported', reason: '结构化表格当前不承担 AI Diff 语义' },
+    aiDiff: { support: 'custom' },
     projection: { support: 'custom' },
     print: { support: 'custom' },
   },
   comments: { documentThreads: 'unsupported' },
+  aiDiff: {
+    resolve: resolveNoteAiDiffBlock,
+    renderCandidate(candidate, registry) {
+      const table = document.createElement('table');
+      const content = readTableContent(candidate);
+      for (const row of content?.rows ?? []) {
+        const tr = document.createElement('tr');
+        row.cells.forEach((cell) => tr.appendChild(renderTableCell(cell, registry)));
+        table.appendChild(tr);
+      }
+      return table;
+    },
+    apply(_block, aiContent, action) {
+      return resolveNoteAiDiffBlockAction(aiContent, action, 'table');
+    },
+  },
   print: {
     styles: [
       `.note-print-body .bn-block-content[data-content-type='table'],

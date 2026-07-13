@@ -3,6 +3,11 @@ import { createCodeBlockSpec } from '@blocknote/core';
 import { flushSync } from 'react-dom';
 import { createRoot } from 'react-dom/client';
 
+import {
+  resolveNoteAiDiffBlock,
+  resolveNoteAiDiffBlockAction,
+} from '../../engines/aiDiff/projection';
+import { projectInlinePlainText } from '../projection';
 import type { NoteBlockPlugin } from '../types';
 import { CodeBlockToolbar, type CodeBlockLanguageOption } from './CodeBlockToolbar';
 
@@ -128,11 +133,24 @@ export const codeBlockPlugin = {
   capabilities: {
     markdownImport: { support: 'default' },
     markdownExport: { support: 'default' },
-    aiDiff: { support: 'unsupported', reason: '当前 AI Diff 映射明确排除代码块' },
+    aiDiff: { support: 'custom' },
     projection: { support: 'default' },
     print: { support: 'custom' },
   },
   comments: { documentThreads: 'range' },
+  aiDiff: {
+    resolve: resolveNoteAiDiffBlock,
+    renderCandidate(candidate, registry) {
+      const pre = document.createElement('pre');
+      const code = document.createElement('code');
+      code.textContent = projectInlinePlainText(candidate.content, registry);
+      pre.appendChild(code);
+      return pre;
+    },
+    apply(_block, aiContent, action) {
+      return resolveNoteAiDiffBlockAction(aiContent, action, 'inline');
+    },
+  },
   print: {
     styles: [
       `.note-print-body .bn-block-content[data-content-type='codeBlock'] {

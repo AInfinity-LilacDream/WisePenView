@@ -1,0 +1,82 @@
+.hidden {
+  display: none !important;
+}
+
+.current {
+  background: var(--error-soft);
+  color: var(--text-tertiary);
+  text-decoration: line-through;
+}
+
+.review {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-sm);
+  min-width: 0;
+  margin: 2px 0;
+}
+
+.candidate,
+.candidatePlain {
+  min-width: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.candidate {
+  flex: 1;
+  padding: 2px 4px;
+  background: var(--success-soft);
+  font-weight: 600;
+}
+
+.candidatePlain {
+  flex: 1;
+}
+
+.actions {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 4px;
+}
+
+.actionButton {
+  height: 24px;
+  padding: 0 10px;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 1;
+}
+
+.accept {
+  border-color: var(--success);
+  background: var(--success);
+  color: #fff;
+}
+
+.discard {
+  background: var(--surface-tertiary);
+  color: var(--foreground);
+}
+
+.stale {
+  color: var(--error);
+  font-size: 12px;
+}
+
+.bulkActions {
+  position: absolute;
+  right: var(--space-lg);
+  bottom: var(--space-lg);
+  z-index: 30;
+  display: inline-flex;
+  gap: 6px;
+  padding: 6px;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  background: var(--overlay);
+  box-shadow: var(--shadow-md);
+}

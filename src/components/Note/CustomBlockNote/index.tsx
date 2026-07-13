@@ -18,7 +18,6 @@ import { toast } from '@heroui/react';
 import { useLatest, useMemoizedFn, useMount, useUnmount, useUpdateEffect } from 'ahooks';
 import clsx from 'clsx';
 import {
-  useCallback,
   useImperativeHandle,
   useMemo,
   useRef,
@@ -50,7 +49,10 @@ import {
 } from './comments';
 import { resolveNoteCommentsRuntimePolicy } from './comments/core/commentPolicy';
 import { syncCommentUserProfileToYMap } from './comments/core/commentUserProfile';
-import { mergeReadOnlyEditorProps, NoteEditorReadOnlyProvider } from './editorReadOnly';
+import { NoteEditorReadOnlyProvider } from './editorReadOnly';
+import { AiDiffBulkActions } from './engines/aiDiff/BulkActions';
+import { AI_DIFF_ACTION_ORIGIN, getAiContentStore } from './engines/aiDiff/store';
+import { useAiDiffSidecarRuntime } from './engines/aiDiff/useAiDiffSidecarRuntime';
 import {
   useAttachNoteYjsUndoStack,
   useNoteCaptureKeyEvent,
@@ -64,16 +66,11 @@ import {
   collectNoteEditorProps,
   createNoteReadOnlyFilterExtension,
   exportNoteMarkdown,
-  hasAiDiffContentFromEditor,
   importNoteMarkdown,
   isCommentableSelection,
   notePluginRegistry,
 } from './plugins';
 import { printNotePdfViaBrowser, waitForEditorPaint } from './plugins/noteBrowserPrint';
-import { syncAiDiffBlockFoldDisplayMode } from './plugins/runtime/aiDiff';
-import { AiDiffBulkActions } from './plugins/runtime/aiDiff/BulkActions';
-import { AiDiffDisplayModeProvider } from './plugins/runtime/aiDiff/displayModeContext';
-import { useAiDiffNormalization } from './plugins/runtime/aiDiff/yjs/useAiDiffNormalization';
 import styles from './style.module.less';
 
 type CreateBlockNoteOptions = NonNullable<Parameters<typeof useCreateBlockNote>[0]>;
@@ -85,6 +82,8 @@ type CollaborationUser = {
 type YCursorExtensionHandle = {
   updateUser?: (user: CollaborationUser) => void;
 };
+
+const AI_DIFF_TRACKED_ORIGINS = [AI_DIFF_ACTION_ORIGIN] as const;
 
 function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === 'object' && v !== null;
@@ -140,7 +139,6 @@ function CustomBlockNote({
   const selectionSnapshotRef = useRef<NoteSelectionSnapshot | undefined>(undefined);
   const flatBlocksRef = useRef<ReturnType<typeof buildOutlineProjection>['flatBlocks']>([]);
   const [pmWriteGuardReady, setPmWriteGuardReady] = useState(false);
-  const effectiveBlockLocalDocWrites = blockLocalDocWrites && pmWriteGuardReady;
   const shouldBlockLocalDocWrites = useMemoizedFn(() => blockLocalDocWrites && pmWriteGuardReady);
   const hasBlockLocalDocWritesProp = useMemoizedFn(() => blockLocalDocWrites);
   const uploadFile = useMemoizedFn(async (file: File) => {
@@ -172,8 +170,6 @@ function CustomBlockNote({
   const [exportDisplayModeOverride, setExportDisplayModeOverride] =
     useState<AiDiffDisplayMode | null>(null);
   const effectiveAiDiffDisplayMode = exportDisplayModeOverride ?? aiDiffDisplayMode;
-  const lastAiDiffPresenceRef = useRef<boolean | null>(null);
-  const [hasAiDiffContent, setHasAiDiffContent] = useState(false);
   const pendingCommentReferenceRef = useRef<PendingCommentReference | null>(null);
   /** 与 reference 分离：applyPendingCommentReference 会在 createThread 时清空 reference，但 mark 仍需选区 */
   const pendingCommentSelectionRef = useRef<PendingCommentSelection | null>(null);
@@ -183,6 +179,7 @@ function CustomBlockNote({
   const commitPendingReferenceForThreadRef = useRef<(threadId: string) => void>(() => undefined);
   const rememberPendingCommentReferenceRef = useRef<() => void>(() => undefined);
   const noteFragment = useNoteYjsFragment(doc);
+  const aiContentStore = useMemo(() => getAiContentStore(doc), [doc]);
   const showCommentsUi = commentsUiEnabled;
   const threadsYMap = getBlockNoteThreadsYMap(doc);
   const commentUsersYMap = getBlockNoteCommentUsersYMap(doc);
@@ -277,14 +274,7 @@ function CustomBlockNote({
     activeCommentUserIdLatest,
     commentResolverContextLatest,
   ]);
-  const editorProps = useMemo(
-    () =>
-      mergeReadOnlyEditorProps(
-        collectNoteEditorProps(notePluginRegistry),
-        effectiveBlockLocalDocWrites
-      ),
-    [effectiveBlockLocalDocWrites]
-  );
+  const editorProps = useMemo(() => collectNoteEditorProps(notePluginRegistry), []);
 
   const editor = useCreateBlockNote({
     schema: blockNoteSchema,
@@ -302,7 +292,12 @@ function CustomBlockNote({
       user: collaborationUser,
     },
   });
-  const undoManager = useNoteYjsUndoManager(noteFragment, editor);
+  const undoManager = useNoteYjsUndoManager(
+    noteFragment,
+    aiContentStore,
+    editor,
+    AI_DIFF_TRACKED_ORIGINS
+  );
 
   const refreshAiDiffBodyContentHash = useMemoizedFn(() => {
     const nextHash = computeNoteBodyContentHash(editor.document);
@@ -345,23 +340,18 @@ function CustomBlockNote({
     syncCollaborationUser();
   }, [collaborationUser, editor]);
 
-  useMount(() => {
-    try {
-      syncAiDiffBlockFoldDisplayMode(editor.prosemirrorView, effectiveAiDiffDisplayMode);
-    } catch {
-      void 0;
-    }
-  });
-
-  useUpdateEffect(() => {
-    try {
-      syncAiDiffBlockFoldDisplayMode(editor.prosemirrorView, effectiveAiDiffDisplayMode);
-    } catch {
-      void 0;
-    }
-  }, [effectiveAiDiffDisplayMode, editor]);
-
   useAttachNoteYjsUndoStack(doc, editor, undoManager);
+
+  const hasAiDiffContent = useAiDiffSidecarRuntime({
+    doc,
+    noteFragment,
+    editor,
+    registry: notePluginRegistry,
+    displayMode: effectiveAiDiffDisplayMode,
+    readOnly: readOnly || blockLocalDocWrites,
+    undoManager,
+    onPresenceChange: onAiDiffPresenceChange,
+  });
 
   useUpdateEffect(() => {
     try {
@@ -370,30 +360,6 @@ function CustomBlockNote({
       void 0;
     }
   }, [editorProps, editor]);
-
-  const syncAiDiffPresence = useCallback(() => {
-    const nextHasAiDiffContent = hasAiDiffContentFromEditor(editor, notePluginRegistry);
-    if (lastAiDiffPresenceRef.current === nextHasAiDiffContent) {
-      return;
-    }
-
-    lastAiDiffPresenceRef.current = nextHasAiDiffContent;
-    setHasAiDiffContent(nextHasAiDiffContent);
-    onAiDiffPresenceChange?.(nextHasAiDiffContent);
-  }, [editor, onAiDiffPresenceChange]);
-
-  useAiDiffNormalization({
-    doc,
-    noteFragment,
-    editor,
-    provider,
-    registry: notePluginRegistry,
-    onNormalized: syncAiDiffPresence,
-  });
-
-  useMount(() => {
-    syncAiDiffPresence();
-  });
 
   useMount(() => {
     let writeGuardActivated = false;
@@ -423,8 +389,6 @@ function CustomBlockNote({
       ) {
         newNoteState.markNewNoteDirty(resourceId);
       }
-      syncAiDiffPresence();
-
       syncOutlineProjection();
     });
 
@@ -585,7 +549,6 @@ function CustomBlockNote({
       exportPdf: async (options) => {
         try {
           setExportDisplayModeOverride(AI_DIFF_DISPLAY_MODE.OLD_ONLY);
-          syncAiDiffBlockFoldDisplayMode(editor.prosemirrorView, AI_DIFF_DISPLAY_MODE.OLD_ONLY);
           await waitForEditorPaint();
           await printNotePdfViaBrowser(editor, notePluginRegistry, {
             title: options?.title,
@@ -593,11 +556,6 @@ function CustomBlockNote({
           });
         } finally {
           setExportDisplayModeOverride(null);
-          try {
-            syncAiDiffBlockFoldDisplayMode(editor.prosemirrorView, aiDiffDisplayMode);
-          } catch {
-            void 0;
-          }
         }
       },
       exportMarkdown: () => {
@@ -613,7 +571,7 @@ function CustomBlockNote({
         };
       },
     }),
-    [aiDiffDisplayMode, editor]
+    [editor]
   );
 
   const onKeyDownCapture = useNoteCaptureKeyEvent({ provider, undoManager, readOnly });
@@ -662,7 +620,10 @@ function CustomBlockNote({
   };
 
   const showAiBulkActions =
-    hasAiDiffContent && !readOnly && aiDiffDisplayMode === AI_DIFF_DISPLAY_MODE.COMPARE;
+    hasAiDiffContent &&
+    !readOnly &&
+    !blockLocalDocWrites &&
+    aiDiffDisplayMode === AI_DIFF_DISPLAY_MODE.COMPARE;
 
   const hasInlineCommentsSidebar =
     showCommentsUi && !commentsSidebarCollapsed && commentsSidebarPortalContainer === undefined;
@@ -680,64 +641,63 @@ function CustomBlockNote({
       onKeyDownCapture={onKeyDownCapture}
     >
       <AiDiffBulkActions
+        doc={doc}
         editor={editor}
         registry={notePluginRegistry}
+        undoManager={undoManager}
         visible={showAiBulkActions}
         portalContainer={aiBulkActionsPortalContainer}
-        onApplied={syncAiDiffPresence}
       />
       <NoteEditorReadOnlyProvider value={readOnly}>
-        <AiDiffDisplayModeProvider value={effectiveAiDiffDisplayMode}>
-          <LatexCommentProvider {...latexCommentProviderProps}>
-            <BlockNoteView
-              className={commentStyles.bodyBlockNoteView}
-              editor={editor}
-              theme="light"
-              formattingToolbar={false}
-              slashMenu={false}
-              sideMenu={false}
-              tableHandles={false}
-              comments={false}
-              editable={!readOnly}
-              onSelectionChange={handleSelectionChange}
-            >
-              <NoteToolbar
-                onAskAi={handleAskAi}
-                showAddComment={commentsWritable}
-                onRememberPendingCommentReference={() => {
-                  syncDomSelectionToProseMirror(editor);
-                  rememberPendingCommentReference();
-                }}
+        <LatexCommentProvider {...latexCommentProviderProps}>
+          <BlockNoteView
+            className={commentStyles.bodyBlockNoteView}
+            editor={editor}
+            theme="light"
+            formattingToolbar={false}
+            slashMenu={false}
+            sideMenu={false}
+            tableHandles={false}
+            comments={false}
+            editable={!readOnly}
+            onSelectionChange={handleSelectionChange}
+          >
+            <NoteToolbar
+              onAskAi={handleAskAi}
+              showAddComment={commentsWritable}
+              onRememberPendingCommentReference={() => {
+                syncDomSelectionToProseMirror(editor);
+                rememberPendingCommentReference();
+              }}
+            />
+            <NoteSlashMenu editor={editor} plugins={notePluginRegistry.contentPlugins} />
+            <NoteSideMenu plugins={notePluginRegistry.contentPlugins} />
+            <NoteTableHandles />
+            {showCommentsUi ? (
+              <NoteCommentsUi
+                editor={editor}
+                doc={doc}
+                commentsEnabled={commentsEnabled}
+                commentsWritable={commentsWritable}
+                commentUserId={activeCommentUserId}
+                commentUsername={activeCommentUsername}
+                commentAvatarUrl={activeCommentAvatarUrl}
+                commentUsersById={commentUsersById}
+                isCommentVisibilityPrivileged={isCommentVisibilityPrivileged}
+                collaboratorVisibility={collaboratorVisibility}
+                sidebarCollapsed={commentsSidebarCollapsed}
+                sidebarWidth={commentsSidebarWidth}
+                onSidebarWidthChange={onCommentsSidebarWidthChange}
+                sidebarPortalContainer={commentsSidebarPortalContainer}
+                commentHistoryOpen={commentHistoryOpen}
+                onCommentHistoryOpenChange={onCommentHistoryOpenChange}
+                localThreadReferenceTexts={visibleThreadReferenceTexts}
+                formulaThreadPositions={formulaThreadPositions}
+                onBumpThreadsSidebar={bumpFormulaState}
               />
-              <NoteSlashMenu editor={editor} plugins={notePluginRegistry.contentPlugins} />
-              <NoteSideMenu plugins={notePluginRegistry.contentPlugins} />
-              <NoteTableHandles />
-              {showCommentsUi ? (
-                <NoteCommentsUi
-                  editor={editor}
-                  doc={doc}
-                  commentsEnabled={commentsEnabled}
-                  commentsWritable={commentsWritable}
-                  commentUserId={activeCommentUserId}
-                  commentUsername={activeCommentUsername}
-                  commentAvatarUrl={activeCommentAvatarUrl}
-                  commentUsersById={commentUsersById}
-                  isCommentVisibilityPrivileged={isCommentVisibilityPrivileged}
-                  collaboratorVisibility={collaboratorVisibility}
-                  sidebarCollapsed={commentsSidebarCollapsed}
-                  sidebarWidth={commentsSidebarWidth}
-                  onSidebarWidthChange={onCommentsSidebarWidthChange}
-                  sidebarPortalContainer={commentsSidebarPortalContainer}
-                  commentHistoryOpen={commentHistoryOpen}
-                  onCommentHistoryOpenChange={onCommentHistoryOpenChange}
-                  localThreadReferenceTexts={visibleThreadReferenceTexts}
-                  formulaThreadPositions={formulaThreadPositions}
-                  onBumpThreadsSidebar={bumpFormulaState}
-                />
-              ) : null}
-            </BlockNoteView>
-          </LatexCommentProvider>
-        </AiDiffDisplayModeProvider>
+            ) : null}
+          </BlockNoteView>
+        </LatexCommentProvider>
       </NoteEditorReadOnlyProvider>
     </div>
   );

@@ -51,15 +51,21 @@ export function useNoteYjsUndoManager<
   BSchema extends BlockSchema,
   ISchema extends InlineContentSchema,
   SSchema extends StyleSchema,
->(noteFragment: Y.XmlFragment, editor: BlockNoteEditor<BSchema, ISchema, SSchema>): Y.UndoManager {
+>(
+  noteFragment: Y.XmlFragment,
+  aiContentStore: Y.Map<unknown>,
+  editor: BlockNoteEditor<BSchema, ISchema, SSchema>,
+  additionalTrackedOrigins: readonly unknown[] = []
+): Y.UndoManager {
   const undoManager = useMemo(() => {
     const trackedOrigins = resolveYjsTrackedOrigins(editor);
     trackedOrigins.add(null);
-    return new Y.UndoManager(noteFragment, {
+    additionalTrackedOrigins.forEach((origin) => trackedOrigins.add(origin));
+    return new Y.UndoManager([noteFragment, aiContentStore], {
       trackedOrigins,
       captureTimeout: 500,
     });
-  }, [editor, noteFragment]);
+  }, [additionalTrackedOrigins, aiContentStore, editor, noteFragment]);
 
   return undoManager;
 }

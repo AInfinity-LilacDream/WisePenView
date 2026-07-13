@@ -42,8 +42,11 @@ function inlinePlugin(id: string, type: string): NoteInlinePlugin {
     id,
     type,
     spec: defaultInlineContentSpecs.text,
-    capabilities: defaultCapabilities,
-    aiDiff: { isPresent: () => false, isVisible: () => true, apply: () => undefined },
+    capabilities: { ...defaultCapabilities, aiDiff: { support: 'inherited' } },
+    aiDiff: {
+      equals: () => true,
+      renderCandidate: () => document.createElement('span'),
+    },
     comments: { documentThreads: 'range' },
   };
 }
@@ -55,12 +58,18 @@ function bundle(children: NotePluginBundle['children']): NotePluginBundle {
 describe('createNotePluginRegistry', () => {
   it('为当前 schema 的每种内容注册唯一 owner', () => {
     expect([...notePluginRegistry.blockPlugins.keys()]).toHaveLength(15);
-    expect([...notePluginRegistry.inlinePlugins.keys()]).toHaveLength(8);
+    expect([...notePluginRegistry.inlinePlugins.keys()]).toHaveLength(3);
     expect(notePluginRegistry.blockPlugins.get('codeBlock')?.id).toBe('codeBlock');
     expect(notePluginRegistry.blockPlugins.get('math')?.id).toBe('latex.block.math');
     expect(notePluginRegistry.inlinePlugins.get('inlineMath')?.id).toBe('latex.inline.inlineMath');
     expect(notePluginRegistry.blockPlugins.get('math')?.markdownImport).toBeDefined();
     expect(notePluginRegistry.inlinePlugins.get('inlineMath')?.markdownImport).toBeDefined();
+    expect([...notePluginRegistry.blockPlugins.values()].every((plugin) => plugin.aiDiff)).toBe(
+      true
+    );
+    expect([...notePluginRegistry.inlinePlugins.values()].every((plugin) => plugin.aiDiff)).toBe(
+      true
+    );
   });
 
   it('展开 bundle 并按依赖稳定排序内容 owner', () => {
@@ -177,38 +186,6 @@ describe('createNotePluginRegistry', () => {
     const registry = createNotePluginRegistry(bundle([blockPlugin('base', 'base')]), [runtime]);
 
     expect(registry.runtimeExtensions).toEqual([runtime]);
-  });
-
-  it('校验 AI Diff runtime 的 plain text owner adapter 唯一且存在', () => {
-    const requiresText: NoteRuntimeExtension = {
-      id: 'ai-diff-runtime',
-      requiresAiDiffText: true,
-    };
-    expect(() =>
-      createNotePluginRegistry(bundle([blockPlugin('base', 'base')]), [requiresText])
-    ).toThrow('Note AI Diff runtime 缺少 plain text owner adapter');
-
-    const first = inlinePlugin('first-text', 'firstText');
-    first.capabilities = {
-      ...defaultCapabilities,
-      aiDiff: { support: 'inherited' },
-    };
-    first.aiDiff.generatedText = {
-      read: () => undefined,
-      create: () => ({ type: 'firstText' }),
-    };
-    const second = inlinePlugin('second-text', 'secondText');
-    second.capabilities = {
-      ...defaultCapabilities,
-      aiDiff: { support: 'inherited' },
-    };
-    second.aiDiff.generatedText = {
-      read: () => undefined,
-      create: () => ({ type: 'secondText' }),
-    };
-    expect(() => createNotePluginRegistry(bundle([first, second]))).toThrow(
-      'Note AI Diff plain text adapter 存在多个 owner：second-text'
-    );
   });
 
   it('去重并组合内容 owner 与 Runtime extension 的打印样式', () => {

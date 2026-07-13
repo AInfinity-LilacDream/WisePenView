@@ -31,7 +31,7 @@ function editorWithPmTypes(types: string[]) {
 }
 
 describe('Note comments owner policy', () => {
-  it('正文范围允许 text，拒绝 dedicated inline 与 AI syntax', () => {
+  it('正文范围允许 text，拒绝 dedicated inline', () => {
     expect(
       isDocumentThreadRangeAllowed(editorWithPmTypes(['text']) as never, notePluginRegistry, 1, 2)
     ).toBe(true);
@@ -42,9 +42,6 @@ describe('Note comments owner policy', () => {
         1,
         2
       )
-    ).toBe(false);
-    expect(
-      isDocumentThreadRangeAllowed(editorWithPmTypes(['ai-add']) as never, notePluginRegistry, 1, 2)
     ).toBe(false);
   });
 

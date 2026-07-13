@@ -48,10 +48,6 @@ describe('importNoteMarkdown', () => {
         props: {
           expression: 'x + y',
           autoOpenEdit: false,
-          aiDiffType: '',
-          aiDiffKey: '',
-          aiDiffOrigin: '',
-          aiDiffReplace: '',
         },
       },
       { type: 'text', text: '，保留 ', styles: {} },
@@ -98,10 +94,6 @@ describe('importNoteMarkdown', () => {
       props: {
         expression: 'x + y',
         autoOpenEdit: false,
-        aiDiffType: '',
-        aiDiffKey: '',
-        aiDiffOrigin: '',
-        aiDiffReplace: '',
       },
     });
     expect(propsOf(math?.props).expression).toBe('a^2 +\nb^2');

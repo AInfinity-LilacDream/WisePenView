@@ -2,13 +2,7 @@ import * as Y from 'yjs';
 
 const NOTE_CONTENT_SIGNATURE_VERSION = 1;
 
-type JsonValue =
-  | string
-  | number
-  | boolean
-  | null
-  | JsonValue[]
-  | { [key: string]: JsonValue };
+type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue };
 
 export function encodeNoteClientStateVector(doc: Y.Doc): string {
   const bytes = Y.encodeStateVector(doc);
@@ -52,14 +46,7 @@ function canonicalizeBlocks(value: unknown): JsonValue[] {
 
 function canonicalizeBlockProps(value: unknown): JsonValue {
   const props = isRecord(value) ? value : {};
-  return pickStableProps(props, [
-    'level',
-    'expression',
-    'aiDiffType',
-    'aiDiffKey',
-    'aiDiffOrigin',
-    'aiDiffReplace',
-  ]);
+  return pickStableProps(props, ['level', 'expression']);
 }
 
 function canonicalizeInlineContent(value: unknown): JsonValue {
@@ -84,16 +71,7 @@ function canonicalizeInlineContent(value: unknown): JsonValue {
 
 function canonicalizeInlineProps(value: unknown): JsonValue {
   const props = isRecord(value) ? value : {};
-  return pickStableProps(props, [
-    'expression',
-    'text',
-    'origin',
-    'replace',
-    'aiDiffType',
-    'aiDiffKey',
-    'aiDiffOrigin',
-    'aiDiffReplace',
-  ]);
+  return pickStableProps(props, ['expression']);
 }
 
 function pickStableProps(
@@ -147,15 +125,9 @@ function hashString(input: string): string {
     h1 = Math.imul(h1 ^ ch, 2654435761);
     h2 = Math.imul(h2 ^ ch, 1597334677);
   }
-  h1 =
-    Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^
-    Math.imul(h2 ^ (h2 >>> 13), 3266489909);
-  h2 =
-    Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^
-    Math.imul(h1 ^ (h1 >>> 13), 3266489909);
-  return `${(h2 >>> 0).toString(16).padStart(8, '0')}${(h1 >>> 0)
-    .toString(16)
-    .padStart(8, '0')}`;
+  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+  return `${(h2 >>> 0).toString(16).padStart(8, '0')}${(h1 >>> 0).toString(16).padStart(8, '0')}`;
 }
 
 function encodeUtf8Base64(value: string): string {
@@ -173,7 +145,12 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 function isNonEmptyObject(value: JsonValue): value is Record<string, JsonValue> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value) && Object.keys(value).length > 0;
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    !Array.isArray(value) &&
+    Object.keys(value).length > 0
+  );
 }
 
 function asString(value: unknown): string {

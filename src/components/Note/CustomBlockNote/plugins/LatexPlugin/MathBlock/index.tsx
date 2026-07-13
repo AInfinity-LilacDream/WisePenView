@@ -10,13 +10,10 @@ import { createReactBlockSpec } from '@blocknote/react';
 import type { ComponentType } from 'react';
 import { useCallback, useMemo, useRef, useState } from 'react';
 
-import { AI_DIFF_DISPLAY_MODE, type AiDiffDisplayMode } from '@/domains/Note';
 import { useEffectForce } from '@/hooks/useEffectForce';
 import 'katex/dist/katex.min.css';
 import type { CustomBlockNoteEditor } from '../../../blockNoteSchema';
 import { useNoteEditorReadOnlyContext } from '../../../editorReadOnly';
-import { useAiDiffDisplayModeContext } from '../../runtime/aiDiff/displayModeContext';
-import aiDiffStyles from '../../runtime/aiDiff/style.module.less';
 import { useLatexComment } from '../comments/latexCommentContext';
 import { LatexFormulaCommentButton } from '../comments/LatexFormulaCommentButton';
 import { useMathBlockCommentHighlight } from '../comments/useMathBlockThreadMarkClasses';
@@ -38,18 +35,6 @@ const mathBlockPropSchema = {
   autoEdit: {
     default: false,
   },
-  aiDiffType: {
-    default: '',
-  },
-  aiDiffKey: {
-    default: '',
-  },
-  aiDiffOrigin: {
-    default: '',
-  },
-  aiDiffReplace: {
-    default: '',
-  },
 } as const;
 
 const mathBlockConfig: BlockConfig<'math', typeof mathBlockPropSchema, 'none'> = {
@@ -61,10 +46,6 @@ const mathBlockConfig: BlockConfig<'math', typeof mathBlockPropSchema, 'none'> =
 type MathBlockProps = {
   expression: string;
   autoEdit: boolean;
-  aiDiffType: string;
-  aiDiffKey: string;
-  aiDiffOrigin: string;
-  aiDiffReplace: string;
 };
 type MathBlockData = {
   id: string;
@@ -76,21 +57,6 @@ type MathBlockRenderProps = {
   editor: BlockNoteEditor<Record<'math', BlockConfig<'math', typeof mathBlockPropSchema, 'none'>>>;
   contentRef: (node: HTMLElement | null) => void;
 };
-type MathAiDiffActionMode = 'accept' | 'discard';
-type MathAiDiffViewMode = 'hidden' | 'plain' | 'compare';
-
-type MathBlockEditor = BlockNoteEditor<BlockSchema, InlineContentSchema, StyleSchema> & {
-  removeBlocks?: (blocks: readonly unknown[]) => void;
-};
-
-type MathAiDiffResolvedView = {
-  mode: MathAiDiffViewMode;
-  plainExpression: string;
-  origin: string;
-  replace: string;
-  hasDiff: boolean;
-};
-
 function MathFormulaPreview({ expression, className }: { expression: string; className: string }) {
   const mathRef = useRef<HTMLDivElement>(null);
 
@@ -103,121 +69,8 @@ function MathFormulaPreview({ expression, className }: { expression: string; cla
   return <div ref={mathRef} className={className} />;
 }
 
-function resolveMathAiDiffViewState(params: {
-  displayMode: AiDiffDisplayMode;
-  expression: string;
-  aiDiffType: string;
-  origin: string;
-  replace: string;
-}): MathAiDiffResolvedView {
-  const { displayMode, expression, aiDiffType, origin, replace } = params;
-  const hasDiff = aiDiffType === 'edit' || aiDiffType === 'create' || aiDiffType === 'delete';
-
-  if (!hasDiff) {
-    return {
-      mode: 'plain',
-      plainExpression: expression,
-      origin: '',
-      replace: '',
-      hasDiff: false,
-    };
-  }
-
-  if (displayMode === AI_DIFF_DISPLAY_MODE.OLD_ONLY) {
-    const plainExpression = aiDiffType === 'create' ? '' : origin;
-    return {
-      mode: plainExpression ? 'plain' : 'hidden',
-      plainExpression,
-      origin,
-      replace,
-      hasDiff: true,
-    };
-  }
-
-  if (displayMode === AI_DIFF_DISPLAY_MODE.NEW_ONLY) {
-    const plainExpression = aiDiffType === 'delete' ? '' : replace;
-    return {
-      mode: plainExpression ? 'plain' : 'hidden',
-      plainExpression,
-      origin,
-      replace,
-      hasDiff: true,
-    };
-  }
-
-  return {
-    mode: origin || replace ? 'compare' : 'hidden',
-    plainExpression: '',
-    origin,
-    replace,
-    hasDiff: true,
-  };
-}
-
-function clearMathAiDiffProps(props: MathBlockRenderProps['block']['props']) {
-  return {
-    ...props,
-    aiDiffType: '',
-    aiDiffKey: '',
-    aiDiffOrigin: '',
-    aiDiffReplace: '',
-  };
-}
-
-function MathDiffActionButtons({ onApply }: { onApply: (mode: MathAiDiffActionMode) => void }) {
-  const readOnly = useNoteEditorReadOnlyContext();
-  if (readOnly) {
-    return null;
-  }
-  return (
-    <span
-      className={`${aiDiffStyles.aiActionsAnchor} ${styles.mathDiffActions}`}
-      aria-hidden="true"
-    >
-      <span
-        className={`${aiDiffStyles.aiActionsRoot} ${styles.mathDiffActionsRoot}`}
-        aria-hidden="true"
-      >
-        <button
-          type="button"
-          aria-label="保留"
-          className={`${aiDiffStyles.aiActionBtn} ${aiDiffStyles.aiActionAccept}`}
-          onMouseDown={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-          }}
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            onApply('accept');
-          }}
-        >
-          Keep
-        </button>
-        <button
-          type="button"
-          aria-label="撤销"
-          className={`${aiDiffStyles.aiActionBtn} ${aiDiffStyles.aiActionDiscard}`}
-          onMouseDown={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-          }}
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            onApply('discard');
-          }}
-        >
-          Undo
-        </button>
-      </span>
-    </span>
-  );
-}
-
 function MathBlockView(props: MathBlockRenderProps) {
   const readOnly = useNoteEditorReadOnlyContext();
-  const aiDiffDisplayMode = useAiDiffDisplayModeContext();
   const latexComment = useLatexComment();
 
   const [isEditing, setIsEditing] = useState(false);
@@ -379,59 +232,10 @@ function MathBlockView(props: MathBlockRenderProps) {
   const shellClass = `${styles.mathShell} ${styles.mathShellBlock}`;
   const previewClass = styles.mathPreview;
   const editTitle = '编辑 LaTeX（独立）';
-  const aiDiffType = String(props.block.props.aiDiffType ?? '');
-  const aiDiffOrigin = String(props.block.props.aiDiffOrigin ?? '');
-  const aiDiffReplace = String(props.block.props.aiDiffReplace ?? '');
-  const viewState = resolveMathAiDiffViewState({
-    displayMode: aiDiffDisplayMode,
-    expression: props.block.props.expression,
-    aiDiffType,
-    origin: aiDiffOrigin,
-    replace: aiDiffReplace,
-  });
-  const hasPendingAiDiff = viewState.hasDiff;
-  const canEnterEdit = !readOnly && !hasPendingAiDiff && !isEditing;
+  const canEnterEdit = !readOnly && !isEditing;
   const rootClass = canEnterEdit
     ? styles.mathRoot
     : `${styles.mathRoot} ${styles.mathRootReadonly}`;
-
-  const applyAiDiffAction = useCallback(
-    (mode: MathAiDiffActionMode) => {
-      const editor = props.editor as unknown as MathBlockEditor;
-      const baseProps = clearMathAiDiffProps(props.block.props);
-
-      if (aiDiffType === 'create') {
-        if (mode === 'accept') {
-          props.editor.updateBlock(props.block, {
-            props: { ...baseProps, expression: aiDiffReplace },
-          });
-        } else {
-          editor.removeBlocks?.([props.block]);
-        }
-        editor.focus();
-        return;
-      }
-
-      if (aiDiffType === 'delete') {
-        if (mode === 'accept') {
-          editor.removeBlocks?.([props.block]);
-        } else {
-          props.editor.updateBlock(props.block, {
-            props: { ...baseProps, expression: aiDiffOrigin },
-          });
-        }
-        editor.focus();
-        return;
-      }
-
-      const nextExpression = mode === 'accept' ? aiDiffReplace : aiDiffOrigin;
-      props.editor.updateBlock(props.block, {
-        props: { ...baseProps, expression: nextExpression },
-      });
-      editor.focus();
-    },
-    [aiDiffOrigin, aiDiffReplace, aiDiffType, props.block, props.editor]
-  );
 
   const editPopover = (
     <LatexEditPopover
@@ -462,7 +266,7 @@ function MathBlockView(props: MathBlockRenderProps) {
 
   return (
     <div ref={shellRef} contentEditable={false} className={`${shellClass} bn-math-block-root`}>
-      {!isEditing && !hasPendingAiDiff ? (
+      {!isEditing ? (
         <LatexFormulaCommentButton
           expression={props.block.props.expression}
           kind="block"
@@ -470,53 +274,29 @@ function MathBlockView(props: MathBlockRenderProps) {
           blockId={props.block.id}
         />
       ) : null}
-      {viewState.mode === 'hidden' ? (
-        <div className={styles.mathHiddenShell} aria-hidden="true" />
-      ) : null}
-      {viewState.mode === 'plain' ? (
-        <div
-          className={`${rootClass} ${commentHighlightClass}`}
-          role={canEnterEdit ? 'button' : undefined}
-          tabIndex={canEnterEdit ? 0 : -1}
-          aria-label={canEnterEdit ? '编辑独立公式' : undefined}
-          onClick={() => {
-            if (canEnterEdit) enterEdit();
-          }}
-          onKeyDown={(e) => {
-            if (!canEnterEdit) return;
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault();
-              e.stopPropagation();
-              enterEdit();
-            }
-          }}
-        >
-          <MathFormulaPreview
-            expression={isEditing ? value : viewState.plainExpression}
-            className={previewClass}
-          />
-        </div>
-      ) : null}
-      {viewState.mode === 'compare' ? (
-        <div
-          className={`${styles.mathRoot} ${styles.mathRootReadonly} ${styles.mathDiffCompare} ${aiDiffStyles.aiDiffRoot} ${commentHighlightClass}`}
-        >
-          {viewState.origin ? (
-            <div className={`${styles.mathDiffCard} ${styles.mathDiffDelete}`}>
-              <MathFormulaPreview expression={viewState.origin} className={previewClass} />
-            </div>
-          ) : null}
-          {viewState.replace ? (
-            <div className={`${styles.mathDiffCard} ${styles.mathDiffAdd}`}>
-              <MathFormulaPreview expression={viewState.replace} className={previewClass} />
-            </div>
-          ) : null}
-          <span className={styles.mathDiffActionLayer}>
-            <MathDiffActionButtons onApply={applyAiDiffAction} />
-          </span>
-        </div>
-      ) : null}
-      {!hasPendingAiDiff ? editPopover : null}
+      <div
+        className={`${rootClass} ${commentHighlightClass}`}
+        role={canEnterEdit ? 'button' : undefined}
+        tabIndex={canEnterEdit ? 0 : -1}
+        aria-label={canEnterEdit ? '编辑独立公式' : undefined}
+        onClick={() => {
+          if (canEnterEdit) enterEdit();
+        }}
+        onKeyDown={(e) => {
+          if (!canEnterEdit) return;
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            e.stopPropagation();
+            enterEdit();
+          }
+        }}
+      >
+        <MathFormulaPreview
+          expression={isEditing ? value : props.block.props.expression}
+          className={previewClass}
+        />
+      </div>
+      {editPopover}
     </div>
   );
 }
