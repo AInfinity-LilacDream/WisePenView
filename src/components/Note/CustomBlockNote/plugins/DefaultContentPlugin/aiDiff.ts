@@ -1,9 +1,9 @@
+import type { NoteBlockAiDiff, NoteInlineAiDiff, NotePluginRegistry } from '../../content/types';
 import {
   resolveNoteAiDiffBlock,
   resolveNoteAiDiffBlockAction,
 } from '../../engines/aiDiff/projection';
 import { stableStringify } from '../../engines/aiDiff/stableValue';
-import type { NoteBlockAiDiff, NoteInlineAiDiff, NotePluginRegistry } from '../types';
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;

@@ -21,23 +21,37 @@ CustomBlockNote/
 │   ├── DefaultContentPlugin/
 │   ├── CodeBlockPlugin/
 │   ├── TablePlugin/
-│   ├── LatexPlugin/
+│   └── LatexPlugin/
+├── content/
+│   ├── types.ts
 │   ├── registry.ts
-│   └── types.ts
+│   ├── projection.ts
+│   └── registry.test.ts
 ├── engines/
-│   └── aiDiff/
-│       ├── action.ts
-│       ├── projection.ts
-│       ├── runtime.ts
-│       ├── store.ts
-│       ├── useAiDiffSidecarRuntime.ts
-│       └── *.test.ts
+│   ├── aiDiff/
+│   │   ├── action.ts
+│   │   ├── projection.ts
+│   │   ├── runtime.ts
+│   │   ├── store.ts
+│   │   ├── useAiDiffSidecarRuntime.ts
+│   │   └── *.test.ts
+│   ├── editor/
+│   ├── markdown/
+│   └── print/
 ├── comments/
 ├── hooks/
+├── noteEditor.ts
 └── index.tsx
 ```
 
-`plugins/` 中只放内容 owner 和 registry；`engines/` 中放跨内容类型的遍历、状态和事务编排。测试与对应实现放在同一目录。
+目录规则：
+
+- `plugins/` 只放内容 owner；内容专属 UI、codec 和 comments 实现属于 owner，可留在对应 plugin 内；
+- `content/` 放 plugin 契约、registry 和内容 projection 基础设施；
+- `engines/` 放 Markdown、print、editor、AI Diff 等跨内容类型编排；
+- `comments/` 放全局批注 runtime 与选区策略；
+- `noteEditor.ts` 是唯一组合入口，负责装配 plugin tree 与 runtime extensions；
+- 测试与对应实现放在同一目录。
 
 ## 3. Plugin Tree 与 Registry
 

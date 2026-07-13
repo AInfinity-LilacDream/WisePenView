@@ -20,6 +20,10 @@ export { LatexCommentProvider, useFormulaComments } from '../plugins/LatexPlugin
 
 export { syncDomSelectionToProseMirror } from './core/commentDocumentMarks';
 export {
+  isCommentableSelection,
+  shouldHideNoteFormattingToolbar,
+} from './core/contentSelectionPolicy';
+export {
   capturePendingCommentSelection,
   type PendingCommentReference,
   type PendingCommentSelection,

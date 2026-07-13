@@ -1,8 +1,8 @@
 /** @vitest-environment jsdom */
 import { describe, expect, it } from 'vitest';
 
-import { notePluginRegistry } from '..';
 import { hashNoteBlockForAiDiff } from '../../engines/aiDiff/projection';
+import { notePluginRegistry } from '../../noteEditor';
 
 describe('LatexPlugin AI Diff', () => {
   it('MathBlock owner 直接比较 expression candidate', () => {

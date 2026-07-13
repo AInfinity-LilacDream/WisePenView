@@ -6,8 +6,8 @@ import type {
 } from '@blocknote/core';
 
 import type { NoteOutlineItem } from '@/components/Note/NoteOutline/index.type';
-import { notePluginRegistry } from './plugins';
-import { projectBlockPlainText } from './plugins/projection';
+import { projectBlockPlainText } from './content/projection';
+import { notePluginRegistry } from './noteEditor';
 
 type FlatBlockSnapshot = {
   id: string;

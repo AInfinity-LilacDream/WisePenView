@@ -1,8 +1,8 @@
 /** @vitest-environment jsdom */
 import { describe, expect, it } from 'vitest';
 
-import { notePluginRegistry } from '..';
 import { hashNoteBlockForAiDiff } from '../../engines/aiDiff/projection';
+import { notePluginRegistry } from '../../noteEditor';
 
 describe('DefaultContentPlugin AI Diff', () => {
   it('由 paragraph owner 解析 native candidate', () => {

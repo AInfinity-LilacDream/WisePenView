@@ -36,6 +36,7 @@ import {
   commentStyles,
   getBlockNoteCommentUsersYMap,
   getBlockNoteThreadsYMap,
+  isCommentableSelection,
   LatexCommentProvider,
   NoteCommentsUi,
   resolveActiveCommentUserProfile,
@@ -53,6 +54,9 @@ import { NoteEditorReadOnlyProvider } from './editorReadOnly';
 import { AiDiffBulkActions } from './engines/aiDiff/BulkActions';
 import { AI_DIFF_ACTION_ORIGIN, getAiContentStore } from './engines/aiDiff/store';
 import { useAiDiffSidecarRuntime } from './engines/aiDiff/useAiDiffSidecarRuntime';
+import { exportNoteMarkdown } from './engines/markdown/markdownExport';
+import { importNoteMarkdown } from './engines/markdown/markdownImport';
+import { printNotePdfViaBrowser, waitForEditorPaint } from './engines/print/noteBrowserPrint';
 import {
   useAttachNoteYjsUndoStack,
   useNoteCaptureKeyEvent,
@@ -60,17 +64,13 @@ import {
   useNoteYjsUndoManager,
 } from './hooks';
 import type { CustomBlockNoteProps, NoteBodyEditorHandle } from './index.type';
-import { buildOutlineProjection, resolveActiveHeadingId } from './Outline';
 import {
   collectNoteEditorExtensions,
   collectNoteEditorProps,
   createNoteReadOnlyFilterExtension,
-  exportNoteMarkdown,
-  importNoteMarkdown,
-  isCommentableSelection,
   notePluginRegistry,
-} from './plugins';
-import { printNotePdfViaBrowser, waitForEditorPaint } from './plugins/noteBrowserPrint';
+} from './noteEditor';
+import { buildOutlineProjection, resolveActiveHeadingId } from './Outline';
 import styles from './style.module.less';
 
 type CreateBlockNoteOptions = NonNullable<Parameters<typeof useCreateBlockNote>[0]>;

@@ -1,9 +1,7 @@
 import { blockNoteSchema } from '@/components/Note/CustomBlockNote/blockNoteSchema';
+import { shouldHideNoteFormattingToolbar } from '@/components/Note/CustomBlockNote/comments';
 import { useNoteEditorReadOnlyContext } from '@/components/Note/CustomBlockNote/editorReadOnly';
-import {
-  notePluginRegistry,
-  shouldHideNoteFormattingToolbar,
-} from '@/components/Note/CustomBlockNote/plugins';
+import { notePluginRegistry } from '@/components/Note/CustomBlockNote/noteEditor';
 import {
   blockMatchesBlockTypeItem,
   getAvailableBlockTypeItems,

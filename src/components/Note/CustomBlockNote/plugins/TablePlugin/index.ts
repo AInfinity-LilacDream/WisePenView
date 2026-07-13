@@ -1,11 +1,11 @@
 import { defaultBlockSpecs } from '@blocknote/core';
 import { PanelLeft, PanelTop, StretchHorizontal, Table2 } from 'lucide-react';
 
+import type { NoteBlockPlugin, NotePluginRegistry, NoteSideMenuAction } from '../../content/types';
 import {
   resolveNoteAiDiffBlock,
   resolveNoteAiDiffBlockAction,
 } from '../../engines/aiDiff/projection';
-import type { NoteBlockPlugin, NotePluginRegistry, NoteSideMenuAction } from '../types';
 
 interface TableContentLike {
   rows: Array<{ cells: unknown[] }>;

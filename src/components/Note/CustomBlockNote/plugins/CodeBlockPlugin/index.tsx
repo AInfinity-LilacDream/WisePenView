@@ -3,12 +3,12 @@ import { createCodeBlockSpec } from '@blocknote/core';
 import { flushSync } from 'react-dom';
 import { createRoot } from 'react-dom/client';
 
+import { projectInlinePlainText } from '../../content/projection';
+import type { NoteBlockPlugin } from '../../content/types';
 import {
   resolveNoteAiDiffBlock,
   resolveNoteAiDiffBlockAction,
 } from '../../engines/aiDiff/projection';
-import { projectInlinePlainText } from '../projection';
-import type { NoteBlockPlugin } from '../types';
 import { CodeBlockToolbar, type CodeBlockLanguageOption } from './CodeBlockToolbar';
 
 const CODE_BLOCK_THEME = 'github-light';

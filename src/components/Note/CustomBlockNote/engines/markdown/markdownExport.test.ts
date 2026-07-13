@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
 import { AI_DIFF_DISPLAY_MODE } from '@/domains/Note';
-import { notePluginRegistry } from '.';
-import { hashNoteBlockForAiDiff } from '../engines/aiDiff/projection';
+import type { NoteAiContentPayload } from '../../content/types';
+import { notePluginRegistry } from '../../noteEditor';
+import { hashNoteBlockForAiDiff } from '../aiDiff/projection';
 import { projectNoteBlocksForMarkdown } from './markdownExport';
-import type { NoteAiContentPayload } from './types';
 
 describe('projectNoteBlocksForMarkdown', () => {
   it('默认导出 native 正文，newOnly 导出 candidate', () => {

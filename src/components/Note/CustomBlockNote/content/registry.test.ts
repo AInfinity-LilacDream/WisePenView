@@ -1,7 +1,7 @@
 import { defaultBlockSpecs, defaultInlineContentSpecs } from '@blocknote/core';
 import { describe, expect, it } from 'vitest';
 
-import { notePluginRegistry } from '.';
+import { notePluginRegistry } from '../noteEditor';
 import {
   collectNotePrintStyles,
   createDefaultNoteBlock,

@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 import * as Y from 'yjs';
 
-import { notePluginRegistry } from '../../plugins';
-import type { NoteAiContentPayload } from '../../plugins/types';
+import type { NoteAiContentPayload } from '../../content/types';
+import { notePluginRegistry } from '../../noteEditor';
 import { applyNoteAiDiffAction } from './action';
 import { hashNoteBlockForAiDiff } from './projection';
 import { readBlockAiContent, setBlockAiContent } from './store';

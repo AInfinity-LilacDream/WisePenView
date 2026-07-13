@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import * as Y from 'yjs';
 
-import type { NoteAiContentPayload } from '../../plugins/types';
+import type { NoteAiContentPayload } from '../../content/types';
 import {
   clearBlockAiContent,
   observeAiContent,

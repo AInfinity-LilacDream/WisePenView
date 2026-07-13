@@ -3,6 +3,8 @@ import type { Mark } from '@tiptap/pm/model';
 import { Plugin, PluginKey } from '@tiptap/pm/state';
 import type { EditorProps } from '@tiptap/pm/view';
 
+import type { NoteRuntimeExtension } from '../../content/types';
+
 const ESC = '\u001b';
 
 function textContainsEsc(text: string): boolean {
@@ -17,7 +19,7 @@ function textContainsEsc(text: string): boolean {
  * 在编辑器视图上拦截含 U+001B 的 insertText / insertCompositionText（PM 会对返回 true 的事件 preventDefault）。
  * appendTransaction 负责协同等不经过 DOM 输入的路径。
  */
-export const stripEscapeEditorProps: Pick<EditorProps, 'handleDOMEvents'> = {
+const stripEscapeEditorProps: Pick<EditorProps, 'handleDOMEvents'> = {
   handleDOMEvents: {
     beforeinput(_view, event) {
       const e = event as InputEvent;
@@ -34,7 +36,7 @@ export const stripEscapeEditorProps: Pick<EditorProps, 'handleDOMEvents'> = {
 };
 
 /** 文档层兜底：剔除已写入的 U+001B（协同 / 非 DOM 输入等）。 */
-export const stripEscapeCharExtension = createExtension({
+const stripEscapeCharExtension = createExtension({
   key: 'stripEscapeChar',
   prosemirrorPlugins: [
     new Plugin({
@@ -83,3 +85,9 @@ export const stripEscapeCharExtension = createExtension({
     }),
   ],
 });
+
+export const editorRuntimeExtension = {
+  id: 'editor.runtime',
+  extensions: () => [stripEscapeCharExtension],
+  editorProps: () => stripEscapeEditorProps,
+} satisfies NoteRuntimeExtension;

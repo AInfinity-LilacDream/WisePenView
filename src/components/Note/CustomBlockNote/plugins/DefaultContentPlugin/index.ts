@@ -7,7 +7,7 @@ import {
 } from '@blocknote/core';
 import { Image as ImageIcon } from 'lucide-react';
 
-import { projectInlinePlainText } from '../projection';
+import { projectInlinePlainText } from '../../content/projection';
 import type {
   NoteBlockPlugin,
   NoteCapabilityDeclaration,
@@ -16,7 +16,7 @@ import type {
   NoteInlinePlugin,
   NotePluginBundle,
   NotePrintContribution,
-} from '../types';
+} from '../../content/types';
 import {
   atomicPropsBlockAiDiff,
   plainLinkInlineAiDiff,

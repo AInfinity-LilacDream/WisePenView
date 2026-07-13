@@ -5,7 +5,7 @@ import type {
   NoteAiDiffAction,
   NoteAiDiffBlockMutation,
   NotePluginRegistry,
-} from '../../plugins/types';
+} from '../../content/types';
 import { stableStringify } from './stableValue';
 import {
   AI_DIFF_ACTION_ORIGIN,

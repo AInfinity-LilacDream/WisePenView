@@ -6,8 +6,8 @@ import type {
 } from '@blocknote/core';
 
 import { AI_DIFF_DISPLAY_MODE, type AiDiffDisplayMode } from '@/domains/Note';
-import { readAiDiffPayloadsFromEditorState } from '../engines/aiDiff/runtime';
-import type { NoteAiContentPayload, NotePluginRegistry } from './types';
+import type { NoteAiContentPayload, NotePluginRegistry } from '../../content/types';
+import { readAiDiffPayloadsFromEditorState } from '../aiDiff/runtime';
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;

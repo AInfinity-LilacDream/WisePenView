@@ -4,7 +4,7 @@ import type { Doc } from 'yjs';
 
 import type { WisepenProvider } from '@/domains/Note';
 import type { CustomBlockNoteEditor } from '../../blockNoteSchema';
-import type { NotePluginRegistry } from '../../plugins/types';
+import type { NotePluginRegistry } from '../../content/types';
 import {
   getBlockNoteThreadDocumentSelectionsYMap,
   hasCommentDocumentYjsBinding,

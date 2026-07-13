@@ -1,6 +1,6 @@
 import type * as Y from 'yjs';
 
-import type { NoteAiContentPayload } from '../../plugins/types';
+import type { NoteAiContentPayload } from '../../content/types';
 
 export const AI_CONTENT_STORE_MAP = 'ai-content-store';
 export const AI_DIFF_ACTION_ORIGIN = Symbol('ai-diff-action');

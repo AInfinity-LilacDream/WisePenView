@@ -1,7 +1,7 @@
-import type { CustomBlockNoteEditor } from '../blockNoteSchema';
-import { getProseMirrorRoot } from './editorProseMirrorRoot';
-import { collectNotePrintStyles } from './registry';
-import type { NotePluginRegistry } from './types';
+import type { CustomBlockNoteEditor } from '../../blockNoteSchema';
+import { collectNotePrintStyles } from '../../content/registry';
+import type { NotePluginRegistry } from '../../content/types';
+import { getProseMirrorRoot } from '../editor/dom';
 
 export interface PrintNotePdfOptions {
   /** 文档 `<title>` 与无 titleRoot 时的合成 h1 文案 */

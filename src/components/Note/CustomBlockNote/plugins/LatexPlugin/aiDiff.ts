@@ -1,9 +1,9 @@
+import type { NoteBlockAiDiff, NoteInlineAiDiff } from '../../content/types';
 import {
   resolveNoteAiDiffBlock,
   resolveNoteAiDiffBlockAction,
 } from '../../engines/aiDiff/projection';
 import { stableStringify } from '../../engines/aiDiff/stableValue';
-import type { NoteBlockAiDiff, NoteInlineAiDiff } from '../types';
 import { renderKatexInto } from './katexRender';
 
 function isRecord(value: unknown): value is Record<string, unknown> {

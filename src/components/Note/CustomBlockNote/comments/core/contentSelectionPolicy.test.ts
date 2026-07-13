@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { notePluginRegistry } from '.';
+import { notePluginRegistry } from '../../noteEditor';
 import {
   isCommentableSelection,
   isDocumentThreadRangeAllowed,
   shouldHideNoteFormattingToolbar,
-} from './commentsPolicy';
+} from './contentSelectionPolicy';
 
 function editorWithPmTypes(types: string[]) {
   const nodesBetween = (_from: number, _to: number, visitor: (node: unknown) => boolean) => {

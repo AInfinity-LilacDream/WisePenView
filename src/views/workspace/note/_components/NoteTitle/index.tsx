@@ -7,7 +7,7 @@ import { useMemoizedFn, useMount, useUnmount, useUpdateEffect } from 'ahooks';
 import React, { useImperativeHandle, useMemo, useRef, type Ref } from 'react';
 
 import { useNewNoteStore } from '@/components/Note/_store/useNewNoteStore';
-import { getProseMirrorRoot } from '@/components/Note/CustomBlockNote/plugins/editorProseMirrorRoot';
+import { getProseMirrorRoot } from '@/components/Note/CustomBlockNote/engines/editor/dom';
 import { useNoteService } from '@/domains';
 
 import { parseErrorMessage } from '@/utils/error';

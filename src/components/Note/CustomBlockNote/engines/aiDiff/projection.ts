@@ -3,7 +3,7 @@ import type {
   NoteAiDiffAction,
   NoteAiDiffBlockMutation,
   NoteAiDiffBlockProjection,
-} from '../../plugins/types';
+} from '../../content/types';
 import { hashStableValue, stableStringify } from './stableValue';
 
 function isRecord(value: unknown): value is Record<string, unknown> {

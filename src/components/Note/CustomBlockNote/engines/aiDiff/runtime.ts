@@ -11,7 +11,7 @@ import type {
   NoteAiDiffAction,
   NotePluginRegistry,
   NoteRuntimeExtension,
-} from '../../plugins/types';
+} from '../../content/types';
 import styles from './style.module.less';
 
 export interface NoteAiDiffActionRequest {

@@ -1,4 +1,4 @@
-import type { NoteBlockPlugin, NoteInlinePlugin, NotePluginBundle } from '../types';
+import type { NoteBlockPlugin, NoteInlinePlugin, NotePluginBundle } from '../../content/types';
 import { inlineMathAiDiff, mathBlockAiDiff } from './aiDiff';
 import { inlineMathContentSpec } from './InlineMath';
 import { createInlineMathDollarExtension } from './InlineMath/inlineMathDollarExtension';

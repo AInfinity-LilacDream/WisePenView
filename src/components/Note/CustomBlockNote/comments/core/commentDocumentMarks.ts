@@ -10,14 +10,14 @@ import {
 import * as Y from 'yjs';
 
 import type { CustomBlockNoteEditor } from '../../blockNoteSchema';
-import { isDocumentThreadRangeAllowed } from '../../plugins/commentsPolicy';
-import { getRootDomSelection } from '../../plugins/editorProseMirrorRoot';
-import type { NotePluginRegistry } from '../../plugins/types';
+import type { NotePluginRegistry } from '../../content/types';
+import { getRootDomSelection } from '../../engines/editor/dom';
 import {
   getBlockNoteThreadsYMap,
   isThreadActive,
   type FormulaThreadAnchor,
 } from './commentThreadConstants';
+import { isDocumentThreadRangeAllowed } from './contentSelectionPolicy';
 import { getHiddenThreadIdsForUser, type ThreadVisibilityContext } from './threadVisibility';
 
 export const WISEPEN_COMMENT_MARK_SYNC_META = 'wisePenCommentMarkSync';

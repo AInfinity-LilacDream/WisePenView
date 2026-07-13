@@ -4,8 +4,7 @@ import type * as Y from 'yjs';
 import type { Doc } from 'yjs';
 
 import type { CustomBlockNoteEditor } from '../../blockNoteSchema';
-import { isDocumentThreadRangeAllowed } from '../../plugins/commentsPolicy';
-import type { NotePluginRegistry } from '../../plugins/types';
+import type { NotePluginRegistry } from '../../content/types';
 import type { BlockNoteCommentDocumentRole } from '../comments.types';
 import { bindDynamicCommentUserId } from '../core/bindDynamicCommentUserId';
 import {
@@ -17,6 +16,7 @@ import {
   getBlockNoteFormulaThreadAnchorsYMap,
   getBlockNoteThreadReferencesYMap,
 } from '../core/commentThreadConstants';
+import { isDocumentThreadRangeAllowed } from '../core/contentSelectionPolicy';
 import {
   createInlineCommentThreadStore,
   type InlineCommentDataSource,
