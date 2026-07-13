@@ -32,7 +32,7 @@ function blockPlugin(id: string, type: string, dependencies?: readonly string[])
     dependencies,
     spec: defaultBlockSpecs.paragraph,
     capabilities: defaultCapabilities,
-    comments: { documentThreads: 'unsupported' },
+    comments: { mode: 'unsupported' },
   };
 }
 
@@ -47,7 +47,7 @@ function inlinePlugin(id: string, type: string): NoteInlinePlugin {
       equals: () => true,
       renderCandidate: () => document.createElement('span'),
     },
-    comments: { documentThreads: 'range' },
+    comments: { mode: 'range' },
   };
 }
 
@@ -98,6 +98,15 @@ describe('createNotePluginRegistry', () => {
 
     expect(() => createNotePluginRegistry(bundle([missing]))).toThrow(
       'Note 插件 missing-comments 未声明 comments policy'
+    );
+  });
+
+  it('拒绝没有 anchor facet 的 dedicated comments owner', () => {
+    const missingFacet = blockPlugin('missing-comment-facet', 'missingCommentFacet');
+    missingFacet.comments = { mode: 'dedicated' } as never;
+
+    expect(() => createNotePluginRegistry(bundle([missingFacet]))).toThrow(
+      'Note 插件 missing-comment-facet 声明专用批注，但未提供 anchor facet'
     );
   });
 

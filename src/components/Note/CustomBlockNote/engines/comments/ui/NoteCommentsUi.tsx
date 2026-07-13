@@ -8,15 +8,11 @@ import type { Doc } from 'yjs';
 
 import type { WisePenCommentAuthorInfo } from '@/components/CommentsSidebar';
 import type { NoteCommentUserDisplayRecord } from '@/domains/Note';
-import type { CustomBlockNoteEditor } from '../../noteEditor';
-import {
-  isFormulaCommentSyncing,
-  isWisePenFormulaYjsTransaction,
-} from '../core/commentDocumentMarks';
+import type { NoteCommentPosition, NotePluginRegistry } from '../../../content/types';
+import type { CustomBlockNoteEditor } from '../../../noteEditor';
 import type { CollaboratorCommentVisibility } from '../core/commentSettings';
 import {
   getBlockNoteCommentUsersYMap,
-  getBlockNoteFormulaThreadAnchorsYMap,
   getBlockNoteThreadsYMap,
 } from '../core/commentThreadConstants';
 import {
@@ -24,7 +20,12 @@ import {
   normalizeAvatarUrl,
   syncCommentUserProfileToYMap,
 } from '../core/commentUserProfile';
-import { getThreadComments, type ThreadPosition } from '../core/threadReferenceText';
+import {
+  getContentCommentAnchorStores,
+  isContentCommentSyncing,
+  isContentCommentYjsTransaction,
+} from '../core/contentCommentAnchors';
+import { getThreadComments } from '../core/threadReferenceText';
 import type { ThreadVisibilityContext } from '../core/threadVisibility';
 import CommentHistoryModal from './CommentHistoryModal';
 import { CommentsSidebarPanel } from './CommentsSidebarPanel';
@@ -68,6 +69,7 @@ function readCommentAuthorInfo(comment: CommentData): RawCommentAuthorInfo | und
 type NoteCommentsUiProps = {
   editor: CustomBlockNoteEditor;
   doc: Doc;
+  registry: NotePluginRegistry;
   commentsEnabled: boolean;
   commentsWritable: boolean;
   commentUserId: string;
@@ -83,13 +85,14 @@ type NoteCommentsUiProps = {
   commentHistoryOpen: boolean;
   onCommentHistoryOpenChange: (open: boolean) => void;
   localThreadReferenceTexts: ReadonlyMap<string, string>;
-  formulaThreadPositions: Map<string, ThreadPosition>;
+  contentThreadPositions: Map<string, NoteCommentPosition>;
   onBumpThreadsSidebar: () => void;
 };
 
 export function NoteCommentsUi({
   editor,
   doc,
+  registry,
   commentsEnabled,
   commentsWritable,
   commentUserId,
@@ -105,11 +108,11 @@ export function NoteCommentsUi({
   commentHistoryOpen,
   onCommentHistoryOpenChange,
   localThreadReferenceTexts,
-  formulaThreadPositions,
+  contentThreadPositions,
   onBumpThreadsSidebar,
 }: NoteCommentsUiProps) {
   const threadsYMap = getBlockNoteThreadsYMap(doc);
-  const formulaAnchorsYMap = getBlockNoteFormulaThreadAnchorsYMap(doc);
+  const contentAnchorStores = getContentCommentAnchorStores(doc, registry);
   const commentUsersYMap = getBlockNoteCommentUsersYMap(doc);
   const detachListenersRef = useRef<(() => void) | null>(null);
 
@@ -181,16 +184,16 @@ export function NoteCommentsUi({
     });
 
     const handleTransaction = (transaction: Y.Transaction) => {
-      if (isWisePenFormulaYjsTransaction(transaction.origin)) {
+      if (isContentCommentYjsTransaction(transaction.origin)) {
         return;
       }
       const changed = transaction.changed as unknown as Map<unknown, unknown>;
       const threadsChanged = changed.has(threadsYMap);
-      const anchorsChanged = changed.has(formulaAnchorsYMap);
+      const anchorsChanged = contentAnchorStores.some((store) => changed.has(store));
       if (!threadsChanged && !anchorsChanged) {
         return;
       }
-      if (isFormulaCommentSyncing) {
+      if (isContentCommentSyncing) {
         return;
       }
       onBumpThreadsSidebar();
@@ -226,7 +229,7 @@ export function NoteCommentsUi({
       editor={editor}
       doc={doc}
       localThreadReferenceTexts={localThreadReferenceTexts}
-      formulaThreadPositions={formulaThreadPositions}
+      contentThreadPositions={contentThreadPositions}
       visibilityContext={visibilityContext}
       filter="resolved"
       sort="recent-activity"
@@ -243,7 +246,7 @@ export function NoteCommentsUi({
         editor={editor}
         doc={doc}
         localThreadReferenceTexts={localThreadReferenceTexts}
-        formulaThreadPositions={formulaThreadPositions}
+        contentThreadPositions={contentThreadPositions}
         visibilityContext={visibilityContext}
         filter="open"
         sort="position"

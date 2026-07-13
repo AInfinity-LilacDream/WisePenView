@@ -3,8 +3,8 @@ import { CommentMark, CommentsExtension, YjsThreadStore } from '@blocknote/core/
 import type * as Y from 'yjs';
 import type { Doc } from 'yjs';
 
-import type { NotePluginRegistry } from '../../content/types';
-import type { CustomBlockNoteEditor } from '../../noteEditor';
+import type { NotePluginRegistry } from '../../../content/types';
+import type { CustomBlockNoteEditor } from '../../../noteEditor';
 import type { BlockNoteCommentDocumentRole } from '../comments.types';
 import { bindDynamicCommentUserId } from '../core/bindDynamicCommentUserId';
 import {
@@ -12,10 +12,11 @@ import {
   persistThreadDocumentSelection,
   WISEPEN_COMMENT_MARK_SYNC_META,
 } from '../core/commentDocumentMarks';
+import { getBlockNoteThreadReferencesYMap } from '../core/commentThreadConstants';
 import {
-  getBlockNoteFormulaThreadAnchorsYMap,
-  getBlockNoteThreadReferencesYMap,
-} from '../core/commentThreadConstants';
+  CONTENT_COMMENT_YJS_ORIGIN,
+  getContentCommentAnchorStores,
+} from '../core/contentCommentAnchors';
 import { isDocumentThreadRangeAllowed } from '../core/contentSelectionPolicy';
 import {
   createInlineCommentThreadStore,
@@ -191,15 +192,19 @@ function isDeletingLastVisibleComment(
   return visibleCommentIds.length === 1 && visibleCommentIds[0] === args.commentId;
 }
 
-function deleteThreadSidecarData(doc: Doc | undefined, threadId: string): void {
+function deleteThreadSidecarData(
+  doc: Doc | undefined,
+  registry: NotePluginRegistry,
+  threadId: string
+): void {
   if (!doc) {
     return;
   }
   doc.transact(() => {
     getBlockNoteThreadReferencesYMap(doc).delete(threadId);
-    getBlockNoteFormulaThreadAnchorsYMap(doc).delete(threadId);
     getBlockNoteThreadDocumentSelectionsYMap(doc).delete(threadId);
-  });
+    getContentCommentAnchorStores(doc, registry).forEach((store) => store.delete(threadId));
+  }, CONTENT_COMMENT_YJS_ORIGIN);
 }
 
 export function buildCommentsExtension(
@@ -266,7 +271,7 @@ export function buildCommentsExtension(
       return;
     }
     threadsYMap.delete(args.threadId);
-    deleteThreadSidecarData(doc, args.threadId);
+    deleteThreadSidecarData(doc, registry, args.threadId);
   };
 
   threadStoreWithDocumentMarks.addThreadToDocument = async (args: AddThreadToDocumentArgs) => {

@@ -12,9 +12,12 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 
 import { useEffectForce } from '@/hooks/useEffectForce';
 import 'katex/dist/katex.min.css';
+import type { NoteCommentAnchor } from '../../../content/types';
+import { useNoteCommentRuntime } from '../../../engines/comments/core/commentRuntimeContext';
 import { useNoteEditorReadOnlyContext } from '../../../engines/editor/readOnly';
 import type { CustomBlockNoteEditor } from '../../../noteEditor';
-import { useLatexComment } from '../comments/latexCommentContext';
+import { MATH_BLOCK_COMMENT_OWNER_ID } from '../comments/anchor';
+import { formatFormulaReferenceText } from '../comments/latexCommentSupport';
 import { LatexFormulaCommentButton } from '../comments/LatexFormulaCommentButton';
 import { useMathBlockCommentHighlight } from '../comments/useMathBlockThreadMarkClasses';
 import popoverStyles from '../InlineMath/style.module.less';
@@ -71,7 +74,7 @@ function MathFormulaPreview({ expression, className }: { expression: string; cla
 
 function MathBlockView(props: MathBlockRenderProps) {
   const readOnly = useNoteEditorReadOnlyContext();
-  const latexComment = useLatexComment();
+  const comments = useNoteCommentRuntime();
 
   const [isEditing, setIsEditing] = useState(false);
   const [value, setValue] = useState(props.block.props.expression);
@@ -214,13 +217,18 @@ function MathBlockView(props: MathBlockRenderProps) {
     () => ({ kind: 'block' as const, blockId: props.block.id }),
     [props.block.id]
   );
+  const blockCommentTarget = useMemo(
+    () => ({
+      ownerId: MATH_BLOCK_COMMENT_OWNER_ID,
+      anchor: blockFormulaAnchor as unknown as NoteCommentAnchor,
+    }),
+    [blockFormulaAnchor]
+  );
   const commentHighlight = useMathBlockCommentHighlight({
-    commentEditor:
-      latexComment?.commentEditor ?? (props.editor as unknown as CustomBlockNoteEditor),
-    anchor: blockFormulaAnchor,
+    commentEditor: comments?.editor ?? (props.editor as unknown as CustomBlockNoteEditor),
+    target: blockCommentTarget,
     revisionKey: String(props.block.props.expression ?? ''),
-    hasActiveFormulaComment: (anchor) => latexComment?.hasActiveFormulaComment(anchor) ?? false,
-    getThreadAnchor: (threadId) => latexComment?.getThreadAnchor(threadId),
+    comments,
   });
   const commentHighlightClass = [
     commentHighlight.commented ? styles.mathBlockCommented : '',
@@ -248,11 +256,13 @@ function MathBlockView(props: MathBlockRenderProps) {
       onChange={(e) => {
         const nextValue = e.target.value;
         setValue(nextValue);
-        latexComment?.updateFormulaCommentReference({
-          anchor: { kind: 'block', blockId: props.block.id },
-          expression: nextValue,
-          kind: 'block',
-        });
+        const referenceText = formatFormulaReferenceText(nextValue, 'block');
+        if (referenceText) {
+          comments?.updateContentCommentReference({
+            ...blockCommentTarget,
+            referenceText,
+          });
+        }
       }}
       onCommit={() => commit(true)}
       commitEnterUnlessShift

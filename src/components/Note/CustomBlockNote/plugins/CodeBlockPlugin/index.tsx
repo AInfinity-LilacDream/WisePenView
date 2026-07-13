@@ -137,7 +137,7 @@ export const codeBlockPlugin = {
     projection: { support: 'default' },
     print: { support: 'custom' },
   },
-  comments: { documentThreads: 'range' },
+  comments: { mode: 'range' },
   aiDiff: {
     resolve: resolveNoteAiDiffBlock,
     renderCandidate(candidate, registry) {

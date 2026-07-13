@@ -8,8 +8,8 @@ import type {
   WisepenProvider,
 } from '@/domains/Note';
 import type { User } from '@/domains/User';
-import type { BlockNoteCommentDocumentRole } from './comments/comments.types';
-import type { CollaboratorCommentVisibility } from './comments/core/commentSettings';
+import type { BlockNoteCommentDocumentRole } from './engines/comments/comments.types';
+import type { CollaboratorCommentVisibility } from './engines/comments/core/commentSettings';
 
 export interface NoteBodyEditorHandle {
   focus: () => void;

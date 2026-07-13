@@ -1,6 +1,6 @@
 import type * as Y from 'yjs';
 
-import type { CustomBlockNoteEditor } from '../../noteEditor';
+import type { CustomBlockNoteEditor } from '../../../noteEditor';
 
 export type PendingCommentSelection = {
   anchor: number;

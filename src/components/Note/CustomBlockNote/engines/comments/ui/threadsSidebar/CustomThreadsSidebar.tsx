@@ -11,7 +11,7 @@ import {
   type WisePenCommentAuthorInfo,
   type WisePenSidebarThread,
 } from '@/components/CommentsSidebar';
-import type { CustomBlockNoteEditor } from '../../../noteEditor';
+import type { CustomBlockNoteEditor } from '../../../../noteEditor';
 import { getBlockNoteThreadsYMap } from '../../core/commentThreadConstants';
 import {
   buildTextCommentBody,
@@ -34,7 +34,7 @@ type CustomThreadsSidebarProps = {
   editor: CustomBlockNoteEditor;
   doc: Doc;
   localThreadReferenceTexts: ReadonlyMap<string, string>;
-  formulaThreadPositions?: Map<string, ThreadPosition>;
+  contentThreadPositions?: Map<string, ThreadPosition>;
   visibilityContext: ThreadVisibilityContext;
   filter?: ThreadResolvedFilter;
   sort?: 'position' | 'recent-activity' | 'oldest';
@@ -75,7 +75,7 @@ export function CustomThreadsSidebar({
   editor,
   doc,
   localThreadReferenceTexts,
-  formulaThreadPositions = new Map(),
+  contentThreadPositions = new Map(),
   visibilityContext,
   filter = 'open',
   sort = 'position',
@@ -120,7 +120,7 @@ export function CustomThreadsSidebar({
   });
 
   const mergedThreadPositions = new Map(threadPositions);
-  formulaThreadPositions.forEach((position, threadId) => {
+  contentThreadPositions.forEach((position, threadId) => {
     if (!mergedThreadPositions.has(threadId)) {
       mergedThreadPositions.set(threadId, position);
     }

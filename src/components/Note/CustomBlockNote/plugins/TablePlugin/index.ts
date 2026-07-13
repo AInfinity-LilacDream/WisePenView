@@ -82,7 +82,7 @@ export const tablePlugin = {
     projection: { support: 'custom' },
     print: { support: 'custom' },
   },
-  comments: { documentThreads: 'unsupported' },
+  comments: { mode: 'unsupported' },
   aiDiff: {
     resolve: resolveNoteAiDiffBlock,
     renderCandidate(candidate, registry) {

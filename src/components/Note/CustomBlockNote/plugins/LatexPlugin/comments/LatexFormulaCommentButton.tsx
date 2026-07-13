@@ -1,8 +1,14 @@
 import { MessageSquare } from 'lucide-react';
 import type { RefObject } from 'react';
 
-import { useLatexComment } from './latexCommentContext';
-import type { FormulaCommentKind } from './latexCommentSupport';
+import type { NoteCommentAnchor } from '../../../content/types';
+import { useNoteCommentRuntime } from '../../../engines/comments/core/commentRuntimeContext';
+import { INLINE_MATH_COMMENT_OWNER_ID, MATH_BLOCK_COMMENT_OWNER_ID } from './anchor';
+import {
+  captureInlineMathAnchor,
+  formatFormulaReferenceText,
+  type FormulaCommentKind,
+} from './latexCommentSupport';
 import styles from './latexFormulaCommentButton.module.less';
 
 type LatexFormulaCommentButtonProps = {
@@ -18,9 +24,9 @@ export function LatexFormulaCommentButton({
   shellRef,
   blockId,
 }: LatexFormulaCommentButtonProps) {
-  const latexComment = useLatexComment();
+  const comments = useNoteCommentRuntime();
 
-  if (!latexComment?.canComment) {
+  if (!comments?.canComment) {
     return null;
   }
 
@@ -41,11 +47,16 @@ export function LatexFormulaCommentButton({
         if (!shellElement) {
           return;
         }
-        latexComment.startFormulaComment({
-          expression,
-          kind,
-          shellElement,
-          blockId,
+        const anchor =
+          kind === 'block' && blockId
+            ? { kind: 'block' as const, blockId }
+            : captureInlineMathAnchor(comments.editor, shellElement);
+        const referenceText = formatFormulaReferenceText(expression, kind);
+        if (!anchor || !referenceText) return;
+        comments.startContentComment({
+          ownerId: kind === 'block' ? MATH_BLOCK_COMMENT_OWNER_ID : INLINE_MATH_COMMENT_OWNER_ID,
+          anchor: anchor as unknown as NoteCommentAnchor,
+          referenceText,
         });
       }}
     >

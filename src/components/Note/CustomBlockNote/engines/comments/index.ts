@@ -16,7 +16,8 @@ export { buildCommentsExtension } from './hooks/useCommentsExtension';
 
 export { NoteCommentsUi } from './ui/NoteCommentsUi';
 
-export { LatexCommentProvider, useFormulaComments } from '../plugins/LatexPlugin/comments';
+export { NoteCommentRuntimeProvider } from './core/commentRuntimeContext';
+export { useContentComments } from './hooks/useContentComments';
 
 export { syncDomSelectionToProseMirror } from './core/commentDocumentMarks';
 export {

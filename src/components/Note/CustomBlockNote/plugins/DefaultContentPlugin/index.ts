@@ -11,8 +11,8 @@ import { projectInlinePlainText } from '../../content/projection';
 import type {
   NoteBlockPlugin,
   NoteCapabilityDeclaration,
+  NoteCommentFacet,
   NoteContentCapabilityDeclarations,
-  NoteContentComments,
   NoteInlinePlugin,
   NotePluginBundle,
   NotePrintContribution,
@@ -57,7 +57,7 @@ function createDefaultBlockPlugin(
   options: {
     outline?: boolean;
     aiDiff?: NoteBlockPlugin['aiDiff'];
-    comments?: NoteContentComments;
+    comments?: NoteCommentFacet;
     contentModel?: NoteBlockPlugin['contentModel'];
     defaultInsertion?: boolean;
     inlineMathDollar?: boolean;
@@ -83,7 +83,7 @@ function createDefaultBlockPlugin(
     ...(options.aiDiff ? { aiDiff: options.aiDiff } : {}),
     ...(options.print ? { print: options.print } : {}),
     ...(options.sideMenu ? { sideMenu: options.sideMenu } : {}),
-    comments: options.comments ?? { documentThreads: 'unsupported' },
+    comments: options.comments ?? { mode: 'unsupported' },
     projection: {
       plainText: (block, registry) => projectInlinePlainText(block.content, registry),
       ...(options.outline
@@ -125,7 +125,7 @@ function createDefaultInlinePlugin(type: 'text' | 'link') {
       },
     },
     aiDiff: type === 'text' ? plainTextInlineAiDiff : plainLinkInlineAiDiff,
-    comments: { documentThreads: 'range' },
+    comments: { mode: 'range' },
   } satisfies NoteInlinePlugin;
 }
 
@@ -189,7 +189,7 @@ export const defaultContentPlugin = {
         {
           outline: type === 'heading',
           aiDiff: richTextBlockAiDiff,
-          comments: { documentThreads: 'range' },
+          comments: { mode: 'range' },
           defaultInsertion: type === 'paragraph',
           inlineMathDollar:
             type === 'paragraph' ||

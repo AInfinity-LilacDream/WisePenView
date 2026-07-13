@@ -3,36 +3,25 @@ import { useExtensionState } from '@blocknote/react';
 import { useMount, useUpdateEffect } from 'ahooks';
 import { useState } from 'react';
 
-import type { FormulaThreadAnchor } from '../../../comments/core/commentThreadConstants';
+import type {
+  ContentCommentTarget,
+  NoteCommentRuntimeContextValue,
+} from '../../../engines/comments/core/commentRuntimeContext';
 import type { CustomBlockNoteEditor } from '../../../noteEditor';
 
 type UseMathBlockCommentHighlightOptions = {
   commentEditor: CustomBlockNoteEditor;
-  anchor: FormulaThreadAnchor;
+  target: ContentCommentTarget;
   revisionKey: string;
-  hasActiveFormulaComment: (anchor: FormulaThreadAnchor) => boolean;
-  getThreadAnchor: (threadId: string) => FormulaThreadAnchor | undefined;
+  comments: NoteCommentRuntimeContextValue | null;
 };
-
-function isBlockFormulaThreadSelected(
-  selectedThreadId: string | undefined,
-  getThreadAnchor: (threadId: string) => FormulaThreadAnchor | undefined,
-  blockId: string
-): boolean {
-  if (!selectedThreadId) {
-    return false;
-  }
-  const selected = getThreadAnchor(selectedThreadId);
-  return selected?.kind === 'block' && selected.blockId === blockId;
-}
 
 /** math 块无法挂 PM CommentMark，用与 bn-thread-mark 同色值由组件样式承担高亮 */
 export function useMathBlockCommentHighlight({
   commentEditor,
-  anchor,
+  target,
   revisionKey,
-  hasActiveFormulaComment,
-  getThreadAnchor,
+  comments,
 }: UseMathBlockCommentHighlightOptions): { commented: boolean; selected: boolean } {
   const { selectedThreadId } = useExtensionState(CommentsExtension, { editor: commentEditor });
   const [measureRevision, setMeasureRevision] = useState(0);
@@ -45,12 +34,8 @@ export function useMathBlockCommentHighlight({
 
   void measureRevision;
 
-  if (anchor.kind !== 'block') {
-    return { commented: false, selected: false };
-  }
-
-  const commented = hasActiveFormulaComment(anchor);
-  const selected = isBlockFormulaThreadSelected(selectedThreadId, getThreadAnchor, anchor.blockId);
+  const commented = comments?.hasActiveContentComment(target) ?? false;
+  const selected = comments?.isContentThreadSelected(target) ?? false;
 
   return { commented, selected };
 }

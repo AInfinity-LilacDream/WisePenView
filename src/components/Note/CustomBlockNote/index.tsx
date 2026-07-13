@@ -29,26 +29,6 @@ import NoteSideMenu from '../NoteSideMenu';
 import NoteSlashMenu from '../NoteSlashMenu';
 import NoteTableHandles from '../NoteTableHandles';
 import NoteToolbar from '../NoteToolbar';
-import {
-  buildCommentsExtension,
-  capturePendingCommentSelection,
-  commentStyles,
-  getBlockNoteCommentUsersYMap,
-  getBlockNoteThreadsYMap,
-  isCommentableSelection,
-  LatexCommentProvider,
-  NoteCommentsUi,
-  resolveActiveCommentUserProfile,
-  resolveBlockNoteCommentUsers,
-  syncDomSelectionToProseMirror,
-  useFormulaComments,
-  useInlineCommentsSync,
-  useSyncCommentDocumentMarks,
-  type PendingCommentReference,
-  type PendingCommentSelection,
-} from './comments';
-import { resolveNoteCommentsRuntimePolicy } from './comments/core/commentPolicy';
-import { syncCommentUserProfileToYMap } from './comments/core/commentUserProfile';
 import { buildOutlineProjection, resolveActiveHeadingId } from './content/outline';
 import { AiDiffBulkActions } from './engines/aiDiff/BulkActions';
 import { AI_DIFF_ACTION_ORIGIN, getAiContentStore } from './engines/aiDiff/store';
@@ -59,6 +39,26 @@ import {
   useNoteYjsFragment,
   useNoteYjsUndoManager,
 } from './engines/collaboration/useNoteYjsUndoStack';
+import {
+  buildCommentsExtension,
+  capturePendingCommentSelection,
+  commentStyles,
+  getBlockNoteCommentUsersYMap,
+  getBlockNoteThreadsYMap,
+  isCommentableSelection,
+  NoteCommentRuntimeProvider,
+  NoteCommentsUi,
+  resolveActiveCommentUserProfile,
+  resolveBlockNoteCommentUsers,
+  syncDomSelectionToProseMirror,
+  useContentComments,
+  useInlineCommentsSync,
+  useSyncCommentDocumentMarks,
+  type PendingCommentReference,
+  type PendingCommentSelection,
+} from './engines/comments';
+import { resolveNoteCommentsRuntimePolicy } from './engines/comments/core/commentPolicy';
+import { syncCommentUserProfileToYMap } from './engines/comments/core/commentUserProfile';
 import {
   createNoteReadOnlyFilterExtension,
   NoteEditorReadOnlyProvider,
@@ -451,15 +451,16 @@ function CustomBlockNote({
   });
 
   const {
-    latexCommentProviderProps,
+    runtimeProviderProps,
     rememberPendingCommentReference,
     commitPendingReferenceForThread,
-    bumpFormulaState,
+    bumpContentState,
     visibleThreadReferenceTexts,
-    formulaThreadPositions,
-  } = useFormulaComments({
+    contentThreadPositions,
+  } = useContentComments({
     editor,
     doc,
+    registry: notePluginRegistry,
     resourceId,
     commentsEnabled,
     commentsWritable,
@@ -490,7 +491,7 @@ function CustomBlockNote({
     commentUserId: activeCommentUserId,
     isCommentVisibilityPrivileged,
     collaboratorVisibility,
-    onAfterDocumentMarksSync: bumpFormulaState,
+    onAfterDocumentMarksSync: bumpContentState,
   });
 
   useUpdateEffect(() => {
@@ -652,7 +653,7 @@ function CustomBlockNote({
         portalContainer={aiBulkActionsPortalContainer}
       />
       <NoteEditorReadOnlyProvider value={readOnly}>
-        <LatexCommentProvider {...latexCommentProviderProps}>
+        <NoteCommentRuntimeProvider {...runtimeProviderProps}>
           <BlockNoteView
             className={commentStyles.bodyBlockNoteView}
             editor={editor}
@@ -680,6 +681,7 @@ function CustomBlockNote({
               <NoteCommentsUi
                 editor={editor}
                 doc={doc}
+                registry={notePluginRegistry}
                 commentsEnabled={commentsEnabled}
                 commentsWritable={commentsWritable}
                 commentUserId={activeCommentUserId}
@@ -695,12 +697,12 @@ function CustomBlockNote({
                 commentHistoryOpen={commentHistoryOpen}
                 onCommentHistoryOpenChange={onCommentHistoryOpenChange}
                 localThreadReferenceTexts={visibleThreadReferenceTexts}
-                formulaThreadPositions={formulaThreadPositions}
-                onBumpThreadsSidebar={bumpFormulaState}
+                contentThreadPositions={contentThreadPositions}
+                onBumpThreadsSidebar={bumpContentState}
               />
             ) : null}
           </BlockNoteView>
-        </LatexCommentProvider>
+        </NoteCommentRuntimeProvider>
       </NoteEditorReadOnlyProvider>
     </div>
   );

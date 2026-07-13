@@ -3,19 +3,20 @@ import { useRef } from 'react';
 import type { Doc } from 'yjs';
 
 import type { WisepenProvider } from '@/domains/Note';
-import type { NotePluginRegistry } from '../../content/types';
-import type { CustomBlockNoteEditor } from '../../noteEditor';
+import type { NotePluginRegistry } from '../../../content/types';
+import type { CustomBlockNoteEditor } from '../../../noteEditor';
 import {
   getBlockNoteThreadDocumentSelectionsYMap,
   hasCommentDocumentYjsBinding,
-  isFormulaCommentSyncing,
   syncPlainTextCommentDocumentMarks,
 } from '../core/commentDocumentMarks';
 import type { CollaboratorCommentVisibility } from '../core/commentSettings';
+import { getBlockNoteThreadsYMap } from '../core/commentThreadConstants';
 import {
-  getBlockNoteFormulaThreadAnchorsYMap,
-  getBlockNoteThreadsYMap,
-} from '../core/commentThreadConstants';
+  getContentCommentAnchorStores,
+  getContentCommentThreadIds,
+  isContentCommentSyncing,
+} from '../core/contentCommentAnchors';
 import type { ThreadVisibilityContext } from '../core/threadVisibility';
 
 type UseSyncCommentDocumentMarksOptions = {
@@ -70,8 +71,9 @@ export function useSyncCommentDocumentMarks({
       return;
     }
     const selectionsYMap = getBlockNoteThreadDocumentSelectionsYMap(doc);
-    const formulaAnchorsYMap = getBlockNoteFormulaThreadAnchorsYMap(doc);
-    const needsBinding = selectionsYMap.size > 0 || formulaAnchorsYMap.size > 0;
+    const contentAnchorStores = getContentCommentAnchorStores(doc, registry);
+    const needsBinding =
+      selectionsYMap.size > 0 || contentAnchorStores.some((store) => store.size > 0);
     if (needsBinding && !hasCommentDocumentYjsBinding(editor)) {
       if (bindingRetryCountRef.current >= BINDING_RETRY_LIMIT) {
         return;
@@ -86,7 +88,13 @@ export function useSyncCommentDocumentMarks({
 
     cancelBindingRetry();
     const visibilityContext = buildVisibilityContext();
-    syncPlainTextCommentDocumentMarks(editor, registry, doc, formulaAnchorsYMap, visibilityContext);
+    syncPlainTextCommentDocumentMarks(
+      editor,
+      registry,
+      doc,
+      getContentCommentThreadIds(doc, registry),
+      visibilityContext
+    );
     onAfterDocumentMarksSync?.();
   };
 
@@ -133,7 +141,7 @@ export function useSyncCommentDocumentMarks({
 
     const threadsYMap = getBlockNoteThreadsYMap(doc);
     const selectionsYMap = getBlockNoteThreadDocumentSelectionsYMap(doc);
-    const formulaAnchorsYMap = getBlockNoteFormulaThreadAnchorsYMap(doc);
+    const contentAnchorStores = getContentCommentAnchorStores(doc, registry);
 
     const handleSync = (isSynced: boolean) => {
       if (!isSynced) {
@@ -150,7 +158,7 @@ export function useSyncCommentDocumentMarks({
     };
     // CommentMark 不在 Yjs CRDT 内，正文协同/本地编辑会冲掉 mark，需按 sidecar 重挂
     const handleEditorChange = () => {
-      if (!hasSyncedRef.current || isFormulaCommentSyncing) {
+      if (!hasSyncedRef.current || isContentCommentSyncing) {
         return;
       }
       scheduleDocumentMarksSync();
@@ -159,7 +167,7 @@ export function useSyncCommentDocumentMarks({
     provider.on('sync', handleSync);
     threadsYMap.observeDeep(handleCommentSidecarChange);
     selectionsYMap.observe(handleCommentSidecarChange);
-    formulaAnchorsYMap.observe(handleCommentSidecarChange);
+    contentAnchorStores.forEach((store) => store.observe(handleCommentSidecarChange));
     const stopEditorChange = editor.onChange(handleEditorChange);
 
     if (provider.synced) {
@@ -171,7 +179,7 @@ export function useSyncCommentDocumentMarks({
       provider.off('sync', handleSync);
       threadsYMap.unobserveDeep(handleCommentSidecarChange);
       selectionsYMap.unobserve(handleCommentSidecarChange);
-      formulaAnchorsYMap.unobserve(handleCommentSidecarChange);
+      contentAnchorStores.forEach((store) => store.unobserve(handleCommentSidecarChange));
       stopEditorChange();
     };
   };

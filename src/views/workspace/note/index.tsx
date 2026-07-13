@@ -6,7 +6,7 @@ import { useCallback, useMemo, useRef, useState, type CSSProperties, type ReactN
 import { Link } from 'react-router-dom';
 
 import CustomBlockNote from '@/components/Note/CustomBlockNote';
-import { useCommentSettingsSync } from '@/components/Note/CustomBlockNote/comments';
+import { useCommentSettingsSync } from '@/components/Note/CustomBlockNote/engines/comments';
 import type {
   NoteBodyEditorHandle,
   NoteCollaborationUser,

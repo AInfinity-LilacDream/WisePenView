@@ -9,22 +9,16 @@ import {
 } from 'y-prosemirror';
 import * as Y from 'yjs';
 
-import type { NotePluginRegistry } from '../../content/types';
-import { getRootDomSelection } from '../../engines/editor/dom';
-import type { CustomBlockNoteEditor } from '../../noteEditor';
-import {
-  getBlockNoteThreadsYMap,
-  isThreadActive,
-  type FormulaThreadAnchor,
-} from './commentThreadConstants';
+import type { NotePluginRegistry } from '../../../content/types';
+import type { CustomBlockNoteEditor } from '../../../noteEditor';
+import { getRootDomSelection } from '../../editor/dom';
+import { getBlockNoteThreadsYMap, isThreadActive } from './commentThreadConstants';
 import { isDocumentThreadRangeAllowed } from './contentSelectionPolicy';
 import { getHiddenThreadIdsForUser, type ThreadVisibilityContext } from './threadVisibility';
 
 export const WISEPEN_COMMENT_MARK_SYNC_META = 'wisePenCommentMarkSync';
-export const WISEPEN_FORMULA_YJS_ORIGIN = 'wisePenFormulaCommentSync';
+export const RANGE_COMMENT_YJS_ORIGIN = 'wisePenRangeCommentSync';
 export const BLOCKNOTE_YJS_THREAD_DOCUMENT_SELECTIONS_MAP = 'thread-document-selections' as const;
-
-export let isFormulaCommentSyncing = false;
 
 export type EncodedThreadDocumentSelection = {
   anchor: Uint8Array;
@@ -42,19 +36,6 @@ export function isWisePenCommentMarkSyncTransaction(tr: {
   getMeta: (key: string) => unknown;
 }): boolean {
   return tr.getMeta(WISEPEN_COMMENT_MARK_SYNC_META) === true;
-}
-
-export function isWisePenFormulaYjsTransaction(origin: unknown): boolean {
-  return origin === WISEPEN_FORMULA_YJS_ORIGIN;
-}
-
-export function runWithFormulaCommentSync<T>(fn: () => T): T {
-  isFormulaCommentSyncing = true;
-  try {
-    return fn();
-  } finally {
-    isFormulaCommentSyncing = false;
-  }
 }
 
 export function getBlockNoteThreadDocumentSelectionsYMap(doc: Y.Doc) {
@@ -94,7 +75,7 @@ export function persistThreadDocumentSelection(
   const docRef = selectionsYMap.doc ?? doc;
   docRef.transact(() => {
     selectionsYMap.set(threadId, payload);
-  }, WISEPEN_FORMULA_YJS_ORIGIN);
+  }, RANGE_COMMENT_YJS_ORIGIN);
 }
 
 function resolveStoredThreadDocumentRange(
@@ -278,7 +259,7 @@ export function pruneThreadDocumentSelections(
     });
   };
   if (doc) {
-    doc.transact(remove, WISEPEN_FORMULA_YJS_ORIGIN);
+    doc.transact(remove, RANGE_COMMENT_YJS_ORIGIN);
   } else {
     remove();
   }
@@ -288,7 +269,7 @@ export function syncPlainTextCommentDocumentMarks(
   editor: CustomBlockNoteEditor,
   registry: NotePluginRegistry,
   doc: Y.Doc,
-  formulaAnchorsYMap: Y.Map<FormulaThreadAnchor>,
+  contentThreadIds: ReadonlySet<string>,
   visibilityContext?: ThreadVisibilityContext
 ): void {
   const threadsYMap = getBlockNoteThreadsYMap(doc);
@@ -306,7 +287,7 @@ export function syncPlainTextCommentDocumentMarks(
 
   selectionsYMap.forEach((stored, threadId) => {
     const id = String(threadId);
-    if (formulaAnchorsYMap.has(id)) {
+    if (contentThreadIds.has(id)) {
       return;
     }
     if (hiddenThreadIds.has(id)) {

@@ -1,4 +1,4 @@
-import type { NoteCommentsStatus } from '../../index.type';
+import type { NoteCommentsStatus } from '../../../index.type';
 
 export interface NoteCommentsRuntimePolicy {
   enabled: boolean;

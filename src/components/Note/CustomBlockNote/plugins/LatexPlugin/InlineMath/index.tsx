@@ -9,13 +9,18 @@ import { useCallback, useLayoutEffect, useRef, useState } from 'react';
 
 import { useEffectForce } from '@/hooks/useEffectForce';
 import 'katex/dist/katex.min.css';
+import type { NoteCommentAnchor } from '../../../content/types';
+import { useNoteCommentRuntime } from '../../../engines/comments/core/commentRuntimeContext';
+import { useNoteEditorReadOnlyContext } from '../../../engines/editor/readOnly';
 import {
+  INLINE_MATH_COMMENT_OWNER_ID,
   INLINE_MATH_PM_TYPE,
   type FormulaThreadAnchor,
-} from '../../../comments/core/commentThreadConstants';
-import { useNoteEditorReadOnlyContext } from '../../../engines/editor/readOnly';
-import { useLatexComment } from '../comments/latexCommentContext';
-import { captureInlineMathAnchor } from '../comments/latexCommentSupport';
+} from '../comments/anchor';
+import {
+  captureInlineMathAnchor,
+  formatFormulaReferenceText,
+} from '../comments/latexCommentSupport';
 import { LatexFormulaCommentButton } from '../comments/LatexFormulaCommentButton';
 import { renderKatexInto } from '../katexRender';
 import { LatexEditPopover } from '../LatexEditPopover';
@@ -109,7 +114,7 @@ function InlineMathView(
 ) {
   const { contentRef, updateInlineContent, inlineContent, editor } = props;
   const readOnly = useNoteEditorReadOnlyContext();
-  const latexComment = useLatexComment();
+  const comments = useNoteCommentRuntime();
   const expression = inlineContent.props.expression as string;
   const autoOpenEdit = inlineContent.props.autoOpenEdit as boolean;
 
@@ -147,10 +152,12 @@ function InlineMathView(
     if (!anchor) {
       return;
     }
-    latexComment?.updateFormulaCommentReference({
-      anchor,
-      expression: nextExpression,
-      kind: 'inline',
+    const referenceText = formatFormulaReferenceText(nextExpression, 'inline');
+    if (!referenceText) return;
+    comments?.updateContentCommentReference({
+      ownerId: INLINE_MATH_COMMENT_OWNER_ID,
+      anchor: anchor as unknown as NoteCommentAnchor,
+      referenceText,
       persist,
     });
   };
@@ -216,7 +223,10 @@ function InlineMathView(
     const anchor = getInlineFormulaAnchor();
     if (anchor) {
       window.setTimeout(() => {
-        latexComment?.clearFormulaCommentReferenceOverride(anchor);
+        comments?.clearContentCommentReferenceOverride({
+          ownerId: INLINE_MATH_COMMENT_OWNER_ID,
+          anchor: anchor as unknown as NoteCommentAnchor,
+        });
       }, 0);
     }
     setIsEditing(false);

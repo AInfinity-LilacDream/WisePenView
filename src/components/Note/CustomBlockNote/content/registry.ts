@@ -87,6 +87,9 @@ export function createNotePluginRegistry(
     if (!plugin.comments) {
       throw new Error(`Note 插件 ${plugin.id} 未声明 comments policy`);
     }
+    if (plugin.comments.mode === 'dedicated' && !plugin.comments.anchor) {
+      throw new Error(`Note 插件 ${plugin.id} 声明专用批注，但未提供 anchor facet`);
+    }
     const executableCapabilities = [
       ['Markdown 导入', plugin.capabilities.markdownImport, plugin.markdownImport],
       ['Markdown 导出', plugin.capabilities.markdownExport, plugin.markdownExport],

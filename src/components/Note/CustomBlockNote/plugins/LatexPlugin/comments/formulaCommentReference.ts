@@ -1,20 +1,9 @@
-import type { FormulaThreadAnchor } from '../../../comments/core/commentThreadConstants';
 import type { CustomBlockNoteEditor } from '../../../noteEditor';
 import {
   formatFormulaReferenceText,
   getFormulaAwareReferenceTextFromSelection,
   getInlineMathReferenceFromSelection,
 } from './latexCommentSupport';
-
-export function isSameFormulaThreadAnchor(a: FormulaThreadAnchor, b: FormulaThreadAnchor) {
-  if (a.kind !== b.kind || a.blockId !== b.blockId) {
-    return false;
-  }
-  if (a.kind === 'block') {
-    return true;
-  }
-  return a.inlineIndex === b.inlineIndex;
-}
 
 export function getFormulaCommentReferenceText(editor: CustomBlockNoteEditor): string | undefined {
   try {

@@ -1,11 +1,11 @@
-import type { NoteContentComments, NotePluginRegistry } from '../../content/types';
-import { hasAiDiffForBlockInEditorState } from '../../engines/aiDiff/runtime';
-import type { CustomBlockNoteEditor } from '../../noteEditor';
+import type { NoteCommentFacet, NotePluginRegistry } from '../../../content/types';
+import type { CustomBlockNoteEditor } from '../../../noteEditor';
+import { hasAiDiffForBlockInEditorState } from '../../aiDiff/runtime';
 
 function getCommentsPolicy(
   type: string,
   registry: NotePluginRegistry
-): NoteContentComments | undefined {
+): NoteCommentFacet | undefined {
   return registry.inlinePlugins.get(type)?.comments ?? registry.blockPlugins.get(type)?.comments;
 }
 
@@ -16,7 +16,7 @@ function blockRejectsDocumentThread(
 ): boolean {
   const policy = registry.blockPlugins.get(block.type)?.comments;
   return (
-    policy?.documentThreads !== 'range' ||
+    policy?.mode !== 'range' ||
     hasAiDiffForBlockInEditorState(
       editor.prosemirrorView.state,
       block as unknown as Record<string, unknown>,
@@ -56,7 +56,7 @@ export function isDocumentThreadRangeAllowed(
   let allowed = true;
   doc.nodesBetween(from, to, (node) => {
     const policy = getCommentsPolicy(node.type.name, registry);
-    if (policy && policy.documentThreads !== 'range') {
+    if (policy && policy.mode !== 'range') {
       allowed = false;
       return false;
     }
@@ -74,11 +74,7 @@ export function isCommentableSelection(
   const { from, to, empty, $from } = editor.prosemirrorView.state.selection;
   if (empty) {
     const adjacentTypes = [$from.nodeAfter?.type.name, $from.nodeBefore?.type.name];
-    if (
-      adjacentTypes.some(
-        (type) => type && getCommentsPolicy(type, registry)?.documentThreads !== 'range'
-      )
-    ) {
+    if (adjacentTypes.some((type) => type && getCommentsPolicy(type, registry)?.mode !== 'range')) {
       return false;
     }
   }

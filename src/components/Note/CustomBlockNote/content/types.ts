@@ -11,6 +11,7 @@ import type {
 import type { DefaultReactSuggestionItem } from '@blocknote/react';
 import type { EditorProps } from '@tiptap/pm/view';
 import type { LucideIcon } from 'lucide-react';
+import type * as Y from 'yjs';
 
 import type { AiDiffDisplayMode } from '@/domains/Note';
 
@@ -87,10 +88,49 @@ export interface NoteInlineAiDiff {
   ) => HTMLElement;
 }
 
-export interface NoteContentComments {
-  documentThreads: 'range' | 'dedicated' | 'unsupported';
-  hideFormattingToolbar?: boolean;
+export type NoteCommentAnchor = Readonly<Record<string, unknown>>;
+
+export interface NoteCommentPosition {
+  from: number;
+  to: number;
 }
+
+export type NoteCommentEditor = Pick<
+  PluginEditor,
+  | 'prosemirrorView'
+  | 'transact'
+  | 'getBlock'
+  | 'getSelection'
+  | 'getTextCursorPosition'
+  | 'setSelection'
+  | 'focus'
+>;
+
+/** 内容 owner 为专用批注锚点提供的可执行能力，engine 不解释 payload。 */
+export interface NoteCommentAnchorFacet {
+  getStore: (doc: Y.Doc) => Y.Map<unknown>;
+  parse: (value: unknown) => NoteCommentAnchor | null;
+  select: (editor: NoteCommentEditor, anchor: NoteCommentAnchor) => boolean;
+  resolve: (editor: NoteCommentEditor, anchor: NoteCommentAnchor) => NoteCommentPosition | null;
+  getReferenceText: (editor: NoteCommentEditor, anchor: NoteCommentAnchor) => string | undefined;
+  getSelectionReferenceText?: (editor: NoteCommentEditor) => string | undefined;
+  equals: (left: NoteCommentAnchor, right: NoteCommentAnchor) => boolean;
+  syncMark?: (
+    editor: NoteCommentEditor,
+    threadId: string,
+    anchor: NoteCommentAnchor,
+    position: NoteCommentPosition
+  ) => boolean;
+}
+
+export type NoteCommentFacet =
+  | { mode: 'range'; hideFormattingToolbar?: boolean }
+  | {
+      mode: 'dedicated';
+      hideFormattingToolbar?: boolean;
+      anchor: NoteCommentAnchorFacet;
+    }
+  | { mode: 'unsupported'; hideFormattingToolbar?: boolean; reason?: string };
 
 export interface NotePrintContribution {
   styles: readonly string[];
@@ -181,7 +221,7 @@ interface NotePluginNodeBase {
 interface NoteContentPluginBase extends NotePluginNodeBase {
   type: string;
   capabilities: NoteContentCapabilityDeclarations;
-  comments: NoteContentComments;
+  comments: NoteCommentFacet;
   print?: NotePrintContribution;
   extensions?: (context: NotePluginRuntimeContext) => ExtensionFactoryInstance[];
   editorProps?: (context: NotePluginRuntimeContext) => Partial<EditorProps>;

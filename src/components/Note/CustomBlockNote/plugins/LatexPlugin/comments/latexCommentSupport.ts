@@ -1,20 +1,11 @@
-﻿import type { ThreadData } from '@blocknote/core/comments';
-import { CommentMark } from '@blocknote/core/comments';
+﻿import { CommentMark } from '@blocknote/core/comments';
 import type { Mark as PmMark, MarkType as PmMarkType, Node as PmNode } from '@tiptap/pm/model';
 import { NodeSelection, TextSelection } from '@tiptap/pm/state';
 import type { EditorView } from '@tiptap/pm/view';
-import type * as Y from 'yjs';
 
-import {
-  WISEPEN_COMMENT_MARK_SYNC_META,
-  WISEPEN_FORMULA_YJS_ORIGIN,
-} from '../../../comments/core/commentDocumentMarks';
-import {
-  INLINE_MATH_PM_TYPE,
-  isThreadActive,
-  type FormulaThreadAnchor,
-} from '../../../comments/core/commentThreadConstants';
+import { WISEPEN_COMMENT_MARK_SYNC_META } from '../../../engines/comments/core/commentDocumentMarks';
 import type { CustomBlockNoteEditor } from '../../../noteEditor';
+import { INLINE_MATH_PM_TYPE, type FormulaThreadAnchor } from './anchor';
 
 const BLOCK_CONTAINER_TYPE = 'blockContainer';
 const MATH_BLOCK_PM_TYPE = 'math';
@@ -42,7 +33,7 @@ export function selectMathBlock(editor: CustomBlockNoteEditor, blockId: string):
       editor.transact((tr) => tr.setSelection(NodeSelection.create(tr.doc, position.from)));
       return true;
     } catch {
-      // math 鍧楄嫢涓嶅彲 node-selectable锛屽啀灏濊瘯鑼冨洿閫夋嫨銆?
+      // math 块不可进行节点选择时，继续尝试范围选择。
     }
 
     try {
@@ -51,61 +42,12 @@ export function selectMathBlock(editor: CustomBlockNoteEditor, blockId: string):
       );
       return true;
     } catch {
-      // 鍥為€€鍒?BlockNote block selection锛屽吋瀹逛笉鍚岀増鏈嚜瀹氫箟鍧楃殑 selection 琛屼负銆?
+      // 最后回退到 BlockNote block selection，兼容自定义块的选区行为。
     }
   }
 
   try {
     editor.setSelection(blockId, blockId);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-function resolveInlineMathNodeAtShell(
-  view: EditorView,
-  shell: HTMLElement
-): { node: PmNode; from: number; to: number } | null {
-  try {
-    const start = view.posAtDOM(shell, 0);
-    const $pos = view.state.doc.resolve(start);
-
-    if ($pos.nodeAfter?.type.name === INLINE_MATH_PM_TYPE) {
-      return {
-        node: $pos.nodeAfter,
-        from: start,
-        to: start + $pos.nodeAfter.nodeSize,
-      };
-    }
-
-    if ($pos.nodeBefore?.type.name === INLINE_MATH_PM_TYPE) {
-      const from = start - $pos.nodeBefore.nodeSize;
-      return {
-        node: $pos.nodeBefore,
-        from,
-        to: start,
-      };
-    }
-  } catch {
-    return null;
-  }
-
-  return null;
-}
-
-export function selectInlineMathNode(
-  editor: Pick<CustomBlockNoteEditor, 'prosemirrorView' | 'transact'>,
-  shell: HTMLElement
-): boolean {
-  const position = resolveInlineMathNodeAtShell(editor.prosemirrorView, shell);
-  if (!position) {
-    return false;
-  }
-
-  try {
-    const { from, to } = position;
-    editor.transact((tr) => tr.setSelection(TextSelection.create(tr.doc, from, to)));
     return true;
   } catch {
     return false;
@@ -203,20 +145,6 @@ export function getFormulaAwareReferenceTextFromSelection(view: EditorView): str
   }
 
   return getFormulaAwareReferenceTextFromRange(view.state.doc, from, to);
-}
-
-type CommentsExtensionHandle = {
-  startPendingComment: () => void;
-};
-
-export function getCommentsExtension(
-  editor: CustomBlockNoteEditor
-): CommentsExtensionHandle | undefined {
-  const extension = editor.getExtension('comments') as CommentsExtensionHandle | undefined;
-  if (!extension || typeof extension.startPendingComment !== 'function') {
-    return undefined;
-  }
-  return extension;
 }
 
 function getBlockContainerId(node: PmNode): string | undefined {
@@ -384,20 +312,53 @@ export function resolveFormulaThreadPosition(
   return resolved;
 }
 
-export function resolveAllFormulaThreadPositions(
+export function selectFormulaThreadAnchor(
   editor: CustomBlockNoteEditor,
-  formulaAnchorsYMap: Y.Map<FormulaThreadAnchor>
-): Map<string, ThreadPosition> {
-  const positions = new Map<string, ThreadPosition>();
+  anchor: FormulaThreadAnchor
+): boolean {
+  if (anchor.kind === 'block') {
+    return selectMathBlock(editor, anchor.blockId);
+  }
+  const position = resolveFormulaThreadPosition(editor, anchor);
+  if (!position) {
+    return false;
+  }
+  try {
+    editor.transact((tr) =>
+      tr.setSelection(TextSelection.create(tr.doc, position.from, position.to))
+    );
+    return true;
+  } catch {
+    return false;
+  }
+}
 
-  formulaAnchorsYMap.forEach((anchor, threadId) => {
-    const position = resolveFormulaThreadPosition(editor, anchor);
-    if (position) {
-      positions.set(String(threadId), position);
+export function getFormulaAnchorReferenceText(
+  editor: CustomBlockNoteEditor,
+  anchor: FormulaThreadAnchor
+): string | undefined {
+  if (anchor.kind === 'block') {
+    const block = editor.getBlock(anchor.blockId);
+    const expression = block?.type === 'math' ? block.props.expression : undefined;
+    return typeof expression === 'string'
+      ? formatFormulaReferenceText(expression, 'block')
+      : undefined;
+  }
+
+  const position = resolveFormulaThreadPosition(editor, anchor);
+  if (!position) {
+    return undefined;
+  }
+  let expression: string | undefined;
+  editor.prosemirrorView.state.doc.nodesBetween(position.from, position.to, (node) => {
+    if (!expression && node.type.name === INLINE_MATH_PM_TYPE) {
+      const value = node.attrs?.expression;
+      if (typeof value === 'string') {
+        expression = value;
+      }
     }
   });
-
-  return positions;
+  return expression ? formatFormulaReferenceText(expression, 'inline') : undefined;
 }
 
 function getCommentMarkType(editor: CustomBlockNoteEditor) {
@@ -457,116 +418,4 @@ export function applyFormulaThreadMark(
   });
 
   return formulaMarkExists(editor.prosemirrorView.state.doc, markType, threadId, from, to);
-}
-
-export function pruneFormulaThreadAnchors(
-  formulaAnchorsYMap: Y.Map<FormulaThreadAnchor>,
-  threadsYMap: Y.Map<unknown>
-) {
-  const prunedIds: string[] = [];
-  formulaAnchorsYMap.forEach((_anchor, threadId) => {
-    const thread = threadsYMap.get(threadId) as ThreadData | undefined;
-    if (!isThreadActive(thread)) {
-      prunedIds.push(String(threadId));
-    }
-  });
-  if (prunedIds.length > 0) {
-    const doc = formulaAnchorsYMap.doc;
-    const prune = () => {
-      prunedIds.forEach((threadId) => {
-        formulaAnchorsYMap.delete(threadId);
-      });
-    };
-    if (doc) {
-      doc.transact(prune, WISEPEN_FORMULA_YJS_ORIGIN);
-    } else {
-      prune();
-    }
-  }
-}
-
-/** 鎸?Yjs 閿氱偣鎶?CommentMark 鍚屾鍒板叕寮?PM 鑺傜偣锛岄珮浜敱姝ｆ枃 bn-thread-mark 鏍峰紡璐熻矗 */
-export function syncFormulaThreadMarks(
-  editor: CustomBlockNoteEditor,
-  formulaAnchorsYMap: Y.Map<FormulaThreadAnchor>,
-  threadsYMap: Y.Map<unknown>,
-  unmarkableThreadIds?: Set<string>,
-  hiddenThreadIds?: ReadonlySet<string>
-) {
-  pruneFormulaThreadAnchors(formulaAnchorsYMap, threadsYMap);
-
-  formulaAnchorsYMap.forEach((anchor, threadId) => {
-    const id = String(threadId);
-    const thread = threadsYMap.get(threadId) as ThreadData | undefined;
-    if (!isThreadActive(thread)) {
-      unmarkableThreadIds?.delete(id);
-      return;
-    }
-
-    if (hiddenThreadIds?.has(id)) {
-      return;
-    }
-
-    if (anchor.kind === 'block') {
-      unmarkableThreadIds?.delete(id);
-      return;
-    }
-
-    const position = resolveFormulaThreadPosition(editor, anchor);
-    if (!position) {
-      return;
-    }
-
-    if (unmarkableThreadIds?.has(id)) {
-      return;
-    }
-
-    const attached = applyFormulaThreadMark(editor, id, position);
-    if (!attached) {
-      unmarkableThreadIds?.add(id);
-    }
-  });
-}
-
-export function updateFormulaThreadReferences(
-  editor: CustomBlockNoteEditor,
-  formulaAnchorsYMap: Y.Map<FormulaThreadAnchor>,
-  threadReferencesYMap: Y.Map<string>
-) {
-  formulaAnchorsYMap.forEach((anchor, threadId) => {
-    const id = String(threadId);
-
-    if (anchor.kind === 'block') {
-      const block = editor.getBlock(anchor.blockId);
-      if (block?.type === 'math' && typeof block.props.expression === 'string') {
-        const referenceText = formatFormulaReferenceText(block.props.expression, 'block');
-        if (referenceText && threadReferencesYMap.get(id) !== referenceText) {
-          threadReferencesYMap.set(id, referenceText);
-        }
-      }
-      return;
-    }
-
-    const position = resolveFormulaThreadPosition(editor, anchor);
-    if (!position) {
-      return;
-    }
-
-    let expression: string | undefined;
-    editor.prosemirrorView.state.doc.nodesBetween(position.from, position.to, (node) => {
-      if (expression || node.type.name !== INLINE_MATH_PM_TYPE) {
-        return;
-      }
-      if (typeof node.attrs?.expression === 'string') {
-        expression = node.attrs.expression;
-      }
-    });
-
-    if (expression) {
-      const referenceText = formatFormulaReferenceText(expression, 'inline');
-      if (referenceText && threadReferencesYMap.get(id) !== referenceText) {
-        threadReferencesYMap.set(id, referenceText);
-      }
-    }
-  });
 }
