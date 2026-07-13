@@ -1,11 +1,4 @@
-import type {
-  BlockNoteEditor,
-  BlockSchema,
-  BlockSpecs,
-  ExtensionFactoryInstance,
-  InlineContentSchema,
-  StyleSchema,
-} from '@blocknote/core';
+import type { BlockSpecs, ExtensionFactoryInstance } from '@blocknote/core';
 import { BlockNoteSchema, createExtension } from '@blocknote/core';
 import { Plugin, PluginKey, type Transaction } from '@tiptap/pm/state';
 import type { EditorProps } from '@tiptap/pm/view';
@@ -221,15 +214,4 @@ export function collectNoteEditorProps(registry: NotePluginRegistry): Partial<Ed
   const mergedDomHandlers = mergeHandleDOMEvents(domHandlersList);
   if (mergedDomHandlers) merged.handleDOMEvents = mergedDomHandlers;
   return merged;
-}
-
-export function noteBlocksToMarkdownLossy<
-  BSchema extends BlockSchema,
-  I extends InlineContentSchema,
-  S extends StyleSchema,
->(
-  editor: BlockNoteEditor<BSchema, I, S>,
-  blocks?: Parameters<BlockNoteEditor<BSchema, I, S>['blocksToMarkdownLossy']>[0]
-): string {
-  return editor.blocksToMarkdownLossy(blocks);
 }

@@ -15,6 +15,7 @@ import {
   aiLinkAddInlineContentSpec,
   aiLinkDeleteInlineContentSpec,
 } from './inlineContentSpecs';
+import { createAiDiffSyntaxMarkdownExport } from './ownerExport';
 
 const aiDiffBlockFoldPluginKey = new PluginKey('AIDiffBlockFold');
 
@@ -432,6 +433,7 @@ function createAiDiffInlinePlugin(params: {
         return params.plainText(props);
       },
     },
+    markdownExport: createAiDiffSyntaxMarkdownExport(params.type),
   };
 }
 
@@ -477,7 +479,6 @@ export const aiDiffPlugin = {
   ],
 } satisfies NotePluginBundle;
 
-export { filterDocumentBlocksForAiDiffExport } from './markdownExport';
 export {
   aiGeneratedBlocksToBlockNoteBlocks,
   applyAiDiffActionForKey,

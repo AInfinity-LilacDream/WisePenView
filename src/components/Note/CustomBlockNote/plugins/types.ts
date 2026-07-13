@@ -11,6 +11,8 @@ import type {
 import type { DefaultReactSuggestionItem } from '@blocknote/react';
 import type { EditorProps } from '@tiptap/pm/view';
 
+import type { AiDiffDisplayMode } from '@/domains/Note';
+
 export type NoteInlineContentSpecs = Record<string, InlineContentSpec<InlineContentConfig>>;
 
 export type PluginEditor = BlockNoteEditor<BlockSchema, InlineContentSchema, StyleSchema>;
@@ -39,6 +41,17 @@ export interface NoteInlineProjection {
   plainText: (inline: Record<string, unknown>, registry: NotePluginRegistry) => string;
 }
 
+export interface NoteMarkdownExportContext {
+  aiDiffDisplayMode: AiDiffDisplayMode;
+}
+
+export interface NoteMarkdownExportProjection {
+  project: (
+    node: Record<string, unknown>,
+    context: NoteMarkdownExportContext
+  ) => Record<string, unknown> | null;
+}
+
 interface NotePluginNodeBase {
   id: string;
   dependencies?: readonly string[];
@@ -56,12 +69,14 @@ export interface NoteBlockPlugin extends NoteContentPluginBase {
   kind: 'block';
   spec: BlockSpecs[string];
   projection?: NoteBlockProjection;
+  markdownExport?: NoteMarkdownExportProjection;
 }
 
 export interface NoteInlinePlugin extends NoteContentPluginBase {
   kind: 'inline';
   spec: InlineContentSpec<InlineContentConfig>;
   projection?: NoteInlineProjection;
+  markdownExport?: NoteMarkdownExportProjection;
 }
 
 export interface NotePluginBundle extends NotePluginNodeBase {

@@ -1,6 +1,11 @@
 import type { CustomBlockNoteEditor } from '@/components/Note/CustomBlockNote/blockNoteSchema';
 import { blockNoteSchema } from '@/components/Note/CustomBlockNote/blockNoteSchema';
 import { useNoteEditorReadOnlyContext } from '@/components/Note/CustomBlockNote/editorReadOnly';
+import {
+  exportNoteFullHtml,
+  exportNoteMarkdown,
+  notePluginRegistry,
+} from '@/components/Note/CustomBlockNote/plugins';
 import type { NoteContentPlugin } from '@/components/Note/CustomBlockNote/plugins/types';
 import {
   applyBlockTypeToBlocks,
@@ -365,8 +370,8 @@ function CustomSideMenu({ plugins }: { plugins: readonly NoteContentPlugin[] }) 
   const copyOrCutBlock = async (mode: 'copy' | 'cut') => {
     const blocks = [block as unknown as NotePartialBlock];
     const clipboardData = {
-      html: editor.blocksToFullHTML(blocks),
-      text: editor.blocksToMarkdownLossy(blocks),
+      html: exportNoteFullHtml(editor, notePluginRegistry, blocks),
+      text: exportNoteMarkdown(editor, notePluginRegistry, blocks),
     };
 
     const copied = await writeClipboardData(clipboardData);

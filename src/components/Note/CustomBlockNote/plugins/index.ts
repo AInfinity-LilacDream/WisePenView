@@ -9,7 +9,6 @@ import {
   createNoteBlockNoteSchema,
   createNotePluginRegistry,
   createNoteReadOnlyFilterExtension,
-  noteBlocksToMarkdownLossy,
 } from './registry';
 import type { NotePluginBundle } from './types';
 
@@ -24,6 +23,11 @@ export const notePluginRegistry = createNotePluginRegistry(notePluginTree, [
   aiDiffRuntimeExtension,
 ]);
 
+export {
+  exportNoteFullHtml,
+  exportNoteMarkdown,
+  projectNoteBlocksForMarkdown,
+} from './markdownExport';
 export type {
   NoteBlockPlugin,
   NoteContentPlugin,
@@ -39,5 +43,4 @@ export {
   createNoteBlockNoteSchema,
   createNotePluginRegistry,
   createNoteReadOnlyFilterExtension,
-  noteBlocksToMarkdownLossy,
 };

@@ -72,13 +72,10 @@ import {
   collectNoteEditorExtensions,
   collectNoteEditorProps,
   createNoteReadOnlyFilterExtension,
-  noteBlocksToMarkdownLossy,
+  exportNoteMarkdown,
   notePluginRegistry,
 } from './plugins';
-import {
-  filterDocumentBlocksForAiDiffExport,
-  syncAiDiffBlockFoldDisplayMode,
-} from './plugins/AIDiffPlugin';
+import { syncAiDiffBlockFoldDisplayMode } from './plugins/AIDiffPlugin';
 import { AiDiffDisplayModeProvider } from './plugins/AIDiffPlugin/displayModeContext';
 import {
   applyAiDiffActionToProps,
@@ -434,7 +431,7 @@ function CustomBlockNoteEditor({
       activateWriteGuard();
       scheduleAiDiffBodyContentHashRefresh();
 
-      const isNoteEmpty = noteBlocksToMarkdownLossy(editor).trim().length === 0;
+      const isNoteEmpty = editor.blocksToMarkdownLossy().trim().length === 0;
       useNewNoteStore.getState().syncNewNoteBodyFromEditor(resourceId, isNoteEmpty);
       syncAiDiffPresence();
 
@@ -624,13 +621,11 @@ function CustomBlockNoteEditor({
         }
       },
       downloadMarkdown: async (fileName?: string) => {
-        const blocksForExport = filterDocumentBlocksForAiDiffExport(
+        const markdown = exportNoteMarkdown(
+          editor,
+          notePluginRegistry,
           editor.document,
           AI_DIFF_DISPLAY_MODE.OLD_ONLY
-        );
-        const markdown = noteBlocksToMarkdownLossy(
-          editor,
-          blocksForExport as typeof editor.document
         );
         const blob = new Blob([markdown], { type: 'text/markdown;charset=utf-8' });
         const url = URL.createObjectURL(blob);

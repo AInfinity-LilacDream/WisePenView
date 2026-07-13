@@ -1,3 +1,4 @@
+import { atomicAiDiffMarkdownExport } from '../AIDiffPlugin/ownerExport';
 import type { NoteBlockPlugin, NoteInlinePlugin, NotePluginBundle } from '../types';
 import { inlineMathContentSpec } from './InlineMath';
 import { inlineMathDollarExtension } from './InlineMath/inlineMathDollarExtension';
@@ -27,6 +28,7 @@ export const mathBlockPlugin = {
       return typeof props.expression === 'string' ? props.expression : '';
     },
   },
+  markdownExport: atomicAiDiffMarkdownExport,
 } satisfies NoteBlockPlugin;
 
 export const inlineMathPlugin = {
@@ -52,6 +54,7 @@ export const inlineMathPlugin = {
       return typeof props.expression === 'string' ? props.expression : '';
     },
   },
+  markdownExport: atomicAiDiffMarkdownExport,
 } satisfies NoteInlinePlugin;
 
 export const latexPlugin = {
