@@ -1,0 +1,81 @@
+.tabs {
+  display: block;
+}
+.tabList {
+  width: auto;
+}
+.tab {
+  width: auto;
+  min-width: 88px;
+  color: var(--muted);
+  font-family: var(--font-sans);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-sm);
+}
+.tab[data-selected='true'] {
+  color: var(--accent-soft-foreground);
+}
+.presetButton {
+  font-family: var(--font-sans);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-sm);
+}
+.guided {
+  display: grid;
+  gap: 0;
+}
+.groupHead,
+.soulHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+.groupHead strong,
+.soulHead strong {
+  font-size: 15px;
+}
+.groupHead p,
+.soulHead p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+.groupHead {
+  margin-bottom: 12px;
+}
+.promptField,
+.presetField {
+  padding: 18px 0;
+  border-top: 1px solid var(--separator);
+}
+.soulHead {
+  min-height: 68px;
+  margin-top: 10px;
+  border-top: 1px solid var(--separator);
+  border-bottom: 1px solid var(--separator);
+}
+.switchContent {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+.editorHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.editorHead span {
+  color: var(--success);
+  font-size: 12px;
+}
+.editorHead span[data-compatible='false'] {
+  color: var(--warning);
+}
+.markdown {
+  min-height: 560px;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+}

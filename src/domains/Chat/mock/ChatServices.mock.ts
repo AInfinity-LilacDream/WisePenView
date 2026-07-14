@@ -403,8 +403,22 @@ const getChatInputAgents: IChatService['getChatInputAgents'] = async () => {
 
 const getTools = async (): Promise<ToolOption[]> => {
   return [
-    { toolId: 'search_historical_messages', label: 'Search History' },
-    { toolId: 'mock-tool-2', label: 'Mock Tool 2' },
+    {
+      toolId: 'search_historical_messages',
+      label: 'Search History',
+      description: '检索历史会话',
+      enabled: true,
+      configured: true,
+      requiresConfig: false,
+    },
+    {
+      toolId: 'mock-tool-2',
+      label: 'Mock Tool 2',
+      description: 'Mock Tool',
+      enabled: true,
+      configured: true,
+      requiresConfig: false,
+    },
   ];
 };
 

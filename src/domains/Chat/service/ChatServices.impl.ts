@@ -222,8 +222,15 @@ const listHistoryMessages = async (
 };
 
 const getTools = async (): Promise<ToolOption[]> => {
-  // 新版 OpenAPI 已移除 /chat/tools；后端未提供工具发现契约前隐藏工具选择。
-  return [];
+  const response = await ChatApi.listTools();
+  return response.tools.map((tool) => ({
+    toolId: tool.name,
+    label: tool.name,
+    description: tool.description,
+    enabled: tool.enabled,
+    configured: tool.configured,
+    requiresConfig: tool.requires_config,
+  }));
 };
 
 const uploadAttachment = async ({

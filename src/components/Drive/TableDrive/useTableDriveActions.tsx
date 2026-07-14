@@ -1,3 +1,4 @@
+import CreateAgentModal from '@/components/Agent/CreateAgentModal';
 import {
   NewFolderNodeModal,
   ResourcePermissionModal,
@@ -58,6 +59,7 @@ const DEFAULT_TOOLBAR_CONFIG: Required<NonNullable<TableDriveActionConfig['toolb
   canCreateNote: true,
   canCreateDrawio: true,
   canCreateSkill: true,
+  canCreateAgent: true,
   canUploadDocument: true,
   canUploadToGroup: false,
   canManageTagPermission: false,
@@ -95,6 +97,7 @@ export function useTableDriveActions({
   const [drawioName, setDrawioName] = useState('未命名图表');
   const [drawioNameError, setDrawioNameError] = useState('');
   const [skillModalOpen, setSkillModalOpen] = useState(false);
+  const [agentModalOpen, setAgentModalOpen] = useState(false);
 
   const existingFolderNames = useMemo(
     () => currentRows.filter((row) => row.node.type === 'folder').map((row) => row.name.trim()),
@@ -233,6 +236,25 @@ export function useTableDriveActions({
     },
     [currentNodeId, mountCreatedResource, openInWorkspace, refresh, scope]
   );
+  const handleCreateAgentSuccess = useCallback(
+    (resourceId: string) => {
+      void (async () => {
+        try {
+          await mountCreatedResource(resourceId);
+          setAgentModalOpen(false);
+          refresh();
+          openInWorkspace({
+            resourceId,
+            resourceType: RESOURCE_KIND.AGENT,
+            driveLocation: { scope, parentNodeId: currentNodeId },
+          });
+        } catch (error) {
+          toast.danger(parseErrorMessage(error));
+        }
+      })();
+    },
+    [currentNodeId, mountCreatedResource, openInWorkspace, refresh, scope]
+  );
 
   const ModalHost = useMemo(
     () => (
@@ -354,6 +376,11 @@ export function useTableDriveActions({
           onOpenChange={setSkillModalOpen}
           onSuccess={handleCreateSkillSuccess}
         />
+        <CreateAgentModal
+          isOpen={agentModalOpen}
+          onOpenChange={setAgentModalOpen}
+          onSuccess={handleCreateAgentSuccess}
+        />
       </>
     ),
     [
@@ -366,6 +393,7 @@ export function useTableDriveActions({
       groupId,
       handleCreateSkillSuccess,
       handleMarkdownFileChange,
+      handleCreateAgentSuccess,
       handleUploadSuccess,
       markdownFileInputRef,
       newFolderOpen,
@@ -376,6 +404,7 @@ export function useTableDriveActions({
       tagAccessPermissionTagId,
       tagMountPermissionTagId,
       skillModalOpen,
+      agentModalOpen,
       uploadDocumentOpen,
       uploadMountTagId,
       uploadOpen,
@@ -434,6 +463,7 @@ export function useTableDriveActions({
   const handleOpenSkillModal = useCallback(() => {
     setSkillModalOpen(true);
   }, []);
+  const handleOpenAgentModal = useCallback(() => setAgentModalOpen(true), []);
 
   const handleCreateMenuSelect = useCallback(
     (id: CreateMenuItem['id']) => {
@@ -453,6 +483,9 @@ export function useTableDriveActions({
         case 'skill':
           handleOpenSkillModal();
           break;
+        case 'agent':
+          handleOpenAgentModal();
+          break;
         case 'upload':
           openUploadDocument();
           break;
@@ -462,6 +495,7 @@ export function useTableDriveActions({
       handleCreateNote,
       handleOpenDrawioModal,
       handleOpenSkillModal,
+      handleOpenAgentModal,
       openNewFolder,
       openMarkdownFilePicker,
       openUploadDocument,
@@ -481,6 +515,7 @@ export function useTableDriveActions({
         (toolbarConfig.canCreateNote ||
           toolbarConfig.canCreateDrawio ||
           toolbarConfig.canCreateSkill ||
+          toolbarConfig.canCreateAgent ||
           showUploadDocument)))
   );
 
@@ -504,6 +539,8 @@ export function useTableDriveActions({
     if (canCreateInCurrentFolder && toolbarConfig.canCreateSkill) {
       items.push({ id: 'skill', label: '新建 Skill' });
     }
+    if (canCreateInCurrentFolder && toolbarConfig.canCreateAgent)
+      items.push({ id: 'agent', label: '新建 Agent' });
     if (showUploadDocument) {
       items.push({ id: 'upload', label: '上传文件' });
     }
@@ -519,6 +556,7 @@ export function useTableDriveActions({
     toolbarConfig.canCreateFolder,
     toolbarConfig.canCreateNote,
     toolbarConfig.canCreateSkill,
+    toolbarConfig.canCreateAgent,
   ]);
 
   return {

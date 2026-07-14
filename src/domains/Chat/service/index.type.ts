@@ -7,6 +7,10 @@ import type { SkillScopeTreeGroup } from '../mapper/skillScope.mapper';
 export interface ToolOption {
   toolId: string;
   label: string;
+  description: string;
+  enabled: boolean;
+  configured: boolean;
+  requiresConfig: boolean;
 }
 
 export interface ChatModelTag {

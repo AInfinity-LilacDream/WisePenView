@@ -1,12 +1,7 @@
-export interface SkillVersionDropdownItem {
-  key: string;
-  version: number;
-  current: boolean;
-}
+import type {
+  VersionDropdownItem,
+  VersionDropdownProps,
+} from '@/components/VersionDropdown/index.type';
 
-export interface SkillVersionDropdownProps {
-  items: SkillVersionDropdownItem[];
-  disabledKeys?: Set<string>;
-  formatVersion: (version: number) => string;
-  onSelect?: (version: number) => void;
-}
+export type SkillVersionDropdownItem = VersionDropdownItem;
+export type SkillVersionDropdownProps = VersionDropdownProps;

@@ -11,6 +11,7 @@
  * 新增更深层级（Level 2+）时在此文件延展，保持分层 + 显式注入依赖
  */
 import { createAdminServices } from '@/domains/Admin/service/AdminServices.impl';
+import { createAgentServices } from '@/domains/Agent/service/AgentServices.impl';
 import { createAuthServices } from '@/domains/Auth/service/AuthServices.impl';
 import { createChatServices } from '@/domains/Chat/service/ChatServices.impl';
 import { createDocumentServices } from '@/domains/Document/service/DocumentServices.impl';
@@ -48,6 +49,7 @@ const skillService = createSkillServices({
   resourceService: resourceService,
   userService: userService,
 });
+const agentService = createAgentServices({ userService: userService });
 const tagService = createTagServices({ resourceService: resourceService });
 const driveService = createDriveServices({
   tagService: tagService,
@@ -62,6 +64,7 @@ const chatService = createChatServices({
 
 const servicesValue: ServicesContextValue = {
   adminService: adminService,
+  agentService: agentService,
   authService: authService,
   chatService: chatService,
   documentService: documentService,

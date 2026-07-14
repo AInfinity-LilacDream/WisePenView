@@ -39,6 +39,19 @@ export interface ListModelsApiResponse {
   user_models: ModelResponse[];
 }
 
+export interface ToolApiResponse {
+  name: string;
+  description: string;
+  requires_config: boolean;
+  configured: boolean;
+  enabled: boolean;
+  missing_config_keys?: string[];
+}
+
+export interface ListToolsApiResponse {
+  tools: ToolApiResponse[];
+}
+
 export interface ModelProviderMappingResponse {
   model_id: string;
   provider_id: string;

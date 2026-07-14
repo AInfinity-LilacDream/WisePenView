@@ -1,0 +1,26 @@
+.dropZone {
+  position: relative;
+  border-radius: 12px;
+}
+
+.dropHint {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed var(--accent-soft-foreground);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--surface-secondary) 82%, transparent);
+  color: var(--accent-soft-foreground);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  pointer-events: none;
+}
+
+.empty {
+  padding: 20px;
+  color: var(--muted);
+  text-align: center;
+}

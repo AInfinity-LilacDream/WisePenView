@@ -1,5 +1,5 @@
 export interface CreateMenuItem {
-  id: 'folder' | 'drawio' | 'note' | 'importNote' | 'skill' | 'upload';
+  id: 'folder' | 'drawio' | 'note' | 'importNote' | 'skill' | 'agent' | 'upload';
   label: string;
   disabled?: boolean;
 }

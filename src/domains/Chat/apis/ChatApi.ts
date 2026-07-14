@@ -11,6 +11,7 @@ import type {
   ListModelsApiResponse,
   ListSessionsApiRequest,
   ListSessionsApiResponse,
+  ListToolsApiResponse,
   RenameSessionApiRequest,
   RenameSessionApiResponse,
 } from './ChatApi.type';
@@ -21,6 +22,10 @@ function listModels(): Promise<ListModelsApiResponse> {
   return apiGet('/chat/model/listAvailableModels');
 }
 
+function listTools(): Promise<ListToolsApiResponse> {
+  return apiGet('/chat/tool/listUserTools');
+}
+
 function initTemporaryAttachmentUpload(
   req: InitTemporaryAttachmentUploadApiRequest
 ): Promise<InitTemporaryAttachmentUploadApiResponse> {
@@ -29,6 +34,7 @@ function initTemporaryAttachmentUpload(
 
 export const ChatApi = {
   listModels,
+  listTools,
   initTemporaryAttachmentUpload,
 };
 

@@ -1,0 +1,214 @@
+.block {
+  margin-top: 22px;
+}
+
+.panel {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--separator);
+  border-radius: 16px 16px 0 0;
+  background: var(--surface-secondary);
+}
+
+.heading {
+  min-width: 0;
+  flex: 1 1 auto;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.header strong,
+.header span {
+  min-width: 0;
+}
+
+.header strong {
+  flex: 0 0 auto;
+  color: var(--foreground);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-sm);
+}
+
+.header span {
+  flex: 1 1 auto;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.options {
+  max-height: 320px;
+  overflow: auto;
+  padding: 6px;
+}
+
+.option {
+  width: 100%;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+}
+
+.optionIcon,
+.selectedIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  border: 1px solid var(--separator);
+  background: var(--surface-secondary);
+}
+
+.optionIcon {
+  width: 24px;
+  height: 24px;
+  border-radius: 8px;
+}
+
+.optionCopy {
+  min-width: 0;
+}
+
+.optionCopy strong,
+.optionCopy small {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.optionCopy strong {
+  color: var(--foreground);
+  font-size: 13px;
+  font-weight: var(--font-weight-medium);
+}
+
+.optionCopy small {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.option em {
+  color: var(--muted);
+  font-size: 11px;
+  font-style: normal;
+}
+
+.selectedList {
+  border-radius: 0 0 16px 16px;
+  background: var(--surface);
+}
+
+.selectedEmpty {
+  padding: 18px 16px;
+  color: var(--muted);
+  font-size: 12px;
+  text-align: center;
+}
+
+.selectedRow {
+  min-height: 58px;
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) 32px;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-top: 1px solid var(--separator);
+}
+
+.selectedRow:first-child {
+  border-top: 0;
+}
+
+.selectedIcon {
+  width: 28px;
+  height: 28px;
+  border-radius: 10px;
+}
+
+.selectedCopy {
+  min-width: 0;
+}
+
+.selectedTitle {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.selectedTitle strong,
+.selectedTitle small,
+.selectedDescription {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.selectedTitle strong {
+  min-width: 0;
+  color: var(--foreground);
+  font-size: 13px;
+  font-weight: var(--font-weight-medium);
+}
+
+.selectedTitle small {
+  flex: 0 1 auto;
+  min-width: 36px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.selectedDescription {
+  display: block;
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.modalPicker {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.modalPicker .options {
+  min-height: 320px;
+  max-height: 460px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+@media (max-width: 760px) {
+  .header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 3px;
+  }
+}

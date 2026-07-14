@@ -17,6 +17,7 @@ export const RESOURCE_VIEWER = createEnum([
   { value: 'note', key: 'NOTE', label: '笔记' },
   { value: 'drawio', key: 'DRAWIO', label: 'DrawIO' },
   { value: 'skill', key: 'SKILL', label: '技能' },
+  { value: 'agent', key: 'AGENT', label: '智能体' },
 ] as const);
 
 export type ResourceViewer = EnumValue<typeof RESOURCE_VIEWER>;
@@ -108,6 +109,7 @@ export const normalizeResourceViewer = (viewer?: string): ResourceViewer | undef
   if (normalized === RESOURCE_VIEWER.NOTE) return RESOURCE_VIEWER.NOTE;
   if (normalized === RESOURCE_VIEWER.DRAWIO) return RESOURCE_VIEWER.DRAWIO;
   if (normalized === RESOURCE_VIEWER.SKILL) return RESOURCE_VIEWER.SKILL;
+  if (normalized === RESOURCE_VIEWER.AGENT) return RESOURCE_VIEWER.AGENT;
 
   if (isOfficeExtension(normalized)) return RESOURCE_VIEWER.OFFICE;
 
@@ -126,6 +128,7 @@ export const resolveResourceViewer = ({
   if (normalizedType === RESOURCE_KIND.NOTE) return RESOURCE_VIEWER.NOTE;
   if (normalizedType === RESOURCE_KIND.DRAWIO) return RESOURCE_VIEWER.DRAWIO;
   if (normalizedType === RESOURCE_KIND.SKILL) return RESOURCE_VIEWER.SKILL;
+  if (normalizedType === RESOURCE_KIND.AGENT) return RESOURCE_VIEWER.AGENT;
 
   if (normalizedType !== RESOURCE_KIND.FILE) return undefined;
 
@@ -150,6 +153,7 @@ export const isResourceViewerCompatible = (
   if (resourceType === RESOURCE_KIND.NOTE) return viewer === RESOURCE_VIEWER.NOTE;
   if (resourceType === RESOURCE_KIND.DRAWIO) return viewer === RESOURCE_VIEWER.DRAWIO;
   if (resourceType === RESOURCE_KIND.SKILL) return viewer === RESOURCE_VIEWER.SKILL;
+  if (resourceType === RESOURCE_KIND.AGENT) return viewer === RESOURCE_VIEWER.AGENT;
   if (resourceType === RESOURCE_KIND.FILE) {
     return viewer === RESOURCE_VIEWER.PDF_PREVIEW || viewer === RESOURCE_VIEWER.OFFICE;
   }

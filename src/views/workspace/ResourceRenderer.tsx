@@ -17,6 +17,7 @@ import { lazy } from 'react';
 import { useResourceHostLayoutConfig, type ResourceHostLayoutConfig } from './ResourceHostContext';
 import styles from './ResourceRenderer.module.less';
 
+const AgentView = lazy(() => import('./agent'));
 const DrawioView = lazy(() => import('./drawio'));
 const NoteView = lazy(() => import('./note'));
 const OfficeView = lazy(() => import('./office'));
@@ -139,6 +140,9 @@ function renderResource(
   if (resourceType === RESOURCE_KIND.SKILL) {
     return <SkillView resourceId={resourceId} />;
   }
+  if (resourceType === RESOURCE_KIND.AGENT) {
+    return <AgentView resourceId={resourceId} />;
+  }
   if (resourceType === RESOURCE_KIND.FILE && viewer === RESOURCE_VIEWER.PDF_PREVIEW) {
     return <DocumentPreview resourceId={resourceId} />;
   }
@@ -162,6 +166,9 @@ function ResourceRenderer({ target, onTargetChange, onClose }: ResourceRendererP
   }
   if (resourceType === RESOURCE_KIND.SKILL && !resourceId) {
     return <SkillView />;
+  }
+  if (resourceType === RESOURCE_KIND.AGENT && !resourceId) {
+    return <AgentView />;
   }
   if (!resourceId) {
     return <UnsupportedResource {...target} onClose={onClose} />;

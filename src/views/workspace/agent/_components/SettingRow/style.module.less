@@ -1,0 +1,32 @@
+.row {
+  min-height: 68px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  border-top: 1px solid var(--separator);
+}
+.row:last-child {
+  border-bottom: 1px solid var(--separator);
+}
+.switchContent {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+.copy {
+  min-width: 0;
+}
+.copy strong {
+  display: block;
+  font-size: var(--font-size-heading-5);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-md);
+}
+.copy span {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}

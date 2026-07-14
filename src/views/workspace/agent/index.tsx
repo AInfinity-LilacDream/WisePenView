@@ -1,0 +1,374 @@
+import CreateAgentModal from '@/components/Agent/CreateAgentModal';
+import { ResultState, Spin } from '@/components/Feedback';
+import AppAlertDialog from '@/components/Overlay/AppAlertDialog';
+import VersionDropdown from '@/components/VersionDropdown';
+import { useAgentService, useChatService, useSkillService } from '@/domains';
+import type { AgentSpec } from '@/domains/Agent';
+import { useOpenInWorkspace } from '@/hooks/useOpenInWorkspace';
+import { useWorkspaceNavigationStore } from '@/layouts/Workspace/_store/useWorkspaceNavigationStore';
+import {
+  useWorkspaceLayoutConfig,
+  type WorkspaceLayoutConfig,
+} from '@/layouts/Workspace/WorkspaceOutletContext';
+import { parseErrorMessage } from '@/utils/error';
+import { RESOURCE_KIND } from '@/utils/navigation/resourceTarget';
+import { Button, toast } from '@heroui/react';
+import { useRequest } from 'ahooks';
+import { Save, Upload } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { Link, useBeforeUnload, useBlocker, useNavigate } from 'react-router-dom';
+import AgentSectionNav from './_components/AgentSectionNav';
+import AssetsSection from './_components/AssetsSection';
+import BasicInfoSection from './_components/BasicInfoSection';
+import CapabilitiesSection from './_components/CapabilitiesSection';
+import MemorySection from './_components/MemorySection';
+import ModelSection from './_components/ModelSection';
+import SystemPromptSection, { type PromptMode } from './_components/SystemPromptSection';
+import { useAgentWorkspaceController } from './_hooks/useAgentWorkspaceController';
+import styles from './style.module.less';
+import { buildGuidedPrompt, DEFAULT_GUIDED_PROMPT_FIELDS, parseGuidedPrompt } from './systemPrompt';
+
+interface Props {
+  resourceId?: string;
+}
+const anchors = [
+  ['agent-info', '基础信息'],
+  ['prompt', 'System Prompt'],
+  ['model', '模型配置'],
+  ['capabilities', '工具与 Skill'],
+  ['memory', '记忆策略'],
+  ['assets', '附件资源'],
+] as const;
+const AGENT_SCROLL_CONTAINER_ID = 'agent-editor-scroll';
+const saveText = (phase: string) =>
+  phase === 'dirty'
+    ? '有未保存修改'
+    : phase === 'saving'
+      ? '保存中...'
+      : phase === 'failed'
+        ? '保存失败'
+        : '已经保存到云端';
+
+export default function AgentView({ resourceId }: Props) {
+  const agentService = useAgentService();
+  const chatService = useChatService();
+  const skillService = useSkillService();
+  const navigate = useNavigate();
+  const openInWorkspace = useOpenInWorkspace();
+  const controller = useAgentWorkspaceController();
+  const [createOpen, setCreateOpen] = useState(!resourceId);
+  const [promptMode, setPromptMode] = useState<PromptMode>('guided');
+  const [promptResetOpen, setPromptResetOpen] = useState(false);
+  const [deleteAssetId, setDeleteAssetId] = useState<string | null>(null);
+  const load = useRequest(
+    async () => {
+      if (!resourceId) return null;
+      const [agent, models, tools, skills] = await Promise.all([
+        agentService.getAgentDetail(resourceId),
+        chatService.getModels(),
+        chatService.getTools(),
+        skillService.getSkillSummaries(),
+      ]);
+      if (!agent.spec.systemPrompt)
+        agent.spec.systemPrompt = buildGuidedPrompt(DEFAULT_GUIDED_PROMPT_FIELDS, true);
+      return { agent, models, tools, skills };
+    },
+    {
+      ready: Boolean(resourceId),
+      refreshDeps: [resourceId],
+      onSuccess: (data) => {
+        if (!data) return;
+        controller.initialize(data.agent);
+        setPromptMode(
+          parseGuidedPrompt(data.agent.spec.systemPrompt).compatible ? 'guided' : 'free'
+        );
+      },
+      onError: (error) => toast.danger(parseErrorMessage(error)),
+    }
+  );
+  const save = useRequest(
+    async () => {
+      if (!resourceId || !controller.draft || !load.data) return;
+      controller.markSaving();
+      await Promise.all([
+        agentService.updateAgentInfo(
+          resourceId,
+          controller.draft.name.trim(),
+          controller.draft.description.trim()
+        ),
+        agentService.updateAgentSpec(
+          resourceId,
+          load.data.agent.draftVersion,
+          controller.draft.spec
+        ),
+      ]);
+    },
+    {
+      manual: true,
+      onSuccess: () => {
+        controller.markSaved();
+        toast.success('Agent 已保存');
+      },
+      onError: (error) => {
+        controller.markFailed();
+        toast.danger(parseErrorMessage(error));
+      },
+    }
+  );
+  const publish = useRequest(
+    async () => {
+      if (!resourceId) return;
+      if (controller.isDirty) await save.runAsync();
+      await agentService.publishVersion(resourceId);
+    },
+    {
+      manual: true,
+      onSuccess: () => {
+        toast.success('Agent 已发布');
+        load.refresh();
+      },
+      onError: (error) => toast.danger(parseErrorMessage(error)),
+    }
+  );
+  const upload = useRequest(
+    async (files: File[]) => {
+      if (!resourceId || !load.data) return;
+      for (const file of files)
+        await agentService.uploadAsset(resourceId, load.data.agent.draftVersion, { file });
+    },
+    {
+      manual: true,
+      onSuccess: () => {
+        toast.success('附件已上传');
+        load.refresh();
+      },
+      onError: (error) => toast.danger(parseErrorMessage(error)),
+    }
+  );
+  const remove = useRequest(
+    async (id: string) => {
+      if (!resourceId || !load.data) return;
+      await agentService.deleteAssets(resourceId, load.data.agent.draftVersion, [id]);
+    },
+    {
+      manual: true,
+      onSuccess: () => {
+        setDeleteAssetId(null);
+        toast.success('附件已删除');
+        load.refresh();
+      },
+      onError: (error) => toast.danger(parseErrorMessage(error)),
+    }
+  );
+  const blocker = useBlocker(controller.isDirty);
+  useBeforeUnload((event) => {
+    if (controller.isDirty) event.preventDefault();
+  });
+  const setSpec = (spec: AgentSpec) => controller.setDraft((current) => ({ ...current, spec }));
+  const requestMode = (mode: PromptMode) => {
+    if (mode === promptMode) return;
+    if (mode === 'free') {
+      setPromptMode('free');
+      return;
+    }
+    if (controller.draft && parseGuidedPrompt(controller.draft.spec.systemPrompt).compatible) {
+      setPromptMode('guided');
+      return;
+    }
+    setPromptResetOpen(true);
+  };
+  const headerConfig = useMemo<WorkspaceLayoutConfig>(
+    () => ({
+      className: styles.pageWrap,
+      header: load.data
+        ? {
+            resource: {
+              resourceId: load.data.agent.resourceId,
+              resourceName: load.data.agent.title,
+              resourceIconType: 'agent',
+              currentActions: load.data.agent.currentActions,
+              copyVersion: load.data.agent.version,
+              permissionResourceType: RESOURCE_KIND.AGENT,
+              ownerId: load.data.agent.ownerId,
+              titleMeta: (
+                <span className={styles.saveStatus}>{saveText(controller.savePhase)}</span>
+              ),
+              actions: load.data.agent.isOwner ? (
+                <div className={styles.headerActions}>
+                  <Button
+                    variant="secondary"
+                    isDisabled={!controller.isDirty || save.loading}
+                    onPress={() => save.run()}
+                  >
+                    <Save size={15} />
+                    保存
+                  </Button>
+                  <Button
+                    variant="primary"
+                    isDisabled={publish.loading || save.loading}
+                    onPress={() => publish.run()}
+                  >
+                    <Upload size={15} />
+                    发布
+                  </Button>
+                  <VersionDropdown
+                    items={[
+                      {
+                        key: String(load.data.agent.version),
+                        version: load.data.agent.version,
+                        current: true,
+                      },
+                    ]}
+                    formatVersion={(version) => `v${version}.0`}
+                  />
+                </div>
+              ) : undefined,
+            },
+          }
+        : undefined,
+    }),
+    [controller.isDirty, controller.savePhase, load.data, publish, save]
+  );
+  useWorkspaceLayoutConfig(headerConfig);
+  if (!resourceId)
+    return (
+      <div className={styles.overlay}>
+        <ResultState
+          status="info"
+          title="创建 Agent"
+          extra={
+            <Button variant="primary" onPress={() => setCreateOpen(true)}>
+              创建新 Agent
+            </Button>
+          }
+        />
+        <CreateAgentModal
+          isOpen={createOpen}
+          onOpenChange={(open) => {
+            setCreateOpen(open);
+            if (!open) navigate('/app/drive', { replace: true });
+          }}
+          onSuccess={(id) =>
+            openInWorkspace({
+              resourceId: id,
+              resourceType: RESOURCE_KIND.AGENT,
+              driveLocation: { scope: useWorkspaceNavigationStore.getState().location.scope },
+              replace: true,
+            })
+          }
+        />
+      </div>
+    );
+  if (load.error)
+    return (
+      <div className={styles.overlay}>
+        <ResultState
+          status="warning"
+          title="无法打开 Agent"
+          subTitle={parseErrorMessage(load.error)}
+          extra={
+            <Link to="/app/drive">
+              <Button variant="secondary">返回云盘</Button>
+            </Link>
+          }
+        />
+      </div>
+    );
+  if ((load.loading && !load.data) || !load.data || !controller.draft)
+    return (
+      <div className={styles.overlay}>
+        <Spin size="large" />
+        <span>正在加载 Agent...</span>
+      </div>
+    );
+  const disabled = !load.data.agent.isOwner || save.loading || publish.loading;
+  return (
+    <div className={styles.page}>
+      <AgentSectionNav items={anchors} scrollContainerId={AGENT_SCROLL_CONTAINER_ID} />
+      <main id={AGENT_SCROLL_CONTAINER_ID} className={styles.content}>
+        <BasicInfoSection
+          name={controller.draft.name}
+          description={controller.draft.description}
+          spec={controller.draft.spec}
+          disabled={disabled}
+          onNameChange={(value) => controller.setDraft((current) => ({ ...current, name: value }))}
+          onDescriptionChange={(value) =>
+            controller.setDraft((current) => ({ ...current, description: value }))
+          }
+          onSpecChange={setSpec}
+        />
+        <SystemPromptSection
+          markdown={controller.draft.spec.systemPrompt}
+          mode={promptMode}
+          disabled={disabled}
+          onModeRequest={requestMode}
+          onMarkdownChange={(value) => setSpec({ ...controller.draft!.spec, systemPrompt: value })}
+        />
+        <ModelSection
+          spec={controller.draft.spec}
+          models={load.data.models}
+          disabled={disabled}
+          onChange={setSpec}
+        />
+        <CapabilitiesSection
+          spec={controller.draft.spec}
+          tools={load.data.tools}
+          skills={load.data.skills}
+          disabled={disabled}
+          onChange={setSpec}
+        />
+        <MemorySection spec={controller.draft.spec} disabled={disabled} onChange={setSpec} />
+        <AssetsSection
+          assets={load.data.agent.assets}
+          disabled={disabled}
+          uploading={upload.loading}
+          onUpload={(files) => upload.run(files)}
+          onDelete={setDeleteAssetId}
+        />
+      </main>
+      <AppAlertDialog
+        type="danger"
+        isOpen={promptResetOpen}
+        onOpenChange={setPromptResetOpen}
+        title="当前内容无法返回引导填写"
+        description="当前 System Prompt 的预设标题结构已损坏。清空并切换将删除现有内容，并从通用预设重新创建。"
+        cancelText="继续自由编辑"
+        confirmText="清空并切换"
+        onConfirm={() => {
+          setSpec({
+            ...controller.draft!.spec,
+            systemPrompt: buildGuidedPrompt(DEFAULT_GUIDED_PROMPT_FIELDS, true),
+          });
+          setPromptMode('guided');
+          setPromptResetOpen(false);
+        }}
+      />
+      <AppAlertDialog
+        type="warning"
+        isOpen={blocker.state === 'blocked'}
+        onOpenChange={(open) => {
+          if (!open) blocker.reset?.();
+        }}
+        title="存在未保存修改"
+        description="离开当前页面将丢失尚未保存的 Agent 配置。"
+        cancelText="继续编辑"
+        confirmText="丢弃并离开"
+        onConfirm={() => blocker.proceed?.()}
+      />
+      <AppAlertDialog
+        type="danger"
+        isOpen={deleteAssetId != null}
+        onOpenChange={(open) => {
+          if (!open) setDeleteAssetId(null);
+        }}
+        title="删除附件"
+        description="确定从当前 Agent 草稿中删除这个附件吗？"
+        confirmText="删除"
+        isConfirmLoading={remove.loading}
+        onConfirm={() => {
+          if (deleteAssetId) remove.run(deleteAssetId);
+        }}
+      />
+    </div>
+  );
+}
