@@ -16,6 +16,7 @@ import { DocumentEditor } from '@onlyoffice/document-editor-react';
 import { useRequest } from 'ahooks';
 import { useCallback, useMemo, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
+import ResourceCommentSection from '../_components/ResourceCommentSection';
 import styles from './style.module.less';
 
 interface OfficeLayoutConfigProps {
@@ -116,6 +117,7 @@ function OfficeView({ resourceId }: OfficeViewProps = {}) {
     data,
     error,
     loading: isConfigLoading,
+    mutate: mutateOfficeData,
     refresh: refreshOfficeData,
   } = useRequest(
     async () => {
@@ -149,6 +151,11 @@ function OfficeView({ resourceId }: OfficeViewProps = {}) {
     setEditorError(nextError);
     setEditorReady(false);
   }, []);
+
+  const refreshCommentResourceInfo = useCallback(async () => {
+    const docInfo = await documentService.getDocInfo(resourceId as string);
+    if (data) mutateOfficeData({ ...data, docInfo });
+  }, [data, documentService, mutateOfficeData, resourceId]);
 
   if (!resourceId) {
     return (
@@ -229,32 +236,40 @@ function OfficeView({ resourceId }: OfficeViewProps = {}) {
       onPermissionSuccess={refreshOfficeData}
     >
       <div className={styles.content}>
-        <OfficeEditorHost
-          key={`${resourceId}-${data.editorConfig.sessionId ?? 'session'}`}
-          config={data.editorConfig.config}
-          documentServerUrl={ONLYOFFICE_DOCUMENT_SERVER_PUBLIC_URL}
+        <div className={styles.editorFrame}>
+          <OfficeEditorHost
+            key={`${resourceId}-${data.editorConfig.sessionId ?? 'session'}`}
+            config={data.editorConfig.config}
+            documentServerUrl={ONLYOFFICE_DOCUMENT_SERVER_PUBLIC_URL}
+            resourceId={resourceId}
+            onReady={handleEditorReady}
+            onError={handleEditorError}
+          />
+          {(!editorReady || Boolean(editorError)) && (
+            <div className={styles.loadingOverlay} aria-busy={!editorError} aria-live="polite">
+              {editorError ? (
+                <div className={styles.middleOverlayInner}>
+                  <ResultState
+                    status="warning"
+                    title="ONLYOFFICE 编辑器加载失败"
+                    subTitle={parseErrorMessage(editorError)}
+                  />
+                </div>
+              ) : (
+                <div className={styles.middleOverlayLoading}>
+                  <Spin size="large" />
+                  <span className={styles.middleOverlayText}>正在启动 ONLYOFFICE 编辑器...</span>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+        <ResourceCommentSection
           resourceId={resourceId}
-          onReady={handleEditorReady}
-          onError={handleEditorError}
+          resourceOwnerId={data.docInfo.resourceInfo.ownerId}
+          totalCommentCount={data.docInfo.resourceInfo.commentCount}
+          onCommentsChanged={refreshCommentResourceInfo}
         />
-        {(!editorReady || Boolean(editorError)) && (
-          <div className={styles.loadingOverlay} aria-busy={!editorError} aria-live="polite">
-            {editorError ? (
-              <div className={styles.middleOverlayInner}>
-                <ResultState
-                  status="warning"
-                  title="ONLYOFFICE 编辑器加载失败"
-                  subTitle={parseErrorMessage(editorError)}
-                />
-              </div>
-            ) : (
-              <div className={styles.middleOverlayLoading}>
-                <Spin size="large" />
-                <span className={styles.middleOverlayText}>正在启动 ONLYOFFICE 编辑器...</span>
-              </div>
-            )}
-          </div>
-        )}
       </div>
     </OfficeLayoutConfig>
   );

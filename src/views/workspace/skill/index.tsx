@@ -26,6 +26,7 @@ import { useRequest } from 'ahooks';
 import { FolderPlus, Pencil, Plus, Save, Settings, Upload } from 'lucide-react';
 import { useCallback, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Link, useBeforeUnload, useBlocker, useNavigate } from 'react-router-dom';
+import ResourceCommentSection from '../_components/ResourceCommentSection';
 import SkillSaveQueueDock from './_components/SkillSaveQueueDock';
 import type { SkillSaveQueueItem } from './_components/SkillSaveQueueDock/index.type';
 import type { UnsavedSkillChangesMode } from './_components/UnsavedSkillChangesModal';
@@ -2235,6 +2236,9 @@ function SkillView({ resourceId = '' }: SkillViewProps = {}) {
             </div>
           )}
         </div>
+        {skill ? (
+          <ResourceCommentSection resourceId={resourceId} resourceOwnerId={skill.ownerId} />
+        ) : null}
       </div>
 
       <AppAlertDialog

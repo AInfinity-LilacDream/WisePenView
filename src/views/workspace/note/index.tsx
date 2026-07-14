@@ -9,7 +9,6 @@ import { Button } from '@heroui/react';
 import { useRequest } from 'ahooks';
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-
 import NoteWorkspace from './_components/NoteWorkspace';
 import styles from './style.module.less';
 

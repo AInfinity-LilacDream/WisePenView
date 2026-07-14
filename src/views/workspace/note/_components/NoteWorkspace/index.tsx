@@ -3,6 +3,7 @@ import SegmentedTabs from '@/components/SegmentedTabs';
 import { useMemoizedFn, useRequest, useUnmount } from 'ahooks';
 import { MessageSquare, MessagesSquare } from 'lucide-react';
 import { useCallback, useMemo, useRef, useState, type CSSProperties } from 'react';
+import ResourceCommentSection from '../../../_components/ResourceCommentSection';
 
 import CustomBlockNote from '@/components/Note/CustomBlockNote';
 import type { NoteOutlineItem } from '@/components/Note/CustomBlockNote/content/outline';
@@ -619,6 +620,12 @@ function NoteWorkspace({ resourceId, noteInfoDisplay, onRefreshNoteInfo }: NoteW
             </div>
           ) : null}
         </div>
+        <ResourceCommentSection
+          resourceId={resourceId}
+          resourceOwnerId={noteInfoDisplay.ownerId}
+          totalCommentCount={noteInfoDisplay.resourceInfo?.commentCount}
+          onCommentsChanged={onRefreshNoteInfo}
+        />
       </div>
 
       {showFullPageSpin ? (

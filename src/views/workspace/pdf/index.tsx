@@ -9,6 +9,7 @@ import { Button } from '@heroui/react';
 import { useRequest } from 'ahooks';
 import { useMemo, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
+import ResourceCommentSection from '../_components/ResourceCommentSection';
 import styles from './style.module.less';
 
 interface PdfLayoutConfigProps {
@@ -171,34 +172,6 @@ function DocumentPreview({ resourceId }: DocumentPreviewProps = {}) {
     );
   }
 
-  if (viewerError) {
-    return (
-      <PdfLayoutConfig
-        resourceId={docInfo.resourceInfo.resourceId || resourceId}
-        resourceName={docInfo.resourceInfo.resourceName}
-        resourceType={docInfo.resourceInfo.resourceType}
-        resourceInfoActions={docInfo.resourceInfo.currentActions}
-        ownerId={docInfo.resourceInfo.ownerId}
-        onPermissionSuccess={refreshDocInfo}
-      >
-        <div className={styles.middleOverlay}>
-          <div className={styles.middleOverlayInner}>
-            <ResultState
-              status="warning"
-              title="文档预览失败"
-              subTitle={parseErrorMessage(viewerError)}
-              extra={
-                <Link to="/app/drive">
-                  <Button variant="secondary">返回云盘</Button>
-                </Link>
-              }
-            />
-          </div>
-        </div>
-      </PdfLayoutConfig>
-    );
-  }
-
   return (
     <PdfLayoutConfig
       resourceId={docInfo.resourceInfo.resourceId || resourceId}
@@ -210,11 +183,40 @@ function DocumentPreview({ resourceId }: DocumentPreviewProps = {}) {
     >
       <div className={styles.content}>
         <div className={styles.root}>
-          <PdfViewer
-            key={resourceId}
-            className={styles.viewer}
+          {viewerError ? (
+            <div className={styles.viewerFailure}>
+              <ResultState
+                status="warning"
+                title="文档预览失败"
+                subTitle={parseErrorMessage(viewerError)}
+                extra={
+                  <Button
+                    variant="secondary"
+                    onPress={() =>
+                      setViewerErrorMap((current) => ({
+                        ...current,
+                        [currentResourceId]: undefined,
+                      }))
+                    }
+                  >
+                    重试预览
+                  </Button>
+                }
+              />
+            </div>
+          ) : (
+            <PdfViewer
+              key={resourceId}
+              className={styles.viewer}
+              resourceId={resourceId}
+              onLoadError={handleViewerLoadError}
+            />
+          )}
+          <ResourceCommentSection
             resourceId={resourceId}
-            onLoadError={handleViewerLoadError}
+            resourceOwnerId={docInfo.resourceInfo.ownerId}
+            totalCommentCount={docInfo.resourceInfo.commentCount}
+            onCommentsChanged={refreshDocInfo}
           />
         </div>
       </div>
