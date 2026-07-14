@@ -58,7 +58,8 @@ function normalizeInlineContent(content: readonly Record<string, unknown>[]) {
   return normalized;
 }
 
-function sliceInlineContent(
+/** 按纯文本偏移切分 inline content，同时保留样式、链接和完整的自定义 inline 结构。 */
+export function sliceInlineContentByTextRange(
   content: unknown,
   from: number,
   to: number,
@@ -92,7 +93,7 @@ function sliceInlineContent(
       continue;
     }
     if (inline.type === 'link') {
-      const children = sliceInlineContent(inline.content, localFrom, localTo, registry);
+      const children = sliceInlineContentByTextRange(inline.content, localFrom, localTo, registry);
       if (!children) return null;
       result.push({ ...inline, content: children });
       continue;
@@ -116,9 +117,14 @@ function replaceInlineTextRange(params: {
   const { base, replacement, baseFrom, baseTo, replacementFrom, replacementTo, registry } = params;
   const baseText = projectInlinePlainText(base, registry);
   const replacementText = projectInlinePlainText(replacement, registry);
-  const prefix = sliceInlineContent(base, 0, baseFrom, registry);
-  const accepted = sliceInlineContent(replacement, replacementFrom, replacementTo, registry);
-  const suffix = sliceInlineContent(base, baseTo, baseText.length, registry);
+  const prefix = sliceInlineContentByTextRange(base, 0, baseFrom, registry);
+  const accepted = sliceInlineContentByTextRange(
+    replacement,
+    replacementFrom,
+    replacementTo,
+    registry
+  );
+  const suffix = sliceInlineContentByTextRange(base, baseTo, baseText.length, registry);
   if (!prefix || !accepted || !suffix) return null;
 
   const result = normalizeInlineContent([...prefix, ...accepted, ...suffix]);
