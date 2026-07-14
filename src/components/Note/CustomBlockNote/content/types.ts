@@ -57,10 +57,24 @@ interface NoteMarkdownExportProjection {
 
 export type NoteAiDiffAction = 'accept' | 'discard';
 
-export type NoteAiDiffActionTarget = { kind: 'text-hunk'; index: number };
+export type NoteAiDiffActionTarget =
+  { kind: 'text-hunk'; index: number } | { kind: 'content-hunk' };
 
 export interface NoteAiDiffComparisonContext {
   renderAction: (action: NoteAiDiffAction, target: NoteAiDiffActionTarget) => HTMLElement;
+}
+
+export interface NoteAiDiffProjection {
+  current: Record<string, unknown>;
+  aiBlock: Record<string, unknown>;
+  currentEmpty: boolean;
+  aiContentEmpty: boolean;
+  changeKind: 'create' | 'update' | 'delete';
+}
+
+export interface NoteAiDiffAcceptedBlockUpdate {
+  props?: Record<string, unknown>;
+  content?: unknown;
 }
 
 export interface NoteInlineAiDiff {
@@ -119,13 +133,18 @@ export interface NotePrintContribution {
 }
 
 export interface NoteBlockAiDiff {
+  resolve?: (
+    block: Record<string, unknown>,
+    aiContent: unknown,
+    registry: NotePluginRegistry
+  ) => NoteAiDiffProjection | null;
+  acceptAiContent?: (
+    block: Record<string, unknown>,
+    aiContent: unknown,
+    registry: NotePluginRegistry
+  ) => NoteAiDiffAcceptedBlockUpdate | null;
   renderAiContent: (aiBlock: Record<string, unknown>, registry: NotePluginRegistry) => HTMLElement;
   comparison?: {
-    resolveMode: (
-      current: Record<string, unknown>,
-      aiBlock: Record<string, unknown>,
-      registry: NotePluginRegistry
-    ) => 'block' | 'granular';
     render: (
       current: Record<string, unknown>,
       aiBlock: Record<string, unknown>,

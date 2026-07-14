@@ -33,6 +33,7 @@ CustomBlockNote/
 │   │   ├── contentState.ts
 │   │   ├── runtime.ts
 │   │   ├── store.ts
+│   │   ├── wordDiff.ts
 │   │   └── useAiDiffSidecarRuntime.ts
 │   ├── comments/
 │   │   ├── core/
@@ -48,6 +49,7 @@ CustomBlockNote/
 │   ├── markdown/
 │   └── print/
 ├── noteEditorComposition.ts
+├── noteConfig.ts
 ├── index.type.ts
 ├── index.tsx
 └── style.module.less
@@ -115,7 +117,12 @@ interface NoteInlineAiDiff {
 }
 
 interface NoteBlockAiDiff {
+  resolve?(block, aiContent, registry): NoteAiDiffProjection | null;
+  acceptAiContent?(block, aiContent, registry): NoteAiDiffAcceptedBlockUpdate | null;
   renderAiContent(aiBlock, registry): HTMLElement;
+  comparison?: {
+    render(current, aiBlock, registry, context?): HTMLElement;
+  };
   applyGranular?(block, aiContent, action, target, registry): unknown | null;
 }
 ```
@@ -123,11 +130,16 @@ interface NoteBlockAiDiff {
 - rich-text block owner 负责组合 text、link、inlineMath owner；
 - table owner 直接读取 row/cell，并委托 cell 内 inline owner；
 - codeBlock owner 按 native content 渲染代码；
-- engine 统一派生 `{ ...block, content: aiContent }`，owner 不创建第三份状态；
-- props-only 的 math、media 等 block 不属于 content AI Diff，必须明确声明 unsupported；
+- `comparison` 只声明 owner 是否提供组合对比视图，不表示操作粒度；
+- `applyGranular` 单独声明 owner 是否支持逐 hunk 接受与拒绝；
+- rich-text 始终使用 hunk 操作；无法按文本范围安全切分时收敛为一个整段 content hunk；
+- codeBlock 可按行展示差异但仍按 block 操作，table 按 block 展示和操作；
+- 默认由 engine 派生 `{ ...block, content: aiContent }` 并在接受时写回 `content`；
+- props-only owner 可通过 `resolve` 和 `acceptAiContent` 把同一份 sidecar 候选投影、写回到自身主内容字段；
+- math 的 sidecar 值是公式字符串，owner 将其映射到 `props.expression`，不持久化整份 props；
 - 局部操作只返回变换后的 content，engine 根据 accept/discard 决定写回正文或 AI-content。
 
-owner 只负责自身 content 的比较展示与局部变换，不新增正文 schema 节点，也不持久化 diff、hunk 或 UI 状态。
+owner 只负责自身主内容的投影、比较展示与变换，不新增正文 schema 节点，也不持久化 diff、hunk 或 UI 状态。
 
 ### 4.2 Comment Facet
 
@@ -160,7 +172,7 @@ AI-content 只存放在 Y.Doc 顶层：
 doc.getMap('ai-content-store');
 ```
 
-map key 是 block id，value 与对应 block 的 native `content` 同形。不存在第二条 `<AI-content>` XML 路径。
+map key 是 block id。默认 block 的 value 与 native `content` 同形；props-only block 使用 owner 声明的主内容值。不存在第二条 `<AI-content>` XML 路径。
 
 逻辑上前端只感知一个 block JSON：
 
@@ -179,15 +191,16 @@ interface NoteBlockWithAiContent {
 
 ### 5.2 Content 约束
 
-- `content` 是当前已确认正文，`ai-content` 是 AI 期望正文；
-- 两者必须使用相同的 native content 结构，不包装 payload、candidate 或 operation；
+- `content` 是默认 block 的当前正文，`ai-content` 是 AI 期望的主内容；
+- 默认 block 的两者必须使用相同 native content 结构；math 的 `ai-content` 直接使用公式字符串；
+- AI-content 不包装 payload、candidate、operation 或整份 props；
 - map value 是 plain JSON，每次整体 set，不使用嵌套 Y.Map/Y.Array；
-- `content === ai-content` 表示审阅完成，此时删除 map entry；
-- `content` 为空且 `ai-content` 非空表示新增；反向表示删除；两者都非空表示修改；
-- props/type 变化不进入 AI-content；结构变化由后端以删除旧 block、创建新 placeholder 表达；
+- owner 判定当前主内容与 AI-content 相同表示审阅完成，此时删除 map entry；
+- 当前主内容为空且 AI-content 非空表示新增；反向表示删除；两者都非空表示修改；
+- 除 props-only owner 声明的主内容字段外，props/type 变化不进入 AI-content；结构变化由后端以删除旧 block、创建新 placeholder 表达；
 - 子 block 各自拥有 AI-content，父 block 不包含子树候选。
 
-后端写入新增 block 时，必须在同一个 Yjs transaction 中创建带 id 的空 content placeholder，并写入 AI-content。
+后端写入新增 block 时，必须在同一个 Yjs transaction 中创建带 id 的空主内容 placeholder，并写入 AI-content。
 
 版本校验属于 Node.js tool 的原子读写接口，不进入 block JSON 或 `ai-content-store`。
 
@@ -223,11 +236,11 @@ Engine 的 PM plugin state 只保存：
 2. 读取 block content 与 AI-content；
 3. 通过 PM transaction meta 同步 engine state；
 4. engine 遍历 `blockContainer`，用 block id 找 sidecar；
-5. 纯计算两份 content 是否相同、是否为空以及展示粒度；
+5. owner 解析当前主内容与 AI-content，engine 据此生成对比视图；
 6. 根据显示模式生成 Decoration 与 AI-content widget；
 7. store 变化主动更新 React presence。
 
-整个投影过程是只读的，不需要 awareness leader，也不监听 provider sync。普通观察永远不会改写 content 或 AI-content。
+整个投影过程是只读的，不需要 awareness leader，也不监听 provider sync。普通观察永远不会改写正文或 AI-content。
 
 ### 6.1 三种显示模式
 
@@ -239,6 +252,8 @@ Engine 的 PM plugin state 只保存：
 
 Decoration 不进入 PM document，因此不会污染 selection、Yjs、正文 hash 或 schema。
 
+rich-text hunk 的合并阈值与计算量上限集中在 `noteConfig.aiDiff.richText`，由组合根注入 owner。`hunk` 用于回归调参，`limits` 只表示性能安全线；二者不进入 block JSON 或 runtime state。
+
 ### 6.2 接受与拒绝
 
 所有动作点击时重新读取当前 block 与 AI-content，不信任 widget 闭包中的内容。
@@ -247,10 +262,10 @@ Decoration 不进入 PM document，因此不会污染 selection、Yjs、正文 h
 | ------------- | ------------------------------------ | ------------------------------------ |
 | 接受一个 hunk | 把对应 AI-content 片段迁移进 content | 保持不变                             |
 | 拒绝一个 hunk | 保持不变                             | 把对应 content 片段迁移进 AI-content |
-| 全部接受      | 替换为 AI-content                    | 删除 entry                           |
+| 全部接受      | owner 将正文主内容替换为 AI-content  | 删除 entry                           |
 | 全部拒绝      | 保持不变                             | 删除 entry                           |
 
-每次动作后若两份 content 相同，删除 AI-content；若收敛结果为空 placeholder，则删除 block。正文修改与 sidecar 更新放在同一个 Yjs transaction 中，UndoManager 同时跟踪正文 fragment 与 `ai-content-store`。
+每次动作后若两份主内容相同，删除 AI-content；若收敛结果为空 placeholder，则删除 block。正文修改与 sidecar 更新放在同一个 Yjs transaction 中，UndoManager 同时跟踪正文 fragment 与 `ai-content-store`。
 
 删除 block 会连带清理子树 sidecar，避免孤儿 AI-content。
 

@@ -127,7 +127,6 @@ export const codeBlockPlugin = {
   aiDiff: {
     renderAiContent: CodeBlockAiContentView,
     comparison: {
-      resolveMode: () => 'granular',
       render: CodeBlockAiDiffComparisonView,
     },
   },

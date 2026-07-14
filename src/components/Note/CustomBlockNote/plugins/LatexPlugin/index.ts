@@ -1,5 +1,5 @@
 import type { NoteBlockPlugin, NoteInlinePlugin, NotePluginBundle } from '../../content/types';
-import { inlineMathAiDiff } from './aiDiff';
+import { inlineMathAiDiff, mathBlockAiDiff } from './aiDiff';
 import { INLINE_MATH_COMMENT_OWNER_ID, MATH_BLOCK_COMMENT_OWNER_ID } from './comments/anchor';
 import { inlineMathCommentFacet, mathBlockCommentFacet } from './comments/facet';
 import { inlineMathContentSpec } from './InlineMath';
@@ -17,7 +17,7 @@ const mathBlockPlugin = {
   capabilities: {
     markdownImport: { support: 'custom' },
     markdownExport: { support: 'custom' },
-    aiDiff: { support: 'unsupported', reason: '公式块仅使用 props，不属于 content AI Diff' },
+    aiDiff: { support: 'custom' },
     projection: { support: 'custom' },
     print: { support: 'custom' },
   },
@@ -56,6 +56,7 @@ const mathBlockPlugin = {
       return `$$\n${expression}\n$$`;
     },
   },
+  aiDiff: mathBlockAiDiff,
 } satisfies NoteBlockPlugin;
 
 const inlineMathPlugin = {

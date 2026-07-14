@@ -59,7 +59,7 @@ function projectBlock(
   const aiContent = aiContentByBlockId.get(blockId);
   const aiProjection =
     aiContentByBlockId.has(blockId) && owner.aiDiff
-      ? resolveNoteAiDiffBlock(block, aiContent)
+      ? resolveNoteAiDiffBlock(block, aiContent, owner.aiDiff, registry)
       : null;
   if (
     aiProjection &&

@@ -6,9 +6,13 @@ import type {
   NotePluginRegistry,
 } from '../../content/types';
 import styles from '../../engines/aiDiff/style.module.less';
-import type { AiDiffTextRenderPlan } from '../../engines/aiDiff/textDiffStrategy';
-import type { AiDiffTextSegment } from '../../engines/aiDiff/wordDiff';
-import { paragraphAiDiffRenderStrategy } from './aiDiffStrategy';
+import {
+  diffAiText,
+  type AiDiffTextConfig,
+  type AiDiffTextHunk,
+  type AiDiffTextSegment,
+} from '../../engines/aiDiff/wordDiff';
+import type { NoteRichTextAiDiffConfig } from '../../noteConfig';
 import {
   acceptInlineTextHunk,
   discardInlineTextHunk,
@@ -22,6 +26,8 @@ const BOOLEAN_STYLE_TAGS = [
   ['strike', 's'],
   ['code', 'code'],
 ] as const;
+
+type RichTextDiffPlan = { mode: 'text'; hunks: readonly AiDiffTextHunk[] } | { mode: 'content' };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
@@ -102,7 +108,6 @@ function renderComparisonSegment(params: {
   const from = isDelete ? originOffset : replacementOffset;
   const source = isDelete ? originContent : replacementContent;
   element.appendChild(renderInlineRange(source, from, from + segment.text.length, registry));
-  element.dataset.aiDiffWordRole = segment.kind;
   if (segment.kind === 'delete') element.className = styles.inlineDelete;
   if (segment.kind === 'insert') element.className = styles.inlineAdd;
 
@@ -114,28 +119,21 @@ function renderComparisonSegment(params: {
   };
 }
 
-function resolveRichTextRenderPlan(
+function resolveRichTextDiffPlan(
   current: Record<string, unknown>,
   aiBlock: Record<string, unknown>,
-  registry: NotePluginRegistry
-): AiDiffTextRenderPlan {
-  const plan = paragraphAiDiffRenderStrategy.plan(
+  registry: NotePluginRegistry,
+  config: AiDiffTextConfig
+): RichTextDiffPlan {
+  const hunks = diffAiText(
     projectInlinePlainText(current.content, registry),
-    projectInlinePlainText(aiBlock.content, registry)
+    projectInlinePlainText(aiBlock.content, registry),
+    config
   );
-  if (plan.mode === 'block') return plan;
-  if (current.type !== 'paragraph') {
-    return {
-      mode: 'block',
-      origin: plan.origin,
-      replacement: plan.replacement,
-      reason: 'unsupported-inline-structure',
-      metrics: plan.metrics,
-    };
-  }
-  const isFullyActionable = plan.hunks
-    .filter((hunk) => hunk.mode === 'hunk')
-    .every(
+  const actionableHunks = hunks.filter((hunk) => hunk.mode === 'hunk');
+  const isFullyActionable =
+    actionableHunks.length > 0 &&
+    actionableHunks.every(
       (hunk) =>
         acceptInlineTextHunk({
           current: current.content,
@@ -150,28 +148,58 @@ function resolveRichTextRenderPlan(
           registry,
         })
     );
-  return isFullyActionable
-    ? plan
-    : {
-        mode: 'block',
-        origin: plan.origin,
-        replacement: plan.replacement,
-        reason: 'unsupported-inline-structure',
-        metrics: plan.metrics,
-      };
+  return isFullyActionable ? { mode: 'text', hunks } : { mode: 'content' };
+}
+
+function appendHunkActions(
+  root: HTMLElement,
+  target: Parameters<NoteAiDiffComparisonContext['renderAction']>[1],
+  context?: NoteAiDiffComparisonContext
+): void {
+  if (!context) return;
+  const actions = document.createElement('span');
+  actions.className = styles.inlineHunkActions;
+  actions.appendChild(context.renderAction('discard', target));
+  actions.appendChild(context.renderAction('accept', target));
+  root.appendChild(actions);
+}
+
+function renderContentHunk(
+  current: Record<string, unknown>,
+  aiBlock: Record<string, unknown>,
+  registry: NotePluginRegistry,
+  context?: NoteAiDiffComparisonContext
+): HTMLElement {
+  const hunkRoot = document.createElement('span');
+  hunkRoot.className = styles.inlineHunk;
+
+  const deleted = document.createElement('span');
+  deleted.className = styles.inlineDelete;
+  deleted.appendChild(renderInlineChildren(current.content, registry));
+
+  const inserted = document.createElement('span');
+  inserted.className = styles.inlineAdd;
+  inserted.appendChild(renderInlineChildren(aiBlock.content, registry));
+
+  hunkRoot.append(deleted, inserted);
+  appendHunkActions(hunkRoot, { kind: 'content-hunk' }, context);
+  return hunkRoot;
 }
 
 function renderRichTextComparison(
   current: Record<string, unknown>,
   aiBlock: Record<string, unknown>,
   registry: NotePluginRegistry,
+  config: AiDiffTextConfig,
   context?: NoteAiDiffComparisonContext
 ): HTMLElement {
   const root = document.createElement('span');
   root.className = styles.inlineComparison;
-  root.dataset.aiDiffGranularity = 'word';
-  const plan = resolveRichTextRenderPlan(current, aiBlock, registry);
-  if (plan.mode !== 'inline') return root;
+  const plan = resolveRichTextDiffPlan(current, aiBlock, registry, config);
+  if (plan.mode === 'content') {
+    root.appendChild(renderContentHunk(current, aiBlock, registry, context));
+    return root;
+  }
   let hunkIndex = 0;
   for (const hunk of plan.hunks) {
     if (hunk.mode === 'outside') {
@@ -182,8 +210,6 @@ function renderRichTextComparison(
     }
     const hunkRoot = document.createElement('span');
     hunkRoot.className = styles.inlineHunk;
-    hunkRoot.dataset.aiDiffHunk = 'true';
-    hunkRoot.dataset.aiDiffHunkIndex = String(hunkIndex);
     let originOffset = hunk.originFrom;
     let replacementOffset = hunk.replacementFrom;
     for (const segment of hunk.segments) {
@@ -199,14 +225,7 @@ function renderRichTextComparison(
       replacementOffset = rendered.replacementOffset;
       hunkRoot.appendChild(rendered.element);
     }
-    if (context) {
-      const actions = document.createElement('span');
-      actions.className = styles.inlineHunkActions;
-      const target = { kind: 'text-hunk', index: hunkIndex } as const;
-      actions.appendChild(context.renderAction('discard', target));
-      actions.appendChild(context.renderAction('accept', target));
-      hunkRoot.appendChild(actions);
-    }
+    appendHunkActions(hunkRoot, { kind: 'text-hunk', index: hunkIndex }, context);
     root.appendChild(hunkRoot);
     hunkIndex += 1;
   }
@@ -231,44 +250,47 @@ export const plainLinkInlineAiDiff: NoteInlineAiDiff = {
   },
 };
 
-export const richTextBlockAiDiff: NoteBlockAiDiff = {
-  renderAiContent(aiBlock, registry) {
-    const root = document.createElement('span');
-    root.appendChild(renderInlineChildren(aiBlock.content, registry));
-    return root;
-  },
-  comparison: {
-    resolveMode(current, aiBlock, registry) {
-      return resolveRichTextRenderPlan(current, aiBlock, registry).mode === 'inline'
-        ? 'granular'
-        : 'block';
+export function createRichTextBlockAiDiff(config: NoteRichTextAiDiffConfig): NoteBlockAiDiff {
+  const textDiffConfig: AiDiffTextConfig = {
+    ...config.hunk,
+    ...config.limits,
+  };
+  return {
+    renderAiContent(aiBlock, registry) {
+      const root = document.createElement('span');
+      root.appendChild(renderInlineChildren(aiBlock.content, registry));
+      return root;
     },
-    render: renderRichTextComparison,
-  },
-  applyGranular(block, aiContent, action, target, registry) {
-    if (block.type !== 'paragraph' || target.kind !== 'text-hunk') {
-      return null;
-    }
-    const aiBlock = { ...block, content: aiContent };
-    const plan = resolveRichTextRenderPlan(block, aiBlock, registry);
-    if (plan.mode !== 'inline') return null;
-    const hunk = plan.hunks.filter((item) => item.mode === 'hunk')[target.index];
-    if (!hunk) return null;
+    comparison: {
+      render(current, aiBlock, registry, context) {
+        return renderRichTextComparison(current, aiBlock, registry, textDiffConfig, context);
+      },
+    },
+    applyGranular(block, aiContent, action, target, registry) {
+      if (target.kind === 'content-hunk') {
+        return action === 'accept' ? aiContent : block.content;
+      }
+      const aiBlock = { ...block, content: aiContent };
+      const plan = resolveRichTextDiffPlan(block, aiBlock, registry, textDiffConfig);
+      if (plan.mode !== 'text') return null;
+      const hunk = plan.hunks.filter((item) => item.mode === 'hunk')[target.index];
+      if (!hunk) return null;
 
-    if (action === 'accept') {
-      return acceptInlineTextHunk({
+      if (action === 'accept') {
+        return acceptInlineTextHunk({
+          current: block.content,
+          aiContent,
+          hunk,
+          registry,
+        });
+      }
+
+      return discardInlineTextHunk({
         current: block.content,
         aiContent,
         hunk,
         registry,
       });
-    }
-
-    return discardInlineTextHunk({
-      current: block.content,
-      aiContent,
-      hunk,
-      registry,
-    });
-  },
-};
+    },
+  };
+}

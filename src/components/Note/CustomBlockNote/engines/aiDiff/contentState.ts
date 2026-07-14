@@ -1,12 +1,9 @@
+import type {
+  NoteAiDiffProjection,
+  NoteBlockAiDiff,
+  NotePluginRegistry,
+} from '../../content/types';
 import { stableStringify } from './stableValue';
-
-interface NoteAiDiffProjection {
-  current: Record<string, unknown>;
-  aiBlock: Record<string, unknown>;
-  currentEmpty: boolean;
-  aiContentEmpty: boolean;
-  changeKind: 'create' | 'update' | 'delete';
-}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
@@ -25,8 +22,13 @@ export function isAiDiffContentEmpty(content: unknown): boolean {
 
 export function resolveNoteAiDiffBlock(
   block: Record<string, unknown>,
-  aiContent: unknown
+  aiContent: unknown,
+  aiDiff: NoteBlockAiDiff,
+  registry: NotePluginRegistry
 ): NoteAiDiffProjection | null {
+  if (aiDiff?.resolve) {
+    return aiDiff.resolve(block, aiContent, registry);
+  }
   if (isAiDiffContentEqual(block.content, aiContent)) return null;
   const currentEmpty = isAiDiffContentEmpty(block.content);
   const aiContentEmpty = isAiDiffContentEmpty(aiContent);

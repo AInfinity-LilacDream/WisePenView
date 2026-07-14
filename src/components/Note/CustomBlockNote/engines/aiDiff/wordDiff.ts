@@ -12,30 +12,16 @@ export type AiDiffTextHunk = {
   replacementTo: number;
 };
 
-export interface AiDiffTextAnalysis {
-  hunks: AiDiffTextHunk[];
-  changeRatio: number;
-  largestHunkChangeRatio: number;
-  largestHunkChangedCharacters: number;
-  usesLinearFallback: boolean;
+export interface AiDiffTextConfig {
+  highChangeRatio: number;
+  maxGapCharacters: number;
+  maxGapTokens: number;
+  maxMergedCharacters: number;
+  maxMatrixCells: number;
 }
 
 type Token = { value: string };
 type InternalSegment = AiDiffTextSegment & { tokenCount: number };
-
-interface MergeHunkOptions {
-  maxGapChars: number;
-  maxGapTokens: number;
-  maxMergedLength: number;
-}
-
-const MAX_LCS_CELLS = 250_000;
-const HIGH_CHANGE_RATIO = 0.6;
-const DEFAULT_MERGE_OPTIONS: MergeHunkOptions = {
-  maxGapChars: 5,
-  maxGapTokens: 3,
-  maxMergedLength: 100,
-};
 
 function isCjkCodePoint(code: number): boolean {
   return (
@@ -90,7 +76,7 @@ function tokenizeFallback(text: string): Token[] {
 }
 
 /** 使用运行环境的词法分段器处理中英文；不可用时退化为 ASCII 单词与 CJK 字符。 */
-export function tokenizeAiDiffText(text: string, localeHint = 'und'): string[] {
+function tokenizeAiDiffText(text: string, localeHint = 'und'): string[] {
   if (typeof Intl !== 'undefined' && typeof Intl.Segmenter === 'function') {
     try {
       const segmenter = new Intl.Segmenter(localeHint, { granularity: 'word' });
@@ -161,10 +147,14 @@ function coalesceSegments(segments: readonly InternalSegment[]): InternalSegment
   return result;
 }
 
-function diffTokens(oldTokens: readonly Token[], newTokens: readonly Token[]): InternalSegment[] {
+function diffTokens(
+  oldTokens: readonly Token[],
+  newTokens: readonly Token[],
+  maxMatrixCells: number
+): InternalSegment[] {
   const oldLength = oldTokens.length;
   const newLength = newTokens.length;
-  if (oldLength * newLength > MAX_LCS_CELLS) {
+  if (oldLength * newLength > maxMatrixCells) {
     return buildLinearFallback(oldTokens, newTokens);
   }
 
@@ -222,11 +212,11 @@ function isSemanticBoundary(text: string): boolean {
   return /[\n。！？；，：.!?;,]/.test(text);
 }
 
-function canMergeAcrossEqual(segment: InternalSegment, options: MergeHunkOptions): boolean {
+function canMergeAcrossEqual(segment: InternalSegment, config: AiDiffTextConfig): boolean {
   return (
     segment.kind === 'equal' &&
-    segment.text.length <= options.maxGapChars &&
-    segment.tokenCount <= options.maxGapTokens &&
+    segment.text.length <= config.maxGapCharacters &&
+    segment.tokenCount <= config.maxGapTokens &&
     !isSemanticBoundary(segment.text)
   );
 }
@@ -237,7 +227,7 @@ function visibleLength(segments: readonly InternalSegment[]): number {
 
 function mergeNearbyChanges(
   segments: readonly InternalSegment[],
-  options: MergeHunkOptions
+  config: AiDiffTextConfig
 ): Array<{ mode: 'outside' | 'hunk'; segments: InternalSegment[] }> {
   const result: Array<{ mode: 'outside' | 'hunk'; segments: InternalSegment[] }> = [];
   let index = 0;
@@ -257,7 +247,7 @@ function mergeNearbyChanges(
     }
     while (
       index + 1 < segments.length &&
-      canMergeAcrossEqual(segments[index], options) &&
+      canMergeAcrossEqual(segments[index], config) &&
       segments[index + 1].kind !== 'equal'
     ) {
       const gap = segments[index];
@@ -267,7 +257,7 @@ function mergeNearbyChanges(
         nextChanges.push(segments[cursor]);
         cursor += 1;
       }
-      if (visibleLength([...hunk, gap, ...nextChanges]) > options.maxMergedLength) break;
+      if (visibleLength([...hunk, gap, ...nextChanges]) > config.maxMergedCharacters) break;
       hunk.push(gap, ...nextChanges);
       index = cursor;
     }
@@ -295,18 +285,21 @@ function changedTokenRatio(segments: readonly InternalSegment[]): number {
  * 生成词级差异，并以句号、分号、逗号和换行为边界合并相邻改动。
  * 大面积重写或超长文本会退化为公共前后缀 + 单个中段 hunk，避免碎片化和二次方计算。
  */
-export function analyzeAiDiffText(origin: string, replacement: string): AiDiffTextAnalysis {
+export function diffAiText(
+  origin: string,
+  replacement: string,
+  config: AiDiffTextConfig
+): AiDiffTextHunk[] {
   const oldTokens = tokenizeAiDiffText(origin).map((value) => ({ value }));
   const newTokens = tokenizeAiDiffText(replacement).map((value) => ({ value }));
-  let segments = diffTokens(oldTokens, newTokens);
-  const exceedsLcsLimit = oldTokens.length * newTokens.length > MAX_LCS_CELLS;
-  const hasHighChangeRatio = changedTokenRatio(segments) > HIGH_CHANGE_RATIO;
+  let segments = diffTokens(oldTokens, newTokens, config.maxMatrixCells);
+  const hasHighChangeRatio = changedTokenRatio(segments) > config.highChangeRatio;
   if (hasHighChangeRatio) {
     segments = buildLinearFallback(oldTokens, newTokens);
   }
   let originOffset = 0;
   let replacementOffset = 0;
-  const hunks = mergeNearbyChanges(segments, DEFAULT_MERGE_OPTIONS).map((hunk) => {
+  return mergeNearbyChanges(segments, config).map((hunk) => {
     const originFrom = originOffset;
     const replacementFrom = replacementOffset;
     for (const current of hunk.segments) {
@@ -322,33 +315,4 @@ export function analyzeAiDiffText(origin: string, replacement: string): AiDiffTe
       replacementTo: replacementOffset,
     };
   });
-  const granularHunks = hunks.filter((hunk) => hunk.mode === 'hunk');
-  const totalCharacters = origin.length + replacement.length;
-  const changedCharacters = segments.reduce(
-    (total, current) => total + (current.kind === 'equal' ? 0 : current.text.length),
-    0
-  );
-  const largestHunkChangedCharacters = granularHunks.reduce(
-    (largest, hunk) =>
-      Math.max(
-        largest,
-        hunk.segments.reduce(
-          (total, current) => total + (current.kind === 'equal' ? 0 : current.text.length),
-          0
-        )
-      ),
-    0
-  );
-  return {
-    hunks,
-    changeRatio: totalCharacters === 0 ? 0 : changedCharacters / totalCharacters,
-    largestHunkChangeRatio:
-      totalCharacters === 0 ? 0 : largestHunkChangedCharacters / totalCharacters,
-    largestHunkChangedCharacters,
-    usesLinearFallback: exceedsLcsLimit || hasHighChangeRatio,
-  };
-}
-
-export function buildAiDiffTextHunks(origin: string, replacement: string): AiDiffTextHunk[] {
-  return analyzeAiDiffText(origin, replacement).hunks;
 }

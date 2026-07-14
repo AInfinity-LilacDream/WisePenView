@@ -73,7 +73,7 @@ function createReviewWidget(params: {
   aiContentEmpty: boolean;
   displayMode: AiDiffDisplayMode;
   actionsEnabled: boolean;
-  granularActions: boolean;
+  hunkActions: boolean;
   onAction?: (request: NoteAiDiffActionRequest) => void;
   renderAiContent: (aiBlock: Record<string, unknown>) => HTMLElement;
   renderComparison?: (
@@ -91,7 +91,7 @@ function createReviewWidget(params: {
     aiContentEmpty,
     displayMode,
     actionsEnabled,
-    granularActions,
+    hunkActions,
     onAction,
     renderAiContent,
     renderComparison,
@@ -102,19 +102,19 @@ function createReviewWidget(params: {
   root.dataset.aiDiffReview = blockId;
   root.dataset.aiDiffContentType = contentType;
   root.dataset.aiDiffChangeKind = changeKind;
-  const granularComparison = Boolean(
+  const customComparison = Boolean(
     displayMode === AI_DIFF_DISPLAY_MODE.COMPARE && renderComparison
   );
 
   if (!aiContentEmpty) {
     const aiContentRoot = document.createElement('div');
-    aiContentRoot.className = granularComparison
+    aiContentRoot.className = customComparison
       ? styles.comparison
       : displayMode === AI_DIFF_DISPLAY_MODE.COMPARE
         ? styles.aiContent
         : styles.aiContentPlain;
     const comparisonContext =
-      granularComparison && granularActions && actionsEnabled && onAction
+      customComparison && hunkActions && actionsEnabled && onAction
         ? {
             renderAction: (action: NoteAiDiffAction, target: NoteAiDiffActionTarget) =>
               buildActionButton(
@@ -129,7 +129,7 @@ function createReviewWidget(params: {
           }
         : undefined;
     aiContentRoot.appendChild(
-      granularComparison && renderComparison
+      customComparison && renderComparison
         ? renderComparison(current, aiBlock, comparisonContext)
         : renderAiContent(aiBlock)
     );
@@ -196,7 +196,7 @@ function buildDecorations(params: {
     }
 
     const aiDiff = registry.blockPlugins.get(block.type)?.aiDiff;
-    const projection = aiDiff ? resolveNoteAiDiffBlock(block, aiContent) : null;
+    const projection = aiDiff ? resolveNoteAiDiffBlock(block, aiContent, aiDiff, registry) : null;
     if (!aiDiff || !projection) return true;
 
     let contentFrom = pos;
@@ -220,17 +220,16 @@ function buildDecorations(params: {
       return false;
     }
 
-    const hasGranularComparison = Boolean(
+    const hasCustomComparison = Boolean(
       runtime.displayMode === AI_DIFF_DISPLAY_MODE.COMPARE &&
       !projection.currentEmpty &&
       !projection.aiContentEmpty &&
-      aiDiff.comparison?.resolveMode(projection.current, projection.aiBlock, registry) ===
-        'granular'
+      aiDiff.comparison
     );
     const hideCurrent =
       projection.currentEmpty ||
       runtime.displayMode === AI_DIFF_DISPLAY_MODE.NEW_ONLY ||
-      hasGranularComparison;
+      hasCustomComparison;
     if (hideCurrent) {
       decorations.push(
         Decoration.node(contentFrom, contentTo, {
@@ -265,11 +264,11 @@ function buildDecorations(params: {
               aiContentEmpty: projection.aiContentEmpty,
               displayMode: runtime.displayMode,
               actionsEnabled: runtime.actionsEnabled,
-              granularActions: Boolean(hasGranularComparison && aiDiff.applyGranular),
+              hunkActions: Boolean(hasCustomComparison && aiDiff.applyGranular),
               onAction: runtime.onAction,
               renderAiContent: (aiBlock) => aiDiff.renderAiContent(aiBlock, registry),
               renderComparison:
-                hasGranularComparison && aiDiff.comparison
+                hasCustomComparison && aiDiff.comparison
                   ? (current, aiBlock, context) =>
                       aiDiff.comparison!.render(current, aiBlock, registry, context)
                   : undefined,
@@ -346,11 +345,9 @@ export function hasAiDiffForBlockInEditorState(
   const blockId = typeof block.id === 'string' ? block.id : '';
   const type = typeof block.type === 'string' ? block.type : '';
   const aiContentByBlockId = aiDiffRuntimePluginKey.getState(state)?.aiContentByBlockId;
-  return Boolean(
-    aiContentByBlockId?.has(blockId) &&
-    registry.blockPlugins.get(type)?.aiDiff &&
-    resolveNoteAiDiffBlock(block, aiContentByBlockId.get(blockId))
-  );
+  const aiDiff = registry.blockPlugins.get(type)?.aiDiff;
+  if (!aiContentByBlockId?.has(blockId) || !aiDiff) return false;
+  return Boolean(resolveNoteAiDiffBlock(block, aiContentByBlockId.get(blockId), aiDiff, registry));
 }
 
 export const aiDiffRuntimeExtension = {

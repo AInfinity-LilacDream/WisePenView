@@ -17,7 +17,8 @@ import type {
   NotePluginBundle,
   NotePrintContribution,
 } from '../../content/types';
-import { plainLinkInlineAiDiff, plainTextInlineAiDiff, richTextBlockAiDiff } from './aiDiff';
+import type { NoteRichTextAiDiffConfig } from '../../noteConfig';
+import { createRichTextBlockAiDiff, plainLinkInlineAiDiff, plainTextInlineAiDiff } from './aiDiff';
 
 const DEFAULT_CAPABILITY: NoteCapabilityDeclaration = { support: 'default' };
 const UNSUPPORTED_AI_DIFF: NoteCapabilityDeclaration = {
@@ -164,66 +165,71 @@ const atomicMediaPrint: NotePrintContribution = {
   ],
 };
 
-export const defaultContentPlugin = {
-  kind: 'bundle',
-  id: 'default-content',
-  children: [
-    createDefaultInlinePlugin('text'),
-    createDefaultInlinePlugin('link'),
-    ...richTextBlockTypes.map((type) =>
-      createDefaultBlockPlugin(
-        type,
-        {
-          ...richTextCapabilities(),
-          ...(type === 'heading' || type === 'quote'
-            ? { print: { support: 'custom' as const } }
-            : {}),
-        },
-        {
-          outline: type === 'heading',
-          aiDiff: richTextBlockAiDiff,
-          comments: { mode: 'range' },
-          defaultInsertion: type === 'paragraph',
-          inlineMathDollar:
-            type === 'paragraph' ||
-            type === 'bulletListItem' ||
-            type === 'numberedListItem' ||
-            type === 'checkListItem',
-          ...(type === 'heading' ? { print: headingPrint } : {}),
-          ...(type === 'quote' ? { print: quotePrint } : {}),
-          ...(type === 'heading'
-            ? {
-                sideMenu: {
-                  inspect(block: Record<string, unknown>) {
-                    const props =
-                      typeof block.props === 'object' && block.props !== null
-                        ? (block.props as Record<string, unknown>)
-                        : {};
-                    return { attributes: { level: String(props.level ?? 1) } };
+export function createDefaultContentPlugin(
+  aiDiffConfig: NoteRichTextAiDiffConfig
+): NotePluginBundle {
+  const richTextBlockAiDiff = createRichTextBlockAiDiff(aiDiffConfig);
+  return {
+    kind: 'bundle',
+    id: 'default-content',
+    children: [
+      createDefaultInlinePlugin('text'),
+      createDefaultInlinePlugin('link'),
+      ...richTextBlockTypes.map((type) =>
+        createDefaultBlockPlugin(
+          type,
+          {
+            ...richTextCapabilities(),
+            ...(type === 'heading' || type === 'quote'
+              ? { print: { support: 'custom' as const } }
+              : {}),
+          },
+          {
+            outline: type === 'heading',
+            aiDiff: richTextBlockAiDiff,
+            comments: { mode: 'range' },
+            defaultInsertion: type === 'paragraph',
+            inlineMathDollar:
+              type === 'paragraph' ||
+              type === 'bulletListItem' ||
+              type === 'numberedListItem' ||
+              type === 'checkListItem',
+            ...(type === 'heading' ? { print: headingPrint } : {}),
+            ...(type === 'quote' ? { print: quotePrint } : {}),
+            ...(type === 'heading'
+              ? {
+                  sideMenu: {
+                    inspect(block: Record<string, unknown>) {
+                      const props =
+                        typeof block.props === 'object' && block.props !== null
+                          ? (block.props as Record<string, unknown>)
+                          : {};
+                      return { attributes: { level: String(props.level ?? 1) } };
+                    },
                   },
-                },
-              }
-            : {}),
-        }
-      )
-    ),
-    ...passThroughAtomicBlockTypes.map((type) =>
-      createDefaultBlockPlugin(
-        type,
-        {
-          ...atomicCapabilities(),
-          ...(type === 'audio' || type === 'image' || type === 'video'
-            ? { print: { support: 'custom' as const } }
-            : {}),
-        },
-        {
-          contentModel: 'none',
-          ...(type === 'audio' || type === 'image' || type === 'video'
-            ? { print: atomicMediaPrint }
-            : {}),
-          ...(type === 'image' ? { sideMenu: { icon: ImageIcon } } : {}),
-        }
-      )
-    ),
-  ],
-} satisfies NotePluginBundle;
+                }
+              : {}),
+          }
+        )
+      ),
+      ...passThroughAtomicBlockTypes.map((type) =>
+        createDefaultBlockPlugin(
+          type,
+          {
+            ...atomicCapabilities(),
+            ...(type === 'audio' || type === 'image' || type === 'video'
+              ? { print: { support: 'custom' as const } }
+              : {}),
+          },
+          {
+            contentModel: 'none',
+            ...(type === 'audio' || type === 'image' || type === 'video'
+              ? { print: atomicMediaPrint }
+              : {}),
+            ...(type === 'image' ? { sideMenu: { icon: ImageIcon } } : {}),
+          }
+        )
+      ),
+    ],
+  };
+}

@@ -36,7 +36,8 @@ function hasActiveAiDiff(
   for (const [blockId, aiContent] of aiContentByBlockId) {
     const block = findBlockById(editor.document, blockId);
     if (!block || typeof block.type !== 'string') continue;
-    if (registry.blockPlugins.get(block.type)?.aiDiff && resolveNoteAiDiffBlock(block, aiContent)) {
+    const aiDiff = registry.blockPlugins.get(block.type)?.aiDiff;
+    if (aiDiff && resolveNoteAiDiffBlock(block, aiContent, aiDiff, registry)) {
       return true;
     }
   }

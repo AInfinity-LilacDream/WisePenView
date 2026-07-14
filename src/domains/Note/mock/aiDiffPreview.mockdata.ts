@@ -114,6 +114,13 @@ export const NOTE_AI_DIFF_PREVIEW_MOCK = {
       children: [],
     },
     {
+      id: 'mock-ai-diff-math',
+      type: 'math',
+      props: { expression: 'E = mc^2', autoEdit: false },
+      'ai-content': 'E_k = \\frac{1}{2}mv^2',
+      children: [],
+    },
+    {
       id: 'mock-ai-diff-table',
       type: 'table',
       props: { textColor: 'default' },

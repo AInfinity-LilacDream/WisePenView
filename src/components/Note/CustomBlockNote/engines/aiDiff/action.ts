@@ -1,8 +1,10 @@
 import type * as Y from 'yjs';
 
 import type {
+  NoteAiDiffAcceptedBlockUpdate,
   NoteAiDiffAction,
   NoteAiDiffActionTarget,
+  NoteBlockAiDiff,
   NotePluginRegistry,
 } from '../../content/types';
 import type { CustomBlockNoteEditor } from '../../noteEditorComposition';
@@ -57,19 +59,31 @@ function removeBlockWithAiContent(params: {
   editor.removeBlocks([block as Parameters<CustomBlockNoteEditor['removeBlocks']>[0][number]]);
 }
 
-function updateBlockContent(
+function updateBlock(
   editor: CustomBlockNoteEditor,
   block: Record<string, unknown>,
-  content: unknown
+  update: NoteAiDiffAcceptedBlockUpdate
 ): Record<string, unknown> {
   const updated = editor.updateBlock(
     block as Parameters<CustomBlockNoteEditor['updateBlock']>[0],
-    { content } as Parameters<CustomBlockNoteEditor['updateBlock']>[1]
+    update as Parameters<CustomBlockNoteEditor['updateBlock']>[1]
   ) as unknown as Record<string, unknown>;
   if (!updated) {
     throw new Error(`AI Diff block 更新未生效：${String(block.id ?? '')}`);
   }
   return updated;
+}
+
+function resolveAcceptedUpdate(
+  block: Record<string, unknown>,
+  aiContent: unknown,
+  aiDiff: NoteBlockAiDiff,
+  registry: NotePluginRegistry
+): NoteAiDiffAcceptedBlockUpdate | null {
+  if (aiDiff.acceptAiContent) {
+    return aiDiff.acceptAiContent(block, aiContent, registry);
+  }
+  return { content: aiContent };
 }
 
 export function applyNoteAiDiffAction(params: {
@@ -87,7 +101,15 @@ export function applyNoteAiDiffAction(params: {
   const block = findBlockById(editor.document, blockId);
   if (!block || typeof block.type !== 'string') return 'missing';
   const aiDiff = registry.blockPlugins.get(block.type)?.aiDiff;
-  if (!aiDiff || !resolveNoteAiDiffBlock(block, aiContent)) return 'unsupported';
+  const projection = aiDiff ? resolveNoteAiDiffBlock(block, aiContent, aiDiff, registry) : null;
+  if (!aiDiff || !projection) return 'unsupported';
+  const acceptedUpdate =
+    action === 'accept' && !target && !projection.aiContentEmpty
+      ? resolveAcceptedUpdate(block, aiContent, aiDiff, registry)
+      : null;
+  if (action === 'accept' && !target && !projection.aiContentEmpty && !acceptedUpdate) {
+    return 'unsupported';
+  }
 
   const granularContent = target
     ? aiDiff.applyGranular?.(block, aiContent, action, target, registry)
@@ -99,13 +121,13 @@ export function applyNoteAiDiffAction(params: {
   doc.transact(() => {
     if (!target) {
       if (action === 'accept') {
-        if (isAiDiffContentEmpty(aiContent)) {
+        if (projection.aiContentEmpty) {
           removeBlockWithAiContent({ doc, editor, block });
         } else {
-          updateBlockContent(editor, block, aiContent);
+          updateBlock(editor, block, acceptedUpdate!);
           deleteBlockAiContent(doc, blockId);
         }
-      } else if (isAiDiffContentEmpty(block.content)) {
+      } else if (projection.currentEmpty) {
         removeBlockWithAiContent({ doc, editor, block });
       } else {
         deleteBlockAiContent(doc, blockId);
@@ -119,12 +141,12 @@ export function applyNoteAiDiffAction(params: {
           removeBlockWithAiContent({ doc, editor, block });
           return;
         }
-        updateBlockContent(editor, block, granularContent);
+        updateBlock(editor, block, { content: granularContent });
         deleteBlockAiContent(doc, blockId);
         return;
       }
-      const updated = updateBlockContent(editor, block, granularContent);
-      if (isAiDiffContentEqual(updated.content, aiContent)) {
+      const updated = updateBlock(editor, block, { content: granularContent });
+      if (!resolveNoteAiDiffBlock(updated, aiContent, aiDiff, registry)) {
         deleteBlockAiContent(doc, blockId);
       }
       return;

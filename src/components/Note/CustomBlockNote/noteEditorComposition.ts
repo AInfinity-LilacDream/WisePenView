@@ -8,10 +8,13 @@ import {
 import type { NotePluginBundle } from './content/types';
 import { aiDiffRuntimeExtension } from './engines/aiDiff/runtime';
 import { editorRuntimeExtension } from './engines/editor/stripEscape';
+import { noteConfig } from './noteConfig';
 import { codeBlockPlugin } from './plugins/CodeBlockPlugin';
-import { defaultContentPlugin } from './plugins/DefaultContentPlugin';
+import { createDefaultContentPlugin } from './plugins/DefaultContentPlugin';
 import { latexPlugin } from './plugins/LatexPlugin';
 import { tablePlugin } from './plugins/TablePlugin';
+
+const defaultContentPlugin = createDefaultContentPlugin(noteConfig.aiDiff.richText);
 
 const notePluginTree = {
   kind: 'bundle',
