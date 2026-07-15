@@ -1,6 +1,6 @@
 import { LogOut, Pencil, Trash2 } from 'lucide-react';
 /**
- * 小组详情：展示/ Tab / 小组盘只读等由 getGroupDisplayConfig（如 showWalletTabs、driveReadOnlyMode）驱动。
+ * 小组详情的展示和操作入口由组类型与当前用户角色配置驱动。
  */
 import TableDrive from '@/components/Drive/TableDrive';
 import { Spin } from '@/components/Feedback';
@@ -115,11 +115,12 @@ function GroupDetail() {
               actions={{
                 toolbar: {
                   canCreateFolder: groupDisplayConfig.canCreateTag,
-                  canCreateNote: groupDisplayConfig.canCreateTag,
-                  canCreateDrawio: groupDisplayConfig.canCreateTag,
-                  canCreateSkill: groupDisplayConfig.canCreateTag,
-                  canUploadDocument: groupDisplayConfig.canCreateTag,
-                  canUploadToGroup: groupDisplayConfig.canCreateTag,
+                  canCreateNote: groupDisplayConfig.canCreateResource,
+                  canCreateDrawio: groupDisplayConfig.canCreateResource,
+                  canCreateSkill: groupDisplayConfig.canCreateResource,
+                  canCreateAgent: groupDisplayConfig.canCreateResource,
+                  canUploadDocument: groupDisplayConfig.canUploadDocument,
+                  canUploadToGroup: groupDisplayConfig.canUploadToGroup,
                   canManageTagPermission: groupDisplayConfig.canManageTag,
                 },
               }}
