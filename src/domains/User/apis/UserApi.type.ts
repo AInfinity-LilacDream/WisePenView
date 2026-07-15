@@ -1,7 +1,7 @@
-import type { PageR } from '@/apis/api.type';
+import type { NumericEnumApiValue, PageApiRequest, PageR } from '@/apis/api.type';
 import type { UserVerificationMode } from '@/domains/User';
 
-export type UserIdentityTypeApiValue = 1 | 2 | 3 | '1' | '2' | '3';
+export type UserIdentityTypeApiValue = NumericEnumApiValue<1 | 2 | 3>;
 export type UserStatusApiValue = 'NORMAL' | 'UNIDENTIFIED' | 'BANNED';
 export type UserSexApiValue = 'MALE' | 'FEMALE' | 'UNKNOWN';
 export type UserDegreeLevelApiValue = 'UNKNOWN' | 'UNDERGRADUATE' | 'MASTER' | 'DOCTOR';
@@ -88,10 +88,7 @@ export interface CheckEmailVerifyApiRequest {
   token: string;
 }
 
-export interface ListAdminMessagesApiRequest {
-  page: number;
-  size: number;
-}
+export type ListAdminMessagesApiRequest = PageApiRequest;
 
 export interface AdminMessageApiModel {
   messageId?: string | number | null;

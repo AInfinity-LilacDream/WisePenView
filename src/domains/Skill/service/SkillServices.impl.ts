@@ -1,6 +1,7 @@
 import type { IResourceService } from '@/domains/Resource';
 import { RESOURCE_SORT_BY, RESOURCE_SORT_DIR } from '@/domains/Resource';
 import type { IUserService } from '@/domains/User';
+import type { AssetUploadTicketApiResponse } from '@/domains/_shared/apis/versionAssetApi.type';
 import { createOssStsClientManager } from '@/domains/_shared/ossStsClient';
 import { createClientError, FRONTEND_CLIENT_ERROR } from '@/utils/error';
 import { putOssPresignedUrl } from '@/utils/oss/ossPresignedPut';
@@ -80,7 +81,6 @@ export const createSkillServices = (deps: SkillServicesDeps): ISkillService => {
       SkillApi.getSkillAssetStsToken({ resourceId, targetVersion }),
     resolveCacheKey: ({ resourceId, targetVersion }) =>
       `${resourceId}:${targetVersion ?? 'published'}`,
-    invalidCredentialMessage: '技能文件访问凭证不完整',
   });
 
   const readAssetContent = async (
@@ -119,7 +119,7 @@ export const createSkillServices = (deps: SkillServicesDeps): ISkillService => {
   const forkSkill: ISkillService['forkSkill'] = async (params) => {
     const resourceId = await SkillApi.forkSkill(params);
     if (!resourceId) {
-      throw new Error('复制 Skill 接口未返回资源 ID');
+      throw createClientError(FRONTEND_CLIENT_ERROR.SKILL_COPY_RESOURCE_ID_MISSING);
     }
     return resourceId;
   };
@@ -177,7 +177,7 @@ export const createSkillServices = (deps: SkillServicesDeps): ISkillService => {
     targetVersion?: number
   ) => {
     if (!objectKey) {
-      throw new Error('技能文件缺少 objectKey');
+      throw createClientError(FRONTEND_CLIENT_ERROR.SKILL_FILE_OBJECT_KEY_MISSING);
     }
     return readAssetContent(resourceId, objectKey, targetVersion);
   };
@@ -204,11 +204,7 @@ export const createSkillServices = (deps: SkillServicesDeps): ISkillService => {
 
     for (let start = 0; start < entries.length; start += DEFAULT_UPLOAD_INIT_BATCH_SIZE) {
       const batchEntries = entries.slice(start, start + DEFAULT_UPLOAD_INIT_BATCH_SIZE);
-      let tickets: NonNullable<
-        NonNullable<
-          Awaited<ReturnType<typeof SkillApi.initUploadSkillAssets>>
-        >['assetUploadTickets']
-      > = [];
+      let tickets: AssetUploadTicketApiResponse[] = [];
 
       try {
         const res = await SkillApi.initUploadSkillAssets({
@@ -242,7 +238,9 @@ export const createSkillServices = (deps: SkillServicesDeps): ISkillService => {
           const ticket = tickets[index];
           try {
             if (!ticket?.assetId) {
-              throw new Error(`技能文件上传票据缺少 assetId：${request.name}`);
+              throw createClientError(FRONTEND_CLIENT_ERROR.SKILL_UPLOAD_ASSET_ID_MISSING, {
+                fileName: request.name,
+              });
             }
 
             options?.onProgress?.({ clientId, progress: 0 });

@@ -1,3 +1,4 @@
+import type { JavaLongApiValue } from '@/apis/api.type';
 import type { ResourceItemApiResponse } from '@/domains/Resource/apis/ResourceApi.type';
 import type { UserDisplayBaseApiResponse } from '@/domains/User/apis/UserApi.type';
 import type { Config } from '@onlyoffice/doceditor-types';
@@ -47,7 +48,7 @@ interface DocumentUploadMetaApiResponse {
   documentName: string;
   uploaderId?: string | number;
   fileType: string;
-  size: number;
+  size: JavaLongApiValue;
 }
 
 export interface PendingDocumentStatusApiResponse {

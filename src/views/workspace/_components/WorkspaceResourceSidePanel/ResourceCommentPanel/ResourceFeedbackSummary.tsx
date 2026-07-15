@@ -32,7 +32,8 @@ function ResourceFeedbackSummary({
   onRateChange,
   favoriteAction,
 }: ResourceFeedbackSummaryProps) {
-  const scoreAvgText = scoreAvg == null ? '暂无评分' : `平均 ${scoreAvg.toFixed(1)} 分`;
+  const scoreAvgText =
+    scoreAvg != null && Number.isFinite(scoreAvg) ? `平均 ${scoreAvg.toFixed(1)} 分` : '暂无评分';
 
   return (
     <>

@@ -5,6 +5,7 @@ import {
   type WalletTransactionKind,
   type WalletTransactionRecord,
 } from '@/domains/Wallet';
+import { normalizeFiniteNumber } from '@/utils/normalize/normalizeNumber';
 import type {
   GetWalletInfoResponse,
   ListWalletTransactionsRequest,
@@ -13,10 +14,7 @@ import type {
   TransferTokenBetweenGroupAndUserRequest,
 } from '../service/index.type';
 
-const toNum = (value: unknown, fallback = 0): number => {
-  const numericValue = Number(value);
-  return Number.isFinite(numericValue) ? numericValue : fallback;
-};
+const toNum = (value: unknown, fallback = 0): number => normalizeFiniteNumber(value) ?? fallback;
 
 const mapTokenTransactionTypeRawFromApi = (raw: unknown): unknown => {
   if (raw == null) return raw;

@@ -1,3 +1,4 @@
+import type { OptionalPageApiRequest } from '@/apis/api.type';
 import type { ResourceItemApiResponse } from '@/domains/Resource/apis/ResourceApi.type';
 
 /** POST /resource/favorite/changeResourceFavoriteStatus 请求体 */
@@ -49,10 +50,8 @@ export interface FavoriteItemApiResponse {
 }
 
 /** GET /resource/favorite/listFavoritedResources 请求参数 */
-export interface ListFavoritedResourcesApiRequest {
+export interface ListFavoritedResourcesApiRequest extends OptionalPageApiRequest {
   collectionId?: string;
-  page?: number;
-  size?: number;
 }
 
 /** GET /resource/favorite/listFavoritedResources 响应 data */

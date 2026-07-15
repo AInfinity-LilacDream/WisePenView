@@ -2,6 +2,7 @@ import type { ResourceItem, ResourceTagBind } from '@/domains/Resource';
 import type { UserDisplayBase } from '@/domains/User';
 import { normalizeUserDisplayBaseFromApi } from '@/domains/User/mapper/userEnum.mapper';
 import { normalizeId } from '@/utils/normalize/normalizeId';
+import { normalizeNonNegativeNumber } from '@/utils/normalize/normalizeNumber';
 import type {
   AddInlineCommentItemApiRequest,
   ChangeResourceActionPermissionApiRequest,
@@ -57,7 +58,6 @@ const PERSONAL_GROUP_PREFIX = 'p_';
 const isPersonalGroupId = (groupId?: string): boolean =>
   groupId?.startsWith(PERSONAL_GROUP_PREFIX) ?? false;
 
-type ResourceItemApiSize = ResourceItemApiResponse['size'];
 type ResourcePermissionActionField =
   | ResourceGroupGrantedActionsApiResponse[]
   | ResourceSpecifiedUserGrantedActionsApiResponse[]
@@ -67,12 +67,6 @@ type ResourcePermissionActionField =
 interface MapResourceItemContext {
   groupId?: string;
 }
-
-const normalizeResourceSize = (value: ResourceItemApiSize): number | undefined => {
-  if (value == null) return undefined;
-  const size = typeof value === 'number' ? value : Number(value);
-  return Number.isFinite(size) && size >= 0 ? size : undefined;
-};
 
 /** Service 入参 → GET /resource/item/listResources query */
 const mapListResourceItemsRequest = (
@@ -198,8 +192,8 @@ const mapResourceItemFromApi = (
   context: MapResourceItemContext = {}
 ): ResourceItem => {
   const interactionInfo = raw.resourceInteractionInfo;
-  const scoreCount = interactionInfo?.scoreCount ?? 0;
-  const scoreTotal = interactionInfo?.scoreTotal ?? 0;
+  const scoreCount = normalizeNonNegativeNumber(interactionInfo?.scoreCount) ?? 0;
+  const scoreTotal = normalizeNonNegativeNumber(interactionInfo?.scoreTotal) ?? 0;
   const item: ResourceItem = {
     resourceId: raw.resourceId,
     resourceName: raw.resourceName,
@@ -208,16 +202,17 @@ const mapResourceItemFromApi = (
     resourceType: raw.resourceType,
     preview: raw.preview,
     // 后端 resourceInfo.size 当前以字符串返回，前端统一归一化为 number。
-    size: normalizeResourceSize(raw.size),
+    size: normalizeNonNegativeNumber(raw.size),
     path: raw.path,
     tagBinds: mapResourceTagBindsFromApi(raw.tagBinds),
     currentActions: coerceResourceActions(raw.currentActions),
     resourceAccessRole: raw.resourceAccessRole,
     overrideGrantedActions: normalizeResourceActionMap(raw.overrideGrantedActions),
     specifiedUsersGrantedActions: normalizeResourceActionMap(raw.specifiedUsersGrantedActions),
-    readCount: interactionInfo?.readCount,
-    likeCount: interactionInfo?.likeCount,
-    favoriteCount: interactionInfo?.favoriteCount,
+    readCount: normalizeNonNegativeNumber(interactionInfo?.readCount),
+    likeCount: normalizeNonNegativeNumber(interactionInfo?.likeCount),
+    favoriteCount: normalizeNonNegativeNumber(interactionInfo?.favoriteCount),
+    commentCount: normalizeNonNegativeNumber(interactionInfo?.commentCount),
     scoreAvg: scoreCount > 0 ? scoreTotal / scoreCount : null,
   };
   const currentTagBind = resolveCurrentTagBind(item, context);

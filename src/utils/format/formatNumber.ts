@@ -1,5 +1,6 @@
 /** 数字千分位格式化 */
 export function formatNumber(num: number): string {
+  if (!Number.isFinite(num)) return '0';
   return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 }
 
@@ -7,7 +8,7 @@ const trimTrailingZero = (value: string): string => value.replace(/\.0$/, '');
 
 /** 阅读量格式化：null/undefined → 0；0–999 直显；1000–9999 保留一位小数 + k（末尾 .0 省略）；≥10000 取整 + k */
 export function formatReadCount(count: number | null | undefined): string {
-  const n = count ?? 0;
+  const n = count != null && Number.isFinite(count) && count >= 0 ? count : 0;
   if (n >= 10_000) return `${Math.floor(n / 1_000)}k`;
   if (n >= 1_000) return `${trimTrailingZero((n / 1_000).toFixed(1))}k`;
   return String(n);

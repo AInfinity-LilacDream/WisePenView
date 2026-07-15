@@ -7,6 +7,15 @@ export {
 export { createClientError } from './createClientError';
 export { parseErrorMessage } from './parseErrorMessage';
 export {
+  configureErrorReporter,
+  getErrorReportId,
+  installGlobalErrorReporting,
+  reportError,
+  type ErrorReport,
+  type ErrorReportContext,
+  type ErrorReporter,
+} from './reportError';
+export {
   WisePenError,
   isWisePenError,
   type WisePenErrorOptions,

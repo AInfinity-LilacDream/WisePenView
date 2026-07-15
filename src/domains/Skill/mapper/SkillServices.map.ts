@@ -1,5 +1,6 @@
 import { coerceResourceActions } from '@/domains/Resource';
 import { ResourceServicesMap } from '@/domains/Resource/mapper/ResourceServices.map';
+import { normalizeNonNegativeNumber } from '@/utils/normalize/normalizeNumber';
 import {
   AssetResourceTypeEnum,
   type SkillAssetApiInfo,
@@ -81,7 +82,7 @@ function assetToFileNode(asset: SkillAssetApiInfo): SkillFileNode {
     language: resolveLanguage(name),
     objectKey: asset.objectKey,
     uploadStatus: asset.uploadStatus,
-    size: asset.size,
+    size: normalizeNonNegativeNumber(asset.size),
   };
 }
 

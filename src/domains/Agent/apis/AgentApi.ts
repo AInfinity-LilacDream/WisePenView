@@ -1,7 +1,7 @@
 import { apiPost } from '@/apis/request';
+import type { InitUploadAssetsApiResponse } from '@/domains/_shared/apis/versionAssetApi.type';
 import type {
   AgentInfoApiResponse,
-  AgentUploadTicketApiResponse,
   AgentVersionBundleApiResponse,
   CreateAgentApiRequest,
   DeleteAgentAssetsApiRequest,
@@ -33,7 +33,7 @@ const publishAgentVersion = (resourceId: string): Promise<void> =>
 
 const initUploadAgentAssets = (
   body: InitUploadAgentAssetsApiRequest
-): Promise<{ assetUploadTickets?: AgentUploadTicketApiResponse[] } | undefined> =>
+): Promise<InitUploadAssetsApiResponse | undefined> =>
   apiPost('/agent/initUploadAgentAssets', body);
 
 const deleteAgentAssets = (body: DeleteAgentAssetsApiRequest): Promise<void> =>

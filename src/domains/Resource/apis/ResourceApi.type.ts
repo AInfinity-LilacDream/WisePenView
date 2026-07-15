@@ -1,4 +1,4 @@
-import type { PageR } from '@/apis/api.type';
+import type { JavaLongApiValue, NumericEnumApiValue, PageApiRequest, PageR } from '@/apis/api.type';
 import type { UserDisplayBaseApiResponse } from '@/domains/User/apis/UserApi.type';
 
 export type ResourceActionApiKey =
@@ -11,17 +11,15 @@ export type ResourceActionApiKey =
   | 'DOWNLOAD_ORIGINAL'
   | 'FORK'
   | 'COMMENT';
-type ResourceActionApiValue = ResourceActionApiKey | number | `${number}`;
+type ResourceActionApiValue = ResourceActionApiKey | NumericEnumApiValue;
 export type ResourceActionApiList = ResourceActionApiValue[];
-type ResourceSizeApiValue = number | `${number}`;
-
 export interface ResourceInteractionInfoApiResponse {
-  readCount?: number;
-  likeCount?: number;
-  scoreCount?: number;
-  scoreTotal?: number;
-  favoriteCount?: number;
-  commentCount?: number;
+  readCount?: JavaLongApiValue | null;
+  likeCount?: JavaLongApiValue | null;
+  scoreCount?: JavaLongApiValue | null;
+  scoreTotal?: JavaLongApiValue | null;
+  favoriteCount?: JavaLongApiValue | null;
+  commentCount?: JavaLongApiValue | null;
 }
 
 interface ResourceTagInfoApiResponse {
@@ -39,7 +37,7 @@ interface ResourceTagBindApiResponse {
   tags?: Record<string, ResourceTagInfoApiResponse | null | undefined>;
 }
 
-type ResourceGroupTypeApiValue = 1 | 2 | 3 | '1' | '2' | '3';
+type ResourceGroupTypeApiValue = NumericEnumApiValue<1 | 2 | 3>;
 
 export interface ResourceGroupDisplayBaseApiResponse {
   groupName?: string | null;
@@ -64,7 +62,7 @@ export interface ResourceItemApiResponse {
   resourceId: string;
   resourceName: string;
   ownerId?: string;
-  size?: ResourceSizeApiValue | null;
+  size?: JavaLongApiValue | null;
   ownerInfo: UserDisplayBaseApiResponse;
   resourceType?: string;
   preview?: string;
@@ -79,9 +77,7 @@ export interface ResourceItemApiResponse {
 
 export type ResourceListPageApiResponse = PageR<ResourceItemApiResponse>;
 
-export interface ListResourceItemsApiRequest {
-  page: number;
-  size: number;
+export interface ListResourceItemsApiRequest extends PageApiRequest {
   sortBy: string;
   sortDir: string;
   resourceType?: string;
@@ -112,11 +108,9 @@ export interface RemoveResourcesApiRequest {
   resourceIds: string[];
 }
 
-export interface GlobalSearchApiRequest {
+export interface GlobalSearchApiRequest extends PageApiRequest {
   keyword: string;
   scope: string;
-  page: number;
-  size: number;
 }
 
 export interface GlobalSearchItemApiResponse {

@@ -1,4 +1,5 @@
 import { ResourceServicesMap } from '@/domains/Resource/mapper/ResourceServices.map';
+import { normalizeNonNegativeNumber } from '@/utils/normalize/normalizeNumber';
 import type {
   AgentInfoApiResponse,
   AgentSpecApi,
@@ -107,7 +108,7 @@ const mapAgentDetail = (params: {
       objectKey: asset.objectKey,
       assetResourceType: asset.assetResourceType ?? 'TEXT',
       uploadStatus: asset.uploadStatus ?? 'UPLOADING',
-      size: asset.size ?? 0,
+      size: normalizeNonNegativeNumber(asset.size) ?? 0,
     })),
     ownerId: resource?.ownerId,
     isOwner: resource?.ownerId === params.currentUserId,

@@ -1,6 +1,7 @@
 // 小组模块展示与操作能力由 {GroupType} x {UserRole} 查表决定（详情 Tab、成员列表等共用）
 // 设计：OWNER 全部权限，ADMIN 可修改 MEMBER 的配额、可踢出 MEMBER，MEMBER 无编辑权限
 // 注意：组长(OWNER)的权限修改和删除不被允许；配额单独用 editableRolesForQuota，组长可修改自己的配额
+// 注意：资源新建/上传与标签管理是不同能力，不可复用 canCreateTag 作为总开关
 
 import type { ROLE } from '@/domains/Group';
 import { GROUP_TYPE } from '@/domains/Group';
@@ -13,7 +14,7 @@ export type EditableRoleForQuota = EnumKey<typeof ROLE>;
 
 export interface GroupDisplayConfig {
   groupType: number;
-  userRole: string;
+  userRole: EnumKey<typeof ROLE>;
   /** 表格列：是否展示姓名 */
   showRealName: boolean;
   /** 表格列：是否展示配额 */
@@ -32,15 +33,21 @@ export interface GroupDisplayConfig {
   canRemoveMember: boolean;
   /** 高级组且当前用户为组长时，小组详情展示 token 明细与 token 划拨 Tab */
   showWalletTabs: boolean;
-  /** 是否可创建标签（OWNER、ADMIN） */
+  /** 是否可创建文件夹标签 */
   canCreateTag: boolean;
+  /** 是否可新建笔记、图表、Skill、Agent 等资源 */
+  canCreateResource: boolean;
+  /** 是否可上传本地文档到当前小组文件夹 */
+  canUploadDocument: boolean;
+  /** 是否可将个人云盘资源上传到小组 */
+  canUploadToGroup: boolean;
   /** 是否可管理标签权限（OWNER、ADMIN） */
   canManageTag: boolean;
   /** 是否可邀请成员（OWNER、ADMIN） */
   canInviteMember: boolean;
 }
 
-const GroupDisplayConfigs: Record<number, Record<string, GroupDisplayConfig>> = {
+const GroupDisplayConfigs: Record<number, Record<EnumKey<typeof ROLE>, GroupDisplayConfig>> = {
   [GROUP_TYPE.NORMAL]: {
     MEMBER: {
       groupType: GROUP_TYPE.NORMAL,
@@ -55,6 +62,9 @@ const GroupDisplayConfigs: Record<number, Record<string, GroupDisplayConfig>> = 
       canRemoveMember: false,
       showWalletTabs: false,
       canCreateTag: false,
+      canCreateResource: true,
+      canUploadDocument: true,
+      canUploadToGroup: true,
       canManageTag: false,
       canInviteMember: false,
     },
@@ -71,6 +81,9 @@ const GroupDisplayConfigs: Record<number, Record<string, GroupDisplayConfig>> = 
       canRemoveMember: true,
       showWalletTabs: false,
       canCreateTag: true,
+      canCreateResource: true,
+      canUploadDocument: true,
+      canUploadToGroup: true,
       canManageTag: true,
       canInviteMember: true,
     },
@@ -87,6 +100,9 @@ const GroupDisplayConfigs: Record<number, Record<string, GroupDisplayConfig>> = 
       canRemoveMember: true,
       showWalletTabs: false,
       canCreateTag: true,
+      canCreateResource: true,
+      canUploadDocument: true,
+      canUploadToGroup: true,
       canManageTag: true,
       canInviteMember: true,
     },
@@ -105,6 +121,9 @@ const GroupDisplayConfigs: Record<number, Record<string, GroupDisplayConfig>> = 
       canRemoveMember: false,
       showWalletTabs: false,
       canCreateTag: false,
+      canCreateResource: true,
+      canUploadDocument: true,
+      canUploadToGroup: true,
       canManageTag: false,
       canInviteMember: false,
     },
@@ -121,6 +140,9 @@ const GroupDisplayConfigs: Record<number, Record<string, GroupDisplayConfig>> = 
       canRemoveMember: true,
       showWalletTabs: false,
       canCreateTag: true,
+      canCreateResource: true,
+      canUploadDocument: true,
+      canUploadToGroup: true,
       canManageTag: true,
       canInviteMember: true,
     },
@@ -137,6 +159,9 @@ const GroupDisplayConfigs: Record<number, Record<string, GroupDisplayConfig>> = 
       canRemoveMember: true,
       showWalletTabs: true,
       canCreateTag: true,
+      canCreateResource: true,
+      canUploadDocument: true,
+      canUploadToGroup: true,
       canManageTag: true,
       canInviteMember: true,
     },
@@ -155,6 +180,9 @@ const GroupDisplayConfigs: Record<number, Record<string, GroupDisplayConfig>> = 
       canRemoveMember: false,
       showWalletTabs: false,
       canCreateTag: false,
+      canCreateResource: true,
+      canUploadDocument: true,
+      canUploadToGroup: true,
       canManageTag: false,
       canInviteMember: false,
     },
@@ -171,6 +199,9 @@ const GroupDisplayConfigs: Record<number, Record<string, GroupDisplayConfig>> = 
       canRemoveMember: true,
       showWalletTabs: false,
       canCreateTag: true,
+      canCreateResource: true,
+      canUploadDocument: true,
+      canUploadToGroup: true,
       canManageTag: true,
       canInviteMember: true,
     },
@@ -187,13 +218,19 @@ const GroupDisplayConfigs: Record<number, Record<string, GroupDisplayConfig>> = 
       canRemoveMember: true,
       showWalletTabs: false,
       canCreateTag: true,
+      canCreateResource: true,
+      canUploadDocument: true,
+      canUploadToGroup: true,
       canManageTag: true,
       canInviteMember: true,
     },
   },
 };
 
-export const getGroupDisplayConfig = (groupType: number, userRole: string): GroupDisplayConfig => {
+export const getGroupDisplayConfig = (
+  groupType: number,
+  userRole: EnumKey<typeof ROLE>
+): GroupDisplayConfig => {
   const config = GroupDisplayConfigs[groupType]?.[userRole];
 
   return (
@@ -208,9 +245,12 @@ export const getGroupDisplayConfig = (groupType: number, userRole: string): Grou
       canModifyPermission: false,
       canAssignQuota: false,
       canRemoveMember: false,
-      canCreateTag: false,
-      canManageTag: false,
       showWalletTabs: false,
+      canCreateTag: false,
+      canCreateResource: false,
+      canUploadDocument: false,
+      canUploadToGroup: false,
+      canManageTag: false,
       canInviteMember: false,
     }
   );

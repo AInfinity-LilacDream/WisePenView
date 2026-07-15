@@ -1,4 +1,5 @@
 import type { AgentAsset } from '@/domains/Agent';
+import { formatFileSize } from '@/utils/format/formatFileSize';
 import { Button, Table } from '@heroui/react';
 import { Trash2, Upload } from 'lucide-react';
 import { useRef, useState, type DragEvent } from 'react';
@@ -11,11 +12,6 @@ interface Props {
   onUpload: (files: File[]) => void;
   onDelete: (id: string) => void;
 }
-const formatSize = (size: number) =>
-  size >= 1024 * 1024
-    ? `${(size / 1024 / 1024).toFixed(1)} MB`
-    : `${Math.max(1, Math.round(size / 1024))} KB`;
-
 const isFileDrag = (event: DragEvent<HTMLElement>) =>
   Array.from(event.dataTransfer.types).includes('Files');
 
@@ -112,7 +108,7 @@ export default function AssetsSection({ assets, disabled, uploading, onUpload, o
                       <strong>{asset.name}</strong>
                     </Table.Cell>
                     <Table.Cell>
-                      {asset.assetResourceType} · {formatSize(asset.size)}
+                      {asset.assetResourceType} · {formatFileSize(asset.size)}
                     </Table.Cell>
                     <Table.Cell>
                       {asset.uploadStatus === 'AVAILABLE' ? '可用' : '上传中'}

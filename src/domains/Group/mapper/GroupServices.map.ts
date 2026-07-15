@@ -9,6 +9,10 @@ import { normalizeUserDisplayBaseFromApi } from '@/domains/User/mapper/userEnum.
 import type { EnumKey } from '@/utils/enum';
 import { formatTimestampToDate } from '@/utils/format/formatTime';
 import { normalizeId } from '@/utils/normalize/normalizeId';
+import {
+  normalizeFiniteNumber,
+  normalizeNonNegativeNumber,
+} from '@/utils/normalize/normalizeNumber';
 import type {
   AddGroupApiRequest,
   ChangeGroupApiRequest,
@@ -35,19 +39,12 @@ import type {
 } from '../service/index.type';
 import { mapGroupMemberFromApi } from './groupMember.mapper';
 
-const normalizeNumberFromApi = (value: unknown, fallback = 0): number => {
-  const numericValue = Number(value);
-  return Number.isFinite(numericValue) ? numericValue : fallback;
-};
-
-const mapGroupTypeFromApi = (value: unknown): number => normalizeNumberFromApi(value);
+const mapGroupTypeFromApi = (value: unknown): number => normalizeFiniteNumber(value) ?? 0;
 
 const mapGroupTypeToApi = (value: number): string => String(value);
 
-const normalizeRoleCodeFromApi = (value: unknown): number | null => {
-  const numericValue = Number(value);
-  return Number.isFinite(numericValue) ? numericValue : null;
-};
+const normalizeRoleCodeFromApi = (value: unknown): number | null =>
+  normalizeFiniteNumber(value) ?? null;
 
 const mapRoleToApi = (value: number): string => String(value);
 
@@ -69,11 +66,12 @@ const mapGroupFromApi = (raw: GroupApiResponse): Group => {
             avatar: ownerInfo.avatar,
             identityType: ownerInfo.identityType,
           },
-    memberCount: normalizeNumberFromApi(raw.memberCount),
+    memberCount: normalizeNonNegativeNumber(raw.memberCount) ?? 0,
     createTime: formatTimestampToDate(raw.createTime),
     inviteCode: raw.inviteCode ?? undefined,
-    tokenUsed: raw.tokenUsed == null ? undefined : normalizeNumberFromApi(raw.tokenUsed),
-    tokenBalance: raw.tokenBalance == null ? undefined : normalizeNumberFromApi(raw.tokenBalance),
+    tokenUsed: raw.tokenUsed == null ? undefined : (normalizeNonNegativeNumber(raw.tokenUsed) ?? 0),
+    tokenBalance:
+      raw.tokenBalance == null ? undefined : (normalizeNonNegativeNumber(raw.tokenBalance) ?? 0),
   };
 };
 
@@ -116,7 +114,7 @@ const mapFetchGroupBaseInfoFromApi = (
 });
 
 const mapGroupWalletInfoFromApi = (data: GroupApiResponse): number =>
-  normalizeNumberFromApi(data.tokenBalance);
+  normalizeNonNegativeNumber(data.tokenBalance) ?? 0;
 
 const mapFetchGroupResConfigFromApi = (data: GetGroupConfigApiResponse): GroupResConfig => {
   return {

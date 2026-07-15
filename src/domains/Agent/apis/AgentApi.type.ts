@@ -1,7 +1,9 @@
 import type { ResourceItemApiResponse } from '@/domains/Resource/apis/ResourceApi.type';
-
-export type AgentVersionStatusApi = 'DRAFT' | 'PUBLISHED';
-export type AgentAssetUploadStatusApi = 'UPLOADING' | 'AVAILABLE';
+import type {
+  InitUploadAssetApiItem,
+  VersionBundleApiResponse,
+  VersionResourceInfoApiResponse,
+} from '@/domains/_shared/apis/versionAssetApi.type';
 
 export interface AgentModelPolicyApi {
   defaultModelId?: string | null;
@@ -38,43 +40,14 @@ export interface AgentSpecApi {
   memoryPolicy?: AgentMemoryPolicyApi | null;
 }
 
-export interface AgentAssetApiInfo {
-  id?: string;
-  name?: string;
-  path?: string;
-  objectKey?: string;
-  assetResourceType?: string;
-  uploadStatus?: AgentAssetUploadStatusApi;
-  size?: number;
-}
-
 export interface AgentInfoApiResponse {
   resourceInfo?: ResourceItemApiResponse;
-  agentInfo?: {
-    name?: string;
-    description?: string;
-    version?: number;
-    sourceType?: string;
-  };
+  agentInfo?: VersionResourceInfoApiResponse;
 }
 
-export interface AgentVersionBundleApiResponse {
-  version?: number;
-  status?: AgentVersionStatusApi;
-  assets?: AgentAssetApiInfo[];
-  resourceId?: string;
+export type AgentVersionBundleApiResponse = VersionBundleApiResponse & {
   spec?: AgentSpecApi | null;
-}
-
-export interface AgentUploadTicketApiResponse {
-  assetId?: string;
-  path?: string;
-  name?: string;
-  objectKey?: string;
-  putUrl?: string;
-  callbackHeader?: string;
-  flashUploaded?: boolean;
-}
+};
 
 export interface CreateAgentApiRequest {
   title: string;
@@ -98,13 +71,7 @@ export interface UpdateAgentSpecApiRequest {
 export interface InitUploadAgentAssetsApiRequest {
   resourceId: string;
   draftVersion: number;
-  assets: Array<{
-    name: string;
-    path: string;
-    assetResourceType: string;
-    md5?: string;
-    expectedSize?: number;
-  }>;
+  assets: InitUploadAssetApiItem[];
 }
 
 export interface DeleteAgentAssetsApiRequest {

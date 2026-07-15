@@ -102,14 +102,16 @@ const appendError = (
   }
 };
 
-export const buildErrorDetail = (error: unknown, pathname: string): string => {
-  const lines = [`页面模块: ${pathname}`];
+export const buildErrorDetail = (error: unknown, pathname: string, errorId: string): string => {
+  const lines = [`错误编号: ${errorId}`, `页面模块: ${pathname}`];
 
   if (isRouteErrorResponse(error)) {
     lines.push(
       '错误类型: RouteErrorResponse',
       `HTTP 状态: ${error.status}${error.statusText ? ` ${error.statusText}` : ''}`
     );
+
+    if (!import.meta.env.DEV) return lines.join('\n');
 
     if (error.data instanceof Error) {
       appendError(lines, error.data, '响应异常');
@@ -121,10 +123,20 @@ export const buildErrorDetail = (error: unknown, pathname: string): string => {
   }
 
   if (error instanceof Error) {
+    if (!import.meta.env.DEV) {
+      lines.push(`错误类型: ${error.name || 'Error'}`);
+      if (isWisePenError(error)) {
+        lines.push(`错误代码: ${error.code}`, `错误来源: ${error.source}`);
+      }
+      return lines.join('\n');
+    }
     appendError(lines, error);
     return lines.join('\n');
   }
 
-  lines.push('错误类型: Unknown', `错误内容: ${serializeValue(error)}`);
+  lines.push('错误类型: Unknown');
+  if (import.meta.env.DEV) {
+    lines.push(`错误内容: ${serializeValue(error)}`);
+  }
   return lines.join('\n');
 };

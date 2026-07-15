@@ -1,4 +1,4 @@
-import type { PageR } from '@/apis/api.type';
+import type { PageApiRequest, PageR } from '@/apis/api.type';
 import type {
   UserDegreeLevelApiValue,
   UserIdentityTypeApiValue,
@@ -23,9 +23,7 @@ export interface AdminUserApiModel {
   updateTime?: string;
 }
 
-export interface FetchAdminUserListApiRequest {
-  page: number;
-  size: number;
+export interface FetchAdminUserListApiRequest extends PageApiRequest {
   keyword: string;
   status?: string;
   identityType?: string;

@@ -1,3 +1,5 @@
+import type { NumericEnumApiValue } from '@/apis/api.type';
+
 type TagAccessControlScopeApiValue = 0 | 1 | 2 | 3;
 type TagResourceActionApiKey =
   | 'DISCOVER'
@@ -60,7 +62,7 @@ export interface TagTreeApiResponse {
   taggedResourceGrantedActionsMask?: number;
   tagMountPermissionScope?: TagAccessControlScopeApiValue;
   tagMountSpecifiedUsers?: string[];
-  grantedActions?: Array<TagResourceActionApiKey | number | `${number}`>;
+  grantedActions?: Array<TagResourceActionApiKey | NumericEnumApiValue>;
   parentId?: string;
   children?: TagTreeApiResponse[];
 }

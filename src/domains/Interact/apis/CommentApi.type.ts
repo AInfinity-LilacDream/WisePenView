@@ -1,4 +1,4 @@
-import type { PageR } from '@/apis/api.type';
+import type { PageApiRequest, PageR } from '@/apis/api.type';
 
 export type CommentSortByApiValue = 'CREATE_TIME' | 'LIKE_COUNT';
 
@@ -37,17 +37,13 @@ export interface CommentItemActionApiRequest {
   commentId: string;
 }
 
-export interface ListCommentsApiRequest {
+export interface ListCommentsApiRequest extends PageApiRequest {
   resourceId: string;
   sortBy: CommentSortByApiValue;
-  page: number;
-  size: number;
 }
 
-export interface ListRepliesApiRequest {
+export interface ListRepliesApiRequest extends PageApiRequest {
   rootCommentId: string;
-  page: number;
-  size: number;
 }
 
 export type CommentPageApiResponse = PageR<ResourceCommentItemApiResponse>;

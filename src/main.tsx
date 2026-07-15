@@ -1,6 +1,41 @@
 import '@/i18n';
 import { createRoot } from 'react-dom/client';
+import { ErrorBoundary } from 'react-error-boundary';
 import App from './bootstrap/App';
 import './bootstrap/index.css';
+import { installGlobalErrorReporting, reportError } from './utils/error';
+import RootErrorFallback from './views/app/error/RootErrorFallback';
 
-createRoot(document.getElementById('root')!).render(<App />);
+installGlobalErrorReporting();
+
+const root = createRoot(document.getElementById('root')!, {
+  onUncaughtError: (error, errorInfo) => {
+    reportError(error, {
+      origin: 'react-uncaught',
+      pathname: window.location.pathname,
+      componentStack: errorInfo.componentStack ?? undefined,
+    });
+  },
+  onRecoverableError: (error, errorInfo) => {
+    reportError(error, {
+      origin: 'react-recoverable',
+      pathname: window.location.pathname,
+      componentStack: errorInfo.componentStack ?? undefined,
+    });
+  },
+});
+
+root.render(
+  <ErrorBoundary
+    FallbackComponent={RootErrorFallback}
+    onError={(error, errorInfo) => {
+      reportError(error, {
+        origin: 'root-boundary',
+        pathname: window.location.pathname,
+        componentStack: errorInfo.componentStack ?? undefined,
+      });
+    }}
+  >
+    <App />
+  </ErrorBoundary>
+);

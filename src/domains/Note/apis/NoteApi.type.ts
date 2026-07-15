@@ -1,3 +1,4 @@
+import type { OptionalPageApiRequest } from '@/apis/api.type';
 import type { ResourceItemApiResponse } from '@/domains/Resource/apis/ResourceApi.type';
 import type { UserDisplayBaseApiResponse } from '@/domains/User/apis/UserApi.type';
 
@@ -50,8 +51,6 @@ export interface ForkNoteApiRequest {
   forkedResourceName?: string;
 }
 
-export interface ListNoteVersionsApiRequest {
+export interface ListNoteVersionsApiRequest extends OptionalPageApiRequest {
   resourceId: string;
-  page?: number;
-  size?: number;
 }

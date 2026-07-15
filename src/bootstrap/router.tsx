@@ -1,5 +1,5 @@
 import { lazy } from 'react';
-import { createBrowserRouter, Navigate } from 'react-router-dom';
+import { createBrowserRouter, Navigate, Outlet } from 'react-router-dom';
 
 // Layout imports
 import AdminLayout from '@/layouts/Admin/AdminLayout';
@@ -9,6 +9,7 @@ import AuthLayout from '@/layouts/Auth/AuthLayout';
 import HomeLayout from '@/layouts/Home/HomeLayout';
 import WorkspaceLayout from '@/layouts/Workspace/WorkspaceLayout';
 import AdminRouteGuard from '@/views/admin/guard/AdminRouteGuard';
+import RouteError from '@/views/app/error/RouteError';
 
 // 页面使用 lazy load，按路由切分 chunk
 const UserManagement = lazy(() => import('@/views/admin/UserManagement'));
@@ -119,63 +120,78 @@ const router = createBrowserRouter([
     children: [
       {
         element: <AppLayout />, // 承载：普通 app 页面导航 + 右侧助手 + 中间内容
+        errorElement: <RouteError />,
         children: [
-          // 登录后的默认入口为 AI 对话。
           {
-            index: true,
-            element: <Navigate to="/app/chat" replace />,
-          },
-          {
-            path: 'chat',
-            element: <ChatPage />,
-          },
-          {
-            path: 'chat/:sessionId',
-            element: <ChatPage />,
-          },
-          // 文档与云盘页
-          {
-            path: 'drive',
-            element: <Drive />,
-          },
-          {
-            path: 'my-group',
-            element: <MyGroup />,
-          },
-          {
-            path: 'my-group/:id',
-            element: <GroupDetail />,
-          },
-          {
-            path: 'profile/usage',
-            element: <Usage />,
-          },
-          {
-            path: 'profile/account',
-            element: <Account />,
-          },
-          {
-            path: 'profile/appearance',
-            element: <Appearance />,
+            element: <Outlet />,
+            errorElement: <RouteError />,
+            children: [
+              // 登录后的默认入口为 AI 对话。
+              {
+                index: true,
+                element: <Navigate to="/app/chat" replace />,
+              },
+              {
+                path: 'chat',
+                element: <ChatPage />,
+              },
+              {
+                path: 'chat/:sessionId',
+                element: <ChatPage />,
+              },
+              // 文档与云盘页
+              {
+                path: 'drive',
+                element: <Drive />,
+              },
+              {
+                path: 'my-group',
+                element: <MyGroup />,
+              },
+              {
+                path: 'my-group/:id',
+                element: <GroupDetail />,
+              },
+              {
+                path: 'profile/usage',
+                element: <Usage />,
+              },
+              {
+                path: 'profile/account',
+                element: <Account />,
+              },
+              {
+                path: 'profile/appearance',
+                element: <Appearance />,
+              },
+            ],
           },
         ],
       },
       {
         element: <WorkspaceLayout />,
+        errorElement: <RouteError />,
         children: [
           {
-            path: 'workspace/:resourceType',
-            element: <WorkspaceResourceView />,
-          },
-          {
-            path: 'workspace/:resourceType/:resourceId',
-            element: <WorkspaceResourceView />,
+            element: <Outlet />,
+            errorElement: <RouteError />,
+            children: [
+              {
+                path: 'workspace/:resourceType',
+                element: <WorkspaceResourceView />,
+              },
+              {
+                path: 'workspace/:resourceType/:resourceId',
+                element: <WorkspaceResourceView />,
+              },
+            ],
           },
         ],
       },
       {
         path: 'zen',
         element: <ZenModeLayout />,
+        errorElement: <RouteError />,
       },
     ],
   },
@@ -190,46 +206,53 @@ const router = createBrowserRouter([
     children: [
       {
         element: <AdminLayout />, // 承载：admin 根页面内容
+        errorElement: <RouteError />,
         children: [
           {
-            index: true,
-            element: <Navigate to="/admin/users" replace />,
-          },
-          {
-            path: 'users',
-            element: <UserManagement />,
-          },
-          {
-            path: 'resources',
-            element: <ResourceManagement />,
-          },
-          {
-            path: 'groups',
-            element: <GroupManagement />,
-          },
-          {
-            path: 'announcements',
-            element: <AnnouncementManagement />,
-          },
-          {
-            path: 'statistics',
-            element: <DataStatistics />,
-          },
-          {
-            path: 'permissions',
-            element: <PermissionManagement />,
-          },
-          {
-            path: 'settings',
-            element: <SystemSettings />,
-          },
-          {
-            path: 'logs',
-            element: <LogAudit />,
-          },
-          {
-            path: 'tasks',
-            element: <TaskCenter />,
+            element: <Outlet />,
+            errorElement: <RouteError />,
+            children: [
+              {
+                index: true,
+                element: <Navigate to="/admin/users" replace />,
+              },
+              {
+                path: 'users',
+                element: <UserManagement />,
+              },
+              {
+                path: 'resources',
+                element: <ResourceManagement />,
+              },
+              {
+                path: 'groups',
+                element: <GroupManagement />,
+              },
+              {
+                path: 'announcements',
+                element: <AnnouncementManagement />,
+              },
+              {
+                path: 'statistics',
+                element: <DataStatistics />,
+              },
+              {
+                path: 'permissions',
+                element: <PermissionManagement />,
+              },
+              {
+                path: 'settings',
+                element: <SystemSettings />,
+              },
+              {
+                path: 'logs',
+                element: <LogAudit />,
+              },
+              {
+                path: 'tasks',
+                element: <TaskCenter />,
+              },
+            ],
           },
         ],
       },

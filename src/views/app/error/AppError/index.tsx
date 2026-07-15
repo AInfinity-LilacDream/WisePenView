@@ -4,42 +4,12 @@ import { isRouteErrorResponse, useLocation, useNavigate, useRouteError } from 'r
 
 import { ResultState } from '@/components/Feedback';
 import LandingNavbar from '@/layouts/Home/_components/LandingNavbar';
+import { getErrorReportId } from '@/utils/error';
 import ResourceNotFound from '@/views/app/error/ResourceNotFound';
 import { Button, toast, Tooltip } from '@heroui/react';
+import { buildAppErrorInfo } from '../errorInfo';
 import { buildErrorDetail } from './errorDetail';
 import styles from './style.module.less';
-
-interface AppErrorInfo {
-  status: 'error' | 'warning' | '404' | '403' | '500' | 'success' | 'info';
-  title: string;
-  subTitle: string;
-}
-
-const buildAppErrorInfo = (error: unknown): AppErrorInfo => {
-  if (isRouteErrorResponse(error)) {
-    const title = error.status >= 500 ? '出错啦' : `请求异常 (${error.status})`;
-    const subTitle = error.statusText || '页面加载失败，请稍后重试。';
-    return {
-      status: error.status >= 500 ? '500' : 'warning',
-      title,
-      subTitle,
-    };
-  }
-
-  if (error instanceof Error) {
-    return {
-      status: '500',
-      title: '出错啦',
-      subTitle: '页面发生了意外错误，请刷新后重试。',
-    };
-  }
-
-  return {
-    status: '500',
-    title: '出错啦',
-    subTitle: '发生了未知错误，请稍后再试。',
-  };
-};
 
 function AppError() {
   const navigate = useNavigate();
@@ -52,7 +22,8 @@ function AppError() {
   }
 
   const errorInfo = buildAppErrorInfo(error);
-  const errorDetail = buildErrorDetail(error, location.pathname);
+  const errorId = getErrorReportId(error);
+  const errorDetail = buildErrorDetail(error, location.pathname, errorId);
 
   const handleCopyDetail = async () => {
     try {
@@ -86,6 +57,7 @@ function AppError() {
             </div>
           }
         >
+          <p className={styles.errorId}>错误编号：{errorId}</p>
           <div className={styles.errorCollapse}>
             <div className={styles.errorCollapseHeader}>
               <button

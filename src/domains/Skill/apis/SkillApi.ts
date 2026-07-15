@@ -1,63 +1,59 @@
+import type { OssStsTokenApiResponse } from '@/apis/api.type';
 import { apiGet, apiPost } from '@/apis/request';
+import type { InitUploadAssetsApiResponse } from '@/domains/_shared/apis/versionAssetApi.type';
 import type {
-  CreateSkillData,
-  DeleteSkillAssetsData,
-  ForkSkillData,
-  GetSkillAssetStsTokenData,
-  GetSkillInfoData,
-  GetSkillVersionBundleInfoData,
-  InitUploadSkillAssetsData,
-  PublishSkillVersionData,
-  RassetUploadInitResponse,
-  RSkillAssetStsTokenResponse,
-  RSkillResourceInfoResponse,
-  RSkillVersionBundleInfoResponse,
-  RString,
-  RVoid,
-  UpdateSkillInfoData,
+  CreateSkillApiRequest,
+  DeleteSkillAssetsApiRequest,
+  ForkSkillApiRequest,
+  GetSkillAssetStsTokenApiRequest,
+  GetSkillInfoApiRequest,
+  GetSkillVersionBundleInfoApiRequest,
+  InitUploadSkillAssetsApiRequest,
+  PublishSkillVersionApiRequest,
+  SkillInfoApiResponse,
+  SkillVersionBundleApiResponse,
+  UpdateSkillInfoApiRequest,
 } from './SkillApi.type';
 
-function createSkill(body: CreateSkillData['body']): Promise<RString['data']> {
+function createSkill(body: CreateSkillApiRequest): Promise<string | undefined> {
   return apiPost('/skill/createSkill', body);
 }
 
-function forkSkill(body: ForkSkillData['body']): Promise<RString['data']> {
+function forkSkill(body: ForkSkillApiRequest): Promise<string | undefined> {
   return apiPost('/skill/forkSkill', body);
 }
 
-function getSkillInfo(
-  query: GetSkillInfoData['query']
-): Promise<RSkillResourceInfoResponse['data']> {
+function getSkillInfo(query: GetSkillInfoApiRequest): Promise<SkillInfoApiResponse | undefined> {
   return apiPost('/skill/getSkillInfo', null, { params: query });
 }
 
 function getSkillVersionBundleInfo(
-  query: GetSkillVersionBundleInfoData['query']
-): Promise<RSkillVersionBundleInfoResponse['data']> {
+  query: GetSkillVersionBundleInfoApiRequest
+): Promise<SkillVersionBundleApiResponse | undefined> {
   return apiPost('/skill/getSkillVersionBundleInfo', null, { params: query });
 }
 
 function getSkillAssetStsToken(
-  query: GetSkillAssetStsTokenData['query']
-): Promise<RSkillAssetStsTokenResponse['data']> {
+  query: GetSkillAssetStsTokenApiRequest
+): Promise<OssStsTokenApiResponse | undefined> {
   return apiGet('/skill/getSkillAssetStsToken', { params: query });
 }
 
-function changeSkillInfo(body: UpdateSkillInfoData['body']): Promise<RVoid['data']> {
+function changeSkillInfo(body: UpdateSkillInfoApiRequest): Promise<void> {
   return apiPost('/skill/changeSkillInfo', body);
 }
 
 function initUploadSkillAssets(
-  body: InitUploadSkillAssetsData['body']
-): Promise<RassetUploadInitResponse['data']> {
+  body: InitUploadSkillAssetsApiRequest
+): Promise<InitUploadAssetsApiResponse | undefined> {
   return apiPost('/skill/initUploadSkillAssets', body);
 }
 
-function deleteSkillAssets(body: DeleteSkillAssetsData['body']): Promise<RVoid['data']> {
+function deleteSkillAssets(body: DeleteSkillAssetsApiRequest): Promise<void> {
   return apiPost('/skill/deleteSkillAssets', body);
 }
 
-function publishSkillVersion(body: PublishSkillVersionData['body']): Promise<RVoid['data']> {
+function publishSkillVersion(body: PublishSkillVersionApiRequest): Promise<void> {
   return apiPost('/skill/publishSkillVersion', body);
 }
 

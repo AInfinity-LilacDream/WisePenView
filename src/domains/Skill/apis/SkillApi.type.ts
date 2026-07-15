@@ -1,4 +1,10 @@
 import type { ResourceItemApiResponse } from '@/domains/Resource/apis/ResourceApi.type';
+import type {
+  InitUploadAssetApiItem,
+  VersionAssetApiInfo,
+  VersionBundleApiResponse,
+  VersionResourceInfoApiResponse,
+} from '@/domains/_shared/apis/versionAssetApi.type';
 
 export const AssetResourceTypeEnum = {
   MD: 'MD',
@@ -12,150 +18,61 @@ export const AssetResourceTypeEnum = {
 export type AssetResourceTypeEnum =
   (typeof AssetResourceTypeEnum)[keyof typeof AssetResourceTypeEnum];
 
-type SkillUploadStatus = 'UPLOADING' | 'AVAILABLE';
-type SkillVersionApiStatus = 'DRAFT' | 'PUBLISHED';
-
-export interface SkillAssetApiInfo {
-  id?: string;
-  name?: string;
-  path?: string;
-  objectKey?: string;
-  assetResourceType?: AssetResourceTypeEnum;
-  uploadStatus?: SkillUploadStatus;
-  size?: number;
-}
+export type SkillAssetApiInfo = VersionAssetApiInfo<AssetResourceTypeEnum>;
 
 export interface SkillInfoApiResponse {
   resourceInfo?: ResourceItemApiResponse;
-  skillInfo?: {
-    name?: string;
-    description?: string;
-    version?: number;
-    sourceType?: string;
-  };
+  skillInfo?: VersionResourceInfoApiResponse;
 }
 
-export interface SkillVersionBundleApiResponse {
-  version?: number;
-  status?: SkillVersionApiStatus;
-  assets?: SkillAssetApiInfo[];
+export type SkillVersionBundleApiResponse = VersionBundleApiResponse<AssetResourceTypeEnum>;
+
+export interface CreateSkillApiRequest {
+  title: string;
+  name?: string;
+  description?: string;
+  sourceType?: string;
+}
+
+export interface ForkSkillApiRequest {
+  resourceId: string;
+  forkedResourceVersion?: number;
+  forkedResourceName: string;
+}
+
+export interface GetSkillInfoApiRequest {
+  resourceId: string;
+  targetVersion?: number;
+}
+
+export interface GetSkillVersionBundleInfoApiRequest {
+  resourceId: string;
+  version: number;
+}
+
+export interface GetSkillAssetStsTokenApiRequest {
+  resourceId: string;
+  targetVersion?: number;
+}
+
+export interface UpdateSkillInfoApiRequest {
   resourceId?: string;
+  name?: string;
+  description?: string;
 }
 
-export interface CreateSkillData {
-  body: {
-    title: string;
-    name?: string;
-    description?: string;
-    sourceType?: string;
-  };
+export interface InitUploadSkillAssetsApiRequest {
+  resourceId: string;
+  draftVersion: number;
+  assets: InitUploadAssetApiItem<AssetResourceTypeEnum>[];
 }
 
-export interface ForkSkillData {
-  body: {
-    resourceId: string;
-    forkedResourceVersion?: number;
-    forkedResourceName: string;
-  };
+export interface DeleteSkillAssetsApiRequest {
+  resourceId: string;
+  draftVersion: number;
+  assetIds: string[];
 }
 
-export interface GetSkillInfoData {
-  query: {
-    resourceId: string;
-    targetVersion?: number;
-  };
-}
-
-export interface GetSkillVersionBundleInfoData {
-  query: {
-    resourceId: string;
-    version: number;
-  };
-}
-
-export interface GetSkillAssetStsTokenData {
-  query: {
-    resourceId: string;
-    targetVersion?: number;
-  };
-}
-
-export interface UpdateSkillInfoData {
-  body: {
-    resourceId?: string;
-    name?: string;
-    description?: string;
-  };
-}
-
-export interface InitUploadSkillAssetsData {
-  body: {
-    resourceId: string;
-    draftVersion: number;
-    assets: Array<{
-      name: string;
-      path: string;
-      assetResourceType: AssetResourceTypeEnum;
-      md5?: string;
-      expectedSize?: number;
-    }>;
-  };
-}
-
-export interface DeleteSkillAssetsData {
-  body: {
-    resourceId: string;
-    draftVersion: number;
-    assetIds: string[];
-  };
-}
-
-export interface PublishSkillVersionData {
-  body: {
-    resourceId: string;
-  };
-}
-
-export interface RString {
-  data?: string;
-}
-
-export interface RVoid {
-  data?: Record<string, unknown>;
-}
-
-export interface RassetUploadInitResponse {
-  data?: {
-    resourceId?: string;
-    version?: number;
-    assetUploadTickets?: Array<{
-      assetId?: string;
-      path?: string;
-      name?: string;
-      objectKey?: string;
-      putUrl?: string;
-      callbackHeader?: string;
-      flashUploaded?: boolean;
-    }>;
-  };
-}
-
-export interface RSkillResourceInfoResponse {
-  data?: SkillInfoApiResponse;
-}
-
-export interface RSkillVersionBundleInfoResponse {
-  data?: SkillVersionBundleApiResponse;
-}
-
-export interface RSkillAssetStsTokenResponse {
-  data?: {
-    accessKeyId?: string;
-    accessKeySecret?: string;
-    securityToken?: string;
-    bucket?: string;
-    region?: string;
-    endpoint?: string;
-    expiration?: string;
-  };
+export interface PublishSkillVersionApiRequest {
+  resourceId: string;
 }

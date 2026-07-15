@@ -1,5 +1,6 @@
 import { ResourceServicesMap } from '@/domains/Resource/mapper/ResourceServices.map';
 import { normalizeId } from '@/utils/normalize/normalizeId';
+import { normalizeFiniteNumber } from '@/utils/normalize/normalizeNumber';
 import type {
   CommentPageApiResponse,
   ResourceCommentItemApiResponse,
@@ -27,11 +28,8 @@ import type {
   UpdateFavoriteCollectionsRequest,
 } from '../service/index.type';
 
-const normalizeTimestamp = (value: number | string | undefined): number => {
-  if (value == null || value === '') return 0;
-  const timestamp = Number(value);
-  return Number.isFinite(timestamp) ? timestamp : 0;
-};
+const normalizeTimestamp = (value: number | string | undefined): number =>
+  normalizeFiniteNumber(value) ?? 0;
 
 function mapCommentAuthorFromApi(
   value: ResourceCommentItemApiResponse['authorInfo'],
