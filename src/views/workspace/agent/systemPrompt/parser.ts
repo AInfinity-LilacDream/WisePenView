@@ -1,12 +1,10 @@
 import {
   AGENT_PROMPT_ROOT,
   DEFAULT_GUIDED_PROMPT_FIELDS,
-  SOUL_PRESET_ALIASES,
-  SOUL_PRESET_OPTIONS,
+  SOUL_FIELD_KEYS,
   SOUL_PROMPT_ROOT,
-  composePresetRules,
   type GuidedPromptFields,
-  type SoulPresetKey,
+  type SoulFieldKey,
 } from './template';
 
 interface HeadingSection {
@@ -18,30 +16,17 @@ interface HeadingSection {
   contentEnd: number;
   content: string;
 }
+
 export interface GuidedPromptParseResult {
   compatible: boolean;
   soulEnabled: boolean;
   fields: GuidedPromptFields;
-  residuals: Record<SoulPresetKey, string>;
   markdown: string;
 }
-
-type TextFieldKey = Exclude<keyof GuidedPromptFields, SoulPresetKey>;
 
 const normalizeMarkdown = (value: string) => value.replace(/^\uFEFF/, '').replace(/\r\n?/g, '\n');
 const trimContent = (value: string) =>
   value.replace(/^(?:[ \t]*\n)+/, '').replace(/(?:\n[ \t]*)+$/, '');
-const normalizeRule = (value: string) =>
-  value
-    .trim()
-    .replace(/[\u3000\s]+/g, '')
-    .replace(/[，,]/g, '、')
-    .replace(/[；;。.!！?？]+$/g, '');
-const splitRules = (content: string) =>
-  normalizeMarkdown(content)
-    .split(/(?<=[。！？!?；;])|\n+/)
-    .map((item) => item.trim())
-    .filter(Boolean);
 
 function scanHeadings(markdown: string): HeadingSection[] {
   const lines = normalizeMarkdown(markdown).split('\n');
@@ -49,6 +34,7 @@ function scanHeadings(markdown: string): HeadingSection[] {
   const stack: Array<{ title: string; level: number }> = [];
   let fence: string | null = null;
   let fenceLength = 0;
+
   lines.forEach((line, lineIndex) => {
     if (fence) {
       const close = line.match(/^[ \t]{0,3}(`{3,}|~{3,})[ \t]*$/);
@@ -58,20 +44,25 @@ function scanHeadings(markdown: string): HeadingSection[] {
       }
       return;
     }
+
     const open = line.match(/^[ \t]{0,3}(`{3,}|~{3,})/);
     if (open) {
       fence = open[1][0];
       fenceLength = open[1].length;
       return;
     }
+
     const match = line.match(/^(#{1,6})[ \t]+(.+?)(?:[ \t]+#+)?[ \t]*$/);
     if (!match) return;
+
     const level = match[1].length;
     while (stack.length && stack[stack.length - 1].level >= level) stack.pop();
+
     const title = match[2].trim().replace(/[ \t]+/g, ' ');
     headings.push({ title, level, path: [...stack.map((x) => x.title), title], lineIndex });
     stack.push({ title, level });
   });
+
   return headings.map((heading, index) => {
     const next = headings[index + 1];
     const contentStart = heading.lineIndex + 1;
@@ -99,42 +90,9 @@ const fieldSchemas = [
   ['soulTaste', 2, [SOUL_PROMPT_ROOT, '结果偏好 Quality Taste']],
   ['soulTruth', 2, [SOUL_PROMPT_ROOT, '事实与不确定性 Truth & Uncertainty']],
   ['soulBoundaries', 2, [SOUL_PROMPT_ROOT, '底线 Boundaries']],
-] as const;
+] as const satisfies ReadonlyArray<readonly [keyof GuidedPromptFields, number, readonly string[]]>;
+
 const pathKey = (path: readonly string[]) => path.join('\u001f');
-
-function parsePreset(key: SoulPresetKey, content: string) {
-  const mapping = new Map<string, string[]>(
-    (SOUL_PRESET_OPTIONS[key] as readonly string[]).map((option) => [
-      normalizeRule(option),
-      [option],
-    ])
-  );
-  Object.entries(SOUL_PRESET_ALIASES[key]).forEach(([alias, values]) =>
-    mapping.set(normalizeRule(alias), values)
-  );
-  const selected: string[] = [];
-  const residual: string[] = [];
-  splitRules(content).forEach((chunk) => {
-    const values = mapping.get(normalizeRule(chunk));
-    if (!values) {
-      residual.push(chunk);
-      return;
-    }
-    values.forEach((value) => {
-      if (!selected.includes(value)) selected.push(value);
-    });
-  });
-  selected.sort(
-    (a, b) =>
-      (SOUL_PRESET_OPTIONS[key] as readonly string[]).indexOf(a) -
-      (SOUL_PRESET_OPTIONS[key] as readonly string[]).indexOf(b)
-  );
-  return { selected, residual: residual.join('\n') };
-}
-
-export function parseSoulPresetContent(key: SoulPresetKey, content: string) {
-  return parsePreset(key, content);
-}
 
 export function parseGuidedPrompt(markdown: string): GuidedPromptParseResult {
   const normalized = normalizeMarkdown(markdown);
@@ -145,14 +103,8 @@ export function parseGuidedPrompt(markdown: string): GuidedPromptParseResult {
   const soulRoots = roots(SOUL_PROMPT_ROOT);
   const soulEnabled = soulRoots.length > 0;
   const fields = structuredClone(DEFAULT_GUIDED_PROMPT_FIELDS);
-  const residuals = {
-    soulStyle: '',
-    soulInitiative: '',
-    soulTaste: '',
-    soulTruth: '',
-    soulBoundaries: '',
-  };
   let compatible = agentRoots.length === 1 && (soulRoots.length === 0 || soulRoots.length === 1);
+
   fieldSchemas.forEach(([key, level, path]) => {
     if (!soulEnabled && path[0] === SOUL_PROMPT_ROOT) return;
     const matches = sections.filter(
@@ -162,16 +114,10 @@ export function parseGuidedPrompt(markdown: string): GuidedPromptParseResult {
       compatible = false;
       return;
     }
-    const section = matches[0];
-    if (key in residuals) {
-      const parsed = parsePreset(key as SoulPresetKey, section.content);
-      fields[key as SoulPresetKey] = parsed.selected;
-      residuals[key as SoulPresetKey] = parsed.residual;
-    } else {
-      fields[key as keyof Omit<GuidedPromptFields, SoulPresetKey>] = section.content;
-    }
+    fields[key] = matches[0].content;
   });
-  return { compatible, soulEnabled, fields, residuals, markdown: normalized };
+
+  return { compatible, soulEnabled, fields, markdown: normalized };
 }
 
 const headings: Record<keyof GuidedPromptFields, string> = {
@@ -189,20 +135,12 @@ const headings: Record<keyof GuidedPromptFields, string> = {
   soulTruth: '## 事实与不确定性 Truth & Uncertainty',
   soulBoundaries: '## 底线 Boundaries',
 };
+
 function section(key: keyof GuidedPromptFields, value: string) {
   return value ? `${headings[key]}\n${value}` : headings[key];
 }
-export function buildGuidedPrompt(
-  fields: GuidedPromptFields,
-  soulEnabled = true,
-  residuals: Record<SoulPresetKey, string> = {
-    soulStyle: '',
-    soulInitiative: '',
-    soulTaste: '',
-    soulTruth: '',
-    soulBoundaries: '',
-  }
-) {
+
+export function buildGuidedPrompt(fields: GuidedPromptFields, soulEnabled = true) {
   const parts = [
     '# Agent',
     section('overview', fields.overview),
@@ -213,19 +151,12 @@ export function buildGuidedPrompt(
     section('qualityChecks', fields.qualityChecks),
     section('whenToAsk', fields.whenToAsk),
   ];
+
   if (soulEnabled) {
     parts.push('# SOUL（可选）', section('soulRole', fields.soulRole));
-    (
-      ['soulStyle', 'soulInitiative', 'soulTaste', 'soulTruth', 'soulBoundaries'] as SoulPresetKey[]
-    ).forEach((key) =>
-      parts.push(
-        section(
-          key,
-          [composePresetRules(fields[key], key), residuals[key]].filter(Boolean).join('\n\n')
-        )
-      )
-    );
+    SOUL_FIELD_KEYS.forEach((key) => parts.push(section(key, fields[key])));
   }
+
   return parts.join('\n\n');
 }
 
@@ -246,54 +177,24 @@ const fieldPaths = fieldSchemas.reduce<Record<keyof GuidedPromptFields, readonly
   {} as Record<keyof GuidedPromptFields, readonly string[]>
 );
 
-export function syncGuidedPrompt(
-  markdown: string,
-  fields: GuidedPromptFields,
-  residuals: Record<SoulPresetKey, string>
-) {
+export function syncGuidedPrompt(markdown: string, fields: GuidedPromptFields) {
   const parsed = parseGuidedPrompt(markdown);
   if (!parsed.compatible) return markdown;
 
   let next = parsed.markdown;
-  const textKeys: TextFieldKey[] = [
-    'overview',
-    'context',
-    'workflow',
-    'outputFormat',
-    'exampleOutput',
-    'qualityChecks',
-    'whenToAsk',
-    'soulRole',
-  ];
-  textKeys.forEach((key) => {
-    if (!parsed.soulEnabled && key === 'soulRole') return;
+  fieldSchemas.forEach(([key, , path]) => {
+    if (!parsed.soulEnabled && path[0] === SOUL_PROMPT_ROOT) return;
     next = replaceSectionContent(next, fieldPaths[key], fields[key]);
   });
-  if (parsed.soulEnabled) {
-    (Object.keys(residuals) as SoulPresetKey[]).forEach((key) => {
-      next = replaceSectionContent(
-        next,
-        fieldPaths[key],
-        [composePresetRules(fields[key], key), residuals[key]].filter(Boolean).join('\n\n')
-      );
-    });
-  }
   return next;
 }
 
-export function setSoulEnabled(
-  markdown: string,
-  fields: GuidedPromptFields,
-  residuals: Record<SoulPresetKey, string>,
-  enabled: boolean
-) {
+export function setSoulEnabled(markdown: string, fields: GuidedPromptFields, enabled: boolean) {
   const parsed = parseGuidedPrompt(markdown);
   if (!parsed.compatible || parsed.soulEnabled === enabled) return parsed.markdown;
 
   if (enabled) {
-    const soulBlock = buildGuidedPrompt(fields, true, residuals).split(
-      `\n\n# ${SOUL_PROMPT_ROOT}`
-    )[1];
+    const soulBlock = buildGuidedPrompt(fields, true).split(`\n\n# ${SOUL_PROMPT_ROOT}`)[1];
     return `${parsed.markdown.trimEnd()}\n\n# ${SOUL_PROMPT_ROOT}${soulBlock}`;
   }
 
@@ -307,3 +208,5 @@ export function setSoulEnabled(
   lines.splice(root.lineIndex, (nextRoot?.lineIndex ?? lines.length) - root.lineIndex);
   return lines.join('\n').trimEnd();
 }
+
+export type { SoulFieldKey };

@@ -15,7 +15,7 @@ import {
   type ResourceHostLayoutConfig,
 } from '@/views/workspace/ResourceHostContext';
 import { Button, toast } from '@heroui/react';
-import { useRequest } from 'ahooks';
+import { useMemoizedFn, useRequest } from 'ahooks';
 import { Save, Upload } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Link, useBeforeUnload, useBlocker, useNavigate } from 'react-router-dom';
@@ -191,6 +191,16 @@ export default function AgentView({ resourceId }: Props) {
     }
     setPromptResetOpen(true);
   };
+  const handleSaveDraftForDebug = useMemoizedFn(async () => {
+    try {
+      await save.runAsync();
+      return true;
+    } catch {
+      return false;
+    }
+  });
+  const handleSave = useMemoizedFn(() => save.run());
+  const handlePublish = useMemoizedFn(() => publish.run());
   const currentDraftAgent = useMemo<ChatAgentOption | null>(() => {
     if (!load.data || !controller.draft) return null;
     const skillPolicy = controller.draft.spec.toolAndSkillPolicy;
@@ -218,14 +228,7 @@ export default function AgentView({ resourceId }: Props) {
             agent: currentDraftAgent,
             isDirty: controller.isDirty,
             isSaving: save.loading,
-            onSaveDraft: async () => {
-              try {
-                await save.runAsync();
-                return true;
-              } catch {
-                return false;
-              }
-            },
+            onSaveDraft: handleSaveDraftForDebug,
           }
         : undefined,
       header: load.data
@@ -246,7 +249,7 @@ export default function AgentView({ resourceId }: Props) {
                   <Button
                     variant="secondary"
                     isDisabled={!controller.isDirty || save.loading}
-                    onPress={() => save.run()}
+                    onPress={handleSave}
                   >
                     <Save size={15} />
                     保存
@@ -254,7 +257,7 @@ export default function AgentView({ resourceId }: Props) {
                   <Button
                     variant="primary"
                     isDisabled={publish.loading || save.loading}
-                    onPress={() => publish.run()}
+                    onPress={handlePublish}
                   >
                     <Upload size={15} />
                     发布
@@ -275,7 +278,17 @@ export default function AgentView({ resourceId }: Props) {
           }
         : undefined,
     }),
-    [controller.isDirty, controller.savePhase, currentDraftAgent, load.data, publish, save]
+    [
+      controller.isDirty,
+      controller.savePhase,
+      currentDraftAgent,
+      handlePublish,
+      handleSave,
+      handleSaveDraftForDebug,
+      load.data,
+      publish.loading,
+      save.loading,
+    ]
   );
   useResourceHostLayoutConfig(headerConfig);
   if (!resourceId)

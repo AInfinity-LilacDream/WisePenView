@@ -1,13 +1,11 @@
 import { FormField, TextArea } from '@/components/Input';
 import { Button, Switch, Tabs } from '@heroui/react';
 import { useState } from 'react';
-import type { GuidedPromptFields, SoulPresetKey } from '../../systemPrompt';
+import type { GuidedPromptFields, SoulFieldKey } from '../../systemPrompt';
 import {
   buildGuidedPrompt,
-  composePresetRules,
   DEFAULT_GUIDED_PROMPT_FIELDS,
   parseGuidedPrompt,
-  parseSoulPresetContent,
   setSoulEnabled,
   syncGuidedPrompt,
 } from '../../systemPrompt';
@@ -45,7 +43,7 @@ const textFields: Array<{
   { key: 'qualityChecks', label: 'Quality Checks', description: '它如何确保结果可靠？' },
   { key: 'whenToAsk', label: 'When To Ask First', description: '什么情况下必须先问用户？' },
 ];
-const presetFields: Array<{ key: SoulPresetKey; label: string; description: string }> = [
+const soulFields: Array<{ key: SoulFieldKey; label: string; description: string }> = [
   { key: 'soulStyle', label: '说话方式 Communication Style', description: '它应该怎么表达？' },
   { key: 'soulInitiative', label: '主动程度 Initiative Level', description: '它应该多主动？' },
   { key: 'soulTaste', label: '结果偏好 Quality Taste', description: '它认为什么是好的结果？' },
@@ -67,19 +65,7 @@ export default function SystemPromptSection({
   const [restoreOpen, setRestoreOpen] = useState(false);
   const parsed = parseGuidedPrompt(markdown);
   const fields = parsed.compatible ? parsed.fields : DEFAULT_GUIDED_PROMPT_FIELDS;
-  const update = (
-    next: GuidedPromptFields,
-    residuals: Record<SoulPresetKey, string> = parsed.residuals
-  ) => onMarkdownChange(syncGuidedPrompt(markdown, next, residuals));
-  const presetValue = (key: SoulPresetKey) =>
-    [composePresetRules(fields[key], key), parsed.residuals[key]].filter(Boolean).join('\n\n');
-  const updatePreset = (key: SoulPresetKey, value: string) => {
-    const nextPreset = parseSoulPresetContent(key, value);
-    update(
-      { ...fields, [key]: nextPreset.selected },
-      { ...parsed.residuals, [key]: nextPreset.residual }
-    );
-  };
+  const update = (next: GuidedPromptFields) => onMarkdownChange(syncGuidedPrompt(markdown, next));
   return (
     <>
       <SectionShell
@@ -168,7 +154,7 @@ export default function SystemPromptSection({
                 isSelected={parsed.soulEnabled}
                 isDisabled={disabled}
                 onChange={(selected) =>
-                  onMarkdownChange(setSoulEnabled(markdown, fields, parsed.residuals, selected))
+                  onMarkdownChange(setSoulEnabled(markdown, fields, selected))
                 }
               >
                 <Switch.Content className={styles.switchContent}>
@@ -191,14 +177,14 @@ export default function SystemPromptSection({
                     <TextArea rows={4} />
                   </FormField>
                 </div>
-                {presetFields.map((field) => (
+                {soulFields.map((field) => (
                   <div key={field.key} className={styles.presetField}>
                     <FormField
                       label={field.label}
                       description={field.description}
-                      value={presetValue(field.key)}
+                      value={fields[field.key]}
                       isDisabled={disabled}
-                      onChange={(value) => updatePreset(field.key, value)}
+                      onChange={(value) => update({ ...fields, [field.key]: value })}
                     >
                       <TextArea rows={3} />
                     </FormField>
@@ -213,7 +199,7 @@ export default function SystemPromptSection({
         isOpen={restoreOpen}
         onOpenChange={setRestoreOpen}
         title="恢复通用预设？"
-        description="这会用通用模板重建 System Prompt，当前填写内容、SOUL 选择和额外补充内容都会被覆盖。"
+        description="这会用通用模板重建 System Prompt，当前填写内容和 SOUL 内容都会被覆盖。"
         onConfirm={() => {
           onMarkdownChange(buildGuidedPrompt(DEFAULT_GUIDED_PROMPT_FIELDS, true));
           setRestoreOpen(false);

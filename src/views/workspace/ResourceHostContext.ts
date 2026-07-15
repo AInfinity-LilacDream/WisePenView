@@ -75,7 +75,7 @@ export const DEFAULT_RESOURCE_HOST_ID = 'default';
 export function useResourceHostContext() {
   const context = useContext(ResourceHostContext);
   if (!context) {
-    throw new Error('useResourceHostContext 蹇呴』鍦?ResourceHostContext 浣滅敤鍩熷唴浣跨敤');
+    throw new Error('useResourceHostContext 必须在 ResourceHostContext 作用域内使用');
   }
   return context;
 }
