@@ -21,21 +21,9 @@ interface DocumentManagerApi {
   ): (() => void) | void;
 }
 
-interface UiManagerApi {
-  setActiveSidebar(
-    placement: string,
-    slot: string,
-    sidebarId: string,
-    documentId?: string,
-    activeTab?: string,
-    props?: Record<string, unknown>
-  ): void;
-}
-
 interface PdfViewerHandle {
   registry: Promise<{
     getPlugin(name: 'document-manager'): { provides(): DocumentManagerApi } | undefined;
-    getPlugin(name: 'ui'): { provides(): UiManagerApi } | undefined;
     getPlugin(name: string): { provides(): unknown } | undefined;
   }>;
 }
@@ -81,12 +69,6 @@ function PdfViewer({ resourceId, config, className, onLoadError }: PdfViewerProp
           canCopy: false,
         },
       });
-
-      // 默认打开左侧缩略图栏，贴近飞书式 PDF 阅读布局。
-      registry
-        .getPlugin('ui')
-        ?.provides()
-        .setActiveSidebar('left', 'main', 'sidebar-panel', documentId, 'thumbnails');
     } catch (error) {
       console.error('[PdfViewer] 文档加载失败:', error);
       onLoadError?.(
