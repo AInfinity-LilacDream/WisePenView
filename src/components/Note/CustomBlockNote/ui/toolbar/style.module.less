@@ -1,6 +1,6 @@
 .toolbarPopover {
   position: fixed;
-  z-index: 40;
+  z-index: calc(var(--bn-ui-base-z-index, 0) + var(--note-editor-toolbar-layer, 120));
   transform: translate(-50%, -100%);
 }
 
