@@ -123,14 +123,20 @@ export function sortSuggestionItemsForDisplay(items: DefaultReactSuggestionItem[
   return [...items].sort(compareSlashMenuItems);
 }
 
-export function groupSuggestionItems(items: DefaultReactSuggestionItem[]) {
+/** 对已按展示顺序排列的菜单项分组，并附带全局起始索引。 */
+export function groupSortedSuggestionItems(items: DefaultReactSuggestionItem[]) {
   const groupMap = new Map<string, DefaultReactSuggestionItem[]>();
-  for (const item of sortSuggestionItemsForDisplay(items)) {
+  for (const item of items) {
     const group = resolveSlashMenuGroup(item);
-    groupMap.set(group, [...(groupMap.get(group) ?? []), item]);
+    const groupItems = groupMap.get(group);
+    if (groupItems) {
+      groupItems.push(item);
+    } else {
+      groupMap.set(group, [item]);
+    }
   }
 
-  return [...groupMap.entries()].sort(([a], [b]) => {
+  const sortedGroups = [...groupMap.entries()].sort(([a], [b]) => {
     const aIndex = SLASH_MENU_GROUP_ORDER.indexOf(a as (typeof SLASH_MENU_GROUP_ORDER)[number]);
     const bIndex = SLASH_MENU_GROUP_ORDER.indexOf(b as (typeof SLASH_MENU_GROUP_ORDER)[number]);
     if (aIndex === -1 && bIndex === -1) {
@@ -139,5 +145,12 @@ export function groupSuggestionItems(items: DefaultReactSuggestionItem[]) {
     if (aIndex === -1) return 1;
     if (bIndex === -1) return -1;
     return aIndex - bIndex;
+  });
+
+  let currentOffset = 0;
+  return sortedGroups.map(([group, groupItems]) => {
+    const groupWithOffset = [group, groupItems, currentOffset] as const;
+    currentOffset += groupItems.length;
+    return groupWithOffset;
   });
 }

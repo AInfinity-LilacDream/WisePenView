@@ -23,7 +23,7 @@ import {
 } from 'lucide-react';
 import { createElement } from 'react';
 import { getSlashMenuItemKey } from './buildSlashMenuItems';
-import { groupSuggestionItems, resolveSlashMenuTitle } from './slashMenuModel';
+import { groupSortedSuggestionItems, resolveSlashMenuTitle } from './slashMenuModel';
 import styles from './style.module.less';
 
 const SLASH_MENU_ICON_MAP: Record<string, typeof Type> = {
@@ -100,15 +100,11 @@ export function SlashMenuDropdownItems({
   getItemId: (item: DefaultReactSuggestionItem, index: number) => string;
   items: DefaultReactSuggestionItem[];
 }) {
-  const groupedItems = groupSuggestionItems(items);
+  const groupedItems = groupSortedSuggestionItems(items);
 
   return (
     <>
-      {groupedItems.map(([group, groupItems], groupIndex) => {
-        const currentOffset = groupedItems
-          .slice(0, groupIndex)
-          .reduce((count, [, previousGroupItems]) => count + previousGroupItems.length, 0);
-
+      {groupedItems.map(([group, groupItems, currentOffset]) => {
         return (
           <Dropdown.Section id={`slash-group-${group}`} className={styles.section} key={group}>
             <Header className={styles.sectionTitle}>{group}</Header>
@@ -136,24 +132,22 @@ export function SlashMenuDropdownItems({
 
 export function SlashMenuListBoxItems({
   getItemId,
+  hoveredItemId,
   items,
   onItemClick,
-  selectedItemId,
+  onItemMouseMove,
 }: {
   getItemId: (item: DefaultReactSuggestionItem, index: number) => string;
+  hoveredItemId?: string;
   items: DefaultReactSuggestionItem[];
   onItemClick?: (item: DefaultReactSuggestionItem) => void;
-  selectedItemId?: string;
+  onItemMouseMove?: (index: number, event: MouseEvent) => void;
 }) {
-  const groupedItems = groupSuggestionItems(items);
+  const groupedItems = groupSortedSuggestionItems(items);
 
   return (
     <>
-      {groupedItems.map(([group, groupItems], groupIndex) => {
-        const currentOffset = groupedItems
-          .slice(0, groupIndex)
-          .reduce((count, [, previousGroupItems]) => count + previousGroupItems.length, 0);
-
+      {groupedItems.map(([group, groupItems, currentOffset]) => {
         return (
           <ListBoxSection id={`slash-group-${group}`} className={styles.section} key={group}>
             <Header className={styles.sectionTitle}>{group}</Header>
@@ -165,14 +159,12 @@ export function SlashMenuListBoxItems({
               return (
                 <ListBoxItem
                   key={itemId}
-                  ref={(node) => {
-                    if (itemId === selectedItemId) {
-                      node?.scrollIntoView({ block: 'nearest' });
-                    }
-                  }}
                   id={itemId}
                   textValue={title}
                   className={styles.item}
+                  data-menu-hovered={itemId === hoveredItemId || undefined}
+                  data-slash-menu-index={itemIndex}
+                  onMouseMove={(event) => onItemMouseMove?.(itemIndex, event.nativeEvent)}
                   onMouseDown={(event) => event.preventDefault()}
                   onPress={() => onItemClick?.(item)}
                 >

@@ -1,30 +1,36 @@
 import { useNoteEditorReadOnlyContext } from '@/components/Note/CustomBlockNote/engines/editor/readOnly';
 import { filterSuggestionItems } from '@blocknote/core/extensions';
 import type { DefaultReactSuggestionItem, SuggestionMenuProps } from '@blocknote/react';
-import { SuggestionMenuController } from '@blocknote/react';
+import { SuggestionMenuController, useBlockNoteEditor } from '@blocknote/react';
 import { ListBox, ListBoxItem } from '@heroui/react';
 import type { NoteContentPlugin } from '../../content/types';
-import type { CustomBlockNoteEditor } from '../../noteEditorComposition';
+import { blockNoteSchema, type CustomBlockNoteEditor } from '../../noteEditorComposition';
 import {
   NOTE_EDITOR_HIDDEN_DEFAULT_SLASH_MENU_KEY_SET,
   getNoteSlashMenuItems,
+  getSlashMenuItemKey,
 } from './buildSlashMenuItems';
 import { sortSuggestionItemsForDisplay } from './slashMenuModel';
 import { SlashMenuListBoxItems } from './slashMenuView';
 import styles from './style.module.less';
+import { getSlashMenuItemId, useSlashMenuNavigation } from './useSlashMenuNavigation';
 
 interface NoteSlashMenuProps {
   editor: CustomBlockNoteEditor;
   plugins: readonly NoteContentPlugin[];
 }
 
-function getSuggestionItemId(index: number) {
-  return `slash-item-${index}`;
+function getSuggestionMenuContentKey(items: DefaultReactSuggestionItem[]) {
+  return items
+    .map(
+      (item, index) => getSlashMenuItemKey(item) ?? `${item.group ?? '其他'}:${item.title}:${index}`
+    )
+    .join('|');
 }
 
 function SlashMenuState({ text }: { text: string }) {
   return (
-    <ListBox aria-label="斜杠菜单" className={styles.menu}>
+    <ListBox id="bn-suggestion-menu" aria-label="斜杠菜单" className={styles.menuState}>
       <ListBoxItem id="slash-menu-state" textValue={text} isDisabled className={styles.emptyItem}>
         {text}
       </ListBoxItem>
@@ -32,41 +38,71 @@ function SlashMenuState({ text }: { text: string }) {
   );
 }
 
-function NoteSuggestionMenu({
+function NoteSuggestionMenuList({
+  editor,
   items,
+  onItemClick,
+}: {
+  editor: CustomBlockNoteEditor;
+  items: DefaultReactSuggestionItem[];
+  onItemClick?: (item: DefaultReactSuggestionItem) => void;
+}) {
+  const {
+    canScrollDown,
+    canScrollUp,
+    handleItemMouseMove,
+    handleScroll,
+    hoveredIndex,
+    isKeyboardNavigating,
+    viewportRef,
+  } = useSlashMenuNavigation({ editor, items, onItemClick });
+  const hoveredItemId = getSlashMenuItemId(hoveredIndex);
+
+  return (
+    <div
+      className={styles.menuShell}
+      data-can-scroll-down={canScrollDown || undefined}
+      data-can-scroll-up={canScrollUp || undefined}
+      data-keyboard-navigation={isKeyboardNavigating || undefined}
+    >
+      <span aria-hidden className={styles.keyboardFrame} />
+      <div ref={viewportRef} className={styles.menuViewport} onScroll={handleScroll}>
+        <ListBox id="bn-suggestion-menu" aria-label="斜杠菜单" className={styles.menu}>
+          <SlashMenuListBoxItems
+            items={items}
+            getItemId={(_item, index) => getSlashMenuItemId(index)}
+            hoveredItemId={isKeyboardNavigating ? undefined : hoveredItemId}
+            onItemClick={onItemClick}
+            onItemMouseMove={handleItemMouseMove}
+          />
+        </ListBox>
+      </div>
+    </div>
+  );
+}
+
+function NoteSuggestionMenu({
+  items: displayItems,
   loadingState,
-  selectedIndex,
   onItemClick,
 }: SuggestionMenuProps<DefaultReactSuggestionItem>) {
+  const editor = useBlockNoteEditor(blockNoteSchema);
+
   if (loadingState === 'loading-initial') {
     return <SlashMenuState text="加载中..." />;
   }
 
-  if (items.length === 0) {
+  if (displayItems.length === 0) {
     return <SlashMenuState text="无匹配项" />;
   }
 
-  const selectedItemIndex = selectedIndex ?? -1;
-  const displayItems = sortSuggestionItemsForDisplay(items);
-  const selectedItem = selectedItemIndex >= 0 ? items[selectedItemIndex] : undefined;
-  const selectedDisplayIndex = selectedItem ? displayItems.indexOf(selectedItem) : -1;
-  const selectedKey =
-    selectedDisplayIndex >= 0 ? getSuggestionItemId(selectedDisplayIndex) : undefined;
-
   return (
-    <ListBox
-      aria-label="斜杠菜单"
-      selectionMode="single"
-      selectedKeys={selectedKey ? [selectedKey] : []}
-      className={styles.menu}
-    >
-      <SlashMenuListBoxItems
-        items={displayItems}
-        getItemId={(_item, index) => getSuggestionItemId(index)}
-        selectedItemId={selectedKey}
-        onItemClick={onItemClick}
-      />
-    </ListBox>
+    <NoteSuggestionMenuList
+      key={getSuggestionMenuContentKey(displayItems)}
+      editor={editor}
+      items={displayItems}
+      onItemClick={onItemClick}
+    />
   );
 }
 
