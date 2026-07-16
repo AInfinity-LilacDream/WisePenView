@@ -4,3 +4,7 @@ packages:
 allowBuilds:
   '@parcel/watcher': true
   esbuild: true
+
+patchedDependencies:
+  '@blocknote/core@0.47.3': patches/@blocknote__core@0.47.3.patch
+  '@blocknote/react@0.47.3': patches/@blocknote__react@0.47.3.patch

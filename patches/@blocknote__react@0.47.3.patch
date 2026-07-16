@@ -1,0 +1,280 @@
+diff --git a/dist/blocknote-react.js b/dist/blocknote-react.js
+index ae97e5e3d657aaac93a8302472bf5aed7ae45749..9f35a86fe74e6509db45c8ba0f97b998509ee7d5 100644
+--- a/dist/blocknote-react.js
++++ b/dist/blocknote-react.js
+@@ -2460,11 +2460,11 @@ function qr(e) {
+     }
+   );
+ }
+-function Xt(e, t, n, o = 3) {
+-  const r = F(0);
++function Xt(e, t, n, o = 3, r = !1) {
++  const i = F(0);
+   M(() => {
+-    t !== void 0 && (e.length > 0 ? r.current = t.length : t.length - r.current > o && n());
+-  }, [n, o, e.length, t]);
++    t !== void 0 && (r ? i.current = t.length : e.length > 0 ? i.current = t.length : t.length - i.current > o && n());
++  }, [n, r, o, e.length, t]);
+ }
+ function Yt(e, t) {
+   const [n, o] = T([]), [r, i] = T(!1), c = F(void 0), s = F(void 0);
+@@ -2509,24 +2509,25 @@ function Xr(e) {
+     query: c,
+     clearQuery: s,
+     closeMenu: a,
+-    onItemClick: d,
+-    columns: u
+-  } = e, m = H(
++    composing: d,
++    onItemClick: u,
++    columns: m
++  } = e, f = H(
+     (C) => {
+-      a(), s(), d == null || d(C);
++      a(), s(), u == null || u(C);
+     },
+-    [d, a, s]
+-  ), { items: f, usedQuery: g, loadingState: h } = Yt(
++    [u, a, s]
++  ), { items: g, usedQuery: h, loadingState: b } = Yt(
+     c,
+     r
+   );
+-  Xt(f, g, a);
+-  const { selectedIndex: b } = Kr(
++  Xt(g, h, a, 3, d);
++  const { selectedIndex: p } = Kr(
+     o,
+     c,
+-    f,
+-    u,
+-    m
++    g,
++    m,
++    f
+   );
+   return M(() => (n((C) => ({
+     ...C,
+@@ -2540,20 +2541,20 @@ function Xr(e) {
+     }));
+   }), [n]), M(() => (n((C) => ({
+     ...C,
+-    "aria-activedescendant": b ? "bn-suggestion-menu-item-" + b : void 0
++    "aria-activedescendant": p ? "bn-suggestion-menu-item-" + p : void 0
+   })), () => {
+     n((C) => ({
+       ...C,
+       "aria-activedescendant": void 0
+     }));
+-  }), [n, b]), /* @__PURE__ */ l(
++  }), [n, p]), /* @__PURE__ */ l(
+     i,
+     {
+-      items: f,
+-      onItemClick: m,
+-      loadingState: h,
+-      selectedIndex: b,
+-      columns: u
++      items: g,
++      onItemClick: f,
++      loadingState: b,
++      selectedIndex: p,
++      columns: m
+     }
+   );
+ }
+@@ -2643,6 +2644,7 @@ function Yr(e) {
+       query: f.query,
+       closeMenu: m.closeMenu,
+       clearQuery: m.clearQuery,
++      composing: f.composing,
+       getItems: u,
+       columns: r,
+       gridSuggestionMenuComponent: o || qr,
+@@ -2750,22 +2752,23 @@ function ni(e) {
+     query: c,
+     clearQuery: s,
+     closeMenu: a,
+-    onItemClick: d
+-  } = e, u = H(
++    composing: d,
++    onItemClick: u
++  } = e, m = H(
+     (p) => {
+-      a(), s(), d == null || d(p);
++      a(), s(), u == null || u(p);
+     },
+-    [d, a, s]
+-  ), { items: m, usedQuery: f, loadingState: g } = Yt(
++    [u, a, s]
++  ), { items: f, usedQuery: g, loadingState: h } = Yt(
+     c,
+     r
+   );
+-  Xt(m, f, a);
+-  const { selectedIndex: h } = ti(
++  Xt(f, g, a, 3, d);
++  const { selectedIndex: b } = ti(
+     o,
+     c,
+-    m,
+-    u
++    f,
++    m
+   );
+   return M(() => (n((p) => ({
+     ...p,
+@@ -2779,19 +2782,19 @@ function ni(e) {
+     }));
+   }), [n]), M(() => (n((p) => ({
+     ...p,
+-    "aria-activedescendant": h ? "bn-suggestion-menu-item-" + h : void 0
++    "aria-activedescendant": b ? "bn-suggestion-menu-item-" + b : void 0
+   })), () => {
+     n((p) => ({
+       ...p,
+       "aria-activedescendant": void 0
+     }));
+-  }), [n, h]), /* @__PURE__ */ l(
++  }), [n, b]), /* @__PURE__ */ l(
+     i,
+     {
+-      items: m,
+-      onItemClick: u,
+-      loadingState: g,
+-      selectedIndex: h
++      items: f,
++      onItemClick: m,
++      loadingState: h,
++      selectedIndex: b
+     }
+   );
+ }
+@@ -2914,6 +2917,7 @@ function ii(e) {
+       query: m.query,
+       closeMenu: u.closeMenu,
+       clearQuery: u.clearQuery,
++      composing: m.composing,
+       getItems: d,
+       suggestionMenuComponent: o || Jr,
+       onItemClick: a
+diff --git a/src/components/SuggestionMenu/GridSuggestionMenu/GridSuggestionMenuController.tsx b/src/components/SuggestionMenu/GridSuggestionMenu/GridSuggestionMenuController.tsx
+index b2af2c55e55715573b082a957f87993b68a3c20c..e10fa8922f0ae10493339f78aa4aeb0e17d48183 100644
+--- a/src/components/SuggestionMenu/GridSuggestionMenu/GridSuggestionMenuController.tsx
++++ b/src/components/SuggestionMenu/GridSuggestionMenu/GridSuggestionMenuController.tsx
+@@ -182,6 +182,7 @@ export function GridSuggestionMenuController<
+           query={state.query}
+           closeMenu={suggestionMenu.closeMenu}
+           clearQuery={suggestionMenu.clearQuery}
++          composing={state.composing}
+           getItems={getItemsOrDefault}
+           columns={columns}
+           gridSuggestionMenuComponent={
+diff --git a/src/components/SuggestionMenu/GridSuggestionMenu/GridSuggestionMenuWrapper.tsx b/src/components/SuggestionMenu/GridSuggestionMenu/GridSuggestionMenuWrapper.tsx
+index 173b36c4ea3427c65c776938e3568f345dd8986d..57a67efa86411b1d616e6a205e0cdb869f237b6a 100644
+--- a/src/components/SuggestionMenu/GridSuggestionMenu/GridSuggestionMenuWrapper.tsx
++++ b/src/components/SuggestionMenu/GridSuggestionMenu/GridSuggestionMenuWrapper.tsx
+@@ -12,6 +12,7 @@ export function GridSuggestionMenuWrapper<Item>(props: {
+   query: string;
+   closeMenu: () => void;
+   clearQuery: () => void;
++  composing?: boolean;
+   getItems: (query: string) => Promise<Item[]>;
+   columns: number;
+   onItemClick?: (item: Item) => void;
+@@ -31,6 +32,7 @@ export function GridSuggestionMenuWrapper<Item>(props: {
+     query,
+     clearQuery,
+     closeMenu,
++    composing,
+     onItemClick,
+     columns,
+   } = props;
+@@ -49,7 +51,7 @@ export function GridSuggestionMenuWrapper<Item>(props: {
+     getItems,
+   );
+ 
+-  useCloseSuggestionMenuNoItems(items, usedQuery, closeMenu);
++  useCloseSuggestionMenuNoItems(items, usedQuery, closeMenu, 3, composing);
+ 
+   const { selectedIndex } = useGridSuggestionMenuKeyboardNavigation(
+     editor,
+diff --git a/src/components/SuggestionMenu/SuggestionMenuController.tsx b/src/components/SuggestionMenu/SuggestionMenuController.tsx
+index 6efb18c84573a8eb2382d6e034d07874b2212b8a..270352c7ec59640aa4e4764850c7b077e4f2715a 100644
+--- a/src/components/SuggestionMenu/SuggestionMenuController.tsx
++++ b/src/components/SuggestionMenu/SuggestionMenuController.tsx
+@@ -175,6 +175,7 @@ export function SuggestionMenuController<
+           query={state.query}
+           closeMenu={suggestionMenu.closeMenu}
+           clearQuery={suggestionMenu.clearQuery}
++          composing={state.composing}
+           getItems={getItemsOrDefault}
+           suggestionMenuComponent={
+             suggestionMenuComponent || SuggestionMenu<ItemType<GetItemsType>>
+diff --git a/src/components/SuggestionMenu/SuggestionMenuWrapper.tsx b/src/components/SuggestionMenu/SuggestionMenuWrapper.tsx
+index 391bcb1b34de633fdd151888a1652d4a5a7d01d4..b2b2adaeaf36d76aeb83663cb1a2c749f8a4401e 100644
+--- a/src/components/SuggestionMenu/SuggestionMenuWrapper.tsx
++++ b/src/components/SuggestionMenu/SuggestionMenuWrapper.tsx
+@@ -12,6 +12,7 @@ export function SuggestionMenuWrapper<Item>(props: {
+   query: string;
+   closeMenu: () => void;
+   clearQuery: () => void;
++  composing?: boolean;
+   getItems: (query: string) => Promise<Item[]>;
+   onItemClick?: (item: Item) => void;
+   suggestionMenuComponent: FC<SuggestionMenuProps<Item>>;
+@@ -30,6 +31,7 @@ export function SuggestionMenuWrapper<Item>(props: {
+     query,
+     clearQuery,
+     closeMenu,
++    composing,
+     onItemClick,
+   } = props;
+ 
+@@ -47,7 +49,7 @@ export function SuggestionMenuWrapper<Item>(props: {
+     getItems,
+   );
+ 
+-  useCloseSuggestionMenuNoItems(items, usedQuery, closeMenu);
++  useCloseSuggestionMenuNoItems(items, usedQuery, closeMenu, 3, composing);
+ 
+   const { selectedIndex } = useSuggestionMenuKeyboardNavigation(
+     editor,
+diff --git a/src/components/SuggestionMenu/hooks/useCloseSuggestionMenuNoItems.ts b/src/components/SuggestionMenu/hooks/useCloseSuggestionMenuNoItems.ts
+index c38946191761d75ade7278bcfa80f15befc7ece2..60d22c88d3f42c1360bda1241d0ba866a281bdfd 100644
+--- a/src/components/SuggestionMenu/hooks/useCloseSuggestionMenuNoItems.ts
++++ b/src/components/SuggestionMenu/hooks/useCloseSuggestionMenuNoItems.ts
+@@ -8,6 +8,7 @@ export function useCloseSuggestionMenuNoItems<Item>(
+   usedQuery: string | undefined,
+   closeMenu: () => void,
+   invalidQueries = 3,
++  disabled = false,
+ ) {
+   const lastUsefulQueryLength = useRef(0);
+ 
+@@ -16,6 +17,11 @@ export function useCloseSuggestionMenuNoItems<Item>(
+       return;
+     }
+ 
++    if (disabled) {
++      lastUsefulQueryLength.current = usedQuery.length;
++      return;
++    }
++
+     if (items.length > 0) {
+       lastUsefulQueryLength.current = usedQuery.length;
+     } else if (
+@@ -24,5 +30,5 @@ export function useCloseSuggestionMenuNoItems<Item>(
+     ) {
+       closeMenu();
+     }
+-  }, [closeMenu, invalidQueries, items.length, usedQuery]);
++  }, [closeMenu, disabled, invalidQueries, items.length, usedQuery]);
+ }
+diff --git a/types/src/components/SuggestionMenu/hooks/useCloseSuggestionMenuNoItems.d.ts b/types/src/components/SuggestionMenu/hooks/useCloseSuggestionMenuNoItems.d.ts
+index 17e42880cd40816c0c446ce9dc9a3b7ead232c1a..2cfc4747306364db33cd588ea69206483c585667 100644
+--- a/types/src/components/SuggestionMenu/hooks/useCloseSuggestionMenuNoItems.d.ts
++++ b/types/src/components/SuggestionMenu/hooks/useCloseSuggestionMenuNoItems.d.ts
+@@ -1 +1 @@
+-export declare function useCloseSuggestionMenuNoItems<Item>(items: Item[], usedQuery: string | undefined, closeMenu: () => void, invalidQueries?: number): void;
++export declare function useCloseSuggestionMenuNoItems<Item>(items: Item[], usedQuery: string | undefined, closeMenu: () => void, invalidQueries?: number, disabled?: boolean): void;
