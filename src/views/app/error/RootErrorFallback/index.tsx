@@ -1,10 +1,12 @@
 import type { FallbackProps } from 'react-error-boundary';
 
 import { getErrorReportId } from '@/utils/error';
+import { buildErrorDetail } from '../AppError/errorDetail';
 import styles from './style.module.less';
 
 function RootErrorFallback({ error }: FallbackProps) {
   const errorId = getErrorReportId(error);
+  const errorDetail = buildErrorDetail(error, window.location.pathname, errorId);
 
   return (
     <main className={styles.root}>
@@ -13,6 +15,7 @@ function RootErrorFallback({ error }: FallbackProps) {
         <h1 className={styles.title}>应用暂时无法继续运行</h1>
         <p className={styles.description}>请重新加载页面。若问题持续，请将错误编号提供给开发者。</p>
         <p className={styles.errorId}>错误编号：{errorId}</p>
+        <pre className={styles.errorDetail}>{errorDetail}</pre>
         <div className={styles.actions}>
           <button
             className={styles.primaryButton}
