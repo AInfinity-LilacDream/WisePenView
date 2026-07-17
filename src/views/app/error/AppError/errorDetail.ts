@@ -111,8 +111,6 @@ export const buildErrorDetail = (error: unknown, pathname: string, errorId: stri
       `HTTP 状态: ${error.status}${error.statusText ? ` ${error.statusText}` : ''}`
     );
 
-    if (!import.meta.env.DEV) return lines.join('\n');
-
     if (error.data instanceof Error) {
       appendError(lines, error.data, '响应异常');
     } else if (error.data !== undefined) {
@@ -123,20 +121,10 @@ export const buildErrorDetail = (error: unknown, pathname: string, errorId: stri
   }
 
   if (error instanceof Error) {
-    if (!import.meta.env.DEV) {
-      lines.push(`错误类型: ${error.name || 'Error'}`);
-      if (isWisePenError(error)) {
-        lines.push(`错误代码: ${error.code}`, `错误来源: ${error.source}`);
-      }
-      return lines.join('\n');
-    }
     appendError(lines, error);
     return lines.join('\n');
   }
 
-  lines.push('错误类型: Unknown');
-  if (import.meta.env.DEV) {
-    lines.push(`错误内容: ${serializeValue(error)}`);
-  }
+  lines.push('错误类型: Unknown', `错误内容: ${serializeValue(error)}`);
   return lines.join('\n');
 };
